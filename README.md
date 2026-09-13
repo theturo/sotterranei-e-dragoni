@@ -10,7 +10,7 @@ Implementato:
 - Registrazione, login, logout, dashboard con pannelli diversi in base al ruolo (`admin` / `dm` / `player`).
 - Pannello admin di gestione utenti: elenco utenti, cambio ruolo, invio email di reset password (`admin-utenti.html`).
 - Pannello DM "Party e livelli": roster dei giocatori e trigger "segnala livello su" (`dm-party.html`). Il DM vede solo i giocatori, in sola lettura sulle schede (non ancora esistenti) e non gestisce account/password.
-- Notifica di salita di livello: popup al giocatore al login successivo alla segnalazione del DM (la spesa dei punti guadagnati sarà gestita dalla futura scheda personaggio).
+- Sistema di notifiche con storico: ogni utente ha una sotto-collezione Firestore `users/{uid}/notifiche`. Una salita di livello genera un popup al login successivo E una voce persistente nella campanella in dashboard (con data, testo tipo "Passaggio di livello: 2 → 3" e badge del numero di notifiche non lette, che si azzera cliccando la singola notifica).
 
 Non ancora implementato: scheda personaggio, controllo musica, mappe.
 

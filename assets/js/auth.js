@@ -13,6 +13,7 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  addDoc,
   collection,
   getDocs,
   query,
@@ -56,7 +57,6 @@ export async function registraUtente({ nome, email, password }) {
     ruolo,
     livello: 1,
     livelliDaSpendere: 0,
-    notificaLivello: false,
     creatoIl: serverTimestamp(),
   });
 
@@ -108,17 +108,33 @@ export async function elencaGiocatori() {
 }
 
 // Il DM segnala che un giocatore è salito di livello (solo DM/admin, vedi firestore.rules).
-export async function segnalaLivelloSu(uid) {
+// livelloAttuale è il livello mostrato in UI prima dell'aggiornamento, usato solo
+// per scrivere un testo leggibile nella notifica (es. "2 → 3").
+export async function segnalaLivelloSu(uid, livelloAttuale) {
+  const livelloPrecedente = livelloAttuale ?? 1;
   await updateDoc(doc(db, "users", uid), {
     livello: increment(1),
     livelliDaSpendere: increment(1),
-    notificaLivello: true,
+  });
+  await addDoc(collection(db, "users", uid, "notifiche"), {
+    tipo: "livello_su",
+    livelloPrecedente,
+    livelloNuovo: livelloPrecedente + 1,
+    letta: false,
+    creataIl: serverTimestamp(),
   });
 }
 
-// Il giocatore conferma di aver visto il popup di livello (chiude la notifica).
-export async function confermaNotificaLivello(uid) {
-  await updateDoc(doc(db, "users", uid), { notificaLivello: false });
+// Restituisce lo storico delle notifiche di un utente, più recenti prima.
+export async function elencaNotifiche(uid) {
+  const riferimento = query(collection(db, "users", uid, "notifiche"), orderBy("creataIl", "desc"));
+  const snapshot = await getDocs(riferimento);
+  return snapshot.docs.map((documento) => ({ id: documento.id, ...documento.data() }));
+}
+
+// Segna una singola notifica come letta.
+export async function segnaNotificaLetta(uid, notificaId) {
+  await updateDoc(doc(db, "users", uid, "notifiche", notificaId), { letta: true });
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,

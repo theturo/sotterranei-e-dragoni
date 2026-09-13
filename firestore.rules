@@ -13,7 +13,10 @@ rules_version = '2';
 // - Solo un admin può elencare TUTTI gli utenti (pannello di gestione utenti).
 // - Un DM può elencare SOLO gli utenti con ruolo "player" (roster di party) e
 //   può aggiornarne esclusivamente i campi legati al livello
-//   ("livello", "notificaLivello", "livelliDaSpendere"), non altro.
+//   ("livello", "livelliDaSpendere"), non altro.
+// - Ogni utente ha una sotto-collezione "notifiche": solo il proprietario (o un
+//   admin) può leggerla; solo il proprietario può segnarle come lette; solo un
+//   admin o un DM (verso un giocatore) può crearne di nuove.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -35,7 +38,7 @@ service cloud.firestore {
 
     function soloCampiLivello() {
       return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['livello', 'notificaLivello', 'livelliDaSpendere']);
+        .hasOnly(['livello', 'livelliDaSpendere']);
     }
 
     match /users/{uid} {
@@ -63,6 +66,20 @@ service cloud.firestore {
       );
 
       allow delete: if isAdmin();
+
+      match /notifiche/{notificaId} {
+        // Lettura: solo il destinatario o un admin.
+        allow read: if isAutenticato() && (request.auth.uid == uid || isAdmin());
+
+        // Creazione: un admin, oppure un DM verso un giocatore.
+        allow create: if isAdmin() || (isDM() && ruoloUtente(uid) == "player");
+
+        // Aggiornamento: solo il destinatario, e solo per segnarla come letta.
+        allow update: if isAutenticato() && request.auth.uid == uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letta']);
+
+        allow delete: if isAdmin();
+      }
     }
   }
 }

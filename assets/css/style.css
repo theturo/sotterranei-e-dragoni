@@ -455,6 +455,119 @@ table.tabella-utenti td.cella-email {
   border-color: var(--color-danger);
 }
 
+/* ---------- Campanella notifiche ---------- */
+
+.notifiche-wrap {
+  position: relative;
+}
+
+.btn-campanella {
+  position: relative;
+  background: transparent;
+  border: 1px solid var(--color-gold);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-gold-bright);
+}
+
+.btn-campanella:hover {
+  background: rgba(201, 162, 39, 0.1);
+}
+
+.btn-campanella svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.badge-non-lette {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-burgundy-bright);
+  color: #fff;
+  font-size: 0.68rem;
+  font-family: var(--font-heading);
+  min-width: 17px;
+  height: 17px;
+  line-height: 17px;
+  text-align: center;
+  border-radius: 999px;
+  padding: 0 4px;
+  border: 1px solid var(--color-ink);
+}
+
+.dropdown-notifiche {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 320px;
+  max-width: 85vw;
+  max-height: 380px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+  border: 2px solid var(--color-gold);
+  border-radius: 10px;
+  box-shadow: var(--shadow-deep);
+  z-index: 150;
+  padding: 10px;
+}
+
+.dropdown-notifiche-titolo {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 6px 10px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.25);
+  margin-bottom: 6px;
+}
+
+.notifica-riga {
+  padding: 9px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-ink);
+}
+
+.notifica-riga.non-letta {
+  background: rgba(201, 162, 39, 0.2);
+}
+
+.notifica-riga:hover {
+  background: rgba(122, 31, 43, 0.1);
+}
+
+.notifica-testo {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.notifica-riga.non-letta .notifica-testo {
+  font-weight: 600;
+}
+
+.notifica-data {
+  display: block;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+  margin-top: 3px;
+}
+
+.dropdown-notifiche-vuoto {
+  padding: 10px 8px;
+  color: var(--color-ink-soft);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
 /* ---------- Modal ---------- */
 
 .modal-overlay {

@@ -20,6 +20,19 @@
         </div>
         <div style="display:flex; align-items:center; gap:14px;">
           <span id="badge-livello" class="role-badge" style="display:none;"></span>
+          <div class="notifiche-wrap">
+            <button id="btn-campanella" class="btn-campanella" aria-label="Notifiche" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+              </svg>
+              <span id="badge-non-lette" class="badge-non-lette" hidden></span>
+            </button>
+            <div id="dropdown-notifiche" class="dropdown-notifiche" hidden>
+              <div class="dropdown-notifiche-titolo">Notifiche</div>
+              <div id="lista-notifiche"></div>
+              <p id="nessuna-notifica" class="dropdown-notifiche-vuoto" hidden>Nessuna notifica.</p>
+            </div>
+          </div>
           <span id="badge-ruolo" class="role-badge"></span>
           <button id="btn-logout" class="btn btn-ghost">Esci</button>
         </div>
@@ -42,7 +55,13 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, esciUtente, confermaNotificaLivello, ROLES } from "./assets/js/auth.js";
+    import {
+      proteggiPagina,
+      esciUtente,
+      elencaNotifiche,
+      segnaNotificaLetta,
+      ROLES,
+    } from "./assets/js/auth.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -70,6 +89,98 @@
       ],
     };
 
+    function testoNotifica(notifica) {
+      if (notifica.tipo === "livello_su") {
+        return `Passaggio di livello: ${notifica.livelloPrecedente} → ${notifica.livelloNuovo}`;
+      }
+      return "Notifica";
+    }
+
+    function formattaDataNotifica(timestamp) {
+      if (!timestamp?.toDate) return "";
+      return timestamp.toDate().toLocaleString("it-IT", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function aggiornaBadgeNonLette(count) {
+      const badge = document.getElementById("badge-non-lette");
+      if (count > 0) {
+        badge.textContent = String(count);
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+      }
+    }
+
+    function renderNotifiche(notifiche, uid) {
+      const lista = document.getElementById("lista-notifiche");
+      const vuoto = document.getElementById("nessuna-notifica");
+
+      if (notifiche.length === 0) {
+        lista.innerHTML = "";
+        vuoto.hidden = false;
+      } else {
+        vuoto.hidden = true;
+        lista.innerHTML = notifiche
+          .map(
+            (n) => `
+          <div class="notifica-riga ${n.letta ? "" : "non-letta"}" data-id="${n.id}">
+            <span class="notifica-testo">${testoNotifica(n)}</span>
+            <span class="notifica-data">${formattaDataNotifica(n.creataIl)}</span>
+          </div>`
+          )
+          .join("");
+      }
+
+      aggiornaBadgeNonLette(notifiche.filter((n) => !n.letta).length);
+
+      lista.querySelectorAll(".notifica-riga.non-letta").forEach((riga) => {
+        riga.addEventListener(
+          "click",
+          async () => {
+            riga.classList.remove("non-letta");
+            try {
+              await segnaNotificaLetta(uid, riga.dataset.id);
+            } catch (errore) {
+              console.error(errore);
+            }
+            aggiornaBadgeNonLette(document.querySelectorAll(".notifica-riga.non-letta").length);
+          },
+          { once: true }
+        );
+      });
+    }
+
+    async function inizializzaNotifiche(uid) {
+      const btnCampanella = document.getElementById("btn-campanella");
+      const dropdown = document.getElementById("dropdown-notifiche");
+
+      btnCampanella.addEventListener("click", (evento) => {
+        evento.stopPropagation();
+        dropdown.hidden = !dropdown.hidden;
+      });
+      document.addEventListener("click", (evento) => {
+        if (!dropdown.hidden && !dropdown.contains(evento.target) && evento.target !== btnCampanella) {
+          dropdown.hidden = true;
+        }
+      });
+
+      try {
+        const notifiche = await elencaNotifiche(uid);
+        renderNotifiche(notifiche, uid);
+        return notifiche;
+      } catch (errore) {
+        console.error(errore);
+        renderNotifiche([], uid);
+        return [];
+      }
+    }
+
     function renderPannelli(ruolo) {
       const pannelli = PANNELLI_PER_RUOLO[ruolo] || PANNELLI_PER_RUOLO[ROLES.PLAYER];
       griglia.innerHTML = pannelli
@@ -82,7 +193,7 @@
         .join("");
     }
 
-    proteggiPagina((user, profilo) => {
+    proteggiPagina(async (user, profilo) => {
       const nome = profilo?.nome || user.displayName || user.email;
       const ruolo = profilo?.ruolo || ROLES.PLAYER;
 
@@ -94,27 +205,30 @@
         const badgeLivello = document.getElementById("badge-livello");
         badgeLivello.textContent = `Livello ${profilo?.livello ?? 1}`;
         badgeLivello.style.display = "inline-block";
+      }
 
-        if (profilo?.notificaLivello) {
-          const overlay = document.getElementById("overlay-livello");
-          document.getElementById("testo-livello").textContent =
-            `Il tuo Dungeon Master ti ha fatto salire al livello ${profilo.livello}. ` +
-            `Potrai spendere i punti guadagnati non appena sarà pronta la scheda personaggio.`;
-          overlay.style.display = "flex";
+      const notifiche = await inizializzaNotifiche(user.uid);
 
-          document.getElementById("btn-chiudi-livello").addEventListener(
-            "click",
-            async () => {
-              overlay.style.display = "none";
-              try {
-                await confermaNotificaLivello(user.uid);
-              } catch (errore) {
-                console.error(errore);
-              }
-            },
-            { once: true }
-          );
+      const livelliNonLetti = notifiche.filter((n) => !n.letta && n.tipo === "livello_su");
+      if (livelliNonLetti.length > 0) {
+        const ultima = livelliNonLetti[0];
+        let testo =
+          `Il tuo Dungeon Master ti ha fatto salire dal livello ${ultima.livelloPrecedente} ` +
+          `al livello ${ultima.livelloNuovo}. Potrai spendere i punti guadagnati non appena ` +
+          `sarà pronta la scheda personaggio.`;
+        if (livelliNonLetti.length > 1) {
+          testo += ` Hai ${livelliNonLetti.length} notifiche di livello non lette: consultale dalla campanella.`;
         }
+        document.getElementById("testo-livello").textContent = testo;
+        document.getElementById("overlay-livello").style.display = "flex";
+
+        document.getElementById("btn-chiudi-livello").addEventListener(
+          "click",
+          () => {
+            document.getElementById("overlay-livello").style.display = "none";
+          },
+          { once: true }
+        );
       }
 
       veil.style.display = "none";

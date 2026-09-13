@@ -116,10 +116,11 @@
       const riga = bottone.closest("tr");
       const cellaLivello = riga.querySelector(".cella-livello");
 
+      const livelloAttuale = Number(cellaLivello.textContent);
       bottone.disabled = true;
       try {
-        await segnalaLivelloSu(uid);
-        cellaLivello.textContent = String(Number(cellaLivello.textContent) + 1);
+        await segnalaLivelloSu(uid, livelloAttuale);
+        cellaLivello.textContent = String(livelloAttuale + 1);
         mostraToast("Livello aggiornato: il giocatore vedrà l'avviso al prossimo accesso.");
       } catch (errore) {
         mostraToast("Impossibile aggiornare il livello.", true);
