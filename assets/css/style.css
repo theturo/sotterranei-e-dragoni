@@ -455,6 +455,43 @@ table.tabella-utenti td.cella-email {
   border-color: var(--color-danger);
 }
 
+/* ---------- Modal ---------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 6, 3, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 200;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+  color: var(--color-ink);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-gold);
+  padding: 30px 28px;
+  box-shadow: var(--shadow-deep);
+  text-align: center;
+}
+
+.modal-card h2 {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin-top: 0;
+}
+
+.modal-card p {
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
 footer.site-footer {
   text-align: center;
   padding: 18px;

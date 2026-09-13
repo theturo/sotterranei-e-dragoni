@@ -6,10 +6,14 @@ rules_version = '2';
 // Logica:
 // - Ogni utente autenticato può leggere e creare il PROPRIO documento in "users"
 //   (creato automaticamente in fase di registrazione), ma NON può modificare
-//   il proprio campo "ruolo" (per evitare di auto-promuoversi ad admin/DM).
-// - Solo un admin può modificare il ruolo di un altro utente.
-// - Solo un admin può elencare TUTTI gli utenti (pannello di gestione utenti);
-//   un utente normale può leggere solo il proprio documento.
+//   il proprio campo "ruolo" né "livello" (per evitare di auto-promuoversi o
+//   auto-livellarsi).
+// - Solo un admin può modificare ruolo/dati di un altro utente, oppure
+//   eliminare un account.
+// - Solo un admin può elencare TUTTI gli utenti (pannello di gestione utenti).
+// - Un DM può elencare SOLO gli utenti con ruolo "player" (roster di party) e
+//   può aggiornarne esclusivamente i campi legati al livello
+//   ("livello", "notificaLivello", "livelliDaSpendere"), non altro.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -25,21 +29,37 @@ service cloud.firestore {
       return isAutenticato() && ruoloUtente(request.auth.uid) == "admin";
     }
 
+    function isDM() {
+      return isAutenticato() && ruoloUtente(request.auth.uid) == "dm";
+    }
+
+    function soloCampiLivello() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['livello', 'notificaLivello', 'livelliDaSpendere']);
+    }
+
     match /users/{uid} {
       // Lettura di un singolo documento: il proprietario o un admin.
       allow get: if isAutenticato() && (request.auth.uid == uid || isAdmin());
 
       // Elenco dell'intera collezione (pannello utenti): solo admin.
-      allow list: if isAdmin();
+      // Un DM può elencare solo i documenti con ruolo "player" (roster di party):
+      // la query lato client deve filtrare esplicitamente su ruolo == "player".
+      allow list: if isAdmin() || (isDM() && resource.data.ruolo == "player");
 
       // Creazione: solo il proprio documento, in fase di registrazione.
       allow create: if isAutenticato() && request.auth.uid == uid;
 
-      // Aggiornamento: il proprietario può modificare tutto TRANNE il campo "ruolo",
-      // a meno che chi scrive non sia admin.
+      // Aggiornamento:
+      // - il proprietario può modificare tutto TRANNE "ruolo" e "livello";
+      // - un admin può modificare qualunque campo di chiunque;
+      // - un DM può modificare SOLO i campi legati al livello di un giocatore.
       allow update: if isAutenticato() && (
-        (request.auth.uid == uid && request.resource.data.ruolo == resource.data.ruolo) ||
-        isAdmin()
+        (request.auth.uid == uid
+          && request.resource.data.ruolo == resource.data.ruolo
+          && request.resource.data.livello == resource.data.livello) ||
+        isAdmin() ||
+        (isDM() && resource.data.ruolo == "player" && soloCampiLivello())
       );
 
       allow delete: if isAdmin();

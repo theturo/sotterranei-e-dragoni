@@ -6,9 +6,13 @@ Sito statico pensato per **GitHub Pages**, con **Firebase** come backend per aut
 
 ## Stato attuale
 
-Implementato: registrazione, login, logout, dashboard con pannelli diversi in base al ruolo (`admin` / `dm` / `player`).
+Implementato:
+- Registrazione, login, logout, dashboard con pannelli diversi in base al ruolo (`admin` / `dm` / `player`).
+- Pannello admin di gestione utenti: elenco utenti, cambio ruolo, invio email di reset password (`admin-utenti.html`).
+- Pannello DM "Party e livelli": roster dei giocatori e trigger "segnala livello su" (`dm-party.html`). Il DM vede solo i giocatori, in sola lettura sulle schede (non ancora esistenti) e non gestisce account/password.
+- Notifica di salita di livello: popup al giocatore al login successivo alla segnalazione del DM (la spesa dei punti guadagnati sarà gestita dalla futura scheda personaggio).
 
-Non ancora implementato: scheda personaggio, gestione ruoli da interfaccia (per ora si fa a mano da Firebase Console), controllo musica, XP/livelli, mappe.
+Non ancora implementato: scheda personaggio, controllo musica, mappe.
 
 ## 1. Crea il tuo progetto Firebase (gratuito)
 
@@ -37,7 +41,7 @@ Poi apri `http://localhost:8000`.
 
 ## 4. Promuovi qualcuno a Dungeon Master
 
-Per ora si fa manualmente: **Firestore Database > users > (documento dell'utente) > campo `ruolo`** → cambia il valore in `dm`. In una fase successiva costruiremo un pannello admin per farlo dall'interfaccia.
+Accedi come admin, vai su **Gestione utenti** dalla dashboard e cambia il ruolo dell'utente in "Dungeon Master" dal menu a tendina.
 
 ## 5. Pubblica su GitHub Pages
 
@@ -51,18 +55,19 @@ Per ora si fa manualmente: **Firestore Database > users > (documento dell'utente
 index.html          → pagina di login
 register.html        → registrazione nuovo account
 dashboard.html        → area post-login, pannelli in base al ruolo
+admin-utenti.html      → pannello admin: elenco utenti, ruoli, reset password
+dm-party.html         → pannello DM: roster giocatori, trigger livello
 assets/css/style.css   → tema visivo fantasy condiviso
 assets/js/firebase-config.js → configurazione Firebase (da personalizzare)
-assets/js/auth.js       → logica di autenticazione e ruoli
+assets/js/auth.js       → logica di autenticazione, ruoli e livelli
 firestore.rules        → regole di sicurezza da incollare nella console Firebase
 ```
 
 ## Prossimi passi
 
-- Scheda personaggio interattiva (creazione, statistiche, inventario).
-- Pannello admin per assegnare i ruoli DM/giocatore da interfaccia.
-- Sistema XP/livelli con notifica pop-up al login.
+- Scheda personaggio interattiva (creazione, statistiche, inventario, spesa punti livello).
 - Controllo musica DM (playlist Spotify/YouTube) con toggle lato giocatori.
 - Adattamento mobile/tablet più rifinito.
 - Lavagna/schede informazioni raccolte durante le sessioni.
 - Mappe, nebbia di guerra, pedine.
+- Rivedere la tagline del footer in fase di rifinitura finale.

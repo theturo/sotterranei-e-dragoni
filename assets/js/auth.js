@@ -16,8 +16,10 @@ import {
   collection,
   getDocs,
   query,
+  where,
   orderBy,
   serverTimestamp,
+  increment,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 export const ROLES = {
@@ -52,6 +54,9 @@ export async function registraUtente({ nome, email, password }) {
     nome,
     email,
     ruolo,
+    livello: 1,
+    livelliDaSpendere: 0,
+    notificaLivello: false,
     creatoIl: serverTimestamp(),
   });
 
@@ -91,6 +96,31 @@ export async function inviaResetPassword(email) {
   await sendPasswordResetEmail(auth, email);
 }
 
+// Restituisce il roster dei soli giocatori (solo DM/admin, vedi firestore.rules).
+// Nota: l'ordinamento è fatto lato client (e non con orderBy in query) per
+// evitare di richiedere un indice composito Firestore per ruolo+nome.
+export async function elencaGiocatori() {
+  const riferimento = query(collection(db, "users"), where("ruolo", "==", ROLES.PLAYER));
+  const snapshot = await getDocs(riferimento);
+  return snapshot.docs
+    .map((documento) => ({ uid: documento.id, ...documento.data() }))
+    .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+}
+
+// Il DM segnala che un giocatore è salito di livello (solo DM/admin, vedi firestore.rules).
+export async function segnalaLivelloSu(uid) {
+  await updateDoc(doc(db, "users", uid), {
+    livello: increment(1),
+    livelliDaSpendere: increment(1),
+    notificaLivello: true,
+  });
+}
+
+// Il giocatore conferma di aver visto il popup di livello (chiude la notifica).
+export async function confermaNotificaLivello(uid) {
+  await updateDoc(doc(db, "users", uid), { notificaLivello: false });
+}
+
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,
 // poi esegue la callback con (user, profilo). Se non autenticato, reindirizza al login.
 export function proteggiPagina(callback) {
@@ -109,6 +139,18 @@ export function proteggiPagina(callback) {
 export function proteggiPaginaAdmin(callback) {
   proteggiPagina((user, profilo) => {
     if (profilo?.ruolo !== ROLES.ADMIN) {
+      window.location.href = "dashboard.html";
+      return;
+    }
+    callback(user, profilo);
+  });
+}
+
+// Come proteggiPagina, ma riservata alle pagine del Dungeon Master
+// (accessibile anche all'admin). Chi non ha questi ruoli viene rimandato alla dashboard.
+export function proteggiPaginaDM(callback) {
+  proteggiPagina((user, profilo) => {
+    if (profilo?.ruolo !== ROLES.DM && profilo?.ruolo !== ROLES.ADMIN) {
       window.location.href = "dashboard.html";
       return;
     }

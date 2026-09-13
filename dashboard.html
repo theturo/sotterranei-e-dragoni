@@ -19,6 +19,7 @@
           </h1>
         </div>
         <div style="display:flex; align-items:center; gap:14px;">
+          <span id="badge-livello" class="role-badge" style="display:none;"></span>
           <span id="badge-ruolo" class="role-badge"></span>
           <button id="btn-logout" class="btn btn-ghost">Esci</button>
         </div>
@@ -30,10 +31,18 @@
     </div>
   </div>
 
+  <div id="overlay-livello" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <h2>Sei salito di livello!</h2>
+      <p id="testo-livello"></p>
+      <button id="btn-chiudi-livello" class="btn">Ho capito</button>
+    </div>
+  </div>
+
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, esciUtente, ROLES } from "./assets/js/auth.js";
+    import { proteggiPagina, esciUtente, confermaNotificaLivello, ROLES } from "./assets/js/auth.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -51,7 +60,8 @@
         { titolo: "Musica di sessione", testo: "Qui vedrai cosa sta suonando il Dungeon Master. (In arrivo)" },
       ],
       [ROLES.DM]: [
-        { titolo: "Schede dei giocatori", testo: "Qui potrai consultare le schede di tutto il party. (In arrivo)" },
+        { titolo: "Party e livelli", testo: "Vedi il tuo party e segnala una salita di livello.", link: "dm-party.html" },
+        { titolo: "Schede dei giocatori", testo: "Consulterai qui le schede dei personaggi, in sola lettura. (In arrivo)" },
         { titolo: "Controllo musica", testo: "Qui potrai gestire playlist Spotify/YouTube per la sessione. (In arrivo)" },
       ],
       [ROLES.ADMIN]: [
@@ -79,6 +89,33 @@
       document.getElementById("nome-utente").textContent = nome;
       document.getElementById("badge-ruolo").textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
       renderPannelli(ruolo);
+
+      if (ruolo === ROLES.PLAYER) {
+        const badgeLivello = document.getElementById("badge-livello");
+        badgeLivello.textContent = `Livello ${profilo?.livello ?? 1}`;
+        badgeLivello.style.display = "inline-block";
+
+        if (profilo?.notificaLivello) {
+          const overlay = document.getElementById("overlay-livello");
+          document.getElementById("testo-livello").textContent =
+            `Il tuo Dungeon Master ti ha fatto salire al livello ${profilo.livello}. ` +
+            `Potrai spendere i punti guadagnati non appena sarà pronta la scheda personaggio.`;
+          overlay.style.display = "flex";
+
+          document.getElementById("btn-chiudi-livello").addEventListener(
+            "click",
+            async () => {
+              overlay.style.display = "none";
+              try {
+                await confermaNotificaLivello(user.uid);
+              } catch (errore) {
+                console.error(errore);
+              }
+            },
+            { once: true }
+          );
+        }
+      }
 
       veil.style.display = "none";
       contenuto.style.display = "block";

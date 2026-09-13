@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — Party</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="veil" class="loading-veil">Consultando gli antichi registri…</div>
+
+  <div id="contenuto" style="display:none;">
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div>
+          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
+          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
+            Party e livelli
+          </h1>
+        </div>
+        <span id="badge-ruolo" class="role-badge"></span>
+      </div>
+
+      <div class="panel-wide">
+        <p style="margin-top:0; color: var(--color-ink-soft);">
+          Quando un giocatore sale di livello durante la sessione, segnalalo qui:
+          al suo prossimo accesso vedrà un avviso e potrà gestire i punti guadagnati
+          (la spesa dei punti sarà disponibile con la scheda personaggio).
+        </p>
+        <div class="table-scroll">
+          <table class="tabella-utenti">
+            <thead>
+              <tr>
+                <th>Giocatore</th>
+                <th>Livello attuale</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="corpo-tabella">
+              <!-- righe generate dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+        <p id="nessun-giocatore" style="display:none; color: var(--color-ink-soft);">
+          Nessun giocatore registrato ancora.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module">
+    import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ROLES } from "./assets/js/auth.js";
+
+    const ETICHETTE_RUOLO = {
+      [ROLES.ADMIN]: "Admin",
+      [ROLES.DM]: "Dungeon Master",
+    };
+
+    const veil = document.getElementById("veil");
+    const contenuto = document.getElementById("contenuto");
+    const corpoTabella = document.getElementById("corpo-tabella");
+    const nessunGiocatore = document.getElementById("nessun-giocatore");
+    const toast = document.getElementById("toast");
+
+    let toastTimer = null;
+    function mostraToast(testo, errore = false) {
+      toast.textContent = testo;
+      toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.className = "toast";
+      }, 3200);
+    }
+
+    function creaRiga(giocatore) {
+      const tr = document.createElement("tr");
+      tr.dataset.uid = giocatore.uid;
+      tr.innerHTML = `
+        <td>${giocatore.nome || giocatore.email || "—"}</td>
+        <td class="cella-livello">${giocatore.livello ?? 1}</td>
+        <td>
+          <button class="btn-tabella" data-uid="${giocatore.uid}">Segnala livello su</button>
+        </td>
+      `;
+      return tr;
+    }
+
+    proteggiPaginaDM(async (user, profilo) => {
+      document.getElementById("badge-ruolo").textContent = ETICHETTE_RUOLO[profilo?.ruolo] || profilo?.ruolo || "";
+      try {
+        const giocatori = await elencaGiocatori();
+        if (giocatori.length === 0) {
+          nessunGiocatore.style.display = "block";
+        } else {
+          corpoTabella.innerHTML = "";
+          giocatori.forEach((g) => corpoTabella.appendChild(creaRiga(g)));
+        }
+      } catch (errore) {
+        mostraToast("Impossibile caricare il party.", true);
+        console.error(errore);
+      }
+
+      veil.style.display = "none";
+      contenuto.style.display = "block";
+    });
+
+    corpoTabella.addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest(".btn-tabella");
+      if (!bottone) return;
+
+      const uid = bottone.dataset.uid;
+      const riga = bottone.closest("tr");
+      const cellaLivello = riga.querySelector(".cella-livello");
+
+      bottone.disabled = true;
+      try {
+        await segnalaLivelloSu(uid);
+        cellaLivello.textContent = String(Number(cellaLivello.textContent) + 1);
+        mostraToast("Livello aggiornato: il giocatore vedrà l'avviso al prossimo accesso.");
+      } catch (errore) {
+        mostraToast("Impossibile aggiornare il livello.", true);
+        console.error(errore);
+      } finally {
+        bottone.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
