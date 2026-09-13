@@ -350,6 +350,25 @@ a:hover {
   color: var(--color-gold-bright);
 }
 
+.azioni-party {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.2);
+}
+
+.btn-tabella-evidenza {
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+  border-color: #4a1219;
+}
+
+.btn-tabella-evidenza:hover {
+  background: var(--color-burgundy-bright);
+}
+
 .table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;

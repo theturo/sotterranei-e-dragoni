@@ -27,6 +27,9 @@
           al suo prossimo accesso vedrà un avviso e potrà gestire i punti guadagnati
           (la spesa dei punti sarà disponibile con la scheda personaggio).
         </p>
+        <div class="azioni-party">
+          <button id="btn-livello-party" class="btn-tabella btn-tabella-evidenza">Aumento di livello party</button>
+        </div>
         <div class="table-scroll">
           <table class="tabella-utenti">
             <thead>
@@ -83,7 +86,7 @@
         <td>${giocatore.nome || giocatore.email || "—"}</td>
         <td class="cella-livello">${giocatore.livello ?? 1}</td>
         <td>
-          <button class="btn-tabella" data-uid="${giocatore.uid}">Segnala livello su</button>
+          <button class="btn-tabella" data-uid="${giocatore.uid}">Aumento di livello</button>
         </td>
       `;
       return tr;
@@ -108,26 +111,61 @@
       contenuto.style.display = "block";
     });
 
+    // Applica l'aumento di livello a una singola riga; restituisce true se riuscito.
+    async function aumentaLivelloRiga(riga) {
+      const uid = riga.dataset.uid;
+      const cellaLivello = riga.querySelector(".cella-livello");
+      const livelloAttuale = Number(cellaLivello.textContent);
+      try {
+        await segnalaLivelloSu(uid, livelloAttuale);
+        cellaLivello.textContent = String(livelloAttuale + 1);
+        return true;
+      } catch (errore) {
+        console.error(errore);
+        return false;
+      }
+    }
+
     corpoTabella.addEventListener("click", async (evento) => {
       const bottone = evento.target.closest(".btn-tabella");
       if (!bottone) return;
 
-      const uid = bottone.dataset.uid;
       const riga = bottone.closest("tr");
-      const cellaLivello = riga.querySelector(".cella-livello");
-
-      const livelloAttuale = Number(cellaLivello.textContent);
       bottone.disabled = true;
-      try {
-        await segnalaLivelloSu(uid, livelloAttuale);
-        cellaLivello.textContent = String(livelloAttuale + 1);
-        mostraToast("Livello aggiornato: il giocatore vedrà l'avviso al prossimo accesso.");
-      } catch (errore) {
-        mostraToast("Impossibile aggiornare il livello.", true);
-        console.error(errore);
-      } finally {
-        bottone.disabled = false;
+      const riuscito = await aumentaLivelloRiga(riga);
+      mostraToast(
+        riuscito
+          ? "Livello aggiornato: il giocatore vedrà l'avviso al prossimo accesso."
+          : "Impossibile aggiornare il livello.",
+        !riuscito
+      );
+      bottone.disabled = false;
+    });
+
+    document.getElementById("btn-livello-party").addEventListener("click", async (evento) => {
+      const righe = Array.from(corpoTabella.querySelectorAll("tr"));
+      if (righe.length === 0) {
+        mostraToast("Nessun giocatore da aggiornare.", true);
+        return;
       }
+
+      const bottoneParty = evento.currentTarget;
+      bottoneParty.disabled = true;
+      corpoTabella.querySelectorAll(".btn-tabella").forEach((b) => (b.disabled = true));
+
+      const risultati = await Promise.all(righe.map((riga) => aumentaLivelloRiga(riga)));
+      const successi = risultati.filter(Boolean).length;
+      const falliti = risultati.length - successi;
+
+      mostraToast(
+        falliti === 0
+          ? `Livello aumentato per tutto il party (${successi} giocatori).`
+          : `Livello aumentato per ${successi} giocatori, ${falliti} falliti.`,
+        falliti > 0
+      );
+
+      bottoneParty.disabled = false;
+      corpoTabella.querySelectorAll(".btn-tabella").forEach((b) => (b.disabled = false));
     });
   </script>
 </body>

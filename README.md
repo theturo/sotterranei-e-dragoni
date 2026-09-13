@@ -1,73 +1,37 @@
 # Sotterranei e Dragoni
 
-Portale interattivo per la campagna D&D del gruppo: login/registrazione, schede personaggio, controllo musica lato Dungeon Master e (in futuro) mappe/pedine/nebbia di guerra.
+A web companion app for a Dungeons & Dragons (5th Edition) home campaign, built to be used
+by both players and the Dungeon Master during live sessions — character management, party
+tools, and (eventually) shared session utilities like music and maps, all in one place.
 
-Sito statico pensato per **GitHub Pages**, con **Firebase** come backend per autenticazione e dati condivisi (nessun dominio personalizzato).
+This is a personal project built for a specific group of friends and their ongoing campaign,
+not a general-purpose product. The code is public mostly for transparency and as a build log;
+it isn't set up to onboard outside users or accept contributions at this time.
 
-## Stato attuale
+## What it does today
 
-Implementato:
-- Registrazione, login, logout, dashboard con pannelli diversi in base al ruolo (`admin` / `dm` / `player`).
-- Pannello admin di gestione utenti: elenco utenti, cambio ruolo, invio email di reset password (`admin-utenti.html`).
-- Pannello DM "Party e livelli": roster dei giocatori e trigger "segnala livello su" (`dm-party.html`). Il DM vede solo i giocatori, in sola lettura sulle schede (non ancora esistenti) e non gestisce account/password.
-- Sistema di notifiche con storico: ogni utente ha una sotto-collezione Firestore `users/{uid}/notifiche`. Una salita di livello genera un popup al login successivo E una voce persistente nella campanella in dashboard (con data, testo tipo "Passaggio di livello: 2 → 3" e badge del numero di notifiche non lette, che si azzera cliccando la singola notifica).
+- **Accounts & roles** — players sign themselves up; the campaign owner (admin) and the
+  Dungeon Master each get a distinct view and distinct capabilities.
+- **Admin tools** — manage registered users, assign roles, trigger password resets.
+- **Dungeon Master tools** — a party roster view and level-up controls, for a single player
+  or the whole party at once.
+- **Notifications** — players get notified in-app when their character levels up, with a
+  persistent notification history.
+- **Fantasy-themed UI** — designed to feel in-keeping with the tabletop experience, and to
+  work on desktop, tablet, and phone alike.
 
-Non ancora implementato: scheda personaggio, controllo musica, mappe.
+## Where it's headed
 
-## 1. Crea il tuo progetto Firebase (gratuito)
+- Interactive character sheets (5th Edition rules)
+- Shared music control for the Dungeon Master (Spotify / YouTube playlists)
+- Session notes / lore board for discoveries made during play
+- Maps, fog of war, and character tokens
 
-1. Vai su [console.firebase.google.com](https://console.firebase.google.com) e crea un nuovo progetto (es. "sotterranei-e-dragoni").
-2. Nel progetto, vai su **Build > Authentication > Sign-in method** e abilita il provider **Email/Password**.
-3. Vai su **Build > Firestore Database** e crea un database (modalità produzione va bene, sistemiamo le regole al punto 3).
-4. Vai su **Impostazioni progetto** (icona ingranaggio) > scorri fino a "Le tue app" > clicca sull'icona **Web** (`</>`) per registrare una nuova web app (non serve Hosting, solo la registrazione).
-5. Copia i valori di configurazione mostrati (`apiKey`, `authDomain`, `projectId`, ecc.) e incollali in [`assets/js/firebase-config.js`](assets/js/firebase-config.js), sostituendo i placeholder `INSERISCI_...`.
-6. Nello stesso file, aggiungi la tua email nell'array `ADMIN_EMAILS`: sarà l'unico account promosso automaticamente ad **admin** in fase di registrazione. Tutti gli altri diventano `player` di default.
+## How it's built
 
-## 2. Imposta le regole di sicurezza Firestore
+A static site (hosted on GitHub Pages) backed by Firebase for authentication and shared
+data — no custom backend server. Plain HTML/CSS/JS, no build step.
 
-Vai su **Firestore Database > Regole** nella console Firebase e incolla il contenuto di [`firestore.rules`](firestore.rules), poi pubblica.
-
-Queste regole impediscono a un giocatore di auto-assegnarsi il ruolo di admin o DM modificando i propri dati dal client.
-
-## 3. Prova in locale
-
-Serve un server statico qualsiasi (i moduli ES richiedono `http://`, non `file://`). Ad esempio:
-
-```bash
-python3 -m http.server 8000
-```
-
-Poi apri `http://localhost:8000`.
-
-## 4. Promuovi qualcuno a Dungeon Master
-
-Accedi come admin, vai su **Gestione utenti** dalla dashboard e cambia il ruolo dell'utente in "Dungeon Master" dal menu a tendina.
-
-## 5. Pubblica su GitHub Pages
-
-1. Crea una repository su GitHub e carica questi file (nessun dominio personalizzato).
-2. Nelle impostazioni della repo, vai su **Pages** e scegli come sorgente il branch `main` (cartella root).
-3. Dopo qualche minuto il sito sarà raggiungibile all'URL `https://<tuo-utente>.github.io/<nome-repo>/`: condividilo con DM e giocatori.
-
-## Struttura del progetto
-
-```
-index.html          → pagina di login
-register.html        → registrazione nuovo account
-dashboard.html        → area post-login, pannelli in base al ruolo
-admin-utenti.html      → pannello admin: elenco utenti, ruoli, reset password
-dm-party.html         → pannello DM: roster giocatori, trigger livello
-assets/css/style.css   → tema visivo fantasy condiviso
-assets/js/firebase-config.js → configurazione Firebase (da personalizzare)
-assets/js/auth.js       → logica di autenticazione, ruoli e livelli
-firestore.rules        → regole di sicurezza da incollare nella console Firebase
-```
-
-## Prossimi passi
-
-- Scheda personaggio interattiva (creazione, statistiche, inventario, spesa punti livello).
-- Controllo musica DM (playlist Spotify/YouTube) con toggle lato giocatori.
-- Adattamento mobile/tablet più rifinito.
-- Lavagna/schede informazioni raccolte durante le sessioni.
-- Mappe, nebbia di guerra, pedine.
-- Rivedere la tagline del footer in fase di rifinitura finale.
+Any Dungeons & Dragons rules content referenced by this project is based on the freely
+licensed System Reference Document (SRD); this project is not affiliated with or endorsed
+by Wizards of the Coast.
