@@ -1,0 +1,42 @@
+rules_version = '2';
+
+// Regole di sicurezza Firestore per Sotterranei e Dragoni.
+// Da incollare in: Console Firebase > Firestore Database > Regole.
+//
+// Logica:
+// - Ogni utente autenticato può leggere e creare il PROPRIO documento in "users"
+//   (creato automaticamente in fase di registrazione), ma NON può modificare
+//   il proprio campo "ruolo" (per evitare di auto-promuoversi ad admin/DM).
+// - Solo un admin può modificare il ruolo di un altro utente.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAutenticato() {
+      return request.auth != null;
+    }
+
+    function ruoloUtente(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.ruolo;
+    }
+
+    function isAdmin() {
+      return isAutenticato() && ruoloUtente(request.auth.uid) == "admin";
+    }
+
+    match /users/{uid} {
+      allow read: if isAutenticato();
+
+      // Creazione: solo il proprio documento, in fase di registrazione.
+      allow create: if isAutenticato() && request.auth.uid == uid;
+
+      // Aggiornamento: il proprietario può modificare tutto TRANNE il campo "ruolo",
+      // a meno che chi scrive non sia admin.
+      allow update: if isAutenticato() && (
+        (request.auth.uid == uid && request.resource.data.ruolo == resource.data.ruolo) ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+  }
+}

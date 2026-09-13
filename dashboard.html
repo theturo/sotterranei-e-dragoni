@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — Dashboard</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="veil" class="loading-veil">Consultando gli antichi registri…</div>
+
+  <div id="contenuto" style="display:none;">
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div>
+          <div class="site-subtitle" style="text-align:left; margin-bottom:4px;">Sotterranei e Dragoni</div>
+          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
+            Bentornato, <span id="nome-utente"></span>
+          </h1>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span id="badge-ruolo" class="role-badge"></span>
+          <button id="btn-logout" class="btn btn-ghost">Esci</button>
+        </div>
+      </div>
+
+      <div class="dashboard-grid" id="griglia-pannelli">
+        <!-- I pannelli vengono generati in base al ruolo -->
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module">
+    import { proteggiPagina, esciUtente, ROLES } from "./assets/js/auth.js";
+
+    const veil = document.getElementById("veil");
+    const contenuto = document.getElementById("contenuto");
+    const griglia = document.getElementById("griglia-pannelli");
+
+    const ETICHETTE_RUOLO = {
+      [ROLES.ADMIN]: "Admin",
+      [ROLES.DM]: "Dungeon Master",
+      [ROLES.PLAYER]: "Giocatore",
+    };
+
+    const PANNELLI_PER_RUOLO = {
+      [ROLES.PLAYER]: [
+        { titolo: "La mia scheda personaggio", testo: "Qui potrai creare e consultare la scheda del tuo personaggio. (In arrivo)" },
+        { titolo: "Musica di sessione", testo: "Qui vedrai cosa sta suonando il Dungeon Master. (In arrivo)" },
+      ],
+      [ROLES.DM]: [
+        { titolo: "Schede dei giocatori", testo: "Qui potrai consultare le schede di tutto il party. (In arrivo)" },
+        { titolo: "Controllo musica", testo: "Qui potrai gestire playlist Spotify/YouTube per la sessione. (In arrivo)" },
+      ],
+      [ROLES.ADMIN]: [
+        { titolo: "Gestione utenti", testo: "Qui potrai assegnare i ruoli Dungeon Master e Giocatore. (In arrivo)" },
+        { titolo: "Impostazioni campagna", testo: "Qui potrai configurare la campagna. (In arrivo)" },
+      ],
+    };
+
+    function renderPannelli(ruolo) {
+      const pannelli = PANNELLI_PER_RUOLO[ruolo] || PANNELLI_PER_RUOLO[ROLES.PLAYER];
+      griglia.innerHTML = pannelli
+        .map(
+          (p) => `
+        <div class="panel">
+          <h3>${p.titolo}</h3>
+          <p>${p.testo}</p>
+        </div>`
+        )
+        .join("");
+    }
+
+    proteggiPagina((user, profilo) => {
+      const nome = profilo?.nome || user.displayName || user.email;
+      const ruolo = profilo?.ruolo || ROLES.PLAYER;
+
+      document.getElementById("nome-utente").textContent = nome;
+      document.getElementById("badge-ruolo").textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
+      renderPannelli(ruolo);
+
+      veil.style.display = "none";
+      contenuto.style.display = "block";
+    });
+
+    document.getElementById("btn-logout").addEventListener("click", async () => {
+      await esciUtente();
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

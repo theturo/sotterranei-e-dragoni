@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — Accedi</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="top-banner">
+    <h1 class="site-title">Sotterranei e Dragoni</h1>
+    <div class="site-subtitle">Il portale della campagna</div>
+  </div>
+
+  <div class="page-shell">
+    <div class="scroll-card">
+      <h2>Varca la soglia</h2>
+      <p class="card-tagline">Accedi per continuare la tua avventura</p>
+
+      <div id="messaggio" class="message"></div>
+
+      <form id="form-login" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn" id="btn-login">Accedi</button>
+      </form>
+
+      <div class="divider"></div>
+
+      <p class="form-footer">
+        Non hai ancora un personaggio? <a href="register.html">Registrati qui</a>
+      </p>
+    </div>
+  </div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module">
+    import { accediUtente, traduciErrore } from "./assets/js/auth.js";
+
+    const form = document.getElementById("form-login");
+    const messaggio = document.getElementById("messaggio");
+    const bottone = document.getElementById("btn-login");
+
+    function mostraMessaggio(testo, tipo) {
+      messaggio.textContent = testo;
+      messaggio.className = `message visible ${tipo}`;
+    }
+
+    form.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      messaggio.className = "message";
+      bottone.disabled = true;
+      bottone.textContent = "Accesso in corso…";
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        await accediUtente({ email, password });
+        window.location.href = "dashboard.html";
+      } catch (errore) {
+        mostraMessaggio(traduciErrore(errore.code), "error");
+        bottone.disabled = false;
+        bottone.textContent = "Accedi";
+      }
+    });
+  </script>
+</body>
+</html>
