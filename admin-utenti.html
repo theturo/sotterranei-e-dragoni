@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — Gestione utenti</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="veil" class="loading-veil">Consultando gli antichi registri…</div>
+
+  <div id="contenuto" style="display:none;">
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div>
+          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
+          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
+            Gestione utenti
+          </h1>
+        </div>
+        <span class="role-badge">Admin</span>
+      </div>
+
+      <div class="panel-wide">
+        <div class="table-scroll">
+          <table class="tabella-utenti">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Ruolo</th>
+                <th>Registrato il</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="corpo-tabella">
+              <!-- righe generate dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module">
+    import {
+      proteggiPaginaAdmin,
+      elencaUtenti,
+      aggiornaRuoloUtente,
+      inviaResetPassword,
+      ROLES,
+    } from "./assets/js/auth.js";
+
+    const veil = document.getElementById("veil");
+    const contenuto = document.getElementById("contenuto");
+    const corpoTabella = document.getElementById("corpo-tabella");
+    const toast = document.getElementById("toast");
+
+    const ETICHETTE_RUOLO = {
+      [ROLES.ADMIN]: "Admin",
+      [ROLES.DM]: "Dungeon Master",
+      [ROLES.PLAYER]: "Giocatore",
+    };
+
+    let toastTimer = null;
+    function mostraToast(testo, errore = false) {
+      toast.textContent = testo;
+      toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.className = "toast";
+      }, 3200);
+    }
+
+    function formattaData(timestamp) {
+      if (!timestamp?.toDate) return "—";
+      return timestamp.toDate().toLocaleDateString("it-IT", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    }
+
+    function creaRiga(utente, uidCorrente) {
+      const tr = document.createElement("tr");
+      const eIlTuoAccount = utente.uid === uidCorrente;
+
+      const opzioniRuolo = Object.entries(ETICHETTE_RUOLO)
+        .map(
+          ([valore, etichetta]) =>
+            `<option value="${valore}" ${utente.ruolo === valore ? "selected" : ""}>${etichetta}</option>`
+        )
+        .join("");
+
+      tr.innerHTML = `
+        <td>${utente.nome || "—"}${eIlTuoAccount ? '<span class="badge-tu">(tu)</span>' : ""}</td>
+        <td class="cella-email">${utente.email || "—"}</td>
+        <td>
+          <select class="select-ruolo" data-uid="${utente.uid}" ${eIlTuoAccount ? "disabled" : ""}>
+            ${opzioniRuolo}
+          </select>
+        </td>
+        <td>${formattaData(utente.creatoIl)}</td>
+        <td>
+          <button class="btn-tabella" data-email="${utente.email || ""}">Reset password</button>
+        </td>
+      `;
+      return tr;
+    }
+
+    proteggiPaginaAdmin(async (user) => {
+      try {
+        const utenti = await elencaUtenti();
+        corpoTabella.innerHTML = "";
+        utenti.forEach((utente) => {
+          corpoTabella.appendChild(creaRiga(utente, user.uid));
+        });
+      } catch (errore) {
+        mostraToast("Impossibile caricare l'elenco utenti.", true);
+        console.error(errore);
+      }
+
+      veil.style.display = "none";
+      contenuto.style.display = "block";
+    });
+
+    // Cambio ruolo
+    corpoTabella.addEventListener("change", async (evento) => {
+      const select = evento.target.closest(".select-ruolo");
+      if (!select) return;
+
+      const uid = select.dataset.uid;
+      const nuovoRuolo = select.value;
+      select.disabled = true;
+
+      try {
+        await aggiornaRuoloUtente(uid, nuovoRuolo);
+        mostraToast(`Ruolo aggiornato a "${ETICHETTE_RUOLO[nuovoRuolo]}".`);
+      } catch (errore) {
+        mostraToast("Impossibile aggiornare il ruolo.", true);
+        console.error(errore);
+      } finally {
+        select.disabled = false;
+      }
+    });
+
+    // Reset password
+    corpoTabella.addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest(".btn-tabella");
+      if (!bottone) return;
+
+      const email = bottone.dataset.email;
+      if (!email) return;
+
+      bottone.disabled = true;
+      const testoOriginale = bottone.textContent;
+      bottone.textContent = "Invio…";
+
+      try {
+        await inviaResetPassword(email);
+        mostraToast(`Email di reset inviata a ${email}.`);
+      } catch (errore) {
+        mostraToast("Impossibile inviare l'email di reset.", true);
+        console.error(errore);
+      } finally {
+        bottone.disabled = false;
+        bottone.textContent = testoOriginale;
+      }
+    });
+  </script>
+</body>
+</html>

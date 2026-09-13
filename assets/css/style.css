@@ -331,6 +331,130 @@ a:hover {
   letter-spacing: 1px;
 }
 
+/* ---------- Pannello admin: gestione utenti ---------- */
+
+.panel-wide {
+  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+  color: var(--color-ink);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-gold);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-deep);
+}
+
+.link-back {
+  display: inline-block;
+  margin-bottom: 18px;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  color: var(--color-gold-bright);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table.tabella-utenti {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+table.tabella-utenti th {
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-ink-soft);
+  padding: 8px 10px;
+  border-bottom: 2px solid rgba(122, 31, 43, 0.35);
+}
+
+table.tabella-utenti td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(43, 27, 16, 0.12);
+  vertical-align: middle;
+}
+
+table.tabella-utenti td.cella-email {
+  color: var(--color-ink-soft);
+  word-break: break-word;
+}
+
+.select-ruolo {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-ink-soft);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--color-ink);
+}
+
+.select-ruolo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.badge-tu {
+  font-size: 0.72rem;
+  color: var(--color-burgundy);
+  font-style: italic;
+  margin-left: 6px;
+}
+
+.btn-tabella {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-burgundy);
+  background: transparent;
+  color: var(--color-burgundy);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-tabella:hover {
+  background: rgba(122, 31, 43, 0.08);
+}
+
+.btn-tabella:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--color-ink);
+  color: var(--color-parchment);
+  border: 1px solid var(--color-gold);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 100;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast.visibile {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.toast-errore {
+  border-color: var(--color-danger);
+}
+
 footer.site-footer {
   text-align: center;
   padding: 18px;

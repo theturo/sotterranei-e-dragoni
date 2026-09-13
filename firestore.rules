@@ -8,6 +8,8 @@ rules_version = '2';
 //   (creato automaticamente in fase di registrazione), ma NON può modificare
 //   il proprio campo "ruolo" (per evitare di auto-promuoversi ad admin/DM).
 // - Solo un admin può modificare il ruolo di un altro utente.
+// - Solo un admin può elencare TUTTI gli utenti (pannello di gestione utenti);
+//   un utente normale può leggere solo il proprio documento.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -24,7 +26,11 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow read: if isAutenticato();
+      // Lettura di un singolo documento: il proprietario o un admin.
+      allow get: if isAutenticato() && (request.auth.uid == uid || isAdmin());
+
+      // Elenco dell'intera collezione (pannello utenti): solo admin.
+      allow list: if isAdmin();
 
       // Creazione: solo il proprio documento, in fase di registrazione.
       allow create: if isAutenticato() && request.auth.uid == uid;

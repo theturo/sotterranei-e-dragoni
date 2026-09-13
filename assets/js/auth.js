@@ -6,11 +6,17 @@ import {
   signOut,
   updateProfile,
   onAuthStateChanged,
+  sendPasswordResetEmail,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+  query,
+  orderBy,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
@@ -68,6 +74,23 @@ export async function ottieniProfiloUtente(uid) {
   return snapshot.exists() ? snapshot.data() : null;
 }
 
+// Restituisce l'elenco di tutti gli utenti registrati (solo admin, vedi firestore.rules).
+export async function elencaUtenti() {
+  const riferimento = query(collection(db, "users"), orderBy("creatoIl", "asc"));
+  const snapshot = await getDocs(riferimento);
+  return snapshot.docs.map((documento) => ({ uid: documento.id, ...documento.data() }));
+}
+
+// Cambia il ruolo di un utente (solo admin, vedi firestore.rules).
+export async function aggiornaRuoloUtente(uid, nuovoRuolo) {
+  await updateDoc(doc(db, "users", uid), { ruolo: nuovoRuolo });
+}
+
+// Invia l'email di reset password all'indirizzo indicato.
+export async function inviaResetPassword(email) {
+  await sendPasswordResetEmail(auth, email);
+}
+
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,
 // poi esegue la callback con (user, profilo). Se non autenticato, reindirizza al login.
 export function proteggiPagina(callback) {
@@ -77,6 +100,18 @@ export function proteggiPagina(callback) {
       return;
     }
     const profilo = await ottieniProfiloUtente(user.uid);
+    callback(user, profilo);
+  });
+}
+
+// Come proteggiPagina, ma riservata alle sole pagine admin: chi non ha
+// ruolo "admin" viene rimandato alla dashboard.
+export function proteggiPaginaAdmin(callback) {
+  proteggiPagina((user, profilo) => {
+    if (profilo?.ruolo !== ROLES.ADMIN) {
+      window.location.href = "dashboard.html";
+      return;
+    }
     callback(user, profilo);
   });
 }

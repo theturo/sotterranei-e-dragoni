@@ -55,7 +55,7 @@
         { titolo: "Controllo musica", testo: "Qui potrai gestire playlist Spotify/YouTube per la sessione. (In arrivo)" },
       ],
       [ROLES.ADMIN]: [
-        { titolo: "Gestione utenti", testo: "Qui potrai assegnare i ruoli Dungeon Master e Giocatore. (In arrivo)" },
+        { titolo: "Gestione utenti", testo: "Vedi tutti gli utenti registrati, assegna i ruoli e invia reset password.", link: "admin-utenti.html" },
         { titolo: "Impostazioni campagna", testo: "Qui potrai configurare la campagna. (In arrivo)" },
       ],
     };
@@ -63,13 +63,12 @@
     function renderPannelli(ruolo) {
       const pannelli = PANNELLI_PER_RUOLO[ruolo] || PANNELLI_PER_RUOLO[ROLES.PLAYER];
       griglia.innerHTML = pannelli
-        .map(
-          (p) => `
-        <div class="panel">
-          <h3>${p.titolo}</h3>
-          <p>${p.testo}</p>
-        </div>`
-        )
+        .map((p) => {
+          const contenuto = `<h3>${p.titolo}</h3><p>${p.testo}</p>`;
+          return p.link
+            ? `<a class="panel" href="${p.link}" style="display:block; text-decoration:none;">${contenuto}</a>`
+            : `<div class="panel">${contenuto}</div>`;
+        })
         .join("");
     }
 
