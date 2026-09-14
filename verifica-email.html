@@ -57,13 +57,35 @@
 
     let utenteCorrente = null;
 
-    proteggiPaginaSenzaVerifica((user) => {
+    proteggiPaginaSenzaVerifica(async (user) => {
       if (user.emailVerified) {
         window.location.href = "dashboard.html";
         return;
       }
       utenteCorrente = user;
       document.getElementById("email-utente").textContent = user.email;
+
+      // Invia davvero l'email a chi arriva qui senza che una registrazione l'abbia
+      // appena inviata (es. un account già esistente che fa login senza aver mai
+      // verificato). La chiave in sessionStorage evita reinvii ad ogni refresh:
+      // Firebase comunque rifiuta con "too-many-requests" gli invii troppo ravvicinati.
+      const chiaveSessione = `verificaInviata:${user.uid}`;
+      if (!sessionStorage.getItem(chiaveSessione)) {
+        try {
+          await inviaEmailVerifica(user);
+          sessionStorage.setItem(chiaveSessione, "1");
+        } catch (errore) {
+          if (errore.code === "auth/too-many-requests") {
+            sessionStorage.setItem(chiaveSessione, "1");
+          } else {
+            console.error(errore);
+            mostraMessaggio(
+              "Non siamo riusciti a inviare l'email automaticamente: prova col pulsante \"Invia di nuovo l'email\" qui sotto.",
+              "error"
+            );
+          }
+        }
+      }
     });
 
     btnControlla.addEventListener("click", async () => {

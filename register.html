@@ -79,7 +79,10 @@
       bottone.textContent = "Creazione in corso…";
 
       try {
-        await registraUtente({ nome, email, password });
+        const { uid } = await registraUtente({ nome, email, password });
+        // registraUtente ha già inviato l'email di verifica: evita che
+        // verifica-email.html ne invii subito una seconda al primo caricamento.
+        sessionStorage.setItem(`verificaInviata:${uid}`, "1");
         window.location.href = "verifica-email.html";
       } catch (errore) {
         mostraMessaggio(traduciErrore(errore.code), "error");
