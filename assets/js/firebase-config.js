@@ -23,7 +23,7 @@ export const ADMIN_EMAILS = ["theturo93@gmail.com"
 // (lo stesso di Firebase), non in un progetto separato — vedi il file di setup privato.
 // Finché resta il placeholder, App Check resta semplicemente disattivato (nessun
 // errore, nessun danno).
-const RECAPTCHA_ENTERPRISE_KEY_ID = "INSERISCI_RECAPTCHA_ENTERPRISE_KEY_ID";
+const RECAPTCHA_ENTERPRISE_KEY_ID = "6Ld9s7stAAAAAMfimVqDUFMjCD7FMM8X8yuqW8xu";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
