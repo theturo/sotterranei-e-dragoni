@@ -36,6 +36,7 @@
               <tr>
                 <th>Giocatore</th>
                 <th>Livello attuale</th>
+                <th>PF</th>
                 <th>Azioni</th>
               </tr>
             </thead>
@@ -56,7 +57,7 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ROLES } from "./assets/js/auth.js";
+    import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ottieniScheda, ROLES } from "./assets/js/auth.js";
 
     const ETICHETTE_RUOLO = {
       [ROLES.ADMIN]: "Admin",
@@ -85,11 +86,27 @@
       tr.innerHTML = `
         <td>${giocatore.nome || giocatore.email || "—"}</td>
         <td class="cella-livello">${giocatore.livello ?? 1}</td>
+        <td class="cella-pf">—</td>
         <td>
           <button class="btn-tabella" data-uid="${giocatore.uid}">Aumento di livello</button>
         </td>
       `;
       return tr;
+    }
+
+    function testoPf(scheda) {
+      if (!scheda?.hp) return "—";
+      const { massimi, attuali, temporanei } = scheda.hp;
+      return temporanei > 0 ? `${attuali} / ${massimi} (+${temporanei})` : `${attuali} / ${massimi}`;
+    }
+
+    async function caricaPfRiga(riga) {
+      try {
+        const scheda = await ottieniScheda(riga.dataset.uid);
+        riga.querySelector(".cella-pf").textContent = testoPf(scheda);
+      } catch (errore) {
+        console.error(errore);
+      }
     }
 
     proteggiPaginaDM(async (user, profilo) => {
@@ -101,6 +118,7 @@
         } else {
           corpoTabella.innerHTML = "";
           giocatori.forEach((g) => corpoTabella.appendChild(creaRiga(g)));
+          Array.from(corpoTabella.querySelectorAll("tr")).forEach(caricaPfRiga);
         }
       } catch (errore) {
         mostraToast("Impossibile caricare il party.", true);

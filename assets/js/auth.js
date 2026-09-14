@@ -152,6 +152,48 @@ export async function segnaNotificaLetta(uid, notificaId) {
   await updateDoc(doc(db, "users", uid, "notifiche", notificaId), { letta: true });
 }
 
+// Valori di default per una scheda personaggio appena creata: per ora coprono
+// solo i campi resi interattivi (PF, tiri salvezza contro la morte). Il resto
+// della scheda (razza, classe, caratteristiche...) arriverà con la creazione guidata.
+function schedaPredefinita() {
+  return {
+    hp: { massimi: 28, attuali: 28, temporanei: 0 },
+    tiriSalvezzaMorte: {
+      successi: [false, false, false],
+      fallimenti: [false, false, false],
+    },
+    aggiornatoIl: serverTimestamp(),
+  };
+}
+
+// Recupera la scheda personaggio di un utente, creandola con valori di
+// default se non esiste ancora (solo per il proprietario: DM/admin che
+// leggono la scheda di qualcun altro ricevono null se non esiste).
+export async function ottieniOCreaScheda(uid) {
+  const riferimento = doc(db, "personaggi", uid);
+  const snapshot = await getDoc(riferimento);
+  if (snapshot.exists()) return snapshot.data();
+
+  const predefinita = schedaPredefinita();
+  await setDoc(riferimento, predefinita);
+  return predefinita;
+}
+
+// Come sopra, ma di sola lettura: restituisce null se la scheda non esiste
+// ancora (usata da DM/admin per consultare la scheda di un altro utente).
+export async function ottieniScheda(uid) {
+  const snapshot = await getDoc(doc(db, "personaggi", uid));
+  return snapshot.exists() ? snapshot.data() : null;
+}
+
+export async function aggiornaHp(uid, hp) {
+  await updateDoc(doc(db, "personaggi", uid), { hp, aggiornatoIl: serverTimestamp() });
+}
+
+export async function aggiornaTiriSalvezzaMorte(uid, tiriSalvezzaMorte) {
+  await updateDoc(doc(db, "personaggi", uid), { tiriSalvezzaMorte, aggiornatoIl: serverTimestamp() });
+}
+
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,
 // poi esegue la callback con (user, profilo). Se non autenticato, reindirizza al
 // login; se autenticato ma con email non verificata, reindirizza alla pagina di

@@ -18,7 +18,7 @@
             Scheda personaggio
           </h1>
         </div>
-        <span class="role-badge" style="border-color: var(--color-danger); color: #d98a94;">Bozza grafica — dati di esempio</span>
+        <span class="role-badge" style="border-color: var(--color-danger); color: #d98a94;">Bozza grafica — PF e tiri salvezza già reali</span>
       </div>
 
       <!-- ===================== SCHEDA ===================== -->
@@ -31,7 +31,7 @@
             <div class="scheda-nome-valore">Kaelen Duskwalker</div>
           </div>
           <div class="scheda-sottotitoli">
-            <div><label>Classe e livello</label><span>Ranger 3</span></div>
+            <div><label>Classe e livello</label><span><span id="icona-classe" class="icona-classe" aria-hidden="true"></span>Ranger 3</span></div>
             <div><label>Background</label><span>Esploratore</span></div>
             <div><label>Razza</label><span>Mezzelfo</span></div>
             <div><label>Allineamento</label><span>Neutrale Buono</span></div>
@@ -147,21 +147,34 @@
             <div class="scheda-box">
               <h3>Punti Ferita</h3>
               <div class="riga-hp">
-                <div><label>Massimi</label><span>28</span></div>
-                <div><label>Attuali</label><span class="input-vuoto">28</span></div>
-                <div><label>Temporanei</label><span class="input-vuoto">0</span></div>
+                <div><label>Massimi</label><span id="hp-massimi">28</span></div>
+                <div>
+                  <label for="hp-attuali">Attuali</label>
+                  <input type="number" id="hp-attuali" class="input-hp" inputmode="numeric" />
+                </div>
+                <div>
+                  <label for="hp-temporanei">Temporanei</label>
+                  <input type="number" id="hp-temporanei" class="input-hp" inputmode="numeric" />
+                </div>
               </div>
               <div class="riga-hp riga-hp-secondaria">
                 <div><label>Dadi Vita</label><span>3d10</span></div>
                 <div class="tiri-morte">
-                  <label>Tiri salvezza contro la morte</label>
-                  <div class="pallini-morte">
-                    <span>Successi</span>
-                    <span class="pallino"></span><span class="pallino"></span><span class="pallino"></span>
+                  <div class="tiri-morte-titolo">
+                    <label>Tiri salvezza contro la morte</label>
+                    <button id="btn-reset-morte" class="btn-reimposta" type="button">Reimposta</button>
                   </div>
                   <div class="pallini-morte">
-                    <span>Fallimenti</span>
-                    <span class="pallino"></span><span class="pallino"></span><span class="pallino"></span>
+                    <span class="pallini-morte-etichetta">Successi</span>
+                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="0"></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="1"></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="2"></span>
+                  </div>
+                  <div class="pallini-morte">
+                    <span class="pallini-morte-etichetta">Fallimenti</span>
+                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="0"></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="1"></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="2"></span>
                   </div>
                 </div>
               </div>
@@ -248,16 +261,107 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina } from "./assets/js/auth.js";
+    import { proteggiPagina, ottieniOCreaScheda, aggiornaHp, aggiornaTiriSalvezzaMorte } from "./assets/js/auth.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
 
-    // Per ora la scheda mostra dati di esempio fissi: la protezione serve solo
-    // a restare coerenti col resto del sito (serve un login valido per vederla).
-    proteggiPagina(() => {
+    const ICONE_CLASSE = {
+      Barbaro: "🪓",
+      Bardo: "🎵",
+      Chierico: "✨",
+      Druido: "🌿",
+      Guerriero: "⚔️",
+      Ladro: "🗡️",
+      Mago: "📖",
+      Monaco: "🥋",
+      Paladino: "🛡️",
+      Ranger: "🏹",
+      Stregone: "🔥",
+      Warlock: "👁️",
+    };
+
+    let uidCorrente = null;
+    let scheda = null;
+
+    function renderIconaClasse(nomeClasse) {
+      document.getElementById("icona-classe").textContent = ICONE_CLASSE[nomeClasse] || "🎲";
+    }
+
+    function renderHp() {
+      document.getElementById("hp-massimi").textContent = scheda.hp.massimi;
+      document.getElementById("hp-attuali").value = scheda.hp.attuali;
+      document.getElementById("hp-temporanei").value = scheda.hp.temporanei;
+    }
+
+    function renderPalliniMorte() {
+      document.querySelectorAll(".pallino-cliccabile").forEach((pallino) => {
+        const tipo = pallino.dataset.tipo;
+        const indice = Number(pallino.dataset.indice);
+        pallino.classList.toggle("competente", Boolean(scheda.tiriSalvezzaMorte[tipo][indice]));
+      });
+    }
+
+    proteggiPagina(async (user) => {
+      uidCorrente = user.uid;
+      renderIconaClasse("Ranger");
+
+      try {
+        scheda = await ottieniOCreaScheda(user.uid);
+      } catch (errore) {
+        console.error(errore);
+        scheda = {
+          hp: { massimi: 28, attuali: 28, temporanei: 0 },
+          tiriSalvezzaMorte: { successi: [false, false, false], fallimenti: [false, false, false] },
+        };
+      }
+
+      renderHp();
+      renderPalliniMorte();
+
       veil.style.display = "none";
       contenuto.style.display = "block";
+    });
+
+    // PF attuali/temporanei: salva al cambio di valore (blur o invio).
+    async function salvaHpDaInput() {
+      const attuali = Math.max(0, Number(document.getElementById("hp-attuali").value) || 0);
+      const temporanei = Math.max(0, Number(document.getElementById("hp-temporanei").value) || 0);
+      scheda.hp.attuali = attuali;
+      scheda.hp.temporanei = temporanei;
+      renderHp();
+      try {
+        await aggiornaHp(uidCorrente, scheda.hp);
+      } catch (errore) {
+        console.error(errore);
+      }
+    }
+    document.getElementById("hp-attuali").addEventListener("change", salvaHpDaInput);
+    document.getElementById("hp-temporanei").addEventListener("change", salvaHpDaInput);
+
+    // Tiri salvezza contro la morte: click su un pallino lo accende/spegne.
+    document.querySelectorAll(".pallino-cliccabile").forEach((pallino) => {
+      pallino.addEventListener("click", async () => {
+        const tipo = pallino.dataset.tipo;
+        const indice = Number(pallino.dataset.indice);
+        scheda.tiriSalvezzaMorte[tipo][indice] = !scheda.tiriSalvezzaMorte[tipo][indice];
+        renderPalliniMorte();
+        try {
+          await aggiornaTiriSalvezzaMorte(uidCorrente, scheda.tiriSalvezzaMorte);
+        } catch (errore) {
+          console.error(errore);
+        }
+      });
+    });
+
+    document.getElementById("btn-reset-morte").addEventListener("click", async () => {
+      scheda.tiriSalvezzaMorte = { successi: [false, false, false], fallimenti: [false, false, false] };
+      renderPalliniMorte();
+      try {
+        await aggiornaTiriSalvezzaMorte(uidCorrente, scheda.tiriSalvezzaMorte);
+      } catch (errore) {
+        console.error(errore);
+      }
     });
   </script>
 </body>

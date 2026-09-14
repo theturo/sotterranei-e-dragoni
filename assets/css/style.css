@@ -797,7 +797,8 @@ table.tabella-utenti td.cella-email {
   flex-shrink: 0;
 }
 
-.lista-competenze li.competente .pallino {
+.lista-competenze li.competente .pallino,
+.pallino.competente {
   background: var(--color-burgundy);
   border-color: var(--color-burgundy);
 }
@@ -809,16 +810,10 @@ table.tabella-utenti td.cella-email {
   text-align: center;
 }
 
-.riga-hp span {
+.riga-hp > div > span {
   font-family: var(--font-display);
   font-size: 1.3rem;
   color: var(--color-burgundy);
-}
-
-.riga-hp span.input-vuoto {
-  border-bottom: 1px solid var(--color-ink-soft);
-  display: inline-block;
-  min-width: 40px;
 }
 
 .riga-hp-secondaria {
@@ -829,13 +824,88 @@ table.tabella-utenti td.cella-email {
   text-align: left;
 }
 
-.tiri-morte .pallini-morte {
+.tiri-morte-titolo {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.btn-reimposta {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: transparent;
+  border: 1px solid var(--color-ink-soft);
+  color: var(--color-ink-soft);
+  border-radius: 12px;
+  padding: 2px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-reimposta:hover {
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.tiri-morte .pallini-morte {
+  display: grid;
+  grid-template-columns: 70px repeat(3, auto);
+  justify-content: start;
+  align-items: center;
+  gap: 10px;
   font-size: 0.78rem;
   color: var(--color-ink-soft);
   margin-top: 4px;
+}
+
+.pallini-morte-etichetta {
+  text-align: left;
+}
+
+.pallino-cliccabile {
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.pallino-cliccabile:hover {
+  transform: scale(1.2);
+  border-color: var(--color-burgundy);
+}
+
+.icona-classe {
+  margin-right: 6px;
+}
+
+.input-hp {
+  width: 100%;
+  max-width: 70px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--color-burgundy);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  padding: 2px 4px;
+}
+
+.input-hp:focus {
+  outline: none;
+  border-color: var(--color-burgundy);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* Nasconde le frecce dello stepper nativo dell'input numerico, per un look più pulito */
+.input-hp::-webkit-outer-spin-button,
+.input-hp::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-hp[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .tabella-attacchi {
