@@ -418,6 +418,15 @@ table.tabella-utenti td.cella-email {
   cursor: not-allowed;
 }
 
+.simbolo-verifica {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  cursor: default;
+}
+
 .badge-tu {
   font-size: 0.72rem;
   color: var(--color-burgundy);

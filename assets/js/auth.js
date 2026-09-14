@@ -60,6 +60,7 @@ export async function registraUtente({ nome, email, password }) {
     ruolo,
     livello: 1,
     livelliDaSpendere: 0,
+    emailVerificata: false,
     creatoIl: serverTimestamp(),
   });
 
@@ -166,6 +167,15 @@ export function proteggiPagina(callback) {
       return;
     }
     const profilo = await ottieniProfiloUtente(user.uid);
+    // A questo punto sappiamo per certo che l'email è verificata: se il documento
+    // Firestore non lo riflette ancora (account creato prima di questa funzione,
+    // o verificato in un'altra scheda), lo allineiamo. Non blocca il rendering.
+    if (profilo && profilo.emailVerificata !== true) {
+      profilo.emailVerificata = true;
+      updateDoc(doc(db, "users", user.uid), { emailVerificata: true }).catch((errore) =>
+        console.error(errore)
+      );
+    }
     callback(user, profilo);
   });
 }

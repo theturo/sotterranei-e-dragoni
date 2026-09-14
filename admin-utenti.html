@@ -28,6 +28,7 @@
               <tr>
                 <th>Nome</th>
                 <th>Email</th>
+                <th>Verificata</th>
                 <th>Ruolo</th>
                 <th>Registrato il</th>
                 <th>Azioni</th>
@@ -96,9 +97,15 @@
         )
         .join("");
 
+      const verificata = utente.emailVerificata === true;
+      const simboloVerifica = verificata
+        ? '<span class="simbolo-verifica" title="Email verificata" aria-label="Email verificata">✓</span>'
+        : '<span class="simbolo-verifica" title="Email non verificata" aria-label="Email non verificata">✗</span>';
+
       tr.innerHTML = `
         <td>${utente.nome || "—"}${eIlTuoAccount ? '<span class="badge-tu">(tu)</span>' : ""}</td>
         <td class="cella-email">${utente.email || "—"}</td>
+        <td>${simboloVerifica}</td>
         <td>
           <select class="select-ruolo" data-uid="${utente.uid}" ${eIlTuoAccount ? "disabled" : ""}>
             ${opzioniRuolo}
