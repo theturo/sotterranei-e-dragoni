@@ -38,8 +38,8 @@
         </div>
       </div>
 
-      <div class="dashboard-grid" id="griglia-pannelli">
-        <!-- I pannelli vengono generati in base al ruolo -->
+      <div id="griglia-pannelli">
+        <!-- Sezioni e pannelli vengono generati in base al ruolo -->
       </div>
     </div>
   </div>
@@ -73,21 +73,42 @@
       [ROLES.PLAYER]: "Giocatore",
     };
 
-    const PANNELLI_PER_RUOLO = {
-      [ROLES.PLAYER]: [
-        { titolo: "La mia scheda personaggio", testo: "Qui potrai creare e consultare la scheda del tuo personaggio. (In arrivo)" },
-        { titolo: "Musica di sessione", testo: "Qui vedrai cosa sta suonando il Dungeon Master. (In arrivo)" },
-      ],
-      [ROLES.DM]: [
-        { titolo: "Party e livelli", testo: "Vedi il tuo party e segnala una salita di livello.", link: "dm-party.html" },
-        { titolo: "Schede dei giocatori", testo: "Consulterai qui le schede dei personaggi, in sola lettura. (In arrivo)" },
-        { titolo: "Controllo musica", testo: "Qui potrai gestire playlist Spotify/YouTube per la sessione. (In arrivo)" },
-      ],
-      [ROLES.ADMIN]: [
-        { titolo: "Gestione utenti", testo: "Vedi tutti gli utenti registrati, assegna i ruoli e invia reset password.", link: "admin-utenti.html" },
-        { titolo: "Impostazioni campagna", testo: "Qui potrai configurare la campagna. (In arrivo)" },
-      ],
+    // Permessi a cascata: ogni ruolo vede anche le sezioni dei ruoli "sotto" di sé
+    // (admin vede tutto, un DM vede anche gli strumenti da giocatore, ecc.) — utile
+    // perché nella pratica una stessa persona ricopre più ruoli nella campagna.
+    const GERARCHIA_RUOLI = {
+      [ROLES.ADMIN]: [ROLES.ADMIN, ROLES.DM, ROLES.PLAYER],
+      [ROLES.DM]: [ROLES.DM, ROLES.PLAYER],
+      [ROLES.PLAYER]: [ROLES.PLAYER],
     };
+
+    const SEZIONI_PANNELLI = [
+      {
+        ruolo: ROLES.ADMIN,
+        titolo: "Area Admin",
+        pannelli: [
+          { titolo: "Gestione utenti", testo: "Vedi tutti gli utenti registrati, assegna i ruoli e invia reset password.", link: "admin-utenti.html" },
+          { titolo: "Impostazioni campagna", testo: "Qui potrai configurare la campagna. (In arrivo)" },
+        ],
+      },
+      {
+        ruolo: ROLES.DM,
+        titolo: "Area Dungeon Master",
+        pannelli: [
+          { titolo: "Party e livelli", testo: "Vedi il tuo party e segnala una salita di livello.", link: "dm-party.html" },
+          { titolo: "Schede dei giocatori", testo: "Consulterai qui le schede dei personaggi, in sola lettura. (In arrivo)" },
+          { titolo: "Controllo musica", testo: "Qui potrai gestire playlist Spotify/YouTube per la sessione. (In arrivo)" },
+        ],
+      },
+      {
+        ruolo: ROLES.PLAYER,
+        titolo: "Area Giocatore",
+        pannelli: [
+          { titolo: "La mia scheda personaggio", testo: "Qui potrai creare e consultare la scheda del tuo personaggio. (In arrivo)" },
+          { titolo: "Musica di sessione", testo: "Qui vedrai cosa sta suonando il Dungeon Master. (In arrivo)" },
+        ],
+      },
+    ];
 
     function testoNotifica(notifica) {
       if (notifica.tipo === "livello_su") {
@@ -182,13 +203,22 @@
     }
 
     function renderPannelli(ruolo) {
-      const pannelli = PANNELLI_PER_RUOLO[ruolo] || PANNELLI_PER_RUOLO[ROLES.PLAYER];
-      griglia.innerHTML = pannelli
-        .map((p) => {
-          const contenuto = `<h3>${p.titolo}</h3><p>${p.testo}</p>`;
-          return p.link
-            ? `<a class="panel" href="${p.link}" style="display:block; text-decoration:none;">${contenuto}</a>`
-            : `<div class="panel">${contenuto}</div>`;
+      const ruoliVisibili = GERARCHIA_RUOLI[ruolo] || [ROLES.PLAYER];
+
+      griglia.innerHTML = SEZIONI_PANNELLI.filter((sezione) => ruoliVisibili.includes(sezione.ruolo))
+        .map((sezione) => {
+          const cardsHtml = sezione.pannelli
+            .map((p) => {
+              const contenuto = `<h3>${p.titolo}</h3><p>${p.testo}</p>`;
+              return p.link
+                ? `<a class="panel" href="${p.link}" style="display:block; text-decoration:none;">${contenuto}</a>`
+                : `<div class="panel">${contenuto}</div>`;
+            })
+            .join("");
+          return `
+            <div class="sezione-titolo">${sezione.titolo}</div>
+            <div class="dashboard-grid">${cardsHtml}</div>
+          `;
         })
         .join("");
     }
@@ -201,11 +231,11 @@
       document.getElementById("badge-ruolo").textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
       renderPannelli(ruolo);
 
-      if (ruolo === ROLES.PLAYER) {
-        const badgeLivello = document.getElementById("badge-livello");
-        badgeLivello.textContent = `Livello ${profilo?.livello ?? 1}`;
-        badgeLivello.style.display = "inline-block";
-      }
+      // Il livello personale è visibile a tutti: anche un DM o un admin possono
+      // avere (o volere) un proprio personaggio nella campagna.
+      const badgeLivello = document.getElementById("badge-livello");
+      badgeLivello.textContent = `Livello ${profilo?.livello ?? 1}`;
+      badgeLivello.style.display = "inline-block";
 
       const notifiche = await inizializzaNotifiche(user.uid);
 

@@ -293,12 +293,35 @@ a:hover {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
+  margin-bottom: 28px;
 }
 
 @media (min-width: 640px) {
   .dashboard-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Separatore che indica il "cambio di area di competenza" quando un utente
+   vede più sezioni in cascata (es. admin che vede anche gli strumenti da DM
+   e da giocatore). */
+.sezione-titolo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--color-gold-bright);
+  margin: 0 0 14px;
+}
+
+.sezione-titolo::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(201, 162, 39, 0.35);
 }
 
 .panel {
