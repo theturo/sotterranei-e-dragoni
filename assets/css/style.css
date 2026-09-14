@@ -619,6 +619,266 @@ table.tabella-utenti td.cella-email {
   margin: 0;
 }
 
+/* ---------- Scheda personaggio ---------- */
+
+.scheda-wrap-esterno {
+  max-width: 1200px;
+}
+
+.scheda {
+  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+  color: var(--color-ink);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-gold);
+  box-shadow: var(--shadow-deep);
+  padding: 26px;
+}
+
+.scheda-intestazione {
+  border-bottom: 2px solid var(--color-burgundy);
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+
+.scheda-nome label,
+.scheda-sottotitoli label,
+.scheda-box label,
+.riga-hp label,
+.riga-monete label,
+.tiri-morte label {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--color-ink-soft);
+}
+
+.scheda-nome-valore {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  color: var(--color-burgundy);
+}
+
+.scheda-sottotitoli {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.scheda-sottotitoli span {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.scheda-corpo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+
+@media (min-width: 980px) {
+  .scheda-corpo {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.scheda-colonna {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.scheda-box {
+  border: 1px solid rgba(122, 31, 43, 0.35);
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.scheda-box h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--color-burgundy);
+  border-bottom: 1px solid rgba(122, 31, 43, 0.25);
+  padding-bottom: 8px;
+}
+
+.scheda-box-centrale {
+  text-align: center;
+}
+
+.valore-grande {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--color-burgundy);
+  line-height: 1;
+}
+
+.valore-grande-etichetta {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-ink-soft);
+  margin-top: 4px;
+}
+
+.griglia-caratteristiche {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.caratteristica {
+  border: 1px solid var(--color-gold);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.caratteristica-nome {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-ink-soft);
+}
+
+.caratteristica-mod {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--color-burgundy);
+  line-height: 1.3;
+}
+
+.caratteristica-punteggio {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--color-ink);
+}
+
+.riga-tre-box {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.lista-competenze {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.lista-competenze li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.lista-competenze li b {
+  margin-left: auto;
+  font-family: var(--font-heading);
+}
+
+.pallino {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-ink-soft);
+  flex-shrink: 0;
+}
+
+.lista-competenze li.competente .pallino {
+  background: var(--color-burgundy);
+  border-color: var(--color-burgundy);
+}
+
+.riga-hp {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+
+.riga-hp span {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--color-burgundy);
+}
+
+.riga-hp span.input-vuoto {
+  border-bottom: 1px solid var(--color-ink-soft);
+  display: inline-block;
+  min-width: 40px;
+}
+
+.riga-hp-secondaria {
+  grid-template-columns: 1fr 2fr;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(122, 31, 43, 0.25);
+  text-align: left;
+}
+
+.tiri-morte .pallini-morte {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  margin-top: 4px;
+}
+
+.tabella-attacchi {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.tabella-attacchi th {
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.3);
+}
+
+.tabella-attacchi td {
+  padding: 6px;
+  border-bottom: 1px solid rgba(43, 27, 16, 0.1);
+}
+
+.riga-monete {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.riga-monete span {
+  display: block;
+  font-family: var(--font-heading);
+}
+
+.scheda-testo-libero {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  margin: 0;
+}
+
 /* ---------- Modal ---------- */
 
 .modal-overlay {
