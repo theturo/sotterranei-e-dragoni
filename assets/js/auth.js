@@ -7,6 +7,8 @@ import {
   updateProfile,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  reload,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   doc,
@@ -48,6 +50,7 @@ export function traduciErrore(codice) {
 export async function registraUtente({ nome, email, password }) {
   const credenziali = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(credenziali.user, { displayName: nome });
+  await sendEmailVerification(credenziali.user);
 
   const ruolo = ADMIN_EMAILS.includes(email.toLowerCase()) ? ROLES.ADMIN : ROLES.PLAYER;
 
@@ -96,6 +99,17 @@ export async function inviaResetPassword(email) {
   await sendPasswordResetEmail(auth, email);
 }
 
+// Invia (o re-invia) l'email di verifica all'utente indicato.
+export async function inviaEmailVerifica(user) {
+  await sendEmailVerification(user);
+}
+
+// Ricarica i dati dell'utente da Firebase Auth (serve per rileggere emailVerified
+// dopo che l'utente ha cliccato il link di verifica in un'altra scheda).
+export async function ricaricaUtente(user) {
+  await reload(user);
+}
+
 // Restituisce il roster dei soli giocatori (solo DM/admin, vedi firestore.rules).
 // Nota: l'ordinamento è fatto lato client (e non con orderBy in query) per
 // evitare di richiedere un indice composito Firestore per ruolo+nome.
@@ -138,15 +152,33 @@ export async function segnaNotificaLetta(uid, notificaId) {
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,
-// poi esegue la callback con (user, profilo). Se non autenticato, reindirizza al login.
+// poi esegue la callback con (user, profilo). Se non autenticato, reindirizza al
+// login; se autenticato ma con email non verificata, reindirizza alla pagina di
+// verifica (usata da tutte le pagine "vere" dell'app, non da verifica-email.html).
 export function proteggiPagina(callback) {
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = "index.html";
       return;
     }
+    if (!user.emailVerified) {
+      window.location.href = "verifica-email.html";
+      return;
+    }
     const profilo = await ottieniProfiloUtente(user.uid);
     callback(user, profilo);
+  });
+}
+
+// Come proteggiPagina, ma SENZA richiedere l'email verificata: usata solo dalla
+// pagina di verifica stessa, che deve restare accessibile a chi non l'ha ancora fatto.
+export function proteggiPaginaSenzaVerifica(callback) {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    callback(user);
   });
 }
 

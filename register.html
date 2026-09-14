@@ -80,7 +80,7 @@
 
       try {
         await registraUtente({ nome, email, password });
-        window.location.href = "dashboard.html";
+        window.location.href = "verifica-email.html";
       } catch (errore) {
         mostraMessaggio(traduciErrore(errore.code), "error");
         bottone.disabled = false;

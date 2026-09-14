@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — Verifica la tua email</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="top-banner">
+    <h1 class="site-title">Sotterranei e Dragoni</h1>
+    <div class="site-subtitle">Il portale della campagna</div>
+  </div>
+
+  <div class="page-shell">
+    <div class="scroll-card">
+      <h2>Verifica la tua email</h2>
+      <p class="card-tagline">Un ultimo passo prima di entrare nell'avventura</p>
+
+      <div id="messaggio" class="message"></div>
+
+      <p style="color: var(--color-ink-soft); line-height:1.5;">
+        Abbiamo inviato un'email di verifica a <strong id="email-utente"></strong>.
+        Apri il link che contiene, poi torna qui e premi il pulsante qui sotto
+        (controlla anche nello spam).
+      </p>
+
+      <button id="btn-controlla" class="btn" style="margin-bottom:12px;">Ho verificato, controlla di nuovo</button>
+      <button id="btn-reinvia" class="btn btn-ghost" style="width:100%;">Invia di nuovo l'email</button>
+
+      <div class="divider"></div>
+
+      <p class="form-footer">
+        Account sbagliato? <a href="#" id="link-esci">Esci e torna al login</a>
+      </p>
+    </div>
+  </div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module">
+    import {
+      proteggiPaginaSenzaVerifica,
+      ricaricaUtente,
+      inviaEmailVerifica,
+      esciUtente,
+    } from "./assets/js/auth.js";
+
+    const messaggio = document.getElementById("messaggio");
+    const btnControlla = document.getElementById("btn-controlla");
+    const btnReinvia = document.getElementById("btn-reinvia");
+
+    function mostraMessaggio(testo, tipo) {
+      messaggio.textContent = testo;
+      messaggio.className = `message visible ${tipo}`;
+    }
+
+    let utenteCorrente = null;
+
+    proteggiPaginaSenzaVerifica((user) => {
+      if (user.emailVerified) {
+        window.location.href = "dashboard.html";
+        return;
+      }
+      utenteCorrente = user;
+      document.getElementById("email-utente").textContent = user.email;
+    });
+
+    btnControlla.addEventListener("click", async () => {
+      if (!utenteCorrente) return;
+      btnControlla.disabled = true;
+      btnControlla.textContent = "Controllo…";
+      try {
+        await ricaricaUtente(utenteCorrente);
+        if (utenteCorrente.emailVerified) {
+          window.location.href = "dashboard.html";
+          return;
+        }
+        mostraMessaggio("Non risulta ancora verificata. Controlla la posta e riprova.", "error");
+      } catch (errore) {
+        mostraMessaggio("Impossibile controllare lo stato. Riprova.", "error");
+        console.error(errore);
+      } finally {
+        btnControlla.disabled = false;
+        btnControlla.textContent = "Ho verificato, controlla di nuovo";
+      }
+    });
+
+    btnReinvia.addEventListener("click", async () => {
+      if (!utenteCorrente) return;
+      btnReinvia.disabled = true;
+      btnReinvia.textContent = "Invio…";
+      try {
+        await inviaEmailVerifica(utenteCorrente);
+        mostraMessaggio("Email inviata di nuovo. Controlla la posta (anche lo spam).", "success");
+      } catch (errore) {
+        mostraMessaggio("Impossibile inviare l'email. Riprova tra qualche minuto.", "error");
+        console.error(errore);
+      } finally {
+        btnReinvia.disabled = false;
+        btnReinvia.textContent = "Invia di nuovo l'email";
+      }
+    });
+
+    document.getElementById("link-esci").addEventListener("click", async (evento) => {
+      evento.preventDefault();
+      await esciUtente();
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
