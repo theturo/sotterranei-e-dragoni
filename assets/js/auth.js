@@ -123,6 +123,14 @@ export async function elencaGiocatori() {
     .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
 }
 
+// Il giocatore consuma un credito di livello (concesso dal DM) applicandolo a una
+// delle proprie schede. Non richiede permessi speciali: le regole di sicurezza
+// permettono già al proprietario di un account di modificare "livelliDaSpendere"
+// (solo "ruolo" e "livello" dell'utente sono bloccati per il proprietario).
+export async function consumaLivelloDaSpendere(uid) {
+  await updateDoc(doc(db, "users", uid), { livelliDaSpendere: increment(-1) });
+}
+
 // Il DM segnala che un giocatore è salito di livello (solo DM/admin, vedi firestore.rules).
 // livelloAttuale è il livello mostrato in UI prima dell'aggiornamento, usato solo
 // per scrivere un testo leggibile nella notifica (es. "2 → 3").

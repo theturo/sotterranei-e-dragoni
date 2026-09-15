@@ -1318,6 +1318,147 @@ table.tabella-utenti td.cella-email {
   margin: 0;
 }
 
+/* ---------- Passaggio di livello ---------- */
+
+.btn-livello-su {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-gold);
+  color: var(--color-bg-dark);
+  cursor: pointer;
+  vertical-align: middle;
+  animation: pulso-livello 1.8s ease-in-out infinite;
+}
+
+.btn-livello-su svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.btn-livello-su:hover {
+  background: var(--color-gold-bright);
+}
+
+@keyframes pulso-livello {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.55); }
+  50% { box-shadow: 0 0 0 7px rgba(201, 162, 39, 0); }
+}
+
+.modal-card-livello {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+  color: var(--color-ink);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-gold);
+  padding: 32px 30px;
+  box-shadow: var(--shadow-deep);
+  text-align: center;
+}
+
+.livello-rivelazione {
+  padding: 20px 0;
+  cursor: pointer;
+}
+
+.livello-rivelazione-etichetta {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+}
+
+.livello-rivelazione-numero {
+  font-family: var(--font-display);
+  font-size: 5rem;
+  color: var(--color-burgundy);
+  text-shadow: 0 0 26px rgba(201, 162, 39, 0.55);
+  animation: rivelazione-livello 0.6s ease-out;
+}
+
+@keyframes rivelazione-livello {
+  0% { transform: scale(0.3); opacity: 0; }
+  65% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.livello-rivelazione-suggerimento {
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.wizard-livello-passo h2 {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin-top: 0;
+  text-align: center;
+}
+
+.wizard-livello-passo .card-tagline {
+  text-align: center;
+  color: var(--color-ink-soft);
+  font-style: italic;
+  margin-bottom: 20px;
+}
+
+.scelta-pf {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.risultato-pf {
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: var(--color-burgundy);
+  margin-bottom: 16px;
+}
+
+.scelta-asi {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+}
+
+.opzione-asi {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.campi-asi {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.campi-asi .field {
+  min-width: 160px;
+  margin-bottom: 0;
+  text-align: left;
+}
+
 footer.site-footer {
   text-align: center;
   padding: 18px;

@@ -189,3 +189,22 @@ export function puntiVitaIniziali(classeChiave, modCostituzione) {
   const classe = CLASSI[classeChiave];
   return classe.dadoVita + modCostituzione;
 }
+
+// Livelli in cui si guadagna un Aumento del Punteggio di Caratteristica.
+// Semplificazione: usiamo la progressione standard per tutte le classi (alcune,
+// come Guerriero e Ladro, ne hanno in SRD di aggiuntivi a livelli specifici).
+export const LIVELLI_ASI = [4, 8, 12, 16, 19];
+
+// PF guadagnati salendo di livello, per il metodo "valore medio" (arrotondato
+// per eccesso, come da regola SRD) o "tiro" (un valore casuale 1..dadoVita).
+// In entrambi i casi il minimo è 1 PF, anche con Costituzione molto bassa.
+export function puntiVitaMedi(classeChiave, modCostituzione) {
+  const classe = CLASSI[classeChiave];
+  return Math.max(1, Math.floor(classe.dadoVita / 2) + 1 + modCostituzione);
+}
+
+export function tiraPuntiVitaLivello(classeChiave, modCostituzione) {
+  const classe = CLASSI[classeChiave];
+  const tiro = 1 + Math.floor(Math.random() * classe.dadoVita);
+  return { tiro, totale: Math.max(1, tiro + modCostituzione) };
+}

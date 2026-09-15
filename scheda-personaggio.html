@@ -31,7 +31,15 @@
             <div id="scheda-nome-valore" class="scheda-nome-valore"></div>
           </div>
           <div class="scheda-sottotitoli">
-            <div><label>Classe e livello</label><span><span id="icona-classe" class="icona-classe" aria-hidden="true"></span><span id="scheda-classe-livello"></span></span></div>
+            <div>
+              <label>Classe e livello</label>
+              <span>
+                <span id="icona-classe" class="icona-classe" aria-hidden="true"></span><span id="scheda-classe-livello"></span>
+                <button type="button" id="btn-livello-su" class="btn-livello-su" title="Passa al livello successivo" aria-label="Passa al livello successivo" hidden>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l8 8h-5v8h-6v-8H4z" /></svg>
+                </button>
+              </span>
+            </div>
             <div>
               <label for="input-background">Background</label>
               <input type="text" id="input-background" class="input-inline" maxlength="40" placeholder="—" title="" />
@@ -250,6 +258,55 @@
     </div>
   </div>
 
+  <div id="modal-livello" class="modal-overlay" style="display:none;">
+    <div class="modal-card-livello">
+      <div id="livello-rivelazione" class="livello-rivelazione">
+        <div class="livello-rivelazione-etichetta">Sei salito di livello!</div>
+        <div class="livello-rivelazione-numero" id="livello-rivelazione-numero">2</div>
+        <p class="livello-rivelazione-suggerimento">Clicca per continuare</p>
+      </div>
+
+      <div id="wizard-livello" class="wizard-livello" hidden>
+        <div id="passo-pf" class="wizard-livello-passo">
+          <h2>Punti Ferita</h2>
+          <p class="card-tagline">Come vuoi calcolare l'aumento dei tuoi PF massimi?</p>
+          <div class="scelta-pf">
+            <button type="button" class="btn-tabella btn-tabella-evidenza" data-metodo="media">Usa il valore medio</button>
+            <button type="button" class="btn-tabella btn-tabella-evidenza" data-metodo="tiro">Tira il dado</button>
+          </div>
+          <div id="risultato-pf" class="risultato-pf" hidden></div>
+          <div class="wizard-nav">
+            <span></span>
+            <button type="button" id="btn-avanti-pf" class="btn btn-secondary" style="width:auto; padding:10px 22px;" disabled>Avanti</button>
+          </div>
+        </div>
+
+        <div id="passo-asi" class="wizard-livello-passo" hidden>
+          <h2>Aumento caratteristiche</h2>
+          <p class="card-tagline">A questo livello puoi migliorare le tue caratteristiche. Scegli come.</p>
+          <div class="scelta-asi">
+            <label class="opzione-asi"><input type="radio" name="modo-asi" value="due" checked /> +1 a due caratteristiche</label>
+            <label class="opzione-asi"><input type="radio" name="modo-asi" value="una" /> +2 a una caratteristica</label>
+          </div>
+          <div id="campi-asi" class="campi-asi"></div>
+          <div class="wizard-nav">
+            <span></span>
+            <button type="button" id="btn-avanti-asi" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Avanti</button>
+          </div>
+        </div>
+
+        <div id="passo-riepilogo-livello" class="wizard-livello-passo" hidden>
+          <h2>Riepilogo</h2>
+          <div id="riepilogo-livello" class="riepilogo-lista"></div>
+          <div class="wizard-nav">
+            <span></span>
+            <button type="button" id="btn-conferma-livello" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Conferma</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-allineamento" class="modal-overlay" style="display:none;">
     <div class="modal-card-allineamento">
       <div class="modal-allineamento-intestazione">
@@ -266,6 +323,8 @@
     </div>
   </div>
 
+  <div id="toast" class="toast"></div>
+
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
@@ -277,6 +336,7 @@
       aggiornaTiriSalvezzaMorte,
       aggiornaInventario,
       aggiornaScheda,
+      consumaLivelloDaSpendere,
     } from "./assets/js/auth.js";
     import {
       CLASSI,
@@ -285,6 +345,9 @@
       ABBREVIAZIONI_CARATTERISTICHE,
       ALLINEAMENTI,
       nomeAllineamento,
+      LIVELLI_ASI,
+      puntiVitaMedi,
+      tiraPuntiVitaLivello,
       modificatore,
       formattaModificatore,
       nomeRazzaCompleto,
@@ -298,6 +361,7 @@
     let uidCorrente = null;
     let scheda = null;
     let soloLettura = false;
+    let profiloCorrente = null;
 
     function formattaVelocita(velocita) {
       return `${String(velocita).replace(".", ",")} m`;
@@ -327,6 +391,231 @@
       bottone.textContent = scheda.allineamento ? nomeAllineamento(scheda.allineamento) : "—";
       bottone.disabled = soloLettura;
     }
+
+    // ---------- Passaggio di livello ----------
+    function creditiLivelloDisponibili() {
+      return !soloLettura && (profiloCorrente?.livelliDaSpendere || 0) > 0;
+    }
+
+    function renderPulsanteLivello() {
+      document.getElementById("btn-livello-su").hidden = !creditiLivelloDisponibili();
+    }
+
+    const statoLivello = { guadagnoPF: null, metodoPF: null, modoAsi: "due", asi: {} };
+
+    function mostraPassoLivello(id) {
+      document.querySelectorAll(".wizard-livello-passo").forEach((el) => (el.hidden = el.id !== id));
+    }
+
+    function apriModalLivello() {
+      if (!creditiLivelloDisponibili()) return;
+      statoLivello.guadagnoPF = null;
+      statoLivello.metodoPF = null;
+      statoLivello.modoAsi = "due";
+      statoLivello.asi = {};
+      document.getElementById("risultato-pf").hidden = true;
+      document.getElementById("btn-avanti-pf").disabled = true;
+      document.getElementById("livello-rivelazione-numero").textContent = String((scheda.livello || 1) + 1);
+      document.getElementById("livello-rivelazione").hidden = false;
+      document.getElementById("wizard-livello").hidden = true;
+      document.getElementById("modal-livello").style.display = "flex";
+    }
+
+    document.getElementById("btn-livello-su").addEventListener("click", apriModalLivello);
+
+    document.getElementById("livello-rivelazione").addEventListener("click", () => {
+      document.getElementById("livello-rivelazione").hidden = true;
+      document.getElementById("wizard-livello").hidden = false;
+      mostraPassoLivello("passo-pf");
+    });
+
+    document.querySelectorAll(".scelta-pf [data-metodo]").forEach((bottone) => {
+      bottone.addEventListener("click", () => {
+        const modCostituzione = modificatore(scheda.caratteristiche?.costituzione ?? 10);
+        const risultato = document.getElementById("risultato-pf");
+        const btnAvanti = document.getElementById("btn-avanti-pf");
+
+        if (bottone.dataset.metodo === "media") {
+          statoLivello.metodoPF = "media";
+          statoLivello.guadagnoPF = puntiVitaMedi(scheda.classe, modCostituzione);
+          risultato.textContent = `+${statoLivello.guadagnoPF} PF`;
+          risultato.hidden = false;
+          btnAvanti.disabled = false;
+        } else {
+          statoLivello.metodoPF = "tiro";
+          risultato.hidden = false;
+          btnAvanti.disabled = true;
+          let tick = 0;
+          const dadoVita = CLASSI[scheda.classe]?.dadoVita || 8;
+          const intervallo = setInterval(() => {
+            risultato.textContent = `🎲 ${1 + Math.floor(Math.random() * dadoVita)}`;
+            tick += 1;
+            if (tick > 10) {
+              clearInterval(intervallo);
+              const { tiro, totale } = tiraPuntiVitaLivello(scheda.classe, modCostituzione);
+              statoLivello.guadagnoPF = totale;
+              risultato.textContent = `Tiro: ${tiro} → +${totale} PF`;
+              btnAvanti.disabled = false;
+            }
+          }, 80);
+        }
+      });
+    });
+
+    function opzioniCaratteristica(select, escludi, limiteMassimo) {
+      const attuale = select.dataset.valoreAttuale || "";
+      select.innerHTML = '<option value="" disabled>— Scegli —</option>';
+      CARATTERISTICHE.forEach(({ chiave, nome }) => {
+        const punteggio = scheda.caratteristiche?.[chiave] ?? 10;
+        if (punteggio > limiteMassimo && chiave !== attuale) return;
+        if (escludi.includes(chiave) && chiave !== attuale) return;
+        const opzione = document.createElement("option");
+        opzione.value = chiave;
+        opzione.textContent = `${nome} (${punteggio})`;
+        if (chiave === attuale) opzione.selected = true;
+        select.appendChild(opzione);
+      });
+    }
+
+    function renderCampiAsi() {
+      const contenitore = document.getElementById("campi-asi");
+      const modo = statoLivello.modoAsi;
+      contenitore.innerHTML = "";
+
+      if (modo === "una") {
+        const select = document.createElement("select");
+        select.className = "select-asi";
+        select.dataset.indice = "0";
+        contenitore.appendChild(wrapCampo("+2 a", select));
+        opzioniCaratteristica(select, [], 18);
+      } else {
+        const select1 = document.createElement("select");
+        select1.className = "select-asi";
+        select1.dataset.indice = "0";
+        const select2 = document.createElement("select");
+        select2.className = "select-asi";
+        select2.dataset.indice = "1";
+        contenitore.appendChild(wrapCampo("+1 a", select1));
+        contenitore.appendChild(wrapCampo("+1 a", select2));
+        opzioniCaratteristica(select1, [select2.value], 19);
+        opzioniCaratteristica(select2, [select1.value], 19);
+      }
+    }
+
+    function wrapCampo(etichetta, select) {
+      const div = document.createElement("div");
+      div.className = "field";
+      div.innerHTML = `<label>${etichetta}</label>`;
+      div.appendChild(select);
+      return div;
+    }
+
+    document.querySelectorAll('input[name="modo-asi"]').forEach((radio) => {
+      radio.addEventListener("change", () => {
+        statoLivello.modoAsi = radio.value;
+        renderCampiAsi();
+      });
+    });
+
+    document.getElementById("campi-asi").addEventListener("change", (evento) => {
+      const select = evento.target.closest(".select-asi");
+      if (!select) return;
+      select.dataset.valoreAttuale = select.value;
+      const selects = document.querySelectorAll(".select-asi");
+      if (selects.length === 2) {
+        opzioniCaratteristica(selects[0], [selects[1].value], 19);
+        opzioniCaratteristica(selects[1], [selects[0].value], 19);
+        selects.forEach((s) => (s.value = s.dataset.valoreAttuale || s.value));
+      }
+    });
+
+    document.getElementById("btn-avanti-pf").addEventListener("click", () => {
+      const nuovoLivello = (scheda.livello || 1) + 1;
+      if (LIVELLI_ASI.includes(nuovoLivello)) {
+        renderCampiAsi();
+        mostraPassoLivello("passo-asi");
+      } else {
+        renderRiepilogoLivello();
+        mostraPassoLivello("passo-riepilogo-livello");
+      }
+    });
+
+    document.getElementById("btn-avanti-asi").addEventListener("click", () => {
+      const selects = Array.from(document.querySelectorAll(".select-asi"));
+      if (selects.some((s) => !s.value)) {
+        mostraToastLivello("Scegli tutte le caratteristiche richieste.");
+        return;
+      }
+      statoLivello.asi = {};
+      const bonus = statoLivello.modoAsi === "una" ? 2 : 1;
+      selects.forEach((s) => {
+        statoLivello.asi[s.value] = (statoLivello.asi[s.value] || 0) + bonus;
+      });
+      renderRiepilogoLivello();
+      mostraPassoLivello("passo-riepilogo-livello");
+    });
+
+    let timerToastLivello = null;
+    function mostraToastLivello(testo) {
+      const toast = document.getElementById("toast");
+      toast.textContent = testo;
+      toast.className = "toast visibile toast-errore";
+      clearTimeout(timerToastLivello);
+      timerToastLivello = setTimeout(() => {
+        toast.className = "toast";
+      }, 3200);
+    }
+
+    function renderRiepilogoLivello() {
+      const nuovoLivello = (scheda.livello || 1) + 1;
+      const pfAttuali = scheda.hp.massimi;
+      const righeAsi = Object.entries(statoLivello.asi)
+        .map(([chiave, bonus]) => {
+          const nome = CARATTERISTICHE.find((c) => c.chiave === chiave)?.nome || chiave;
+          return `<li>${nome}: ${scheda.caratteristiche[chiave]} → <b>${scheda.caratteristiche[chiave] + bonus}</b></li>`;
+        })
+        .join("");
+      document.getElementById("riepilogo-livello").innerHTML = `
+        <p><label>Nuovo livello</label> <b>${nuovoLivello}</b></p>
+        <p><label>Punti Ferita massimi</label> <b>${pfAttuali} → ${pfAttuali + statoLivello.guadagnoPF}</b></p>
+        ${righeAsi ? `<ul class="lista-competenze">${righeAsi}</ul>` : ""}
+      `;
+    }
+
+    document.getElementById("btn-conferma-livello").addEventListener("click", async () => {
+      const bottone = document.getElementById("btn-conferma-livello");
+      bottone.disabled = true;
+      try {
+        scheda.livello = (scheda.livello || 1) + 1;
+        scheda.hp.massimi += statoLivello.guadagnoPF;
+        scheda.hp.attuali += statoLivello.guadagnoPF;
+        Object.entries(statoLivello.asi).forEach(([chiave, bonus]) => {
+          scheda.caratteristiche[chiave] = (scheda.caratteristiche[chiave] || 10) + bonus;
+        });
+
+        await aggiornaScheda(scheda.id, {
+          livello: scheda.livello,
+          hp: scheda.hp,
+          caratteristiche: scheda.caratteristiche,
+        });
+        await consumaLivelloDaSpendere(uidCorrente);
+        profiloCorrente.livelliDaSpendere = (profiloCorrente.livelliDaSpendere || 1) - 1;
+
+        document.getElementById("modal-livello").style.display = "none";
+        renderIntestazione();
+        renderCaratteristiche();
+        renderSalvezze();
+        renderVelocitaEDadi();
+        renderAbilita();
+        renderHp();
+        renderPulsanteLivello();
+      } catch (errore) {
+        console.error(errore);
+        mostraToastLivello("Impossibile salvare il livello. Riprova.");
+      } finally {
+        bottone.disabled = false;
+      }
+    });
 
     // ---------- Ruota a spicchi per la scelta dell'allineamento ----------
     function posizioneRuota(angoloGradi, raggio) {
@@ -436,6 +725,12 @@
 
     document.getElementById("modal-allineamento").addEventListener("click", (evento) => {
       if (evento.target.id === "modal-allineamento") {
+        evento.currentTarget.style.display = "none";
+      }
+    });
+
+    document.getElementById("modal-livello").addEventListener("click", (evento) => {
+      if (evento.target.id === "modal-livello") {
         evento.currentTarget.style.display = "none";
       }
     });
@@ -722,8 +1017,9 @@
       }
     }
 
-    proteggiPagina(async (user) => {
+    proteggiPagina(async (user, profilo) => {
       uidCorrente = user.uid;
+      profiloCorrente = profilo || {};
       const idParam = new URLSearchParams(window.location.search).get("id");
 
       try {
@@ -768,6 +1064,7 @@
       renderPersonalita();
       renderTalenti();
       renderMonete();
+      renderPulsanteLivello();
 
       veil.style.display = "none";
       contenuto.style.display = "block";
