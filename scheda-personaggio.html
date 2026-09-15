@@ -13,12 +13,12 @@
     <div class="dashboard-wrap scheda-wrap-esterno">
       <div class="dashboard-header">
         <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
+          <a class="link-back" href="i-miei-personaggi.html">&larr; I miei personaggi</a>
           <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
             Scheda personaggio
           </h1>
         </div>
-        <span class="role-badge" style="border-color: var(--color-danger); color: #d98a94;">Bozza grafica — PF e tiri salvezza già reali</span>
+        <span id="badge-stato" class="role-badge"></span>
       </div>
 
       <!-- ===================== SCHEDA ===================== -->
@@ -28,14 +28,14 @@
         <div class="scheda-intestazione">
           <div class="scheda-nome">
             <label>Nome del personaggio</label>
-            <div class="scheda-nome-valore">Kaelen Duskwalker</div>
+            <div id="scheda-nome-valore" class="scheda-nome-valore"></div>
           </div>
           <div class="scheda-sottotitoli">
-            <div><label>Classe e livello</label><span><span id="icona-classe" class="icona-classe" aria-hidden="true"></span>Ranger 3</span></div>
-            <div><label>Background</label><span>Esploratore</span></div>
-            <div><label>Razza</label><span>Mezzelfo</span></div>
-            <div><label>Allineamento</label><span>Neutrale Buono</span></div>
-            <div><label>Punti Esperienza</label><span>900</span></div>
+            <div><label>Classe e livello</label><span><span id="icona-classe" class="icona-classe" aria-hidden="true"></span><span id="scheda-classe-livello"></span></span></div>
+            <div><label>Background</label><span>—</span></div>
+            <div><label>Razza</label><span id="scheda-razza"></span></div>
+            <div><label>Allineamento</label><span>—</span></div>
+            <div><label>Punti Esperienza</label><span>0</span></div>
           </div>
         </div>
 
@@ -46,81 +46,62 @@
           <div class="scheda-colonna">
 
             <div class="scheda-box scheda-box-centrale">
-              <div class="valore-grande" title="Bonus di competenza">+2</div>
+              <div id="valore-bonus-competenza" class="valore-grande" title="Bonus di competenza">+2</div>
               <div class="valore-grande-etichetta">Bonus di competenza</div>
             </div>
 
-            <div class="griglia-caratteristiche">
-              <div class="caratteristica">
+            <div class="griglia-caratteristiche" id="griglia-caratteristiche">
+              <div class="caratteristica" data-chiave="forza">
                 <div class="caratteristica-nome">Forza</div>
-                <div class="caratteristica-mod">+1</div>
-                <div class="caratteristica-punteggio">12</div>
+                <div class="caratteristica-mod"></div>
+                <div class="caratteristica-punteggio"></div>
               </div>
-              <div class="caratteristica">
+              <div class="caratteristica" data-chiave="destrezza">
                 <div class="caratteristica-nome">Destrezza</div>
-                <div class="caratteristica-mod">+3</div>
-                <div class="caratteristica-punteggio">17</div>
+                <div class="caratteristica-mod"></div>
+                <div class="caratteristica-punteggio"></div>
               </div>
-              <div class="caratteristica">
+              <div class="caratteristica" data-chiave="costituzione">
                 <div class="caratteristica-nome">Costituzione</div>
-                <div class="caratteristica-mod">+2</div>
-                <div class="caratteristica-punteggio">14</div>
+                <div class="caratteristica-mod"></div>
+                <div class="caratteristica-punteggio"></div>
               </div>
-              <div class="caratteristica">
+              <div class="caratteristica" data-chiave="intelligenza">
                 <div class="caratteristica-nome">Intelligenza</div>
-                <div class="caratteristica-mod">+0</div>
-                <div class="caratteristica-punteggio">10</div>
+                <div class="caratteristica-mod"></div>
+                <div class="caratteristica-punteggio"></div>
               </div>
-              <div class="caratteristica">
+              <div class="caratteristica" data-chiave="saggezza">
                 <div class="caratteristica-nome">Saggezza</div>
-                <div class="caratteristica-mod">+2</div>
-                <div class="caratteristica-punteggio">15</div>
+                <div class="caratteristica-mod"></div>
+                <div class="caratteristica-punteggio"></div>
               </div>
-              <div class="caratteristica">
+              <div class="caratteristica" data-chiave="carisma">
                 <div class="caratteristica-nome">Carisma</div>
-                <div class="caratteristica-mod">−1</div>
-                <div class="caratteristica-punteggio">8</div>
+                <div class="caratteristica-mod"></div>
+                <div class="caratteristica-punteggio"></div>
               </div>
             </div>
 
             <div class="scheda-box">
               <h3>Tiri salvezza</h3>
-              <ul class="lista-competenze">
-                <li class="competente"><span class="pallino"></span>Forza <b>+3</b></li>
-                <li class="competente"><span class="pallino"></span>Destrezza <b>+5</b></li>
-                <li><span class="pallino"></span>Costituzione <b>+2</b></li>
-                <li><span class="pallino"></span>Intelligenza <b>+0</b></li>
-                <li><span class="pallino"></span>Saggezza <b>+2</b></li>
-                <li><span class="pallino"></span>Carisma <b>−1</b></li>
+              <ul class="lista-competenze" id="lista-salvezze">
+                <li data-chiave="forza"><span class="pallino"></span>Forza <b></b></li>
+                <li data-chiave="destrezza"><span class="pallino"></span>Destrezza <b></b></li>
+                <li data-chiave="costituzione"><span class="pallino"></span>Costituzione <b></b></li>
+                <li data-chiave="intelligenza"><span class="pallino"></span>Intelligenza <b></b></li>
+                <li data-chiave="saggezza"><span class="pallino"></span>Saggezza <b></b></li>
+                <li data-chiave="carisma"><span class="pallino"></span>Carisma <b></b></li>
               </ul>
             </div>
 
             <div class="scheda-box">
               <h3>Abilità</h3>
-              <ul class="lista-competenze">
-                <li><span class="pallino"></span>Acrobazia (Des) <b>+3</b></li>
-                <li><span class="pallino"></span>Addestrare Animali (Sag) <b>+2</b></li>
-                <li><span class="pallino"></span>Arcano (Int) <b>+0</b></li>
-                <li class="competente"><span class="pallino"></span>Atletica (For) <b>+3</b></li>
-                <li><span class="pallino"></span>Furtività (Des) <b>+3</b></li>
-                <li><span class="pallino"></span>Indagare (Int) <b>+0</b></li>
-                <li><span class="pallino"></span>Inganno (Car) <b>−1</b></li>
-                <li><span class="pallino"></span>Intimidire (Car) <b>−1</b></li>
-                <li><span class="pallino"></span>Intrattenere (Car) <b>−1</b></li>
-                <li><span class="pallino"></span>Intuizione (Sag) <b>+2</b></li>
-                <li><span class="pallino"></span>Medicina (Sag) <b>+2</b></li>
-                <li><span class="pallino"></span>Natura (Int) <b>+0</b></li>
-                <li class="competente"><span class="pallino"></span>Percezione (Sag) <b>+4</b></li>
-                <li><span class="pallino"></span>Persuasione (Car) <b>−1</b></li>
-                <li><span class="pallino"></span>Religione (Int) <b>+0</b></li>
-                <li class="competente"><span class="pallino"></span>Rapidità di Mano (Des) <b>+5</b></li>
-                <li class="competente"><span class="pallino"></span>Sopravvivenza (Sag) <b>+4</b></li>
-                <li class="competente"><span class="pallino"></span>Storia (Int) <b>+2</b></li>
-              </ul>
+              <p class="scheda-testo-libero">Competenze nelle abilità: in arrivo con l'editing completo della scheda.</p>
             </div>
 
             <div class="scheda-box scheda-box-centrale">
-              <div class="valore-grande">14</div>
+              <div id="valore-percezione-passiva" class="valore-grande">10</div>
               <div class="valore-grande-etichetta">Percezione passiva</div>
             </div>
 
@@ -131,15 +112,15 @@
 
             <div class="riga-tre-box">
               <div class="scheda-box scheda-box-centrale">
-                <div class="valore-grande">14</div>
+                <div id="valore-ca" class="valore-grande">10</div>
                 <div class="valore-grande-etichetta">Classe Armatura</div>
               </div>
               <div class="scheda-box scheda-box-centrale">
-                <div class="valore-grande">+3</div>
+                <div id="valore-iniziativa" class="valore-grande">+0</div>
                 <div class="valore-grande-etichetta">Iniziativa</div>
               </div>
               <div class="scheda-box scheda-box-centrale">
-                <div class="valore-grande">9 m</div>
+                <div id="valore-velocita" class="valore-grande">9 m</div>
                 <div class="valore-grande-etichetta">Velocità</div>
               </div>
             </div>
@@ -147,7 +128,7 @@
             <div class="scheda-box">
               <h3>Punti Ferita</h3>
               <div class="riga-hp">
-                <div><label>Massimi</label><span id="hp-massimi">28</span></div>
+                <div><label>Massimi</label><span id="hp-massimi">—</span></div>
                 <div>
                   <label for="hp-attuali">Attuali</label>
                   <input type="number" id="hp-attuali" class="input-hp" inputmode="numeric" />
@@ -158,7 +139,7 @@
                 </div>
               </div>
               <div class="riga-hp riga-hp-secondaria">
-                <div><label>Dadi Vita</label><span>3d10</span></div>
+                <div><label>Dadi Vita</label><span id="dadi-vita">—</span></div>
                 <div class="tiri-morte">
                   <div class="tiri-morte-titolo">
                     <label>Tiri salvezza contro la morte</label>
@@ -182,32 +163,19 @@
 
             <div class="scheda-box">
               <h3>Attacchi e incantesimi</h3>
-              <table class="tabella-attacchi">
-                <thead>
-                  <tr><th>Nome</th><th>Bonus attacco</th><th>Danno / Tipo</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td>Arco lungo</td><td>+5</td><td>1d8+3 perforante</td></tr>
-                  <tr><td>Spada corta</td><td>+3</td><td>1d6+1 perforante</td></tr>
-                  <tr><td>Pugnale</td><td>+3</td><td>1d4+1 perforante</td></tr>
-                </tbody>
-              </table>
+              <p class="scheda-testo-libero">In arrivo con l'editing completo della scheda.</p>
             </div>
 
             <div class="scheda-box">
               <h3>Equipaggiamento</h3>
               <div class="riga-monete">
                 <div><label>MR</label><span>0</span></div>
-                <div><label>MA</label><span>2</span></div>
-                <div><label>MO</label><span>15</span></div>
+                <div><label>MA</label><span>0</span></div>
+                <div><label>MO</label><span>0</span></div>
                 <div><label>ME</label><span>0</span></div>
                 <div><label>MP</label><span>0</span></div>
               </div>
-              <p class="scheda-testo-libero">
-                Arco lungo, faretra con 20 frecce, spada corta, pugnale, zaino da
-                esploratore, corda di canapa (15 m), borraccia, acciarino, 3 razioni
-                da viaggio, mantello con cappuccio.
-              </p>
+              <p class="scheda-testo-libero">In arrivo con l'editing completo della scheda.</p>
             </div>
 
           </div>
@@ -217,36 +185,29 @@
 
             <div class="scheda-box">
               <h3>Tratti della personalità</h3>
-              <p class="scheda-testo-libero">Osservo sempre i dettagli prima di agire, anche quando gli altri hanno fretta.</p>
+              <p class="scheda-testo-libero">Da definire.</p>
             </div>
             <div class="scheda-box">
               <h3>Ideali</h3>
-              <p class="scheda-testo-libero">La natura selvaggia va protetta, ad ogni costo.</p>
+              <p class="scheda-testo-libero">Da definire.</p>
             </div>
             <div class="scheda-box">
               <h3>Legami</h3>
-              <p class="scheda-testo-libero">Il mio villaggio natale è stato distrutto da un incendio doloso: cerco ancora chi lo ha causato.</p>
+              <p class="scheda-testo-libero">Da definire.</p>
             </div>
             <div class="scheda-box">
               <h3>Difetti</h3>
-              <p class="scheda-testo-libero">Non mi fido facilmente degli estranei, nemmeno quando dovrei.</p>
+              <p class="scheda-testo-libero">Da definire.</p>
             </div>
 
             <div class="scheda-box">
               <h3>Caratteristiche e talenti</h3>
-              <p class="scheda-testo-libero">
-                <b>Nemico Prescelto</b> (non morti) · <b>Esploratore Nato</b> (foreste) ·
-                <b>Stile di Combattimento</b>: Tiro con l'Arco · <b>Incantesimi da Ranger</b> (1° livello)
-              </p>
+              <p class="scheda-testo-libero">Da definire.</p>
             </div>
 
             <div class="scheda-box">
               <h3>Competenze e linguaggi</h3>
-              <p class="scheda-testo-libero">
-                Armature leggere e medie, scudi, armi semplici e da guerra.<br />
-                Strumenti: nessuno.<br />
-                Linguaggi: Comune, Elfico, Silvano.
-              </p>
+              <p class="scheda-testo-libero">Da definire.</p>
             </div>
 
           </div>
@@ -261,37 +222,81 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, ottieniOCreaScheda, aggiornaHp, aggiornaTiriSalvezzaMorte } from "./assets/js/auth.js";
+    import { proteggiPagina, ottieniScheda, ottieniSchedaAttiva, aggiornaHp, aggiornaTiriSalvezzaMorte } from "./assets/js/auth.js";
+    import {
+      CLASSI,
+      CARATTERISTICHE,
+      modificatore,
+      formattaModificatore,
+      nomeRazzaCompleto,
+      velocitaRazza,
+    } from "./assets/js/dati-srd.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
 
-    const ICONE_CLASSE = {
-      Barbaro: "🪓",
-      Bardo: "🎵",
-      Chierico: "✨",
-      Druido: "🌿",
-      Guerriero: "⚔️",
-      Ladro: "🗡️",
-      Mago: "📖",
-      Monaco: "🥋",
-      Paladino: "🛡️",
-      Ranger: "🏹",
-      Stregone: "🔥",
-      Warlock: "👁️",
-    };
-
     let uidCorrente = null;
     let scheda = null;
+    let soloLettura = false;
 
-    function renderIconaClasse(nomeClasse) {
-      document.getElementById("icona-classe").textContent = ICONE_CLASSE[nomeClasse] || "🎲";
+    function formattaVelocita(velocita) {
+      return `${String(velocita).replace(".", ",")} m`;
+    }
+
+    function bonusCompetenza(livello) {
+      return 2 + Math.floor(((livello || 1) - 1) / 4);
+    }
+
+    function renderIntestazione() {
+      const classe = CLASSI[scheda.classe];
+      document.getElementById("scheda-nome-valore").textContent = scheda.nome || "—";
+      document.getElementById("icona-classe").textContent = classe?.icona || "🎲";
+      document.getElementById("scheda-classe-livello").textContent = `${classe?.nome || "—"} ${scheda.livello || 1}`;
+      document.getElementById("scheda-razza").textContent = nomeRazzaCompleto(scheda.razza, scheda.sottorazza);
+    }
+
+    function renderCaratteristiche() {
+      CARATTERISTICHE.forEach(({ chiave }) => {
+        const punteggio = scheda.caratteristiche?.[chiave] ?? 10;
+        const mod = modificatore(punteggio);
+        const box = document.querySelector(`.caratteristica[data-chiave="${chiave}"]`);
+        box.querySelector(".caratteristica-punteggio").textContent = punteggio;
+        box.querySelector(".caratteristica-mod").textContent = formattaModificatore(mod);
+      });
+
+      const modDestrezza = modificatore(scheda.caratteristiche?.destrezza ?? 10);
+      const modSaggezza = modificatore(scheda.caratteristiche?.saggezza ?? 10);
+      document.getElementById("valore-iniziativa").textContent = formattaModificatore(modDestrezza);
+      document.getElementById("valore-ca").textContent = String(10 + modDestrezza);
+      document.getElementById("valore-percezione-passiva").textContent = String(10 + modSaggezza);
+    }
+
+    function renderSalvezze() {
+      const classe = CLASSI[scheda.classe];
+      const bonus = bonusCompetenza(scheda.livello);
+      CARATTERISTICHE.forEach(({ chiave }) => {
+        const punteggio = scheda.caratteristiche?.[chiave] ?? 10;
+        const competente = Boolean(classe?.salvezze?.includes(chiave));
+        const mod = modificatore(punteggio) + (competente ? bonus : 0);
+        const riga = document.querySelector(`#lista-salvezze li[data-chiave="${chiave}"]`);
+        riga.classList.toggle("competente", competente);
+        riga.querySelector("b").textContent = formattaModificatore(mod);
+      });
+      document.getElementById("valore-bonus-competenza").textContent = `+${bonus}`;
+    }
+
+    function renderVelocitaEDadi() {
+      document.getElementById("valore-velocita").textContent = formattaVelocita(velocitaRazza(scheda.razza, scheda.sottorazza));
+      const classe = CLASSI[scheda.classe];
+      document.getElementById("dadi-vita").textContent = `${scheda.livello || 1}d${classe?.dadoVita || 8}`;
     }
 
     function renderHp() {
       document.getElementById("hp-massimi").textContent = scheda.hp.massimi;
       document.getElementById("hp-attuali").value = scheda.hp.attuali;
       document.getElementById("hp-temporanei").value = scheda.hp.temporanei;
+      document.getElementById("hp-attuali").disabled = soloLettura;
+      document.getElementById("hp-temporanei").disabled = soloLettura;
     }
 
     function renderPalliniMorte() {
@@ -299,23 +304,47 @@
         const tipo = pallino.dataset.tipo;
         const indice = Number(pallino.dataset.indice);
         pallino.classList.toggle("competente", Boolean(scheda.tiriSalvezzaMorte[tipo][indice]));
+        pallino.classList.toggle("pallino-cliccabile", !soloLettura);
       });
+      document.getElementById("btn-reset-morte").style.display = soloLettura ? "none" : "";
+    }
+
+    function renderBadgeStato() {
+      const badge = document.getElementById("badge-stato");
+      if (soloLettura) {
+        badge.textContent = "Sola lettura";
+        badge.style.borderColor = "var(--color-danger)";
+        badge.style.color = "#d98a94";
+      } else {
+        badge.textContent = "Alcuni campi non sono ancora modificabili";
+        badge.style.borderColor = "";
+        badge.style.color = "";
+      }
     }
 
     proteggiPagina(async (user) => {
       uidCorrente = user.uid;
-      renderIconaClasse("Ranger");
+      const idParam = new URLSearchParams(window.location.search).get("id");
 
       try {
-        scheda = await ottieniOCreaScheda(user.uid);
+        scheda = idParam ? await ottieniScheda(idParam) : await ottieniSchedaAttiva(user.uid);
       } catch (errore) {
         console.error(errore);
-        scheda = {
-          hp: { massimi: 28, attuali: 28, temporanei: 0 },
-          tiriSalvezzaMorte: { successi: [false, false, false], fallimenti: [false, false, false] },
-        };
+        scheda = null;
       }
 
+      if (!scheda) {
+        window.location.href = "i-miei-personaggi.html";
+        return;
+      }
+
+      soloLettura = scheda.proprietarioUid !== user.uid;
+
+      renderBadgeStato();
+      renderIntestazione();
+      renderCaratteristiche();
+      renderSalvezze();
+      renderVelocitaEDadi();
       renderHp();
       renderPalliniMorte();
 
@@ -325,13 +354,14 @@
 
     // PF attuali/temporanei: salva al cambio di valore (blur o invio).
     async function salvaHpDaInput() {
+      if (soloLettura) return;
       const attuali = Math.max(0, Number(document.getElementById("hp-attuali").value) || 0);
       const temporanei = Math.max(0, Number(document.getElementById("hp-temporanei").value) || 0);
       scheda.hp.attuali = attuali;
       scheda.hp.temporanei = temporanei;
       renderHp();
       try {
-        await aggiornaHp(uidCorrente, scheda.hp);
+        await aggiornaHp(scheda.id, scheda.hp);
       } catch (errore) {
         console.error(errore);
       }
@@ -342,12 +372,13 @@
     // Tiri salvezza contro la morte: click su un pallino lo accende/spegne.
     document.querySelectorAll(".pallino-cliccabile").forEach((pallino) => {
       pallino.addEventListener("click", async () => {
+        if (soloLettura) return;
         const tipo = pallino.dataset.tipo;
         const indice = Number(pallino.dataset.indice);
         scheda.tiriSalvezzaMorte[tipo][indice] = !scheda.tiriSalvezzaMorte[tipo][indice];
         renderPalliniMorte();
         try {
-          await aggiornaTiriSalvezzaMorte(uidCorrente, scheda.tiriSalvezzaMorte);
+          await aggiornaTiriSalvezzaMorte(scheda.id, scheda.tiriSalvezzaMorte);
         } catch (errore) {
           console.error(errore);
         }
@@ -355,10 +386,11 @@
     });
 
     document.getElementById("btn-reset-morte").addEventListener("click", async () => {
+      if (soloLettura) return;
       scheda.tiriSalvezzaMorte = { successi: [false, false, false], fallimenti: [false, false, false] };
       renderPalliniMorte();
       try {
-        await aggiornaTiriSalvezzaMorte(uidCorrente, scheda.tiriSalvezzaMorte);
+        await aggiornaTiriSalvezzaMorte(scheda.id, scheda.tiriSalvezzaMorte);
       } catch (errore) {
         console.error(errore);
       }

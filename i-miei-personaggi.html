@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — I miei personaggi</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="veil" class="loading-veil">Consultando gli antichi registri…</div>
+
+  <div id="contenuto" style="display:none;">
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div>
+          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
+          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
+            I miei personaggi
+          </h1>
+        </div>
+        <a href="crea-personaggio.html" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Nuovo personaggio</a>
+      </div>
+
+      <div class="panel-wide">
+        <div id="griglia-schede" class="griglia-schede-personaggio"></div>
+        <p id="nessuna-scheda" style="display:none; color: var(--color-ink-soft);">
+          Non hai ancora nessun personaggio: creane uno per iniziare l'avventura.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module">
+    import { proteggiPagina, elencaSchedePersonaggio, impostaSchedaAttiva } from "./assets/js/auth.js";
+    import { CLASSI, nomeRazzaCompleto } from "./assets/js/dati-srd.js";
+
+    const veil = document.getElementById("veil");
+    const contenuto = document.getElementById("contenuto");
+    const griglia = document.getElementById("griglia-schede");
+    const nessunaScheda = document.getElementById("nessuna-scheda");
+    const toast = document.getElementById("toast");
+
+    let uidCorrente = null;
+
+    let toastTimer = null;
+    function mostraToast(testo, errore = false) {
+      toast.textContent = testo;
+      toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.className = "toast";
+      }, 3200);
+    }
+
+    function testoPf(scheda) {
+      if (!scheda?.hp) return "—";
+      const { massimi, attuali, temporanei } = scheda.hp;
+      return temporanei > 0 ? `${attuali} / ${massimi} (+${temporanei})` : `${attuali} / ${massimi}`;
+    }
+
+    function creaCard(scheda) {
+      const classe = CLASSI[scheda.classe];
+      const div = document.createElement("div");
+      div.className = `scheda-card${scheda.attiva ? " scheda-card-attiva" : ""}`;
+      div.innerHTML = `
+        <div class="scheda-card-header">
+          <span class="icona-classe" aria-hidden="true">${classe?.icona || "🎲"}</span>
+          <div class="scheda-card-titoli">
+            <div class="scheda-card-nome">${scheda.nome || "—"}</div>
+            <div class="scheda-card-sub">${nomeRazzaCompleto(scheda.razza, scheda.sottorazza)} · ${classe?.nome || "—"} ${scheda.livello || 1}</div>
+          </div>
+          ${scheda.attiva ? '<span class="role-badge">Attiva</span>' : ""}
+        </div>
+        <div class="scheda-card-pf">PF ${testoPf(scheda)}</div>
+        <div class="scheda-card-azioni">
+          <a class="btn-tabella" href="scheda-personaggio.html?id=${scheda.id}">Apri scheda</a>
+          ${scheda.attiva ? "" : `<button class="btn-tabella btn-tabella-evidenza" data-attiva="${scheda.id}">Rendi attiva</button>`}
+        </div>
+      `;
+      return div;
+    }
+
+    async function caricaSchede() {
+      try {
+        const schede = await elencaSchedePersonaggio(uidCorrente);
+        griglia.innerHTML = "";
+        if (schede.length === 0) {
+          nessunaScheda.style.display = "block";
+        } else {
+          nessunaScheda.style.display = "none";
+          schede.forEach((scheda) => griglia.appendChild(creaCard(scheda)));
+        }
+      } catch (errore) {
+        mostraToast("Impossibile caricare i personaggi.", true);
+        console.error(errore);
+      }
+    }
+
+    proteggiPagina(async (user) => {
+      uidCorrente = user.uid;
+      await caricaSchede();
+      veil.style.display = "none";
+      contenuto.style.display = "block";
+    });
+
+    griglia.addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-attiva]");
+      if (!bottone) return;
+
+      bottone.disabled = true;
+      try {
+        await impostaSchedaAttiva(uidCorrente, bottone.dataset.attiva);
+        await caricaSchede();
+        mostraToast("Personaggio reso attivo.");
+      } catch (errore) {
+        mostraToast("Impossibile rendere attivo il personaggio.", true);
+        console.error(errore);
+        bottone.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

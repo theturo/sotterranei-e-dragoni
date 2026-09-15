@@ -23,6 +23,7 @@ import {
   orderBy,
   serverTimestamp,
   increment,
+  writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 export const ROLES = {
@@ -152,46 +153,73 @@ export async function segnaNotificaLetta(uid, notificaId) {
   await updateDoc(doc(db, "users", uid, "notifiche", notificaId), { letta: true });
 }
 
-// Valori di default per una scheda personaggio appena creata: per ora coprono
-// solo i campi resi interattivi (PF, tiri salvezza contro la morte). Il resto
-// della scheda (razza, classe, caratteristiche...) arriverà con la creazione guidata.
-function schedaPredefinita() {
-  return {
-    hp: { massimi: 28, attuali: 28, temporanei: 0 },
-    tiriSalvezzaMorte: {
-      successi: [false, false, false],
-      fallimenti: [false, false, false],
-    },
+// Ogni utente può avere più schede personaggio (collezione "personaggi", un
+// documento per scheda, con "proprietarioUid" e un flag "attiva"). Solo una
+// scheda per utente è "attiva" alla volta: è quella usata in sessione e
+// visibile al DM.
+
+// Elenca tutte le schede di un utente (le proprie, o quelle di un giocatore
+// se chi chiama è admin/DM), più recenti create per ultime.
+export async function elencaSchedePersonaggio(uid) {
+  const riferimento = query(collection(db, "personaggi"), where("proprietarioUid", "==", uid));
+  const snapshot = await getDocs(riferimento);
+  return snapshot.docs
+    .map((documento) => ({ id: documento.id, ...documento.data() }))
+    .sort((a, b) => (a.creataIl?.toMillis?.() ?? 0) - (b.creataIl?.toMillis?.() ?? 0));
+}
+
+// Crea una nuova scheda personaggio per un utente. Se è la sua prima scheda
+// diventa automaticamente quella attiva.
+export async function creaScheda(uid, dati) {
+  const schedeEsistenti = await elencaSchedePersonaggio(uid);
+  const riferimento = await addDoc(collection(db, "personaggi"), {
+    ...dati,
+    proprietarioUid: uid,
+    attiva: schedeEsistenti.length === 0,
+    creataIl: serverTimestamp(),
     aggiornatoIl: serverTimestamp(),
-  };
+  });
+  return riferimento.id;
 }
 
-// Recupera la scheda personaggio di un utente, creandola con valori di
-// default se non esiste ancora (solo per il proprietario: DM/admin che
-// leggono la scheda di qualcun altro ricevono null se non esiste).
-export async function ottieniOCreaScheda(uid) {
-  const riferimento = doc(db, "personaggi", uid);
-  const snapshot = await getDoc(riferimento);
-  if (snapshot.exists()) return snapshot.data();
-
-  const predefinita = schedaPredefinita();
-  await setDoc(riferimento, predefinita);
-  return predefinita;
+// Recupera una scheda per id (di sola lettura per chi non è il proprietario:
+// le regole di sicurezza impediscono comunque la lettura a chi non ha diritto).
+export async function ottieniScheda(schedaId) {
+  const snapshot = await getDoc(doc(db, "personaggi", schedaId));
+  return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
 }
 
-// Come sopra, ma di sola lettura: restituisce null se la scheda non esiste
-// ancora (usata da DM/admin per consultare la scheda di un altro utente).
-export async function ottieniScheda(uid) {
-  const snapshot = await getDoc(doc(db, "personaggi", uid));
-  return snapshot.exists() ? snapshot.data() : null;
+// Restituisce la scheda attualmente attiva di un utente, o null se non ne ha
+// ancora creata nessuna (usata sia dal giocatore stesso, sia dal DM per
+// vedere i PF in tabella).
+export async function ottieniSchedaAttiva(uid) {
+  const riferimento = query(
+    collection(db, "personaggi"),
+    where("proprietarioUid", "==", uid),
+    where("attiva", "==", true)
+  );
+  const snapshot = await getDocs(riferimento);
+  if (snapshot.empty) return null;
+  const documento = snapshot.docs[0];
+  return { id: documento.id, ...documento.data() };
 }
 
-export async function aggiornaHp(uid, hp) {
-  await updateDoc(doc(db, "personaggi", uid), { hp, aggiornatoIl: serverTimestamp() });
+// Rende attiva una scheda tra quelle di un utente, disattivando le altre.
+export async function impostaSchedaAttiva(uid, schedaId) {
+  const schede = await elencaSchedePersonaggio(uid);
+  const batch = writeBatch(db);
+  schede.forEach((scheda) => {
+    batch.update(doc(db, "personaggi", scheda.id), { attiva: scheda.id === schedaId });
+  });
+  await batch.commit();
 }
 
-export async function aggiornaTiriSalvezzaMorte(uid, tiriSalvezzaMorte) {
-  await updateDoc(doc(db, "personaggi", uid), { tiriSalvezzaMorte, aggiornatoIl: serverTimestamp() });
+export async function aggiornaHp(schedaId, hp) {
+  await updateDoc(doc(db, "personaggi", schedaId), { hp, aggiornatoIl: serverTimestamp() });
+}
+
+export async function aggiornaTiriSalvezzaMorte(schedaId, tiriSalvezzaMorte) {
+  await updateDoc(doc(db, "personaggi", schedaId), { tiriSalvezzaMorte, aggiornatoIl: serverTimestamp() });
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,

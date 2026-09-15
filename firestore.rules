@@ -17,9 +17,12 @@ rules_version = '2';
 // - Ogni utente ha una sotto-collezione "notifiche": solo il proprietario (o un
 //   admin) può leggerla; solo il proprietario può segnarle come lette; solo un
 //   admin o un DM (verso un giocatore) può crearne di nuove.
-// - Collezione "personaggi/{uid}": la scheda del personaggio di ogni utente.
-//   Il proprietario può leggerla e scriverla; un admin o un DM possono solo
-//   leggerla (il DM deve poter vedere i PF dei giocatori durante la sessione).
+// - Collezione "personaggi/{schedaId}": ogni documento è UNA scheda personaggio,
+//   con un campo "proprietarioUid" che indica di chi è. Un utente può avere più
+//   schede (più personaggi), ognuna col proprio flag "attiva" (una sola alla
+//   volta per utente, imposto lato client). Il proprietario può leggere e
+//   scrivere le proprie schede; un admin o un DM possono solo leggerle (il DM
+//   deve poter vedere i PF dei giocatori durante la sessione).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -85,15 +88,21 @@ service cloud.firestore {
       }
     }
 
-    match /personaggi/{uid} {
-      // Lettura: il proprietario, un admin, o un DM (deve vedere i PF in sessione).
-      allow get: if isAutenticato() && (request.auth.uid == uid || isAdmin() || isDM());
-      allow list: if isAdmin() || isDM();
+    match /personaggi/{schedaId} {
+      // Lettura di una scheda: il proprietario, un admin, o un DM (deve vedere i PF in sessione).
+      allow get: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin() || isDM());
 
-      // Scrittura: solo il proprietario della scheda, o un admin.
-      allow create: if isAutenticato() && request.auth.uid == uid;
-      allow update: if isAutenticato() && (request.auth.uid == uid || isAdmin());
-      allow delete: if isAdmin();
+      // Elenco: il proprietario può elencare le PROPRIE schede (query filtrata su
+      // proprietarioUid lato client); admin/DM possono elencare quelle di chiunque
+      // (es. per trovare la scheda attiva di un giocatore).
+      allow list: if isAdmin() || isDM() || (isAutenticato() && request.auth.uid == resource.data.proprietarioUid);
+
+      // Creazione: solo a proprio nome.
+      allow create: if isAutenticato() && request.resource.data.proprietarioUid == request.auth.uid;
+
+      // Aggiornamento/eliminazione: solo il proprietario della scheda, o un admin.
+      allow update: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin());
+      allow delete: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin());
     }
   }
 }

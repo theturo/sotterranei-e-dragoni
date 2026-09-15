@@ -29,6 +29,13 @@
   box-sizing: border-box;
 }
 
+/* L'attributo hidden deve sempre vincere, anche su elementi con classi (es.
+   .btn) che impostano "display": a parità di specificità CSS altrimenti
+   perderebbe contro la regola della classe. */
+[hidden] {
+  display: none !important;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -991,4 +998,181 @@ footer.site-footer {
   padding: 18px;
   font-size: 0.8rem;
   color: rgba(243, 230, 200, 0.5);
+}
+
+/* ---------- Selettori nei form (usati dai .field) ---------- */
+
+.field select {
+  width: 100%;
+  padding: 11px 13px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--color-ink);
+}
+
+.field select:focus {
+  outline: none;
+  border-color: var(--color-burgundy);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.field-riga {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 16px;
+}
+
+@media (min-width: 640px) {
+  .field-riga {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* .btn-tabella usato anche su <a> (link "Apri scheda", "Visualizza scheda"). */
+.btn-tabella {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn-tabella:hover {
+  text-decoration: none;
+}
+
+/* ---------- "I miei personaggi": elenco a card ---------- */
+
+.griglia-schede-personaggio {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .griglia-schede-personaggio {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.scheda-card {
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.scheda-card-attiva {
+  border-color: var(--color-burgundy);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.scheda-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.scheda-card-header .icona-classe {
+  font-size: 1.6rem;
+}
+
+.scheda-card-titoli {
+  flex: 1;
+}
+
+.scheda-card-nome {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: var(--color-burgundy);
+}
+
+.scheda-card-sub {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+}
+
+.scheda-card-pf {
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+  margin-bottom: 12px;
+}
+
+.scheda-card-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Creazione guidata del personaggio ---------- */
+
+.wizard-panel {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.wizard-step h2 {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin-top: 0;
+}
+
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.wizard-nav .btn {
+  width: auto;
+  padding: 10px 22px;
+}
+
+table.tabella-punteggi {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+table.tabella-punteggi th {
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-ink-soft);
+  padding: 6px 8px;
+  border-bottom: 2px solid rgba(122, 31, 43, 0.35);
+}
+
+table.tabella-punteggi td {
+  padding: 8px;
+  border-bottom: 1px solid rgba(43, 27, 16, 0.12);
+  vertical-align: middle;
+}
+
+table.tabella-punteggi select {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 5px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--color-ink-soft);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--color-ink);
+}
+
+.riepilogo-lista p {
+  margin: 6px 0;
+}
+
+.riepilogo-lista label {
+  display: inline-block;
+  min-width: 170px;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
 }

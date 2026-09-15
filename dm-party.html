@@ -57,7 +57,7 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ottieniScheda, ROLES } from "./assets/js/auth.js";
+    import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ottieniSchedaAttiva, ROLES } from "./assets/js/auth.js";
 
     const ETICHETTE_RUOLO = {
       [ROLES.ADMIN]: "Admin",
@@ -102,7 +102,7 @@
 
     async function caricaPfRiga(riga) {
       try {
-        const scheda = await ottieniScheda(riga.dataset.uid);
+        const scheda = await ottieniSchedaAttiva(riga.dataset.uid);
         riga.querySelector(".cella-pf").textContent = testoPf(scheda);
       } catch (errore) {
         console.error(errore);
