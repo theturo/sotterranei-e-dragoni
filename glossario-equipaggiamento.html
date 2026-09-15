@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — Glossario equipaggiamento</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="veil" class="loading-veil">Consultando gli antichi registri…</div>
+
+  <div id="contenuto" style="display:none;">
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div>
+          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
+          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
+            Glossario equipaggiamento
+          </h1>
+        </div>
+        <span class="role-badge">SRD 5.1</span>
+      </div>
+
+      <div class="panel-wide">
+        <div class="glossario-controlli">
+          <input type="text" id="ricerca-glossario" class="input-ricerca" placeholder="Cerca un'arma, un'armatura, un oggetto…" autocomplete="off" />
+          <select id="filtro-categoria" class="select-filtro">
+            <option value="">Tutte le categorie</option>
+            <option value="arma">Armi</option>
+            <option value="armatura">Armature</option>
+            <option value="oggetto">Oggetti da avventura</option>
+            <option value="strumento">Strumenti</option>
+            <option value="pacco">Pacchi equipaggiamento</option>
+            <option value="montatura">Cavalcature</option>
+          </select>
+        </div>
+        <div id="risultati-glossario" class="glossario-risultati"></div>
+        <p id="glossario-vuoto" class="scheda-testo-libero" hidden>Nessun oggetto trovato: prova un altro termine.</p>
+        <p id="glossario-suggerimento" class="scheda-testo-libero">
+          Digita un termine di ricerca, oppure scegli una categoria qui sopra per sfogliarla per intero.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module">
+    import { proteggiPaginaDM } from "./assets/js/auth.js";
+    import { tuttiGliOggetti, ETICHETTE_CATEGORIA, cercaEquipaggiamento } from "./assets/js/equipaggiamento-srd.js";
+
+    const veil = document.getElementById("veil");
+    const contenuto = document.getElementById("contenuto");
+    const inputRicerca = document.getElementById("ricerca-glossario");
+    const selectCategoria = document.getElementById("filtro-categoria");
+    const risultati = document.getElementById("risultati-glossario");
+    const vuoto = document.getElementById("glossario-vuoto");
+    const suggerimento = document.getElementById("glossario-suggerimento");
+
+    function dettagliVoce(voce) {
+      switch (voce.categoria) {
+        case "arma":
+          return `
+            <p><label>Tipo</label> Arma ${voce.sottocategoria} · ${voce.tipo}</p>
+            <p><label>Danno</label> ${voce.danno} ${voce.tipoDanno}</p>
+            ${voce.proprieta?.length ? `<p><label>Proprietà</label> ${voce.proprieta.join(", ")}</p>` : ""}
+            <p><label>Costo</label> ${voce.costo} · <label>Peso</label> ${voce.peso} lb</p>
+          `;
+        case "armatura":
+          return `
+            <p><label>Tipo</label> Armatura ${voce.sottocategoria}</p>
+            <p><label>Classe Armatura</label> ${voce.ca}</p>
+            ${voce.forzaRichiesta ? `<p><label>Forza richiesta</label> ${voce.forzaRichiesta}</p>` : ""}
+            <p><label>Svantaggio in Furtività</label> ${voce.svantaggioFurtivita ? "Sì" : "No"}</p>
+            <p><label>Costo</label> ${voce.costo} · <label>Peso</label> ${voce.peso} lb</p>
+          `;
+        case "oggetto":
+          return `<p><label>Costo</label> ${voce.costo}${voce.peso ? ` · <label>Peso</label> ${voce.peso} lb` : ""}</p>`;
+        case "strumento":
+          return `
+            <p><label>Tipo</label> ${voce.sottocategoria}</p>
+            <p><label>Costo</label> ${voce.costo}${voce.peso ? ` · <label>Peso</label> ${voce.peso} lb` : ""}</p>
+          `;
+        case "pacco":
+          return `
+            <p><label>Costo</label> ${voce.costo}</p>
+            <p><label>Contenuto</label></p>
+            <ul class="lista-competenze">${voce.contenuto.map((c) => `<li>${c}</li>`).join("")}</ul>
+          `;
+        case "montatura":
+          return `<p><label>Costo</label> ${voce.costo}${voce.note ? ` · ${voce.note}` : ""}</p>`;
+        default:
+          return "";
+      }
+    }
+
+    function renderRisultati(voci) {
+      if (voci.length === 0) {
+        risultati.innerHTML = "";
+        vuoto.hidden = false;
+        return;
+      }
+      vuoto.hidden = true;
+      risultati.innerHTML = voci
+        .map(
+          (voce) => `
+        <div class="glossario-card">
+          <div class="glossario-card-header">
+            <h3>${voce.nome}</h3>
+            <span class="role-badge">${ETICHETTE_CATEGORIA[voce.categoria]}</span>
+          </div>
+          ${dettagliVoce(voce)}
+        </div>`
+        )
+        .join("");
+    }
+
+    function aggiorna() {
+      const testo = inputRicerca.value.trim();
+      const categoria = selectCategoria.value;
+
+      if (!testo && !categoria) {
+        risultati.innerHTML = "";
+        vuoto.hidden = true;
+        suggerimento.hidden = false;
+        return;
+      }
+      suggerimento.hidden = true;
+
+      const voci = testo
+        ? cercaEquipaggiamento(testo, { categoria: categoria || undefined })
+        : tuttiGliOggetti()
+            .filter((v) => v.categoria === categoria)
+            .sort((a, b) => a.nome.localeCompare(b.nome));
+
+      renderRisultati(voci);
+    }
+
+    inputRicerca.addEventListener("input", aggiorna);
+    selectCategoria.addEventListener("change", aggiorna);
+
+    proteggiPaginaDM(() => {
+      veil.style.display = "none";
+      contenuto.style.display = "block";
+    });
+  </script>
+</body>
+</html>

@@ -1176,3 +1176,155 @@ table.tabella-punteggi select {
   font-size: 0.85rem;
   color: var(--color-ink-soft);
 }
+
+/* ---------- Ricerca equipaggiamento (scheda) e glossario (DM) ---------- */
+
+.input-ricerca,
+.select-filtro {
+  padding: 11px 13px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--color-ink);
+}
+
+.input-ricerca {
+  width: 100%;
+}
+
+.input-ricerca:focus,
+.select-filtro:focus {
+  outline: none;
+  border-color: var(--color-burgundy);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.ricerca-equipaggiamento {
+  position: relative;
+  margin: 14px 0 8px;
+}
+
+.risultati-ricerca {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--color-parchment);
+  border: 1px solid var(--color-gold);
+  border-radius: 8px;
+  box-shadow: var(--shadow-deep);
+}
+
+.risultato-riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(43, 27, 16, 0.1);
+  font-size: 0.9rem;
+}
+
+.risultato-riga:last-child {
+  border-bottom: none;
+}
+
+.risultato-riga small {
+  color: var(--color-ink-soft);
+}
+
+.inventario-lista {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+
+.inventario-riga {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(43, 27, 16, 0.12);
+}
+
+.inventario-nome {
+  flex: 1;
+}
+
+.inventario-quantita {
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+}
+
+.input-quantita {
+  width: 56px;
+  padding: 4px 6px;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.glossario-controlli {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.glossario-controlli .input-ricerca {
+  flex: 1;
+  min-width: 220px;
+}
+
+.glossario-risultati {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 720px) {
+  .glossario-risultati {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.glossario-card {
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.glossario-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.glossario-card-header h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.glossario-card p {
+  margin: 4px 0;
+  font-size: 0.92rem;
+}
+
+.glossario-card label {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-ink-soft);
+}

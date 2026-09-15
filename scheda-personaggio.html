@@ -175,7 +175,12 @@
                 <div><label>ME</label><span>0</span></div>
                 <div><label>MP</label><span>0</span></div>
               </div>
-              <p class="scheda-testo-libero">In arrivo con l'editing completo della scheda.</p>
+              <div id="ricerca-equip-wrap" class="ricerca-equipaggiamento">
+                <input type="text" id="ricerca-equip" class="input-ricerca" placeholder="Cerca nel catalogo (es. spada, corda, pozione)…" autocomplete="off" />
+                <div id="risultati-equip" class="risultati-ricerca" hidden></div>
+              </div>
+              <ul id="lista-inventario" class="inventario-lista"></ul>
+              <p id="inventario-vuoto" class="scheda-testo-libero" hidden>Nessun oggetto nell'inventario.</p>
             </div>
 
           </div>
@@ -222,7 +227,14 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, ottieniScheda, ottieniSchedaAttiva, aggiornaHp, aggiornaTiriSalvezzaMorte } from "./assets/js/auth.js";
+    import {
+      proteggiPagina,
+      ottieniScheda,
+      ottieniSchedaAttiva,
+      aggiornaHp,
+      aggiornaTiriSalvezzaMorte,
+      aggiornaInventario,
+    } from "./assets/js/auth.js";
     import {
       CLASSI,
       CARATTERISTICHE,
@@ -231,6 +243,7 @@
       nomeRazzaCompleto,
       velocitaRazza,
     } from "./assets/js/dati-srd.js";
+    import { cercaEquipaggiamento, ETICHETTE_CATEGORIA } from "./assets/js/equipaggiamento-srd.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -309,6 +322,63 @@
       document.getElementById("btn-reset-morte").style.display = soloLettura ? "none" : "";
     }
 
+    function renderInventario() {
+      const lista = document.getElementById("lista-inventario");
+      const vuoto = document.getElementById("inventario-vuoto");
+      const inventario = scheda.inventario || [];
+
+      document.getElementById("ricerca-equip-wrap").hidden = soloLettura;
+
+      if (inventario.length === 0) {
+        lista.innerHTML = "";
+        vuoto.hidden = false;
+      } else {
+        vuoto.hidden = true;
+        lista.innerHTML = inventario
+          .map(
+            (voce) => `
+          <li class="inventario-riga" data-chiave="${voce.chiave}">
+            <span class="inventario-nome">${voce.nome}</span>
+            ${
+              soloLettura
+                ? `<span class="inventario-quantita">×${voce.quantita}</span>`
+                : `<input type="number" class="input-quantita" min="1" value="${voce.quantita}" data-chiave="${voce.chiave}" />
+                   <button class="btn-tabella" data-rimuovi="${voce.chiave}" type="button">Rimuovi</button>`
+            }
+          </li>`
+          )
+          .join("");
+      }
+    }
+
+    async function salvaInventario() {
+      try {
+        await aggiornaInventario(scheda.id, scheda.inventario || []);
+      } catch (errore) {
+        console.error(errore);
+      }
+    }
+
+    function renderRisultatiRicerca(testo) {
+      const contenitore = document.getElementById("risultati-equip");
+      const risultati = cercaEquipaggiamento(testo).slice(0, 15);
+      if (risultati.length === 0) {
+        contenitore.hidden = true;
+        contenitore.innerHTML = "";
+        return;
+      }
+      contenitore.hidden = false;
+      contenitore.innerHTML = risultati
+        .map(
+          (voce) => `
+        <div class="risultato-riga">
+          <span>${voce.nome} <small>(${ETICHETTE_CATEGORIA[voce.categoria]}${voce.costo ? " · " + voce.costo : ""})</small></span>
+          <button class="btn-tabella" data-aggiungi="${voce.chiave}" data-nome="${voce.nome}" data-categoria="${voce.categoria}" type="button">Aggiungi</button>
+        </div>`
+        )
+        .join("");
+    }
+
     function renderBadgeStato() {
       const badge = document.getElementById("badge-stato");
       if (soloLettura) {
@@ -347,6 +417,7 @@
       renderVelocitaEDadi();
       renderHp();
       renderPalliniMorte();
+      renderInventario();
 
       veil.style.display = "none";
       contenuto.style.display = "block";
@@ -394,6 +465,56 @@
       } catch (errore) {
         console.error(errore);
       }
+    });
+
+    // Ricerca nel catalogo equipaggiamento e aggiunta all'inventario.
+    const inputRicerca = document.getElementById("ricerca-equip");
+    inputRicerca.addEventListener("input", () => {
+      renderRisultatiRicerca(inputRicerca.value);
+    });
+
+    document.getElementById("risultati-equip").addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-aggiungi]");
+      if (!bottone) return;
+
+      const chiave = bottone.dataset.aggiungi;
+      scheda.inventario = scheda.inventario || [];
+      const esistente = scheda.inventario.find((voce) => voce.chiave === chiave);
+      if (esistente) {
+        esistente.quantita += 1;
+      } else {
+        scheda.inventario.push({
+          chiave,
+          nome: bottone.dataset.nome,
+          categoria: bottone.dataset.categoria,
+          quantita: 1,
+        });
+      }
+
+      inputRicerca.value = "";
+      renderRisultatiRicerca("");
+      renderInventario();
+      await salvaInventario();
+    });
+
+    document.getElementById("lista-inventario").addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-rimuovi]");
+      if (!bottone) return;
+
+      scheda.inventario = (scheda.inventario || []).filter((voce) => voce.chiave !== bottone.dataset.rimuovi);
+      renderInventario();
+      await salvaInventario();
+    });
+
+    document.getElementById("lista-inventario").addEventListener("change", async (evento) => {
+      const input = evento.target.closest(".input-quantita");
+      if (!input) return;
+
+      const quantita = Math.max(1, Number(input.value) || 1);
+      const voce = (scheda.inventario || []).find((v) => v.chiave === input.dataset.chiave);
+      if (voce) voce.quantita = quantita;
+      renderInventario();
+      await salvaInventario();
     });
   </script>
 </body>

@@ -222,6 +222,11 @@ export async function aggiornaTiriSalvezzaMorte(schedaId, tiriSalvezzaMorte) {
   await updateDoc(doc(db, "personaggi", schedaId), { tiriSalvezzaMorte, aggiornatoIl: serverTimestamp() });
 }
 
+// Inventario di una scheda: array di { chiave, nome, categoria, quantita }.
+export async function aggiornaInventario(schedaId, inventario) {
+  await updateDoc(doc(db, "personaggi", schedaId), { inventario, aggiornatoIl: serverTimestamp() });
+}
+
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,
 // poi esegue la callback con (user, profilo). Se non autenticato, reindirizza al
 // login; se autenticato ma con email non verificata, reindirizza alla pagina di
