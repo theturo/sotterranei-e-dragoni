@@ -679,6 +679,64 @@ table.tabella-utenti td.cella-email {
   font-size: 1rem;
 }
 
+.input-inline {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--color-ink);
+  text-overflow: ellipsis;
+}
+
+.input-inline:hover,
+.input-inline:focus {
+  border-bottom-color: var(--color-burgundy);
+}
+
+.input-inline:focus {
+  outline: none;
+}
+
+.input-inline:disabled {
+  opacity: 0.7;
+}
+
+.input-inline::placeholder {
+  color: var(--color-ink-soft);
+  opacity: 0.55;
+}
+
+.btn-allineamento-trigger {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--color-ink);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-allineamento-trigger:hover,
+.btn-allineamento-trigger:focus-visible {
+  border-bottom-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.btn-allineamento-trigger:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
 .scheda-corpo {
   display: grid;
   grid-template-columns: 1fr;
@@ -1106,6 +1164,158 @@ table.tabella-utenti td.cella-email {
   color: var(--color-ink-soft);
   line-height: 1.5;
   margin-bottom: 22px;
+}
+
+/* ---------- Modale allineamento: ruota a spicchi ---------- */
+
+.modal-card-allineamento {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+  color: var(--color-ink);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-gold);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-deep);
+}
+
+.modal-allineamento-intestazione {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.modal-allineamento-intestazione h2 {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin: 0;
+}
+
+.btn-chiudi-modal {
+  background: transparent;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.btn-chiudi-modal:hover {
+  color: var(--color-burgundy);
+}
+
+.modal-allineamento-corpo {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ruota-allineamento {
+  position: relative;
+  width: min(280px, 70vw);
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+
+.ruota-allineamento-anello {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.ruota-allineamento-bordo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid var(--color-gold);
+  box-shadow: 0 0 0 6px rgba(21, 13, 8, 0.6), 0 14px 34px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.spicchio-allineamento {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: transparent;
+  transition: filter 0.18s ease, transform 0.18s ease;
+  z-index: 1;
+}
+
+.spicchio-allineamento:hover,
+.spicchio-allineamento:focus-visible {
+  transform: scale(1.12);
+  filter: brightness(1.2) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+  z-index: 5;
+}
+
+.spicchio-allineamento-etichetta {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-bg-dark);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.hub-allineamento {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 32%;
+  height: 32%;
+  border-radius: 50%;
+  border: 3px solid var(--color-bg-dark);
+  box-shadow: 0 0 0 2px var(--color-gold-bright), 0 6px 16px rgba(0, 0, 0, 0.5);
+  color: var(--color-ink);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  cursor: pointer;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.hub-allineamento:hover,
+.hub-allineamento:focus-visible {
+  transform: translate(-50%, -50%) scale(1.1);
+  filter: brightness(1.15);
+}
+
+.pannello-allineamento {
+  flex: 1 1 220px;
+  max-width: 300px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid var(--color-gold);
+  border-radius: 10px;
+  padding: 16px 18px;
+  min-height: 100px;
+}
+
+.pannello-allineamento-nome {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.pannello-allineamento-testo {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+  margin: 0;
 }
 
 footer.site-footer {

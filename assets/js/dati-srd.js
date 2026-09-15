@@ -157,6 +157,25 @@ export function velocitaRazza(razzaChiave, sottorazzaChiave) {
   return sottorazza?.velocita ?? razza.velocita;
 }
 
+// I 9 allineamenti del SRD 5.1. "angolo" posiziona la voce sulla ruota a
+// spicchi (0°=in alto, in senso orario); la voce senza angolo (Neutrale
+// Puro) occupa il fulcro centrale della ruota.
+export const ALLINEAMENTI = [
+  { chiave: "NB", nome: "Neutrale Buono", angolo: 0, blurb: "Fa il possibile per aiutare gli altri, senza legarsi rigidamente a ordine o libertà." },
+  { chiave: "CB", nome: "Caotico Buono", angolo: 45, blurb: "Segue la coscienza più delle regole, ribellandosi quando le leggi opprimono il bene." },
+  { chiave: "CN", nome: "Caotico Neutrale", angolo: 90, blurb: "Segue il proprio istinto e la libertà individuale: imprevedibile più che crudele." },
+  { chiave: "CM", nome: "Caotico Malvagio", angolo: 135, blurb: "Agisce per capriccio e violenza, mosso da avidità, odio o sete di distruzione." },
+  { chiave: "NM", nome: "Neutrale Malvagio", angolo: 180, blurb: "Persegue i propri interessi senza scrupoli, pronto a tradire se conviene." },
+  { chiave: "LM", nome: "Legale Malvagio", angolo: 225, blurb: "Sfrutta regole e gerarchie con metodo spietato per ottenere potere e controllo." },
+  { chiave: "LN", nome: "Legale Neutrale", angolo: 270, blurb: "Crede nell'ordine, nella tradizione o in un codice personale, senza schierarsi tra bene e male." },
+  { chiave: "LB", nome: "Legale Buono", angolo: 315, blurb: "Agisce secondo un codice d'onore, cercando il bene in modo affidabile e organizzato." },
+  { chiave: "N", nome: "Neutrale Puro", angolo: null, blurb: "Agisce secondo le circostanze, senza forti convinzioni su moralità o ordine costituito." },
+];
+
+export function nomeAllineamento(chiave) {
+  return ALLINEAMENTI.find((a) => a.chiave === chiave)?.nome || "—";
+}
+
 export function modificatore(punteggio) {
   return Math.floor((punteggio - 10) / 2);
 }
