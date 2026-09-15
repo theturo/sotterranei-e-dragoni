@@ -97,7 +97,7 @@
 
             <div class="scheda-box">
               <h3>Abilità</h3>
-              <p class="scheda-testo-libero">Competenze nelle abilità: in arrivo con l'editing completo della scheda.</p>
+              <ul class="lista-competenze" id="lista-abilita"></ul>
             </div>
 
             <div class="scheda-box scheda-box-centrale">
@@ -163,17 +163,23 @@
 
             <div class="scheda-box">
               <h3>Attacchi e incantesimi</h3>
-              <p class="scheda-testo-libero">In arrivo con l'editing completo della scheda.</p>
+              <table class="tabella-attacchi">
+                <thead>
+                  <tr><th>Nome</th><th>Bonus attacco</th><th>Danno / Tipo</th></tr>
+                </thead>
+                <tbody id="corpo-attacchi"></tbody>
+              </table>
+              <p id="attacchi-vuoto" class="scheda-testo-libero" hidden>Aggiungi un'arma all'equipaggiamento per vederla qui.</p>
             </div>
 
             <div class="scheda-box">
               <h3>Equipaggiamento</h3>
               <div class="riga-monete">
-                <div><label>MR</label><span>0</span></div>
-                <div><label>MA</label><span>0</span></div>
-                <div><label>MO</label><span>0</span></div>
-                <div><label>ME</label><span>0</span></div>
-                <div><label>MP</label><span>0</span></div>
+                <div><label for="moneta-rame">MR</label><input type="number" id="moneta-rame" class="input-moneta" min="0" inputmode="numeric" /></div>
+                <div><label for="moneta-argento">MA</label><input type="number" id="moneta-argento" class="input-moneta" min="0" inputmode="numeric" /></div>
+                <div><label for="moneta-oro">MO</label><input type="number" id="moneta-oro" class="input-moneta" min="0" inputmode="numeric" /></div>
+                <div><label for="moneta-elettro">ME</label><input type="number" id="moneta-elettro" class="input-moneta" min="0" inputmode="numeric" /></div>
+                <div><label for="moneta-platino">MP</label><input type="number" id="moneta-platino" class="input-moneta" min="0" inputmode="numeric" /></div>
               </div>
               <div id="ricerca-equip-wrap" class="ricerca-equipaggiamento">
                 <input type="text" id="ricerca-equip" class="input-ricerca" placeholder="Cerca nel catalogo (es. spada, corda, pozione)…" autocomplete="off" />
@@ -181,6 +187,15 @@
               </div>
               <ul id="lista-inventario" class="inventario-lista"></ul>
               <p id="inventario-vuoto" class="scheda-testo-libero" hidden>Nessun oggetto nell'inventario.</p>
+              <div id="equip-indossato-wrap" class="equip-indossato">
+                <div class="field">
+                  <label for="select-armatura-indossata">Armatura indossata</label>
+                  <select id="select-armatura-indossata"></select>
+                </div>
+                <label class="checkbox-scudo">
+                  <input type="checkbox" id="checkbox-scudo" /> Scudo imbracciato
+                </label>
+              </div>
             </div>
 
           </div>
@@ -190,29 +205,34 @@
 
             <div class="scheda-box">
               <h3>Tratti della personalità</h3>
-              <p class="scheda-testo-libero">Da definire.</p>
+              <textarea id="personalita-tratti" class="textarea-libero" rows="3" placeholder="Da definire."></textarea>
             </div>
             <div class="scheda-box">
               <h3>Ideali</h3>
-              <p class="scheda-testo-libero">Da definire.</p>
+              <textarea id="personalita-ideali" class="textarea-libero" rows="2" placeholder="Da definire."></textarea>
             </div>
             <div class="scheda-box">
               <h3>Legami</h3>
-              <p class="scheda-testo-libero">Da definire.</p>
+              <textarea id="personalita-legami" class="textarea-libero" rows="2" placeholder="Da definire."></textarea>
             </div>
             <div class="scheda-box">
               <h3>Difetti</h3>
-              <p class="scheda-testo-libero">Da definire.</p>
+              <textarea id="personalita-difetti" class="textarea-libero" rows="2" placeholder="Da definire."></textarea>
             </div>
 
             <div class="scheda-box">
               <h3>Caratteristiche e talenti</h3>
-              <p class="scheda-testo-libero">Da definire.</p>
+              <ol id="lista-talenti" class="lista-talenti"></ol>
+              <p id="talenti-vuoto" class="scheda-testo-libero" hidden>Da definire.</p>
+              <div id="form-talento-wrap" class="form-aggiungi-talento">
+                <input type="text" id="input-talento" placeholder="Es. Nemico Prescelto (non morti)" autocomplete="off" />
+                <button id="btn-aggiungi-talento" class="btn-tabella" type="button">Aggiungi</button>
+              </div>
             </div>
 
             <div class="scheda-box">
               <h3>Competenze e linguaggi</h3>
-              <p class="scheda-testo-libero">Da definire.</p>
+              <textarea id="competenze-linguaggi" class="textarea-libero" rows="3" placeholder="Da definire."></textarea>
             </div>
 
           </div>
@@ -234,16 +254,19 @@
       aggiornaHp,
       aggiornaTiriSalvezzaMorte,
       aggiornaInventario,
+      aggiornaScheda,
     } from "./assets/js/auth.js";
     import {
       CLASSI,
       CARATTERISTICHE,
+      ABILITA,
+      ABBREVIAZIONI_CARATTERISTICHE,
       modificatore,
       formattaModificatore,
       nomeRazzaCompleto,
       velocitaRazza,
     } from "./assets/js/dati-srd.js";
-    import { cercaEquipaggiamento, ETICHETTE_CATEGORIA } from "./assets/js/equipaggiamento-srd.js";
+    import { ARMI, ARMATURE, cercaEquipaggiamento, ETICHETTE_CATEGORIA } from "./assets/js/equipaggiamento-srd.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -278,10 +301,157 @@
       });
 
       const modDestrezza = modificatore(scheda.caratteristiche?.destrezza ?? 10);
-      const modSaggezza = modificatore(scheda.caratteristiche?.saggezza ?? 10);
       document.getElementById("valore-iniziativa").textContent = formattaModificatore(modDestrezza);
-      document.getElementById("valore-ca").textContent = String(10 + modDestrezza);
-      document.getElementById("valore-percezione-passiva").textContent = String(10 + modSaggezza);
+    }
+
+    // L'armatura/lo scudo indossati (scelti tra quelli posseduti in inventario)
+    // determinano la Classe Armatura effettiva.
+    function possiedeScudo() {
+      return (scheda.inventario || []).some((v) => v.categoria === "armatura" && ARMATURE[v.chiave]?.sottocategoria === "scudo");
+    }
+
+    function oggettiArmaturaIndossabile() {
+      return (scheda.inventario || []).filter((v) => v.categoria === "armatura" && ARMATURE[v.chiave]?.sottocategoria !== "scudo");
+    }
+
+    function renderCA() {
+      const modDes = modificatore(scheda.caratteristiche?.destrezza ?? 10);
+      const armatura = scheda.armaturaIndossata ? ARMATURE[scheda.armaturaIndossata] : null;
+      let ca;
+      if (armatura) {
+        const desEffettivo = armatura.usaDestrezza ? (armatura.desMax != null ? Math.min(modDes, armatura.desMax) : modDes) : 0;
+        ca = armatura.caBase + desEffettivo;
+      } else {
+        ca = 10 + modDes;
+      }
+      if (scheda.scudoIndossato && possiedeScudo()) ca += ARMATURE.scudo.bonusScudo;
+      document.getElementById("valore-ca").textContent = String(ca);
+    }
+
+    function renderEquipaggiamentoIndossato() {
+      const select = document.getElementById("select-armatura-indossata");
+      const checkboxScudo = document.getElementById("checkbox-scudo");
+      const armorItems = oggettiArmaturaIndossabile();
+      const haScudo = possiedeScudo();
+
+      select.innerHTML =
+        '<option value="">Nessuna (senza armatura)</option>' +
+        armorItems.map((v) => `<option value="${v.chiave}">${v.nome}</option>`).join("");
+      select.value = scheda.armaturaIndossata || "";
+      select.disabled = soloLettura;
+
+      checkboxScudo.checked = Boolean(scheda.scudoIndossato) && haScudo;
+      checkboxScudo.disabled = soloLettura || !haScudo;
+
+      document.getElementById("equip-indossato-wrap").hidden = armorItems.length === 0 && !haScudo;
+      renderCA();
+    }
+
+    function renderAbilita() {
+      const bonus = bonusCompetenza(scheda.livello);
+      const competenti = scheda.abilitaCompetenti || [];
+      document.getElementById("lista-abilita").innerHTML = ABILITA.map(({ chiave, nome, caratteristica }) => {
+        const punteggio = scheda.caratteristiche?.[caratteristica] ?? 10;
+        const competente = competenti.includes(chiave);
+        const mod = modificatore(punteggio) + (competente ? bonus : 0);
+        const abbr = ABBREVIAZIONI_CARATTERISTICHE[caratteristica];
+        return `<li data-chiave="${chiave}" class="${competente ? "competente" : ""}">
+          <span class="pallino${soloLettura ? "" : " pallino-cliccabile"}" data-abilita="${chiave}"></span>${nome} (${abbr}) <b>${formattaModificatore(mod)}</b>
+        </li>`;
+      }).join("");
+
+      const modSaggezza = modificatore(scheda.caratteristiche?.saggezza ?? 10);
+      const bonusPercezione = competenti.includes("percezione") ? bonus : 0;
+      document.getElementById("valore-percezione-passiva").textContent = String(10 + modSaggezza + bonusPercezione);
+    }
+
+    function renderAttacchi() {
+      const armi = (scheda.inventario || []).filter((v) => v.categoria === "arma");
+      const corpo = document.getElementById("corpo-attacchi");
+      const vuoto = document.getElementById("attacchi-vuoto");
+      document.querySelector(".tabella-attacchi").hidden = armi.length === 0;
+
+      if (armi.length === 0) {
+        corpo.innerHTML = "";
+        vuoto.hidden = false;
+        return;
+      }
+      vuoto.hidden = true;
+      corpo.innerHTML = armi
+        .map((voce) => {
+          const dati = ARMI[voce.chiave];
+          const bonus = voce.bonusAttacco || 0;
+          return `<tr data-chiave="${voce.chiave}">
+            <td>${voce.nome}</td>
+            <td>${
+              soloLettura
+                ? formattaModificatore(bonus)
+                : `<input type="number" class="input-bonus-attacco" data-chiave="${voce.chiave}" value="${bonus}" />`
+            }</td>
+            <td>${dati ? `${dati.danno} ${dati.tipoDanno}` : "—"}</td>
+          </tr>`;
+        })
+        .join("");
+    }
+
+    function bonusAttaccoSuggerito(chiaveArma) {
+      const arma = ARMI[chiaveArma];
+      if (!arma) return 0;
+      const modFor = modificatore(scheda.caratteristiche?.forza ?? 10);
+      const modDes = modificatore(scheda.caratteristiche?.destrezza ?? 10);
+      const finezza = arma.proprieta?.includes("Finezza");
+      const modPertinente = finezza ? Math.max(modFor, modDes) : arma.tipo === "a distanza" ? modDes : modFor;
+      return modPertinente + bonusCompetenza(scheda.livello);
+    }
+
+    function renderPersonalita() {
+      const campi = {
+        "personalita-tratti": "tratti",
+        "personalita-ideali": "ideali",
+        "personalita-legami": "legami",
+        "personalita-difetti": "difetti",
+        "competenze-linguaggi": "competenzeLinguaggi",
+      };
+      Object.entries(campi).forEach(([id, chiave]) => {
+        const campo = document.getElementById(id);
+        campo.value = chiave === "competenzeLinguaggi" ? scheda.competenzeLinguaggi || "" : scheda.personalita?.[chiave] || "";
+        campo.disabled = soloLettura;
+      });
+    }
+
+    function renderTalenti() {
+      const talenti = scheda.talenti || [];
+      const lista = document.getElementById("lista-talenti");
+      const vuoto = document.getElementById("talenti-vuoto");
+      document.getElementById("form-talento-wrap").hidden = soloLettura;
+
+      if (talenti.length === 0) {
+        lista.innerHTML = "";
+        vuoto.hidden = false;
+        return;
+      }
+      vuoto.hidden = true;
+      lista.innerHTML = talenti
+        .map(
+          (testo, indice) => `
+        <li>
+          <b>${testo}</b>
+          ${soloLettura ? "" : `<button class="btn-rimuovi-talento" data-indice="${indice}" type="button" aria-label="Rimuovi">×</button>`}
+        </li>`
+        )
+        .join("");
+    }
+
+    function renderMonete() {
+      const monete = scheda.monete;
+      document.getElementById("moneta-rame").value = monete.rame;
+      document.getElementById("moneta-argento").value = monete.argento;
+      document.getElementById("moneta-oro").value = monete.oro;
+      document.getElementById("moneta-elettro").value = monete.elettro;
+      document.getElementById("moneta-platino").value = monete.platino;
+      ["moneta-rame", "moneta-argento", "moneta-oro", "moneta-elettro", "moneta-platino"].forEach((id) => {
+        document.getElementById(id).disabled = soloLettura;
+      });
     }
 
     function renderSalvezze() {
@@ -410,6 +580,16 @@
 
       soloLettura = scheda.proprietarioUid !== user.uid;
 
+      // Normalizza i campi introdotti dopo la creazione di schede più vecchie.
+      scheda.abilitaCompetenti = scheda.abilitaCompetenti || [];
+      scheda.personalita = scheda.personalita || {};
+      scheda.talenti = scheda.talenti || [];
+      scheda.competenzeLinguaggi = scheda.competenzeLinguaggi || "";
+      scheda.monete = scheda.monete || { rame: 0, argento: 0, oro: 0, elettro: 0, platino: 0 };
+      scheda.inventario = scheda.inventario || [];
+      scheda.armaturaIndossata = scheda.armaturaIndossata || null;
+      scheda.scudoIndossato = Boolean(scheda.scudoIndossato);
+
       renderBadgeStato();
       renderIntestazione();
       renderCaratteristiche();
@@ -418,6 +598,12 @@
       renderHp();
       renderPalliniMorte();
       renderInventario();
+      renderEquipaggiamentoIndossato();
+      renderAbilita();
+      renderAttacchi();
+      renderPersonalita();
+      renderTalenti();
+      renderMonete();
 
       veil.style.display = "none";
       contenuto.style.display = "block";
@@ -478,22 +664,22 @@
       if (!bottone) return;
 
       const chiave = bottone.dataset.aggiungi;
+      const categoria = bottone.dataset.categoria;
       scheda.inventario = scheda.inventario || [];
       const esistente = scheda.inventario.find((voce) => voce.chiave === chiave);
       if (esistente) {
         esistente.quantita += 1;
       } else {
-        scheda.inventario.push({
-          chiave,
-          nome: bottone.dataset.nome,
-          categoria: bottone.dataset.categoria,
-          quantita: 1,
-        });
+        const nuovaVoce = { chiave, nome: bottone.dataset.nome, categoria, quantita: 1 };
+        if (categoria === "arma") nuovaVoce.bonusAttacco = bonusAttaccoSuggerito(chiave);
+        scheda.inventario.push(nuovaVoce);
       }
 
       inputRicerca.value = "";
       renderRisultatiRicerca("");
       renderInventario();
+      renderEquipaggiamentoIndossato();
+      renderAttacchi();
       await salvaInventario();
     });
 
@@ -503,6 +689,8 @@
 
       scheda.inventario = (scheda.inventario || []).filter((voce) => voce.chiave !== bottone.dataset.rimuovi);
       renderInventario();
+      renderEquipaggiamentoIndossato();
+      renderAttacchi();
       await salvaInventario();
     });
 
@@ -515,6 +703,131 @@
       if (voce) voce.quantita = quantita;
       renderInventario();
       await salvaInventario();
+    });
+
+    // Armatura/scudo indossati: cambiano la Classe Armatura calcolata.
+    document.getElementById("select-armatura-indossata").addEventListener("change", async (evento) => {
+      if (soloLettura) return;
+      scheda.armaturaIndossata = evento.target.value || null;
+      renderCA();
+      try {
+        await aggiornaScheda(scheda.id, { armaturaIndossata: scheda.armaturaIndossata });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    document.getElementById("checkbox-scudo").addEventListener("change", async (evento) => {
+      if (soloLettura) return;
+      scheda.scudoIndossato = evento.target.checked;
+      renderCA();
+      try {
+        await aggiornaScheda(scheda.id, { scudoIndossato: scheda.scudoIndossato });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    // Abilità: click su un pallino accende/spegne la competenza.
+    document.getElementById("lista-abilita").addEventListener("click", async (evento) => {
+      if (soloLettura) return;
+      const pallino = evento.target.closest("[data-abilita]");
+      if (!pallino) return;
+
+      const chiave = pallino.dataset.abilita;
+      const competenti = new Set(scheda.abilitaCompetenti || []);
+      if (competenti.has(chiave)) competenti.delete(chiave);
+      else competenti.add(chiave);
+      scheda.abilitaCompetenti = Array.from(competenti);
+      renderAbilita();
+      try {
+        await aggiornaScheda(scheda.id, { abilitaCompetenti: scheda.abilitaCompetenti });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    // Bonus attacco: editabile per ogni arma dell'inventario.
+    document.getElementById("corpo-attacchi").addEventListener("change", async (evento) => {
+      const input = evento.target.closest(".input-bonus-attacco");
+      if (!input) return;
+
+      const voce = (scheda.inventario || []).find((v) => v.chiave === input.dataset.chiave);
+      if (voce) voce.bonusAttacco = Number(input.value) || 0;
+      await salvaInventario();
+    });
+
+    // Personalità e competenze/linguaggi: testo libero, salvato al cambio.
+    const CAMPI_PERSONALITA = {
+      "personalita-tratti": "tratti",
+      "personalita-ideali": "ideali",
+      "personalita-legami": "legami",
+      "personalita-difetti": "difetti",
+    };
+    Object.keys(CAMPI_PERSONALITA).forEach((id) => {
+      document.getElementById(id).addEventListener("change", async (evento) => {
+        if (soloLettura) return;
+        scheda.personalita = scheda.personalita || {};
+        scheda.personalita[CAMPI_PERSONALITA[id]] = evento.target.value;
+        try {
+          await aggiornaScheda(scheda.id, { personalita: scheda.personalita });
+        } catch (errore) {
+          console.error(errore);
+        }
+      });
+    });
+
+    document.getElementById("competenze-linguaggi").addEventListener("change", async (evento) => {
+      if (soloLettura) return;
+      scheda.competenzeLinguaggi = evento.target.value;
+      try {
+        await aggiornaScheda(scheda.id, { competenzeLinguaggi: scheda.competenzeLinguaggi });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    // Caratteristiche e talenti: elenco libero di voci aggiunte una alla volta.
+    async function salvaTalenti() {
+      try {
+        await aggiornaScheda(scheda.id, { talenti: scheda.talenti || [] });
+      } catch (errore) {
+        console.error(errore);
+      }
+    }
+
+    document.getElementById("btn-aggiungi-talento").addEventListener("click", async () => {
+      if (soloLettura) return;
+      const input = document.getElementById("input-talento");
+      const testo = input.value.trim();
+      if (!testo) return;
+      scheda.talenti = [...(scheda.talenti || []), testo];
+      input.value = "";
+      renderTalenti();
+      await salvaTalenti();
+    });
+
+    document.getElementById("lista-talenti").addEventListener("click", async (evento) => {
+      if (soloLettura) return;
+      const bottone = evento.target.closest(".btn-rimuovi-talento");
+      if (!bottone) return;
+      const indice = Number(bottone.dataset.indice);
+      scheda.talenti = (scheda.talenti || []).filter((_, i) => i !== indice);
+      renderTalenti();
+      await salvaTalenti();
+    });
+
+    // Monete: salvate al cambio di ciascun campo.
+    ["rame", "argento", "oro", "elettro", "platino"].forEach((chiave) => {
+      document.getElementById(`moneta-${chiave}`).addEventListener("change", async (evento) => {
+        if (soloLettura) return;
+        scheda.monete[chiave] = Math.max(0, Number(evento.target.value) || 0);
+        try {
+          await aggiornaScheda(scheda.id, { monete: scheda.monete });
+        } catch (errore) {
+          console.error(errore);
+        }
+      });
     });
   </script>
 </body>

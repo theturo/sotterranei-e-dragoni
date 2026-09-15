@@ -222,9 +222,15 @@ export async function aggiornaTiriSalvezzaMorte(schedaId, tiriSalvezzaMorte) {
   await updateDoc(doc(db, "personaggi", schedaId), { tiriSalvezzaMorte, aggiornatoIl: serverTimestamp() });
 }
 
-// Inventario di una scheda: array di { chiave, nome, categoria, quantita }.
+// Inventario di una scheda: array di { chiave, nome, categoria, quantita, bonusAttacco? }.
 export async function aggiornaInventario(schedaId, inventario) {
   await updateDoc(doc(db, "personaggi", schedaId), { inventario, aggiornatoIl: serverTimestamp() });
+}
+
+// Aggiornamento generico di uno o più campi di una scheda (abilità competenti,
+// personalità, talenti, competenze/linguaggi, monete, equipaggiamento indossato...).
+export async function aggiornaScheda(schedaId, campi) {
+  await updateDoc(doc(db, "personaggi", schedaId), { ...campi, aggiornatoIl: serverTimestamp() });
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,

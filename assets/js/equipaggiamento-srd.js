@@ -44,20 +44,22 @@ export const ARMI = {
   rete: { nome: "Rete", sottocategoria: "marziale", tipo: "a distanza", danno: "—", tipoDanno: "speciale", proprieta: ["Speciale", "Da lancio (1,5/4,5 m)"], costo: "1 mo", peso: 3 },
 };
 
+// caBase/usaDestrezza/desMax servono al calcolo automatico della CA sulla
+// scheda personaggio; "ca" resta la stringa leggibile usata dal glossario.
 export const ARMATURE = {
-  imbottita: { nome: "Imbottita", sottocategoria: "leggera", ca: "11 + Des", forzaRichiesta: null, svantaggioFurtivita: true, costo: "5 mo", peso: 8 },
-  cuoio: { nome: "Cuoio", sottocategoria: "leggera", ca: "11 + Des", forzaRichiesta: null, svantaggioFurtivita: false, costo: "10 mo", peso: 10 },
-  cuoio_borchiato: { nome: "Cuoio borchiato", sottocategoria: "leggera", ca: "12 + Des", forzaRichiesta: null, svantaggioFurtivita: false, costo: "45 mo", peso: 13 },
-  pelle: { nome: "Pelle", sottocategoria: "media", ca: "12 + Des (max 2)", forzaRichiesta: null, svantaggioFurtivita: false, costo: "10 mo", peso: 12 },
-  usbergo_maglia: { nome: "Usbergo di maglia", sottocategoria: "media", ca: "13 + Des (max 2)", forzaRichiesta: null, svantaggioFurtivita: false, costo: "50 mo", peso: 20 },
-  corazza_a_scaglie: { nome: "Corazza a scaglie", sottocategoria: "media", ca: "14 + Des (max 2)", forzaRichiesta: null, svantaggioFurtivita: true, costo: "50 mo", peso: 45 },
-  corazza: { nome: "Corazza", sottocategoria: "media", ca: "14 + Des (max 2)", forzaRichiesta: null, svantaggioFurtivita: false, costo: "400 mo", peso: 20 },
-  mezza_piastra: { nome: "Mezza piastra", sottocategoria: "media", ca: "15 + Des (max 2)", forzaRichiesta: null, svantaggioFurtivita: true, costo: "750 mo", peso: 40 },
-  usbergo_anelli: { nome: "Usbergo ad anelli", sottocategoria: "pesante", ca: "14", forzaRichiesta: null, svantaggioFurtivita: true, costo: "30 mo", peso: 40 },
-  cotta_di_maglia: { nome: "Cotta di maglia", sottocategoria: "pesante", ca: "16", forzaRichiesta: 13, svantaggioFurtivita: true, costo: "75 mo", peso: 55 },
-  armatura_lamellare: { nome: "Armatura lamellare", sottocategoria: "pesante", ca: "17", forzaRichiesta: 15, svantaggioFurtivita: true, costo: "200 mo", peso: 60 },
-  armatura_a_piastre: { nome: "Armatura a piastre", sottocategoria: "pesante", ca: "18", forzaRichiesta: 15, svantaggioFurtivita: true, costo: "1500 mo", peso: 65 },
-  scudo: { nome: "Scudo", sottocategoria: "scudo", ca: "+2", forzaRichiesta: null, svantaggioFurtivita: false, costo: "10 mo", peso: 6 },
+  imbottita: { nome: "Imbottita", sottocategoria: "leggera", ca: "11 + Des", caBase: 11, usaDestrezza: true, desMax: null, forzaRichiesta: null, svantaggioFurtivita: true, costo: "5 mo", peso: 8 },
+  cuoio: { nome: "Cuoio", sottocategoria: "leggera", ca: "11 + Des", caBase: 11, usaDestrezza: true, desMax: null, forzaRichiesta: null, svantaggioFurtivita: false, costo: "10 mo", peso: 10 },
+  cuoio_borchiato: { nome: "Cuoio borchiato", sottocategoria: "leggera", ca: "12 + Des", caBase: 12, usaDestrezza: true, desMax: null, forzaRichiesta: null, svantaggioFurtivita: false, costo: "45 mo", peso: 13 },
+  pelle: { nome: "Pelle", sottocategoria: "media", ca: "12 + Des (max 2)", caBase: 12, usaDestrezza: true, desMax: 2, forzaRichiesta: null, svantaggioFurtivita: false, costo: "10 mo", peso: 12 },
+  usbergo_maglia: { nome: "Usbergo di maglia", sottocategoria: "media", ca: "13 + Des (max 2)", caBase: 13, usaDestrezza: true, desMax: 2, forzaRichiesta: null, svantaggioFurtivita: false, costo: "50 mo", peso: 20 },
+  corazza_a_scaglie: { nome: "Corazza a scaglie", sottocategoria: "media", ca: "14 + Des (max 2)", caBase: 14, usaDestrezza: true, desMax: 2, forzaRichiesta: null, svantaggioFurtivita: true, costo: "50 mo", peso: 45 },
+  corazza: { nome: "Corazza", sottocategoria: "media", ca: "14 + Des (max 2)", caBase: 14, usaDestrezza: true, desMax: 2, forzaRichiesta: null, svantaggioFurtivita: false, costo: "400 mo", peso: 20 },
+  mezza_piastra: { nome: "Mezza piastra", sottocategoria: "media", ca: "15 + Des (max 2)", caBase: 15, usaDestrezza: true, desMax: 2, forzaRichiesta: null, svantaggioFurtivita: true, costo: "750 mo", peso: 40 },
+  usbergo_anelli: { nome: "Usbergo ad anelli", sottocategoria: "pesante", ca: "14", caBase: 14, usaDestrezza: false, desMax: 0, forzaRichiesta: null, svantaggioFurtivita: true, costo: "30 mo", peso: 40 },
+  cotta_di_maglia: { nome: "Cotta di maglia", sottocategoria: "pesante", ca: "16", caBase: 16, usaDestrezza: false, desMax: 0, forzaRichiesta: 13, svantaggioFurtivita: true, costo: "75 mo", peso: 55 },
+  armatura_lamellare: { nome: "Armatura lamellare", sottocategoria: "pesante", ca: "17", caBase: 17, usaDestrezza: false, desMax: 0, forzaRichiesta: 15, svantaggioFurtivita: true, costo: "200 mo", peso: 60 },
+  armatura_a_piastre: { nome: "Armatura a piastre", sottocategoria: "pesante", ca: "18", caBase: 18, usaDestrezza: false, desMax: 0, forzaRichiesta: 15, svantaggioFurtivita: true, costo: "1500 mo", peso: 65 },
+  scudo: { nome: "Scudo", sottocategoria: "scudo", ca: "+2", bonusScudo: 2, forzaRichiesta: null, svantaggioFurtivita: false, costo: "10 mo", peso: 6 },
 };
 
 export const OGGETTI = {

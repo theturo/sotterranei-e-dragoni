@@ -13,6 +13,37 @@ export const CARATTERISTICHE = [
 // Array standard 5e: da assegnare liberamente, un valore per caratteristica.
 export const ARRAY_STANDARD = [15, 14, 13, 12, 10, 8];
 
+export const ABBREVIAZIONI_CARATTERISTICHE = {
+  forza: "For",
+  destrezza: "Des",
+  costituzione: "Cos",
+  intelligenza: "Int",
+  saggezza: "Sag",
+  carisma: "Car",
+};
+
+// Le 18 abilità del SRD 5.1, con la caratteristica di riferimento.
+export const ABILITA = [
+  { chiave: "acrobazia", nome: "Acrobazia", caratteristica: "destrezza" },
+  { chiave: "addestrare_animali", nome: "Addestrare Animali", caratteristica: "saggezza" },
+  { chiave: "arcano", nome: "Arcano", caratteristica: "intelligenza" },
+  { chiave: "atletica", nome: "Atletica", caratteristica: "forza" },
+  { chiave: "furtivita", nome: "Furtività", caratteristica: "destrezza" },
+  { chiave: "indagare", nome: "Indagare", caratteristica: "intelligenza" },
+  { chiave: "inganno", nome: "Inganno", caratteristica: "carisma" },
+  { chiave: "intimidire", nome: "Intimidire", caratteristica: "carisma" },
+  { chiave: "intrattenere", nome: "Intrattenere", caratteristica: "carisma" },
+  { chiave: "intuizione", nome: "Intuizione", caratteristica: "saggezza" },
+  { chiave: "medicina", nome: "Medicina", caratteristica: "saggezza" },
+  { chiave: "natura", nome: "Natura", caratteristica: "intelligenza" },
+  { chiave: "percezione", nome: "Percezione", caratteristica: "saggezza" },
+  { chiave: "persuasione", nome: "Persuasione", caratteristica: "carisma" },
+  { chiave: "religione", nome: "Religione", caratteristica: "intelligenza" },
+  { chiave: "rapidita_di_mano", nome: "Rapidità di Mano", caratteristica: "destrezza" },
+  { chiave: "sopravvivenza", nome: "Sopravvivenza", caratteristica: "saggezza" },
+  { chiave: "storia", nome: "Storia", caratteristica: "intelligenza" },
+];
+
 export const RAZZE = {
   umano: {
     nome: "Umano",
