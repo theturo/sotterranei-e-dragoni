@@ -292,6 +292,71 @@ export function slotIncantesimoAlLivello(classeChiave, livello) {
 // regolistico completo): al passaggio di livello vengono aggiunti in automatico
 // a "Caratteristiche e talenti". Quando è coinvolta una sottoclasse non ancora
 // scelta dal giocatore, compare come voce generica da specificare a mano.
+// ---------- Incantesimi conosciuti / preparati (limiti per classe) ----------
+
+// Caratteristica da incantatore per classe (usata per calcolare i preparati).
+export const CARATTERISTICA_INCANTESIMI = {
+  bardo: "carisma", chierico: "saggezza", druido: "saggezza", mago: "intelligenza",
+  paladino: "carisma", ranger: "saggezza", stregone: "carisma", warlock: "carisma",
+};
+
+// Classi "a conoscenza fissa": ciò che sanno è sempre utilizzabile, senza preparazione.
+export const CLASSI_CONOSCENZA_FISSA = ["bardo", "ranger", "stregone", "warlock"];
+// Classi "a preparazione": conoscono l'intera lista della classe, ma ne preparano
+// solo un sottoinsieme ogni giorno secondo una formula.
+export const CLASSI_PREPARAZIONE = ["chierico", "druido", "paladino"];
+// Il Mago è un caso ibrido: il libro degli incantesimi è il pool di "conosciuti"
+// (qui senza limite, per semplicità), da cui ogni giorno prepara un sottoinsieme.
+
+// Trucchetti conosciuti per livello (soglie 1/4/10, valide per tutte le classi
+// incantatrici con trucchetti; Paladino e Ranger nel SRD non ne hanno).
+const TRUCCHETTI_CONOSCIUTI = {
+  bardo: [2, 3, 4], chierico: [3, 4, 5], druido: [2, 3, 4],
+  mago: [3, 4, 5], stregone: [4, 5, 6], warlock: [2, 3, 4],
+};
+
+export function trucchettiConosciutiAlLivello(classeChiave, livello) {
+  const tabella = TRUCCHETTI_CONOSCIUTI[classeChiave];
+  if (!tabella) return 0;
+  if (livello >= 10) return tabella[2];
+  if (livello >= 4) return tabella[1];
+  return tabella[0];
+}
+
+// Bonus di trucchetti conosciuti garantito da alcune razze/sottorazze SRD
+// (Alto Elfo, Elfo Nero, Tiefling): un trucchetto extra scelto liberamente,
+// per semplicità, invece di vincolarlo a una lista di classe specifica.
+export function trucchettoBonusRazza(razzaChiave, sottorazzaChiave) {
+  if (razzaChiave === "elfo" && (sottorazzaChiave === "alto" || sottorazzaChiave === "drow")) return 1;
+  if (razzaChiave === "tiefling") return 1;
+  return 0;
+}
+
+// Incantesimi (non trucchetti) conosciuti per livello — solo per le classi a
+// conoscenza fissa. Indice 0 = livello personaggio 1.
+const INCANTESIMI_CONOSCIUTI_TABELLA = {
+  bardo: [4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 15, 16, 18, 19, 19, 20, 22, 22, 22],
+  ranger: [0, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11],
+  stregone: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 13, 14, 14, 15, 15, 15, 15],
+  warlock: [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15],
+};
+
+export function incantesimiConosciutiAlLivello(classeChiave, livello) {
+  const tabella = INCANTESIMI_CONOSCIUTI_TABELLA[classeChiave];
+  if (!tabella) return 0;
+  return tabella[Math.max(0, Math.min(19, livello - 1))];
+}
+
+// Incantesimi preparati al giorno per le classi "a preparazione" (e per il
+// Mago, che prepara dal proprio libro): mod. caratteristica + livello (metà
+// livello, arrotondato per difetto, per il Paladino), minimo 1.
+export function incantesimiPreparatiAlLivello(classeChiave, livello, punteggioCaratteristica) {
+  if (!CLASSI_PREPARAZIONE.includes(classeChiave) && classeChiave !== "mago") return null;
+  const mod = modificatore(punteggioCaratteristica);
+  if (classeChiave === "paladino") return Math.max(1, mod + Math.floor(livello / 2));
+  return Math.max(1, mod + livello);
+}
+
 export const TRATTI_PER_LIVELLO = {
   barbaro: {
     2: ["Attacco Fatidico", "Percezione del Pericolo"], 3: ["Cammino Primordiale (sottoclasse)"],

@@ -186,14 +186,42 @@
               <p id="attacchi-vuoto" class="scheda-testo-libero" hidden>Aggiungi un'arma all'equipaggiamento per vederla qui.</p>
 
               <div id="sezione-incantesimi" hidden>
-                <h4 class="sottotitolo-box">Incantesimi conosciuti</h4>
-                <p id="slot-incantesimo-riepilogo" class="slot-incantesimo-riepilogo"></p>
-                <div id="ricerca-incantesimi-wrap" class="ricerca-equipaggiamento">
-                  <input type="text" id="ricerca-incantesimi" class="input-ricerca" placeholder="Cerca un incantesimo…" autocomplete="off" />
-                  <div id="risultati-incantesimi" class="risultati-ricerca" hidden></div>
+
+                <h4 class="sottotitolo-box">Trucchetti conosciuti</h4>
+                <p id="trucchetti-limite" class="slot-incantesimo-riepilogo"></p>
+                <div id="ricerca-trucchetti-wrap" class="ricerca-equipaggiamento">
+                  <input type="text" id="ricerca-trucchetti" class="input-ricerca" placeholder="Cerca un trucchetto…" autocomplete="off" />
+                  <div id="risultati-trucchetti" class="risultati-ricerca" hidden></div>
                 </div>
-                <ul id="lista-incantesimi" class="inventario-lista"></ul>
-                <p id="incantesimi-vuoto" class="scheda-testo-libero" hidden>Nessun incantesimo conosciuto.</p>
+                <ul id="lista-trucchetti" class="inventario-lista"></ul>
+
+                <div id="blocco-conosciuti">
+                  <h4 class="sottotitolo-box" id="titolo-blocco-conosciuti">Incantesimi conosciuti</h4>
+                  <p id="incantesimi-limite" class="slot-incantesimo-riepilogo"></p>
+                  <div id="ricerca-incantesimi-wrap" class="ricerca-equipaggiamento">
+                    <input type="text" id="ricerca-incantesimi" class="input-ricerca" placeholder="Cerca un incantesimo…" autocomplete="off" />
+                    <select id="filtro-livello-incantesimi" class="select-filtro"></select>
+                    <div id="risultati-incantesimi" class="risultati-ricerca" hidden></div>
+                  </div>
+                  <ul id="lista-incantesimi" class="inventario-lista"></ul>
+                  <p id="incantesimi-vuoto" class="scheda-testo-libero" hidden>Nessun incantesimo conosciuto.</p>
+                </div>
+
+                <div id="blocco-preparati" hidden>
+                  <h4 class="sottotitolo-box">Incantesimi preparati oggi</h4>
+                  <p id="preparati-limite" class="slot-incantesimo-riepilogo"></p>
+                  <div id="ricerca-preparati-wrap" class="ricerca-equipaggiamento">
+                    <input type="text" id="ricerca-preparati" class="input-ricerca" placeholder="Cerca da preparare…" autocomplete="off" />
+                    <select id="filtro-livello-preparati" class="select-filtro"></select>
+                    <div id="risultati-preparati" class="risultati-ricerca" hidden></div>
+                  </div>
+                  <ul id="lista-preparati" class="inventario-lista"></ul>
+                  <p id="preparati-vuoto" class="scheda-testo-libero" hidden>Nessun incantesimo preparato.</p>
+                </div>
+
+                <h4 class="sottotitolo-box">Slot incantesimo</h4>
+                <div id="pips-slot-incantesimo" class="pips-slot-incantesimo"></div>
+                <button id="btn-riposo-lungo" class="btn-tabella" type="button">Riposo lungo (ripristina gli slot)</button>
               </div>
             </div>
 
@@ -386,6 +414,13 @@
       TIPO_LANCIATORE,
       TRATTI_PER_LIVELLO,
       slotIncantesimoAlLivello,
+      CLASSI_CONOSCENZA_FISSA,
+      CLASSI_PREPARAZIONE,
+      CARATTERISTICA_INCANTESIMI,
+      trucchettiConosciutiAlLivello,
+      trucchettoBonusRazza,
+      incantesimiConosciutiAlLivello,
+      incantesimiPreparatiAlLivello,
       modificatore,
       formattaModificatore,
       nomeRazzaCompleto,
@@ -618,10 +653,27 @@
 
     document.getElementById("btn-avanti-tratti").addEventListener("click", procediDopoTratti);
 
+    function formattaSlotIncantesimo(classe, livello) {
+      const tipo = TIPO_LANCIATORE[classe];
+      const slot = slotIncantesimoAlLivello(classe, livello);
+      if (!tipo || !slot) return "nessuno slot ancora";
+      if (tipo === "patto") {
+        return slot.slot > 0 ? `Patto Magico: ${slot.slot} slot di ${slot.livelloSlot}° livello` : "nessuno slot ancora";
+      }
+      const parti = slot.map((n, i) => (n > 0 ? `${n}×${i + 1}°` : null)).filter(Boolean);
+      return parti.length ? parti.join(", ") : "nessuno slot ancora";
+    }
+
+    // Lo step "nuovi incantesimi" del level-up ha senso solo per chi "impara"
+    // (conoscenza fissa) o "annota nel libro" (Mago) — le classi a preparazione
+    // (Chierico/Druido/Paladino) conoscono già tutta la lista della classe e
+    // preparano dalla scheda in qualsiasi momento, non al passaggio di livello.
     function procediDopoTratti() {
       const nuovoLivello = (scheda.livello || 1) + 1;
-      if (slotIncantesimoCambiato(scheda.classe, scheda.livello || 1, nuovoLivello)) {
-        document.getElementById("incantesimi-livello-nota").textContent = `Al livello ${nuovoLivello} ottieni nuovi slot incantesimo: ${formattaSlotIncantesimo(scheda.classe, nuovoLivello)}`;
+      const modo = modoIncantatore(scheda.classe);
+      const rilevante = (modo === "fisso" || modo === "libro") && slotIncantesimoCambiato(scheda.classe, scheda.livello || 1, nuovoLivello);
+      if (rilevante) {
+        document.getElementById("incantesimi-livello-nota").textContent = `Al livello ${nuovoLivello} ottieni nuovi slot incantesimo: ${formattaSlotIncantesimo(scheda.classe, nuovoLivello)}.`;
         document.getElementById("ricerca-incantesimi-livello").value = "";
         document.getElementById("risultati-incantesimi-livello").hidden = true;
         renderIncantesimiSceltiLivello();
@@ -676,6 +728,17 @@
       const bottone = evento.target.closest("[data-scegli-incantesimo]");
       if (!bottone) return;
       const chiave = bottone.dataset.scegliIncantesimo;
+
+      if (CLASSI_CONOSCENZA_FISSA.includes(scheda.classe)) {
+        const nuovoLivello = (scheda.livello || 1) + 1;
+        const maxConosciuti = incantesimiConosciutiAlLivello(scheda.classe, nuovoLivello);
+        const attualiNonTrucchetto = (scheda.incantesimiConosciuti || []).filter((c) => ottieniIncantesimo(c)?.livello > 0).length;
+        if (attualiNonTrucchetto + statoLivello.incantesimiScelti.length >= maxConosciuti) {
+          mostraToastLivello(`Hai già raggiunto il limite di incantesimi conosciuti per il livello ${nuovoLivello}.`);
+          return;
+        }
+      }
+
       const giaConosciuto = (scheda.incantesimiConosciuti || []).includes(chiave) || statoLivello.incantesimiScelti.includes(chiave);
       if (!giaConosciuto) statoLivello.incantesimiScelti.push(chiave);
       document.getElementById("ricerca-incantesimi-livello").value = "";
@@ -1003,65 +1066,126 @@
         .join("");
     }
 
-    function formattaSlotIncantesimo(classe, livello) {
-      const tipo = TIPO_LANCIATORE[classe];
-      const slot = slotIncantesimoAlLivello(classe, livello);
-      if (!tipo || !slot) return "Nessuno slot ancora.";
-      if (tipo === "patto") {
-        return slot.slot > 0 ? `Patto Magico: ${slot.slot} slot di ${slot.livelloSlot}° livello.` : "Nessuno slot ancora.";
-      }
-      const parti = slot.map((n, i) => (n > 0 ? `${n}×${i + 1}°` : null)).filter(Boolean);
-      return parti.length ? `Slot incantesimo: ${parti.join(", ")}.` : "Nessuno slot ancora.";
+    function modoIncantatore(classe) {
+      if (CLASSI_CONOSCENZA_FISSA.includes(classe)) return "fisso";
+      if (classe === "mago") return "libro";
+      if (CLASSI_PREPARAZIONE.includes(classe)) return "preparazione";
+      return null;
     }
 
-    function renderIncantesimi() {
-      const tipo = TIPO_LANCIATORE[scheda.classe];
-      const sezione = document.getElementById("sezione-incantesimi");
-      sezione.hidden = !tipo;
-      if (!tipo) return;
+    function livelloMassimoDisponibile(classe, livello) {
+      const tipo = TIPO_LANCIATORE[classe];
+      const slot = slotIncantesimoAlLivello(classe, livello);
+      if (!tipo || !slot) return 0;
+      if (tipo === "patto") return slot.slot > 0 ? slot.livelloSlot : 0;
+      for (let i = slot.length - 1; i >= 0; i--) {
+        if (slot[i] > 0) return i + 1;
+      }
+      return 0;
+    }
 
-      document.getElementById("slot-incantesimo-riepilogo").textContent = formattaSlotIncantesimo(scheda.classe, scheda.livello || 1);
-      document.getElementById("ricerca-incantesimi-wrap").hidden = soloLettura;
+    function etichettaIncantesimo(dati) {
+      return dati.livello === 0 ? "Trucchetto" : `Livello ${dati.livello}`;
+    }
 
-      const lista = document.getElementById("lista-incantesimi");
-      const vuoto = document.getElementById("incantesimi-vuoto");
-      const conosciuti = scheda.incantesimiConosciuti || [];
+    function popolaFiltroLivello(select, livelloMax) {
+      const attuale = select.value;
+      select.innerHTML = '<option value="">Tutti i livelli</option><option value="0">Trucchetti</option>';
+      for (let i = 1; i <= livelloMax; i++) {
+        const opzione = document.createElement("option");
+        opzione.value = String(i);
+        opzione.textContent = `${i}° livello`;
+        select.appendChild(opzione);
+      }
+      select.value = attuale && Number(attuale) <= livelloMax ? attuale : "";
+    }
 
-      if (conosciuti.length === 0) {
+    function renderListaIncantesimi(idLista, idVuoto, chiavi, { campo, lanciabile }) {
+      const lista = document.getElementById(idLista);
+      const vuoto = idVuoto ? document.getElementById(idVuoto) : null;
+      if (chiavi.length === 0) {
         lista.innerHTML = "";
-        vuoto.hidden = false;
+        if (vuoto) vuoto.hidden = false;
         return;
       }
-      vuoto.hidden = true;
-      lista.innerHTML = conosciuti
+      if (vuoto) vuoto.hidden = true;
+      lista.innerHTML = chiavi
         .map((chiave) => {
           const dati = ottieniIncantesimo(chiave);
           if (!dati) return "";
-          const etichettaLivello = dati.livello === 0 ? "Trucchetto" : `Livello ${dati.livello}`;
+          const bottoneLancia =
+            !soloLettura && lanciabile && dati.livello > 0
+              ? `<button class="btn-tabella btn-lancia-incantesimo" data-lancia="${chiave}" type="button">Lancia</button>`
+              : "";
+          const bottoneRimuovi = soloLettura ? "" : `<button class="btn-tabella" data-rimuovi="${campo}:${chiave}" type="button">Rimuovi</button>`;
           return `<li class="inventario-riga" data-chiave="${chiave}">
-            <span class="inventario-nome">${dati.nome} <small>(${etichettaLivello})</small></span>
-            ${soloLettura ? "" : `<button class="btn-tabella" data-rimuovi-incantesimo="${chiave}" type="button">Rimuovi</button>`}
+            <span class="inventario-nome">${dati.nome} <small>(${etichettaIncantesimo(dati)})</small></span>
+            ${bottoneLancia}${bottoneRimuovi}
           </li>`;
         })
         .join("");
     }
 
-    async function salvaIncantesimi() {
-      try {
-        await aggiornaScheda(scheda.id, { incantesimiConosciuti: scheda.incantesimiConosciuti || [] });
-      } catch (errore) {
-        console.error(errore);
+    function renderIncantesimi() {
+      const classe = scheda.classe;
+      const modo = modoIncantatore(classe);
+      const sezione = document.getElementById("sezione-incantesimi");
+      sezione.hidden = !modo;
+      if (!modo) return;
+
+      const livello = scheda.livello || 1;
+      const livelloMax = livelloMassimoDisponibile(classe, livello);
+
+      const maxTrucchetti = trucchettiConosciutiAlLivello(classe, livello) + trucchettoBonusRazza(scheda.razza, scheda.sottorazza);
+      const trucchetti = (scheda.incantesimiConosciuti || []).filter((c) => ottieniIncantesimo(c)?.livello === 0);
+      document.getElementById("trucchetti-limite").textContent = `${trucchetti.length} / ${maxTrucchetti}`;
+      document.getElementById("ricerca-trucchetti-wrap").hidden = soloLettura || trucchetti.length >= maxTrucchetti;
+      renderListaIncantesimi("lista-trucchetti", null, trucchetti, { campo: "conosciuti", lanciabile: false });
+
+      const blocoConosciuti = document.getElementById("blocco-conosciuti");
+      const blocoPreparati = document.getElementById("blocco-preparati");
+
+      if (modo === "fisso") {
+        blocoConosciuti.hidden = false;
+        blocoPreparati.hidden = true;
+        document.getElementById("titolo-blocco-conosciuti").textContent = "Incantesimi conosciuti";
+        const max = incantesimiConosciutiAlLivello(classe, livello);
+        const conosciuti = (scheda.incantesimiConosciuti || []).filter((c) => ottieniIncantesimo(c)?.livello > 0);
+        document.getElementById("incantesimi-limite").textContent = `${conosciuti.length} / ${max}`;
+        document.getElementById("ricerca-incantesimi-wrap").hidden = soloLettura || conosciuti.length >= max;
+        popolaFiltroLivello(document.getElementById("filtro-livello-incantesimi"), livelloMax);
+        renderListaIncantesimi("lista-incantesimi", "incantesimi-vuoto", conosciuti, { campo: "conosciuti", lanciabile: true });
+      } else if (modo === "libro") {
+        blocoConosciuti.hidden = false;
+        blocoPreparati.hidden = false;
+        document.getElementById("titolo-blocco-conosciuti").textContent = "Incantesimi nel libro";
+        document.getElementById("incantesimi-limite").textContent = "";
+        document.getElementById("ricerca-incantesimi-wrap").hidden = soloLettura;
+        popolaFiltroLivello(document.getElementById("filtro-livello-incantesimi"), livelloMax);
+        const libro = (scheda.incantesimiConosciuti || []).filter((c) => ottieniIncantesimo(c)?.livello > 0);
+        renderListaIncantesimi("lista-incantesimi", "incantesimi-vuoto", libro, { campo: "conosciuti", lanciabile: false });
+        renderBloccoPreparati(classe, livello, livelloMax);
+      } else {
+        blocoConosciuti.hidden = true;
+        blocoPreparati.hidden = false;
+        renderBloccoPreparati(classe, livello, livelloMax);
       }
+
+      renderSlotPips();
     }
 
-    function renderRisultatiIncantesimi(testo) {
-      const contenitore = document.getElementById("risultati-incantesimi");
-      if (!testo.trim()) {
-        contenitore.hidden = true;
-        contenitore.innerHTML = "";
-        return;
-      }
-      const risultati = cercaIncantesimi(testo, { classe: scheda.classe }).slice(0, 15);
+    function renderBloccoPreparati(classe, livello, livelloMax) {
+      const punteggio = scheda.caratteristiche?.[CARATTERISTICA_INCANTESIMI[classe]] ?? 10;
+      const max = incantesimiPreparatiAlLivello(classe, livello, punteggio) || 0;
+      const preparati = scheda.incantesimiPreparati || [];
+      document.getElementById("preparati-limite").textContent = `${preparati.length} / ${max}`;
+      document.getElementById("ricerca-preparati-wrap").hidden = soloLettura || preparati.length >= max;
+      popolaFiltroLivello(document.getElementById("filtro-livello-preparati"), livelloMax);
+      renderListaIncantesimi("lista-preparati", "preparati-vuoto", preparati, { campo: "preparati", lanciabile: true });
+    }
+
+    function renderRisultatiRicercaIncantesimi(idContenitore, risultati, attributoDati) {
+      const contenitore = document.getElementById(idContenitore);
       if (risultati.length === 0) {
         contenitore.hidden = true;
         contenitore.innerHTML = "";
@@ -1069,40 +1193,232 @@
       }
       contenitore.hidden = false;
       contenitore.innerHTML = risultati
-        .map((voce) => {
-          const etichettaLivello = voce.livello === 0 ? "Trucchetto" : `Livello ${voce.livello}`;
-          return `<div class="risultato-riga">
-            <span>${voce.nome} <small>(${etichettaLivello} · ${voce.scuola})</small></span>
-            <button class="btn-tabella" data-aggiungi-incantesimo="${voce.chiave}" type="button">Aggiungi</button>
-          </div>`;
-        })
+        .map(
+          (voce) => `<div class="risultato-riga">
+        <span>${voce.nome} <small>(${etichettaIncantesimo(voce)} · ${voce.scuola})</small></span>
+        <button class="btn-tabella" data-${attributoDati}="${voce.chiave}" type="button">Aggiungi</button>
+      </div>`
+        )
         .join("");
     }
 
-    document.getElementById("ricerca-incantesimi").addEventListener("input", (evento) => {
-      renderRisultatiIncantesimi(evento.target.value);
+    async function aggiungiIncantesimoConosciuto(chiave) {
+      scheda.incantesimiConosciuti = scheda.incantesimiConosciuti || [];
+      if (!scheda.incantesimiConosciuti.includes(chiave)) scheda.incantesimiConosciuti.push(chiave);
+      renderIncantesimi();
+      try {
+        await aggiornaScheda(scheda.id, { incantesimiConosciuti: scheda.incantesimiConosciuti });
+      } catch (errore) {
+        console.error(errore);
+      }
+    }
+
+    document.getElementById("ricerca-trucchetti").addEventListener("input", (evento) => {
+      const testo = evento.target.value;
+      if (!testo.trim()) {
+        renderRisultatiRicercaIncantesimi("risultati-trucchetti", []);
+        return;
+      }
+      const risultati = cercaIncantesimi(testo, { classe: scheda.classe, livello: 0 }).slice(0, 10);
+      renderRisultatiRicercaIncantesimi("risultati-trucchetti", risultati, "aggiungi-trucchetto");
     });
+
+    document.getElementById("risultati-trucchetti").addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-aggiungi-trucchetto]");
+      if (!bottone) return;
+      await aggiungiIncantesimoConosciuto(bottone.dataset.aggiungiTrucchetto);
+      document.getElementById("ricerca-trucchetti").value = "";
+      renderRisultatiRicercaIncantesimi("risultati-trucchetti", []);
+    });
+
+    function aggiornaRisultatiPrincipali() {
+      const testo = document.getElementById("ricerca-incantesimi").value;
+      const livelloSel = document.getElementById("filtro-livello-incantesimi").value;
+      if (!testo.trim() && livelloSel === "") {
+        renderRisultatiRicercaIncantesimi("risultati-incantesimi", []);
+        return;
+      }
+      const opzioni = { classe: scheda.classe };
+      if (livelloSel !== "") opzioni.livello = Number(livelloSel);
+      const risultati = cercaIncantesimi(testo, opzioni)
+        .filter((v) => v.livello > 0)
+        .slice(0, 15);
+      renderRisultatiRicercaIncantesimi("risultati-incantesimi", risultati, "aggiungi-incantesimo");
+    }
+
+    document.getElementById("ricerca-incantesimi").addEventListener("input", aggiornaRisultatiPrincipali);
+    document.getElementById("filtro-livello-incantesimi").addEventListener("change", aggiornaRisultatiPrincipali);
 
     document.getElementById("risultati-incantesimi").addEventListener("click", async (evento) => {
       const bottone = evento.target.closest("[data-aggiungi-incantesimo]");
       if (!bottone) return;
-      const chiave = bottone.dataset.aggiungiIncantesimo;
-      scheda.incantesimiConosciuti = scheda.incantesimiConosciuti || [];
-      if (!scheda.incantesimiConosciuti.includes(chiave)) {
-        scheda.incantesimiConosciuti.push(chiave);
-      }
+      await aggiungiIncantesimoConosciuto(bottone.dataset.aggiungiIncantesimo);
       document.getElementById("ricerca-incantesimi").value = "";
-      renderRisultatiIncantesimi("");
-      renderIncantesimi();
-      await salvaIncantesimi();
+      aggiornaRisultatiPrincipali();
     });
 
-    document.getElementById("lista-incantesimi").addEventListener("click", async (evento) => {
-      const bottone = evento.target.closest("[data-rimuovi-incantesimo]");
+    function aggiornaRisultatiPreparati() {
+      const testo = document.getElementById("ricerca-preparati").value;
+      const livelloSel = document.getElementById("filtro-livello-preparati").value;
+      if (!testo.trim() && livelloSel === "") {
+        renderRisultatiRicercaIncantesimi("risultati-preparati", []);
+        return;
+      }
+      let candidati;
+      if (scheda.classe === "mago") {
+        const query = testo.trim().toLowerCase();
+        candidati = (scheda.incantesimiConosciuti || [])
+          .map((c) => ottieniIncantesimo(c))
+          .filter((v) => v && v.livello > 0)
+          .filter((v) => !query || v.nome.toLowerCase().includes(query))
+          .filter((v) => livelloSel === "" || v.livello === Number(livelloSel));
+      } else {
+        const opzioni = { classe: scheda.classe };
+        if (livelloSel !== "") opzioni.livello = Number(livelloSel);
+        candidati = cercaIncantesimi(testo, opzioni).filter((v) => v.livello > 0);
+      }
+      candidati = candidati.filter((v) => !(scheda.incantesimiPreparati || []).includes(v.chiave)).slice(0, 15);
+      renderRisultatiRicercaIncantesimi("risultati-preparati", candidati, "aggiungi-preparato");
+    }
+
+    document.getElementById("ricerca-preparati").addEventListener("input", aggiornaRisultatiPreparati);
+    document.getElementById("filtro-livello-preparati").addEventListener("change", aggiornaRisultatiPreparati);
+
+    document.getElementById("risultati-preparati").addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-aggiungi-preparato]");
       if (!bottone) return;
-      scheda.incantesimiConosciuti = (scheda.incantesimiConosciuti || []).filter((c) => c !== bottone.dataset.rimuoviIncantesimo);
+      const chiave = bottone.dataset.aggiungiPreparato;
+      scheda.incantesimiPreparati = scheda.incantesimiPreparati || [];
+      if (!scheda.incantesimiPreparati.includes(chiave)) scheda.incantesimiPreparati.push(chiave);
+      document.getElementById("ricerca-preparati").value = "";
       renderIncantesimi();
-      await salvaIncantesimi();
+      aggiornaRisultatiPreparati();
+      try {
+        await aggiornaScheda(scheda.id, { incantesimiPreparati: scheda.incantesimiPreparati });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    async function lanciaIncantesimo(chiave) {
+      if (soloLettura) return;
+      const dati = ottieniIncantesimo(chiave);
+      if (!dati || dati.livello === 0) return;
+      const tipo = TIPO_LANCIATORE[scheda.classe];
+      const slot = slotIncantesimoAlLivello(scheda.classe, scheda.livello || 1);
+      scheda.slotIncantesimoUsati = scheda.slotIncantesimoUsati || {};
+
+      if (tipo === "patto") {
+        if (dati.livello > slot.livelloSlot) {
+          mostraToastLivello("Non hai ancora uno slot Patto Magico abbastanza alto.");
+          return;
+        }
+        const usati = scheda.slotIncantesimoUsati.patto || 0;
+        if (usati >= slot.slot) {
+          mostraToastLivello("Nessuno slot Patto Magico disponibile.");
+          return;
+        }
+        scheda.slotIncantesimoUsati.patto = usati + 1;
+      } else {
+        const max = slot[dati.livello - 1] || 0;
+        const usati = scheda.slotIncantesimoUsati[dati.livello] || 0;
+        if (usati >= max) {
+          mostraToastLivello(`Nessuno slot di ${dati.livello}° livello disponibile.`);
+          return;
+        }
+        scheda.slotIncantesimoUsati[dati.livello] = usati + 1;
+      }
+
+      renderSlotPips();
+      try {
+        await aggiornaScheda(scheda.id, { slotIncantesimoUsati: scheda.slotIncantesimoUsati });
+      } catch (errore) {
+        console.error(errore);
+      }
+    }
+
+    function renderPipRow(max, usati, chiaveSlot) {
+      const disponibili = Math.max(0, max - usati);
+      let html = "";
+      for (let i = 0; i < max; i++) {
+        const acceso = i < disponibili;
+        html += `<span class="pallino${acceso ? " competente" : ""}${soloLettura ? "" : " pallino-cliccabile"}" data-pip-slot="${chiaveSlot}"></span>`;
+      }
+      return html;
+    }
+
+    function renderSlotPips() {
+      const contenitore = document.getElementById("pips-slot-incantesimo");
+      const tipo = TIPO_LANCIATORE[scheda.classe];
+      const slot = slotIncantesimoAlLivello(scheda.classe, scheda.livello || 1);
+      if (!tipo || !slot) {
+        contenitore.innerHTML = "";
+        return;
+      }
+      if (tipo === "patto") {
+        const usati = scheda.slotIncantesimoUsati?.patto || 0;
+        contenitore.innerHTML =
+          slot.slot > 0
+            ? `<div class="riga-pip-slot"><span class="pip-slot-etichetta">Patto ${slot.livelloSlot}°</span>${renderPipRow(slot.slot, usati, "patto")}</div>`
+            : "";
+        return;
+      }
+      contenitore.innerHTML = slot
+        .map((max, indice) => {
+          if (max === 0) return "";
+          const livelloSlot = indice + 1;
+          const usati = scheda.slotIncantesimoUsati?.[livelloSlot] || 0;
+          return `<div class="riga-pip-slot"><span class="pip-slot-etichetta">${livelloSlot}°</span>${renderPipRow(max, usati, String(livelloSlot))}</div>`;
+        })
+        .join("");
+    }
+
+    document.getElementById("pips-slot-incantesimo").addEventListener("click", async (evento) => {
+      if (soloLettura) return;
+      const pip = evento.target.closest("[data-pip-slot]");
+      if (!pip) return;
+      const chiaveSlot = pip.dataset.pipSlot;
+      const acceso = pip.classList.contains("competente");
+      scheda.slotIncantesimoUsati = scheda.slotIncantesimoUsati || {};
+      const attuale = scheda.slotIncantesimoUsati[chiaveSlot] || 0;
+      scheda.slotIncantesimoUsati[chiaveSlot] = acceso ? attuale + 1 : Math.max(0, attuale - 1);
+      renderSlotPips();
+      try {
+        await aggiornaScheda(scheda.id, { slotIncantesimoUsati: scheda.slotIncantesimoUsati });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    document.getElementById("btn-riposo-lungo").addEventListener("click", async () => {
+      if (soloLettura) return;
+      scheda.slotIncantesimoUsati = {};
+      renderSlotPips();
+      try {
+        await aggiornaScheda(scheda.id, { slotIncantesimoUsati: scheda.slotIncantesimoUsati });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    document.getElementById("sezione-incantesimi").addEventListener("click", async (evento) => {
+      const bottoneRimuovi = evento.target.closest("[data-rimuovi]");
+      if (bottoneRimuovi) {
+        const [campo, chiave] = bottoneRimuovi.dataset.rimuovi.split(":");
+        const proprieta = campo === "preparati" ? "incantesimiPreparati" : "incantesimiConosciuti";
+        scheda[proprieta] = (scheda[proprieta] || []).filter((c) => c !== chiave);
+        renderIncantesimi();
+        try {
+          await aggiornaScheda(scheda.id, { [proprieta]: scheda[proprieta] });
+        } catch (errore) {
+          console.error(errore);
+        }
+        return;
+      }
+      const bottoneLancia = evento.target.closest("[data-lancia]");
+      if (bottoneLancia) {
+        await lanciaIncantesimo(bottoneLancia.dataset.lancia);
+      }
     });
 
     function bonusAttaccoSuggerito(chiaveArma) {
@@ -1304,6 +1620,8 @@
       scheda.background = scheda.background || "";
       scheda.allineamento = scheda.allineamento || null;
       scheda.incantesimiConosciuti = scheda.incantesimiConosciuti || [];
+      scheda.incantesimiPreparati = scheda.incantesimiPreparati || [];
+      scheda.slotIncantesimoUsati = scheda.slotIncantesimoUsati || {};
 
       renderBadgeStato();
       renderIntestazione();
