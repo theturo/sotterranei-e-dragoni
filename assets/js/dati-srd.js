@@ -208,3 +208,149 @@ export function tiraPuntiVitaLivello(classeChiave, modCostituzione) {
   const tiro = 1 + Math.floor(Math.random() * classe.dadoVita);
   return { tiro, totale: Math.max(1, tiro + modCostituzione) };
 }
+
+// ---------- Progressione di classe (Fase 2 del passaggio di livello) ----------
+
+// Tipo di lanciatore per classe: "pieno" (Bardo/Chierico/Druido/Mago/Stregone),
+// "mezzo" (Paladino/Ranger, incantesimi da 2° livello, max 5° cerchio) o
+// "patto" (Warlock, slot Patto Magico). Le classi assenti non lanciano incantesimi.
+export const TIPO_LANCIATORE = {
+  bardo: "pieno", chierico: "pieno", druido: "pieno", mago: "pieno", stregone: "pieno",
+  paladino: "mezzo", ranger: "mezzo",
+  warlock: "patto",
+};
+
+const SLOT_LANCIATORE_PIENO = [
+  [2, 0, 0, 0, 0, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0, 0, 0, 0, 0],
+  [4, 2, 0, 0, 0, 0, 0, 0, 0],
+  [4, 3, 0, 0, 0, 0, 0, 0, 0],
+  [4, 3, 2, 0, 0, 0, 0, 0, 0],
+  [4, 3, 3, 0, 0, 0, 0, 0, 0],
+  [4, 3, 3, 1, 0, 0, 0, 0, 0],
+  [4, 3, 3, 2, 0, 0, 0, 0, 0],
+  [4, 3, 3, 3, 1, 0, 0, 0, 0],
+  [4, 3, 3, 3, 2, 0, 0, 0, 0],
+  [4, 3, 3, 3, 2, 1, 0, 0, 0],
+  [4, 3, 3, 3, 2, 1, 0, 0, 0],
+  [4, 3, 3, 3, 2, 1, 1, 0, 0],
+  [4, 3, 3, 3, 2, 1, 1, 0, 0],
+  [4, 3, 3, 3, 2, 1, 1, 1, 0],
+  [4, 3, 3, 3, 2, 1, 1, 1, 0],
+  [4, 3, 3, 3, 2, 1, 1, 1, 1],
+  [4, 3, 3, 3, 3, 1, 1, 1, 1],
+  [4, 3, 3, 3, 3, 2, 1, 1, 1],
+  [4, 3, 3, 3, 3, 2, 2, 1, 1],
+];
+
+const SLOT_LANCIATORE_MEZZO = [
+  [0, 0, 0, 0, 0],
+  [2, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0],
+  [4, 2, 0, 0, 0],
+  [4, 2, 0, 0, 0],
+  [4, 3, 0, 0, 0],
+  [4, 3, 0, 0, 0],
+  [4, 3, 2, 0, 0],
+  [4, 3, 2, 0, 0],
+  [4, 3, 3, 0, 0],
+  [4, 3, 3, 0, 0],
+  [4, 3, 3, 1, 0],
+  [4, 3, 3, 1, 0],
+  [4, 3, 3, 2, 0],
+  [4, 3, 3, 2, 0],
+  [4, 3, 3, 3, 1],
+  [4, 3, 3, 3, 1],
+  [4, 3, 3, 3, 2],
+  [4, 3, 3, 3, 2],
+];
+
+// Patto Magico del Warlock: numero di slot e loro livello (sempre uguale tra loro).
+const SLOT_PATTO_WARLOCK = [
+  { slot: 1, livelloSlot: 1 }, { slot: 2, livelloSlot: 1 }, { slot: 2, livelloSlot: 2 }, { slot: 2, livelloSlot: 2 },
+  { slot: 2, livelloSlot: 3 }, { slot: 2, livelloSlot: 3 }, { slot: 2, livelloSlot: 4 }, { slot: 2, livelloSlot: 4 },
+  { slot: 2, livelloSlot: 5 }, { slot: 2, livelloSlot: 5 }, { slot: 3, livelloSlot: 5 }, { slot: 3, livelloSlot: 5 },
+  { slot: 3, livelloSlot: 5 }, { slot: 3, livelloSlot: 5 }, { slot: 3, livelloSlot: 5 }, { slot: 3, livelloSlot: 5 },
+  { slot: 4, livelloSlot: 5 }, { slot: 4, livelloSlot: 5 }, { slot: 4, livelloSlot: 5 }, { slot: 4, livelloSlot: 5 },
+];
+
+// Restituisce gli slot incantesimo disponibili al dato livello: un array
+// [slotLiv1, slotLiv2, ...] per lanciatori pieno/mezzo, o { slot, livelloSlot }
+// per il Warlock (Patto Magico), oppure null se la classe non lancia incantesimi.
+export function slotIncantesimoAlLivello(classeChiave, livello) {
+  const tipo = TIPO_LANCIATORE[classeChiave];
+  if (!tipo) return null;
+  const indice = Math.max(0, Math.min(19, livello - 1));
+  if (tipo === "pieno") return SLOT_LANCIATORE_PIENO[indice];
+  if (tipo === "mezzo") return SLOT_LANCIATORE_MEZZO[indice];
+  if (tipo === "patto") return SLOT_PATTO_WARLOCK[indice];
+  return null;
+}
+
+// Tratti guadagnati a un livello, per classe — solo nomi brevi (non il testo
+// regolistico completo): al passaggio di livello vengono aggiunti in automatico
+// a "Caratteristiche e talenti". Quando è coinvolta una sottoclasse non ancora
+// scelta dal giocatore, compare come voce generica da specificare a mano.
+export const TRATTI_PER_LIVELLO = {
+  barbaro: {
+    2: ["Attacco Fatidico", "Percezione del Pericolo"], 3: ["Cammino Primordiale (sottoclasse)"],
+    5: ["Attacco Extra", "Movimento Veloce"], 7: ["Istinto Ferino"], 9: ["Critico Brutale (1 dado)"],
+    11: ["Furia Implacabile"], 13: ["Critico Brutale (2 dadi)"], 15: ["Ira Persistente"],
+    17: ["Critico Brutale (3 dadi)"], 18: ["Forza Indomabile"], 20: ["Campione Primordiale"],
+  },
+  bardo: {
+    2: ["Ispirazione Bardica (d8)", "Jack of All Trades"], 3: ["Collegio Bardico (sottoclasse)", "Competenza"],
+    5: ["Fonte di Ispirazione", "Ispirazione Bardica (d10)"], 10: ["Ispirazione Bardica (d12)", "Segreti Magici", "Competenza"],
+    14: ["Segreti Magici"], 18: ["Ispirazione Illimitata"], 20: ["Superiorità Ispiratrice"],
+  },
+  chierico: {
+    2: ["Incanalare Divinità", "Potere del Dominio Divino"], 5: ["Distruggere non Morti (GS 1/2)"],
+    6: ["Potere del Dominio Divino", "Incanalare Divinità (2 usi)"], 8: ["Percosse Divine", "Distruggere non Morti (GS 1)"],
+    10: ["Intervento Divino"], 11: ["Distruggere non Morti (GS 2)"], 14: ["Distruggere non Morti (GS 3)"],
+    17: ["Potere del Dominio Divino", "Distruggere non Morti (GS 4)"], 20: ["Intervento Divino Migliorato"],
+  },
+  druido: {
+    2: ["Forma Selvatica", "Circolo Druidico (sottoclasse)"], 4: ["Discepolo del Wild Shape"],
+    18: ["Corpo Senza Tempo"], 20: ["Arcidruido"],
+  },
+  guerriero: {
+    2: ["Recupero Energie", "Stile di Combattimento"], 3: ["Archetipo Marziale (sottoclasse)"],
+    5: ["Attacco Extra"], 9: ["Indomito"], 11: ["Attacco Extra (2)"], 13: ["Indomito (2 usi)"],
+    17: ["Attacco Extra (3)", "Indomito (3 usi)"],
+  },
+  ladro: {
+    2: ["Azione Scaltra"], 3: ["Archetipo Ladresco (sottoclasse)"], 5: ["Elusione"],
+    7: ["Eludere le Insidie"], 11: ["Talento Affidabile"], 14: ["Percezione Cieca"],
+    15: ["Mente Sfuggente"], 18: ["Fortuna del Ladro"], 20: ["Colpo di Fortuna"],
+  },
+  mago: {
+    2: ["Tradizione Arcana (sottoclasse)"], 18: ["Recupero degli Incantesimi Avanzato"], 20: ["Padronanza Arcana"],
+  },
+  monaco: {
+    2: ["Ki", "Movimento senza Armatura"], 3: ["Tradizione Monastica (sottoclasse)", "Deviare Proiettili"],
+    4: ["Caduta Lenta"], 5: ["Attacco Extra", "Colpo Frastornante"], 6: ["Colpi Potenziati dal Ki"],
+    7: ["Mente Vuota", "Scatto"], 9: ["Purezza del Corpo"], 10: ["Immunità alla Malattia"],
+    13: ["Lingua degli Spiriti"], 14: ["Anima Diamantina"], 15: ["Corpo Senza Tempo"],
+    18: ["Corpo Vuoto"], 20: ["Perfezione dell'Essere"],
+  },
+  paladino: {
+    2: ["Punizione Divina", "Sentire il Male e il Bene"], 3: ["Giuramento Sacro (sottoclasse)", "Incanalare Divinità", "Salute Divina"],
+    5: ["Attacco Extra"], 6: ["Aura di Protezione"], 10: ["Aura di Coraggio"], 11: ["Colpi Radiosi"],
+    14: ["Tocco Purificatore"], 18: ["Aura Migliorata"], 20: ["Potere del Giuramento Sacro (finale)"],
+  },
+  ranger: {
+    2: ["Stile di Combattimento", "Magia del Ranger"], 3: ["Archetipo del Ranger (sottoclasse)", "Nemico Prescelto", "Esploratore Nato"],
+    5: ["Attacco Extra"], 8: ["Andatura Terrestre"], 10: ["Occultarsi nella Natura"],
+    14: ["Sparire"], 18: ["Sensi Selvaggi"], 20: ["Massacro di Mostri"],
+  },
+  stregone: {
+    2: ["Metamagia (1 opzione)"], 3: ["Origine Stregonesca (sottoclasse)"], 10: ["Metamagia (2 opzioni)"],
+    17: ["Metamagia (3 opzioni)"], 20: ["Restauro Stregonesco"],
+  },
+  warlock: {
+    2: ["Invocazioni Occulte"], 3: ["Patto Occulto (sottoclasse)"], 7: ["Invocazioni Occulte aggiuntive"],
+    9: ["Recupero Magico"], 11: ["Arcanum Mistico (6° livello)"], 13: ["Arcanum Mistico (7° livello)"],
+    15: ["Arcanum Mistico (8° livello)"], 17: ["Arcanum Mistico (9° livello)"], 20: ["Padronanza del Patto"],
+  },
+};

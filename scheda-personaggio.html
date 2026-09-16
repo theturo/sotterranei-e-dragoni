@@ -184,6 +184,17 @@
                 <tbody id="corpo-attacchi"></tbody>
               </table>
               <p id="attacchi-vuoto" class="scheda-testo-libero" hidden>Aggiungi un'arma all'equipaggiamento per vederla qui.</p>
+
+              <div id="sezione-incantesimi" hidden>
+                <h4 class="sottotitolo-box">Incantesimi conosciuti</h4>
+                <p id="slot-incantesimo-riepilogo" class="slot-incantesimo-riepilogo"></p>
+                <div id="ricerca-incantesimi-wrap" class="ricerca-equipaggiamento">
+                  <input type="text" id="ricerca-incantesimi" class="input-ricerca" placeholder="Cerca un incantesimo…" autocomplete="off" />
+                  <div id="risultati-incantesimi" class="risultati-ricerca" hidden></div>
+                </div>
+                <ul id="lista-incantesimi" class="inventario-lista"></ul>
+                <p id="incantesimi-vuoto" class="scheda-testo-libero" hidden>Nessun incantesimo conosciuto.</p>
+              </div>
             </div>
 
             <div class="scheda-box">
@@ -295,6 +306,30 @@
           </div>
         </div>
 
+        <div id="passo-tratti-livello" class="wizard-livello-passo" hidden>
+          <h2>Nuovi tratti di classe</h2>
+          <p class="card-tagline">A questo livello guadagni automaticamente questi tratti.</p>
+          <ul id="lista-tratti-livello" class="tratti-livello-lista"></ul>
+          <div class="wizard-nav">
+            <span></span>
+            <button type="button" id="btn-avanti-tratti" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Avanti</button>
+          </div>
+        </div>
+
+        <div id="passo-incantesimi-livello" class="wizard-livello-passo" hidden>
+          <h2>Nuovi incantesimi</h2>
+          <p class="card-tagline" id="incantesimi-livello-nota">A questo livello puoi imparare nuovi incantesimi.</p>
+          <div class="ricerca-equipaggiamento">
+            <input type="text" id="ricerca-incantesimi-livello" class="input-ricerca" placeholder="Cerca un incantesimo…" autocomplete="off" />
+            <div id="risultati-incantesimi-livello" class="risultati-ricerca" hidden></div>
+          </div>
+          <ul id="lista-incantesimi-livello-scelti" class="tratti-livello-lista"></ul>
+          <div class="wizard-nav">
+            <span></span>
+            <button type="button" id="btn-avanti-incantesimi" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Avanti</button>
+          </div>
+        </div>
+
         <div id="passo-riepilogo-livello" class="wizard-livello-passo" hidden>
           <h2>Riepilogo</h2>
           <div id="riepilogo-livello" class="riepilogo-lista"></div>
@@ -348,12 +383,16 @@
       LIVELLI_ASI,
       puntiVitaMedi,
       tiraPuntiVitaLivello,
+      TIPO_LANCIATORE,
+      TRATTI_PER_LIVELLO,
+      slotIncantesimoAlLivello,
       modificatore,
       formattaModificatore,
       nomeRazzaCompleto,
       velocitaRazza,
     } from "./assets/js/dati-srd.js";
     import { ARMI, ARMATURE, cercaEquipaggiamento, ETICHETTE_CATEGORIA } from "./assets/js/equipaggiamento-srd.js";
+    import { cercaIncantesimi, ottieniIncantesimo } from "./assets/js/incantesimi-srd.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -401,7 +440,7 @@
       document.getElementById("btn-livello-su").hidden = !creditiLivelloDisponibili();
     }
 
-    const statoLivello = { guadagnoPF: null, metodoPF: null, modoAsi: "due", asi: {} };
+    const statoLivello = { guadagnoPF: null, metodoPF: null, modoAsi: "due", asi: {}, tratti: [], incantesimiScelti: [] };
 
     function mostraPassoLivello(id) {
       document.querySelectorAll(".wizard-livello-passo").forEach((el) => (el.hidden = el.id !== id));
@@ -413,6 +452,8 @@
       statoLivello.metodoPF = null;
       statoLivello.modoAsi = "due";
       statoLivello.asi = {};
+      statoLivello.tratti = [];
+      statoLivello.incantesimiScelti = [];
       document.getElementById("risultato-pf").hidden = true;
       document.getElementById("btn-avanti-pf").disabled = true;
       document.getElementById("livello-rivelazione-numero").textContent = String((scheda.livello || 1) + 1);
@@ -535,8 +576,7 @@
         renderCampiAsi();
         mostraPassoLivello("passo-asi");
       } else {
-        renderRiepilogoLivello();
-        mostraPassoLivello("passo-riepilogo-livello");
+        procediDopoCaratteristiche();
       }
     });
 
@@ -551,6 +591,106 @@
       selects.forEach((s) => {
         statoLivello.asi[s.value] = (statoLivello.asi[s.value] || 0) + bonus;
       });
+      procediDopoCaratteristiche();
+    });
+
+    // ---------- Fase 2: tratti di classe e nuovi incantesimi ----------
+    function slotIncantesimoCambiato(classe, livelloPrec, livelloNuovo) {
+      const tipo = TIPO_LANCIATORE[classe];
+      if (!tipo) return false;
+      const prima = slotIncantesimoAlLivello(classe, livelloPrec);
+      const dopo = slotIncantesimoAlLivello(classe, livelloNuovo);
+      if (tipo === "patto") return prima.slot !== dopo.slot || prima.livelloSlot !== dopo.livelloSlot;
+      return JSON.stringify(prima) !== JSON.stringify(dopo);
+    }
+
+    function procediDopoCaratteristiche() {
+      const nuovoLivello = (scheda.livello || 1) + 1;
+      statoLivello.tratti = TRATTI_PER_LIVELLO[scheda.classe]?.[nuovoLivello] || [];
+
+      if (statoLivello.tratti.length > 0) {
+        document.getElementById("lista-tratti-livello").innerHTML = statoLivello.tratti.map((t) => `<li><b>${t}</b></li>`).join("");
+        mostraPassoLivello("passo-tratti-livello");
+      } else {
+        procediDopoTratti();
+      }
+    }
+
+    document.getElementById("btn-avanti-tratti").addEventListener("click", procediDopoTratti);
+
+    function procediDopoTratti() {
+      const nuovoLivello = (scheda.livello || 1) + 1;
+      if (slotIncantesimoCambiato(scheda.classe, scheda.livello || 1, nuovoLivello)) {
+        document.getElementById("incantesimi-livello-nota").textContent = `Al livello ${nuovoLivello} ottieni nuovi slot incantesimo: ${formattaSlotIncantesimo(scheda.classe, nuovoLivello)}`;
+        document.getElementById("ricerca-incantesimi-livello").value = "";
+        document.getElementById("risultati-incantesimi-livello").hidden = true;
+        renderIncantesimiSceltiLivello();
+        mostraPassoLivello("passo-incantesimi-livello");
+      } else {
+        renderRiepilogoLivello();
+        mostraPassoLivello("passo-riepilogo-livello");
+      }
+    }
+
+    function renderIncantesimiSceltiLivello() {
+      const lista = document.getElementById("lista-incantesimi-livello-scelti");
+      if (statoLivello.incantesimiScelti.length === 0) {
+        lista.innerHTML = '<li class="scheda-testo-libero">Nessun incantesimo scelto finora.</li>';
+        return;
+      }
+      lista.innerHTML = statoLivello.incantesimiScelti
+        .map((chiave) => {
+          const dati = ottieniIncantesimo(chiave);
+          return `<li><b>${dati?.nome || chiave}</b> <button class="btn-rimuovi-talento" data-chiave="${chiave}" type="button" aria-label="Rimuovi">×</button></li>`;
+        })
+        .join("");
+    }
+
+    document.getElementById("ricerca-incantesimi-livello").addEventListener("input", (evento) => {
+      const contenitore = document.getElementById("risultati-incantesimi-livello");
+      const testo = evento.target.value;
+      if (!testo.trim()) {
+        contenitore.hidden = true;
+        contenitore.innerHTML = "";
+        return;
+      }
+      const risultati = cercaIncantesimi(testo, { classe: scheda.classe }).slice(0, 15);
+      if (risultati.length === 0) {
+        contenitore.hidden = true;
+        contenitore.innerHTML = "";
+        return;
+      }
+      contenitore.hidden = false;
+      contenitore.innerHTML = risultati
+        .map((voce) => {
+          const etichettaLivello = voce.livello === 0 ? "Trucchetto" : `Livello ${voce.livello}`;
+          return `<div class="risultato-riga">
+            <span>${voce.nome} <small>(${etichettaLivello} · ${voce.scuola})</small></span>
+            <button class="btn-tabella" data-scegli-incantesimo="${voce.chiave}" type="button">Aggiungi</button>
+          </div>`;
+        })
+        .join("");
+    });
+
+    document.getElementById("risultati-incantesimi-livello").addEventListener("click", (evento) => {
+      const bottone = evento.target.closest("[data-scegli-incantesimo]");
+      if (!bottone) return;
+      const chiave = bottone.dataset.scegliIncantesimo;
+      const giaConosciuto = (scheda.incantesimiConosciuti || []).includes(chiave) || statoLivello.incantesimiScelti.includes(chiave);
+      if (!giaConosciuto) statoLivello.incantesimiScelti.push(chiave);
+      document.getElementById("ricerca-incantesimi-livello").value = "";
+      document.getElementById("risultati-incantesimi-livello").hidden = true;
+      renderIncantesimiSceltiLivello();
+    });
+
+    document.getElementById("lista-incantesimi-livello-scelti").addEventListener("click", (evento) => {
+      const bottone = evento.target.closest("[data-chiave]");
+      if (!bottone) return;
+      statoLivello.incantesimiScelti = statoLivello.incantesimiScelti.filter((c) => c !== bottone.dataset.chiave);
+      renderIncantesimiSceltiLivello();
+    });
+
+    document.getElementById("btn-avanti-incantesimi").addEventListener("click", () => {
       renderRiepilogoLivello();
       mostraPassoLivello("passo-riepilogo-livello");
     });
@@ -575,10 +715,16 @@
           return `<li>${nome}: ${scheda.caratteristiche[chiave]} → <b>${scheda.caratteristiche[chiave] + bonus}</b></li>`;
         })
         .join("");
+      const righeTratti = statoLivello.tratti.map((t) => `<li>${t}</li>`).join("");
+      const righeIncantesimi = statoLivello.incantesimiScelti
+        .map((chiave) => `<li>${ottieniIncantesimo(chiave)?.nome || chiave}</li>`)
+        .join("");
       document.getElementById("riepilogo-livello").innerHTML = `
         <p><label>Nuovo livello</label> <b>${nuovoLivello}</b></p>
         <p><label>Punti Ferita massimi</label> <b>${pfAttuali} → ${pfAttuali + statoLivello.guadagnoPF}</b></p>
-        ${righeAsi ? `<ul class="lista-competenze">${righeAsi}</ul>` : ""}
+        ${righeAsi ? `<p><label>Caratteristiche</label></p><ul class="lista-competenze">${righeAsi}</ul>` : ""}
+        ${righeTratti ? `<p><label>Nuovi tratti</label></p><ul class="lista-competenze">${righeTratti}</ul>` : ""}
+        ${righeIncantesimi ? `<p><label>Nuovi incantesimi</label></p><ul class="lista-competenze">${righeIncantesimi}</ul>` : ""}
       `;
     }
 
@@ -592,11 +738,17 @@
         Object.entries(statoLivello.asi).forEach(([chiave, bonus]) => {
           scheda.caratteristiche[chiave] = (scheda.caratteristiche[chiave] || 10) + bonus;
         });
+        scheda.talenti = [...(scheda.talenti || []), ...statoLivello.tratti];
+        scheda.incantesimiConosciuti = Array.from(
+          new Set([...(scheda.incantesimiConosciuti || []), ...statoLivello.incantesimiScelti])
+        );
 
         await aggiornaScheda(scheda.id, {
           livello: scheda.livello,
           hp: scheda.hp,
           caratteristiche: scheda.caratteristiche,
+          talenti: scheda.talenti,
+          incantesimiConosciuti: scheda.incantesimiConosciuti,
         });
         await consumaLivelloDaSpendere(uidCorrente);
         profiloCorrente.livelliDaSpendere = (profiloCorrente.livelliDaSpendere || 1) - 1;
@@ -608,6 +760,8 @@
         renderVelocitaEDadi();
         renderAbilita();
         renderHp();
+        renderTalenti();
+        renderIncantesimi();
         renderPulsanteLivello();
       } catch (errore) {
         console.error(errore);
@@ -849,6 +1003,108 @@
         .join("");
     }
 
+    function formattaSlotIncantesimo(classe, livello) {
+      const tipo = TIPO_LANCIATORE[classe];
+      const slot = slotIncantesimoAlLivello(classe, livello);
+      if (!tipo || !slot) return "Nessuno slot ancora.";
+      if (tipo === "patto") {
+        return slot.slot > 0 ? `Patto Magico: ${slot.slot} slot di ${slot.livelloSlot}° livello.` : "Nessuno slot ancora.";
+      }
+      const parti = slot.map((n, i) => (n > 0 ? `${n}×${i + 1}°` : null)).filter(Boolean);
+      return parti.length ? `Slot incantesimo: ${parti.join(", ")}.` : "Nessuno slot ancora.";
+    }
+
+    function renderIncantesimi() {
+      const tipo = TIPO_LANCIATORE[scheda.classe];
+      const sezione = document.getElementById("sezione-incantesimi");
+      sezione.hidden = !tipo;
+      if (!tipo) return;
+
+      document.getElementById("slot-incantesimo-riepilogo").textContent = formattaSlotIncantesimo(scheda.classe, scheda.livello || 1);
+      document.getElementById("ricerca-incantesimi-wrap").hidden = soloLettura;
+
+      const lista = document.getElementById("lista-incantesimi");
+      const vuoto = document.getElementById("incantesimi-vuoto");
+      const conosciuti = scheda.incantesimiConosciuti || [];
+
+      if (conosciuti.length === 0) {
+        lista.innerHTML = "";
+        vuoto.hidden = false;
+        return;
+      }
+      vuoto.hidden = true;
+      lista.innerHTML = conosciuti
+        .map((chiave) => {
+          const dati = ottieniIncantesimo(chiave);
+          if (!dati) return "";
+          const etichettaLivello = dati.livello === 0 ? "Trucchetto" : `Livello ${dati.livello}`;
+          return `<li class="inventario-riga" data-chiave="${chiave}">
+            <span class="inventario-nome">${dati.nome} <small>(${etichettaLivello})</small></span>
+            ${soloLettura ? "" : `<button class="btn-tabella" data-rimuovi-incantesimo="${chiave}" type="button">Rimuovi</button>`}
+          </li>`;
+        })
+        .join("");
+    }
+
+    async function salvaIncantesimi() {
+      try {
+        await aggiornaScheda(scheda.id, { incantesimiConosciuti: scheda.incantesimiConosciuti || [] });
+      } catch (errore) {
+        console.error(errore);
+      }
+    }
+
+    function renderRisultatiIncantesimi(testo) {
+      const contenitore = document.getElementById("risultati-incantesimi");
+      if (!testo.trim()) {
+        contenitore.hidden = true;
+        contenitore.innerHTML = "";
+        return;
+      }
+      const risultati = cercaIncantesimi(testo, { classe: scheda.classe }).slice(0, 15);
+      if (risultati.length === 0) {
+        contenitore.hidden = true;
+        contenitore.innerHTML = "";
+        return;
+      }
+      contenitore.hidden = false;
+      contenitore.innerHTML = risultati
+        .map((voce) => {
+          const etichettaLivello = voce.livello === 0 ? "Trucchetto" : `Livello ${voce.livello}`;
+          return `<div class="risultato-riga">
+            <span>${voce.nome} <small>(${etichettaLivello} · ${voce.scuola})</small></span>
+            <button class="btn-tabella" data-aggiungi-incantesimo="${voce.chiave}" type="button">Aggiungi</button>
+          </div>`;
+        })
+        .join("");
+    }
+
+    document.getElementById("ricerca-incantesimi").addEventListener("input", (evento) => {
+      renderRisultatiIncantesimi(evento.target.value);
+    });
+
+    document.getElementById("risultati-incantesimi").addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-aggiungi-incantesimo]");
+      if (!bottone) return;
+      const chiave = bottone.dataset.aggiungiIncantesimo;
+      scheda.incantesimiConosciuti = scheda.incantesimiConosciuti || [];
+      if (!scheda.incantesimiConosciuti.includes(chiave)) {
+        scheda.incantesimiConosciuti.push(chiave);
+      }
+      document.getElementById("ricerca-incantesimi").value = "";
+      renderRisultatiIncantesimi("");
+      renderIncantesimi();
+      await salvaIncantesimi();
+    });
+
+    document.getElementById("lista-incantesimi").addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-rimuovi-incantesimo]");
+      if (!bottone) return;
+      scheda.incantesimiConosciuti = (scheda.incantesimiConosciuti || []).filter((c) => c !== bottone.dataset.rimuoviIncantesimo);
+      renderIncantesimi();
+      await salvaIncantesimi();
+    });
+
     function bonusAttaccoSuggerito(chiaveArma) {
       const arma = ARMI[chiaveArma];
       if (!arma) return 0;
@@ -1047,6 +1303,7 @@
       scheda.scudoIndossato = Boolean(scheda.scudoIndossato);
       scheda.background = scheda.background || "";
       scheda.allineamento = scheda.allineamento || null;
+      scheda.incantesimiConosciuti = scheda.incantesimiConosciuti || [];
 
       renderBadgeStato();
       renderIntestazione();
@@ -1061,6 +1318,7 @@
       renderEquipaggiamentoIndossato();
       renderAbilita();
       renderAttacchi();
+      renderIncantesimi();
       renderPersonalita();
       renderTalenti();
       renderMonete();
