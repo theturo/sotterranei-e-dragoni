@@ -332,6 +332,37 @@ export function trucchettoBonusRazza(razzaChiave, sottorazzaChiave) {
   return 0;
 }
 
+// Incantesimi innati garantiti da alcune razze/sottorazze SRD (oltre al
+// trucchetto bonus), lanciabili una volta al giorno senza consumare slot,
+// a partire da un certo livello di personaggio. "chiave" fa riferimento a
+// una voce del catalogo in incantesimi-srd.js.
+export const INCANTESIMI_RAZZIALI = {
+  tiefling: [
+    { livello: 3, chiave: "colpo_infernale" },
+    { livello: 5, chiave: "oscurita" },
+  ],
+};
+
+export const INCANTESIMI_RAZZIALI_SOTTORAZZA = {
+  elfo: {
+    drow: [
+      { livello: 3, chiave: "fuoco_fatuo" },
+      { livello: 5, chiave: "oscurita" },
+    ],
+  },
+};
+
+export function incantesimiRazzialiAlLivello(razzaChiave, sottorazzaChiave, livello) {
+  const risultato = [];
+  (INCANTESIMI_RAZZIALI[razzaChiave] || []).forEach((voce) => {
+    if (livello >= voce.livello) risultato.push(voce.chiave);
+  });
+  (INCANTESIMI_RAZZIALI_SOTTORAZZA[razzaChiave]?.[sottorazzaChiave] || []).forEach((voce) => {
+    if (livello >= voce.livello) risultato.push(voce.chiave);
+  });
+  return risultato;
+}
+
 // Incantesimi (non trucchetti) conosciuti per livello — solo per le classi a
 // conoscenza fissa. Indice 0 = livello personaggio 1.
 const INCANTESIMI_CONOSCIUTI_TABELLA = {

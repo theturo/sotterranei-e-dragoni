@@ -1509,6 +1509,43 @@ table.tabella-utenti td.cella-email {
   margin-left: 6px;
 }
 
+.scelta-slot-incantesimo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.btn-slot-livello {
+  padding: 4px 9px;
+  font-size: 0.78rem;
+}
+
+.btn-annulla-slot {
+  padding: 3px 8px;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--color-ink-soft);
+}
+
+.scelta-slot-vuota {
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+  font-style: italic;
+}
+
+.etichetta-incantesimo-razza-usato {
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.inventario-nome .pallino {
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
 footer.site-footer {
   text-align: center;
   padding: 18px;

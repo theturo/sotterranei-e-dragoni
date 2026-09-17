@@ -223,6 +223,12 @@
                 <div id="pips-slot-incantesimo" class="pips-slot-incantesimo"></div>
                 <button id="btn-riposo-lungo" class="btn-tabella" type="button">Riposo lungo (ripristina gli slot)</button>
               </div>
+
+              <div id="sezione-incantesimi-razza" hidden>
+                <h4 class="sottotitolo-box">Incantesimi di razza</h4>
+                <p class="scheda-testo-libero">Tratti razziali innati: lanciabili una volta al giorno, senza consumare slot.</p>
+                <ul id="lista-incantesimi-razza" class="inventario-lista"></ul>
+              </div>
             </div>
 
             <div class="scheda-box">
@@ -421,6 +427,7 @@
       trucchettoBonusRazza,
       incantesimiConosciutiAlLivello,
       incantesimiPreparatiAlLivello,
+      incantesimiRazzialiAlLivello,
       modificatore,
       formattaModificatore,
       nomeRazzaCompleto,
@@ -825,6 +832,7 @@
         renderHp();
         renderTalenti();
         renderIncantesimi();
+        renderIncantesimiRazza();
         renderPulsanteLivello();
       } catch (errore) {
         console.error(errore);
@@ -1100,6 +1108,49 @@
       select.value = attuale && Number(attuale) <= livelloMax ? attuale : "";
     }
 
+    // Livelli di slot uguali o superiori a quello base dell'incantesimo che
+    // hanno ancora almeno uno slot libero (upcasting): solo per lanciatori
+    // "pieno"/"mezzo" — il Warlock lancia sempre al livello del Patto Magico.
+    function livelliSlotDisponibili(classe, livello, livelloBase) {
+      const tipo = TIPO_LANCIATORE[classe];
+      const slot = slotIncantesimoAlLivello(classe, livello);
+      if ((tipo !== "pieno" && tipo !== "mezzo") || !slot) return [];
+      const usati = scheda.slotIncantesimoUsati || {};
+      const risultato = [];
+      for (let i = livelloBase; i <= slot.length; i++) {
+        const max = slot[i - 1] || 0;
+        if (max === 0) continue;
+        const disponibili = max - (usati[i] || 0);
+        if (disponibili > 0) risultato.push({ livello: i, disponibili });
+      }
+      return risultato;
+    }
+
+    // Chiave dell'incantesimo per cui è aperto il selettore del livello di
+    // slot da usare (upcasting): null quando nessun selettore è aperto.
+    let spellChooserAperto = null;
+
+    function renderControlloLancio(chiave, dati) {
+      const tipo = TIPO_LANCIATORE[scheda.classe];
+      if (tipo === "patto") {
+        return `<button class="btn-tabella btn-lancia-incantesimo" data-lancia="${chiave}" type="button">Lancia</button>`;
+      }
+      if (chiave !== spellChooserAperto) {
+        return `<button class="btn-tabella btn-lancia-incantesimo" data-lancia="${chiave}" type="button">Lancia</button>`;
+      }
+      const opzioni = livelliSlotDisponibili(scheda.classe, scheda.livello || 1, dati.livello);
+      if (opzioni.length === 0) {
+        return `<span class="scelta-slot-vuota">Nessuno slot disponibile</span>`;
+      }
+      const bottoni = opzioni
+        .map(
+          (o) =>
+            `<button class="btn-tabella btn-slot-livello" data-lancia-livello="${chiave}:${o.livello}" type="button">${o.livello}° (${o.disponibili})</button>`
+        )
+        .join("");
+      return `<span class="scelta-slot-incantesimo">${bottoni}<button class="btn-tabella btn-annulla-slot" data-annulla-slot="${chiave}" type="button" aria-label="Annulla">×</button></span>`;
+    }
+
     function renderListaIncantesimi(idLista, idVuoto, chiavi, { campo, lanciabile }) {
       const lista = document.getElementById(idLista);
       const vuoto = idVuoto ? document.getElementById(idVuoto) : null;
@@ -1113,10 +1164,7 @@
         .map((chiave) => {
           const dati = ottieniIncantesimo(chiave);
           if (!dati) return "";
-          const bottoneLancia =
-            !soloLettura && lanciabile && dati.livello > 0
-              ? `<button class="btn-tabella btn-lancia-incantesimo" data-lancia="${chiave}" type="button">Lancia</button>`
-              : "";
+          const bottoneLancia = !soloLettura && lanciabile && dati.livello > 0 ? renderControlloLancio(chiave, dati) : "";
           const bottoneRimuovi = soloLettura ? "" : `<button class="btn-tabella" data-rimuovi="${campo}:${chiave}" type="button">Rimuovi</button>`;
           return `<li class="inventario-riga" data-chiave="${chiave}">
             <span class="inventario-nome">${dati.nome} <small>(${etichettaIncantesimo(dati)})</small></span>
@@ -1300,7 +1348,10 @@
       }
     });
 
-    async function lanciaIncantesimo(chiave) {
+    // livelloScelto: livello dello slot da consumare (upcasting), solo per
+    // lanciatori "pieno"/"mezzo" — se omesso si usa il livello base dell'incantesimo.
+    // Il Warlock (Patto Magico) usa sempre e solo il livello del proprio slot.
+    async function lanciaIncantesimo(chiave, livelloScelto) {
       if (soloLettura) return;
       const dati = ottieniIncantesimo(chiave);
       if (!dati || dati.livello === 0) return;
@@ -1320,16 +1371,19 @@
         }
         scheda.slotIncantesimoUsati.patto = usati + 1;
       } else {
-        const max = slot[dati.livello - 1] || 0;
-        const usati = scheda.slotIncantesimoUsati[dati.livello] || 0;
+        const livelloSlot = livelloScelto || dati.livello;
+        if (livelloSlot < dati.livello) return;
+        const max = slot[livelloSlot - 1] || 0;
+        const usati = scheda.slotIncantesimoUsati[livelloSlot] || 0;
         if (usati >= max) {
-          mostraToastLivello(`Nessuno slot di ${dati.livello}° livello disponibile.`);
+          mostraToastLivello(`Nessuno slot di ${livelloSlot}° livello disponibile.`);
           return;
         }
-        scheda.slotIncantesimoUsati[dati.livello] = usati + 1;
+        scheda.slotIncantesimoUsati[livelloSlot] = usati + 1;
       }
 
-      renderSlotPips();
+      spellChooserAperto = null;
+      renderIncantesimi();
       try {
         await aggiornaScheda(scheda.id, { slotIncantesimoUsati: scheda.slotIncantesimoUsati });
       } catch (errore) {
@@ -1393,9 +1447,56 @@
     document.getElementById("btn-riposo-lungo").addEventListener("click", async () => {
       if (soloLettura) return;
       scheda.slotIncantesimoUsati = {};
+      scheda.incantesimiRazzaUsati = [];
       renderSlotPips();
+      renderIncantesimiRazza();
       try {
-        await aggiornaScheda(scheda.id, { slotIncantesimoUsati: scheda.slotIncantesimoUsati });
+        await aggiornaScheda(scheda.id, {
+          slotIncantesimoUsati: scheda.slotIncantesimoUsati,
+          incantesimiRazzaUsati: scheda.incantesimiRazzaUsati,
+        });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    // Incantesimi innati di razza: indipendenti dalla classe (e quindi dalla
+    // sezione "modo incantatore"), lanciabili 1 volta al giorno senza slot.
+    function renderIncantesimiRazza() {
+      const sezione = document.getElementById("sezione-incantesimi-razza");
+      const elenco = incantesimiRazzialiAlLivello(scheda.razza, scheda.sottorazza, scheda.livello || 1);
+      sezione.hidden = elenco.length === 0;
+      if (elenco.length === 0) return;
+      const usati = scheda.incantesimiRazzaUsati || [];
+      document.getElementById("lista-incantesimi-razza").innerHTML = elenco
+        .map((chiave) => {
+          const dati = ottieniIncantesimo(chiave);
+          if (!dati) return "";
+          const usato = usati.includes(chiave);
+          const pip = `<span class="pallino${usato ? "" : " competente"}"></span>`;
+          const azione = soloLettura
+            ? ""
+            : usato
+            ? `<span class="etichetta-incantesimo-razza-usato">Usato oggi</span>`
+            : `<button class="btn-tabella btn-lancia-incantesimo" data-lancia-razza="${chiave}" type="button">Lancia</button>`;
+          return `<li class="inventario-riga">
+            <span class="inventario-nome">${pip} ${dati.nome} <small>(1/giorno)</small></span>
+            ${azione}
+          </li>`;
+        })
+        .join("");
+    }
+
+    document.getElementById("lista-incantesimi-razza").addEventListener("click", async (evento) => {
+      if (soloLettura) return;
+      const bottone = evento.target.closest("[data-lancia-razza]");
+      if (!bottone) return;
+      const chiave = bottone.dataset.lanciaRazza;
+      scheda.incantesimiRazzaUsati = scheda.incantesimiRazzaUsati || [];
+      if (!scheda.incantesimiRazzaUsati.includes(chiave)) scheda.incantesimiRazzaUsati.push(chiave);
+      renderIncantesimiRazza();
+      try {
+        await aggiornaScheda(scheda.id, { incantesimiRazzaUsati: scheda.incantesimiRazzaUsati });
       } catch (errore) {
         console.error(errore);
       }
@@ -1417,7 +1518,25 @@
       }
       const bottoneLancia = evento.target.closest("[data-lancia]");
       if (bottoneLancia) {
-        await lanciaIncantesimo(bottoneLancia.dataset.lancia);
+        const chiave = bottoneLancia.dataset.lancia;
+        if (TIPO_LANCIATORE[scheda.classe] === "patto") {
+          await lanciaIncantesimo(chiave);
+        } else {
+          spellChooserAperto = chiave;
+          renderIncantesimi();
+        }
+        return;
+      }
+      const bottoneLivello = evento.target.closest("[data-lancia-livello]");
+      if (bottoneLivello) {
+        const [chiave, livelloStr] = bottoneLivello.dataset.lanciaLivello.split(":");
+        await lanciaIncantesimo(chiave, Number(livelloStr));
+        return;
+      }
+      const bottoneAnnulla = evento.target.closest("[data-annulla-slot]");
+      if (bottoneAnnulla) {
+        spellChooserAperto = null;
+        renderIncantesimi();
       }
     });
 
@@ -1622,6 +1741,7 @@
       scheda.incantesimiConosciuti = scheda.incantesimiConosciuti || [];
       scheda.incantesimiPreparati = scheda.incantesimiPreparati || [];
       scheda.slotIncantesimoUsati = scheda.slotIncantesimoUsati || {};
+      scheda.incantesimiRazzaUsati = scheda.incantesimiRazzaUsati || [];
 
       renderBadgeStato();
       renderIntestazione();
@@ -1637,6 +1757,7 @@
       renderAbilita();
       renderAttacchi();
       renderIncantesimi();
+      renderIncantesimiRazza();
       renderPersonalita();
       renderTalenti();
       renderMonete();
