@@ -1881,3 +1881,12 @@ table.tabella-punteggi select {
   letter-spacing: 0.5px;
   color: var(--color-ink-soft);
 }
+
+.glossario-riga-effetto {
+  font-weight: 600;
+  color: var(--color-burgundy);
+}
+
+.glossario-riga-effetto label {
+  color: var(--color-burgundy);
+}

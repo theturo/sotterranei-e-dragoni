@@ -1096,6 +1096,16 @@
       return dati.livello === 0 ? "Trucchetto" : `Livello ${dati.livello}`;
     }
 
+    // Testo del tooltip (attributo title) mostrato sul nome dell'incantesimo:
+    // danno/cura (se presenti) seguiti dalla descrizione completa.
+    function tooltipIncantesimo(dati) {
+      const righe = [];
+      if (dati.danno) righe.push(`Danno: ${dati.danno}`);
+      if (dati.cura) righe.push(`Cura: ${dati.cura}`);
+      righe.push(dati.descrizione);
+      return righe.join("\n").replace(/"/g, "&quot;");
+    }
+
     function popolaFiltroLivello(select, livelloMax) {
       const attuale = select.value;
       select.innerHTML = '<option value="">Tutti i livelli</option><option value="0">Trucchetti</option>';
@@ -1167,7 +1177,7 @@
           const bottoneLancia = !soloLettura && lanciabile && dati.livello > 0 ? renderControlloLancio(chiave, dati) : "";
           const bottoneRimuovi = soloLettura ? "" : `<button class="btn-tabella" data-rimuovi="${campo}:${chiave}" type="button">Rimuovi</button>`;
           return `<li class="inventario-riga" data-chiave="${chiave}">
-            <span class="inventario-nome">${dati.nome} <small>(${etichettaIncantesimo(dati)})</small></span>
+            <span class="inventario-nome" title="${tooltipIncantesimo(dati)}">${dati.nome} <small>(${etichettaIncantesimo(dati)})</small></span>
             ${bottoneLancia}${bottoneRimuovi}
           </li>`;
         })
@@ -1480,7 +1490,7 @@
             ? `<span class="etichetta-incantesimo-razza-usato">Usato oggi</span>`
             : `<button class="btn-tabella btn-lancia-incantesimo" data-lancia-razza="${chiave}" type="button">Lancia</button>`;
           return `<li class="inventario-riga">
-            <span class="inventario-nome">${pip} ${dati.nome} <small>(1/giorno)</small></span>
+            <span class="inventario-nome" title="${tooltipIncantesimo(dati)}">${pip} ${dati.nome} <small>(1/giorno)</small></span>
             ${azione}
           </li>`;
         })

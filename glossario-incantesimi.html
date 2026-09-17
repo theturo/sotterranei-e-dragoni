@@ -85,11 +85,17 @@
     function dettagliVoce(voce) {
       const etichettaLivello = voce.livello === 0 ? "Trucchetto" : `${voce.livello}° livello`;
       const bandierine = [voce.concentrazione ? "Concentrazione" : null, voce.rituale ? "Rituale" : null].filter(Boolean).join(" · ");
+      const rigaEffetto = voce.danno
+        ? `<p class="glossario-riga-effetto"><label>Danno</label> ${voce.danno}</p>`
+        : voce.cura
+        ? `<p class="glossario-riga-effetto"><label>Cura</label> ${voce.cura}</p>`
+        : "";
       return `
         <p><label>Livello</label> ${etichettaLivello} · ${voce.scuola}${bandierine ? ` · ${bandierine}` : ""}</p>
         <p><label>Tempo di lancio</label> ${voce.tempoLancio} · <label>Gittata</label> ${voce.gittata}</p>
         <p><label>Componenti</label> ${voce.componenti} · <label>Durata</label> ${voce.durata}</p>
         <p><label>Classi</label> ${voce.classi.map((c) => c[0].toUpperCase() + c.slice(1)).join(", ")}</p>
+        ${rigaEffetto}
         <p>${voce.descrizione}</p>
       `;
     }
