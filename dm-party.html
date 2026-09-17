@@ -18,7 +18,7 @@
             Party e livelli
           </h1>
         </div>
-        <span id="badge-ruolo" class="role-badge"></span>
+        <div id="slot-utente" class="slot-utente"></div>
       </div>
 
       <div class="panel-wide">
@@ -57,12 +57,8 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ottieniSchedaAttiva, ROLES } from "./assets/js/auth.js";
-
-    const ETICHETTE_RUOLO = {
-      [ROLES.ADMIN]: "Admin",
-      [ROLES.DM]: "Dungeon Master",
-    };
+    import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ottieniSchedaAttiva } from "./assets/js/auth.js";
+    import { montaMenuUtente } from "./assets/js/menu-utente.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -110,7 +106,7 @@
     }
 
     proteggiPaginaDM(async (user, profilo) => {
-      document.getElementById("badge-ruolo").textContent = ETICHETTE_RUOLO[profilo?.ruolo] || profilo?.ruolo || "";
+      montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
       try {
         const giocatori = await elencaGiocatori();
         if (giocatori.length === 0) {

@@ -9,12 +9,17 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
   reload,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+  verifyBeforeUpdateEmail,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   doc,
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
   addDoc,
   collection,
   getDocs,
@@ -32,6 +37,13 @@ export const ROLES = {
   PLAYER: "player",
 };
 
+// Etichette leggibili dei ruoli, condivise da dashboard, header e pannelli admin/DM.
+export const ETICHETTE_RUOLO = {
+  [ROLES.ADMIN]: "Admin",
+  [ROLES.DM]: "Dungeon Master",
+  [ROLES.PLAYER]: "Giocatore",
+};
+
 // Traduce i codici di errore Firebase in messaggi comprensibili in italiano.
 export function traduciErrore(codice) {
   const mappa = {
@@ -43,6 +55,7 @@ export function traduciErrore(codice) {
     "auth/invalid-credential": "Email o password non corretti.",
     "auth/too-many-requests": "Troppi tentativi falliti. Riprova più tardi.",
     "auth/missing-password": "Inserisci una password.",
+    "auth/requires-recent-login": "Per sicurezza, effettua di nuovo l'accesso e riprova.",
   };
   return mappa[codice] || "Si è verificato un errore. Riprova.";
 }
@@ -96,9 +109,31 @@ export async function aggiornaRuoloUtente(uid, nuovoRuolo) {
   await updateDoc(doc(db, "users", uid), { ruolo: nuovoRuolo });
 }
 
-// Invia l'email di reset password all'indirizzo indicato.
+// Invia l'email di reset password all'indirizzo indicato. Firebase Authentication
+// stesso decide se l'indirizzo corrisponde a un account esistente: qui non serve (né
+// è possibile, prima del login) verificarlo a mano contro Firestore.
 export async function inviaResetPassword(email) {
   await sendPasswordResetEmail(auth, email);
+}
+
+// Ri-autentica l'utente corrente con la password attuale: richiesto da Firebase
+// prima di operazioni sensibili come cambio password o email (auth/requires-recent-login).
+async function riautenticaUtente(passwordAttuale) {
+  const credenziale = EmailAuthProvider.credential(auth.currentUser.email, passwordAttuale);
+  await reauthenticateWithCredential(auth.currentUser, credenziale);
+}
+
+// Cambia la password dell'utente corrente, dopo essersi ri-autenticato con quella attuale.
+export async function cambiaPassword(passwordAttuale, nuovaPassword) {
+  await riautenticaUtente(passwordAttuale);
+  await updatePassword(auth.currentUser, nuovaPassword);
+}
+
+// Invia un'email di conferma alla NUOVA casella: l'indirizzo su Firebase Authentication
+// cambia solo dopo che l'utente clicca il link, non subito.
+export async function cambiaEmail(passwordAttuale, nuovaEmail) {
+  await riautenticaUtente(passwordAttuale);
+  await verifyBeforeUpdateEmail(auth.currentUser, nuovaEmail);
 }
 
 // Invia (o re-invia) l'email di verifica all'utente indicato.
@@ -222,6 +257,22 @@ export async function impostaSchedaAttiva(uid, schedaId) {
   await batch.commit();
 }
 
+// Elimina una scheda personaggio. Se era quella attiva e ne restano altre, la
+// prima rimasta diventa la nuova attiva (come già succede per la primissima
+// scheda creata), per non lasciare l'utente senza un personaggio attivo.
+export async function eliminaScheda(uid, schedaId) {
+  const schede = await elencaSchedePersonaggio(uid);
+  const scheda = schede.find((s) => s.id === schedaId);
+  await deleteDoc(doc(db, "personaggi", schedaId));
+
+  if (scheda?.attiva) {
+    const restanti = schede.filter((s) => s.id !== schedaId);
+    if (restanti.length > 0) {
+      await updateDoc(doc(db, "personaggi", restanti[0].id), { attiva: true });
+    }
+  }
+}
+
 export async function aggiornaHp(schedaId, hp) {
   await updateDoc(doc(db, "personaggi", schedaId), { hp, aggiornatoIl: serverTimestamp() });
 }
@@ -262,6 +313,14 @@ export function proteggiPagina(callback) {
     if (profilo && profilo.emailVerificata !== true) {
       profilo.emailVerificata = true;
       updateDoc(doc(db, "users", user.uid), { emailVerificata: true }).catch((errore) =>
+        console.error(errore)
+      );
+    }
+    // Se l'utente ha completato un cambio email (verifyBeforeUpdateEmail), l'indirizzo
+    // su Authentication è già aggiornato: allineiamo la copia su Firestore.
+    if (profilo && user.email && profilo.email !== user.email) {
+      profilo.email = user.email;
+      updateDoc(doc(db, "users", user.uid), { email: user.email }).catch((errore) =>
         console.error(errore)
       );
     }

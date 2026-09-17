@@ -283,6 +283,12 @@ a:hover {
   margin-bottom: 28px;
 }
 
+.slot-utente {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .role-badge {
   display: inline-block;
   font-family: var(--font-heading);
@@ -393,6 +399,21 @@ a:hover {
   background: var(--color-burgundy);
   color: var(--color-parchment);
   border-color: #4a1219;
+}
+
+.btn-tabella-pericolo {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.btn-tabella-pericolo:hover {
+  background: rgba(165, 41, 58, 0.1);
+}
+
+.btn-pericolo {
+  background: linear-gradient(180deg, #c23a4d, var(--color-danger));
+  border-color: #6e1c26;
+  box-shadow: 0 4px 0 #6e1c26;
 }
 
 .btn-tabella-evidenza:hover {
@@ -1143,6 +1164,7 @@ table.tabella-utenti td.cella-email {
 }
 
 .modal-card {
+  position: relative;
   width: 100%;
   max-width: 420px;
   background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
@@ -1152,6 +1174,43 @@ table.tabella-utenti td.cella-email {
   padding: 30px 28px;
   box-shadow: var(--shadow-deep);
   text-align: center;
+}
+
+.modal-card > .btn-chiudi-modal {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+}
+
+/* ---------- Pannello impostazioni account (header condiviso) ---------- */
+
+.impostazioni-schermata .field {
+  text-align: left;
+}
+
+.impostazioni-opzioni {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.impostazioni-opzioni .btn-tabella {
+  width: 100%;
+  padding: 12px;
+}
+
+.impostazioni-azioni {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.impostazioni-azioni .btn {
+  width: auto;
+  padding: 10px 22px;
 }
 
 .modal-card h2 {

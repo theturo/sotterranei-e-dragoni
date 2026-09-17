@@ -18,7 +18,10 @@
             Glossario incantesimi
           </h1>
         </div>
-        <span class="role-badge">SRD 5.1</span>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span class="role-badge">SRD 5.1</span>
+          <div id="slot-utente" class="slot-utente"></div>
+        </div>
       </div>
 
       <div class="panel-wide">
@@ -65,6 +68,7 @@
 
   <script type="module">
     import { proteggiPaginaDM } from "./assets/js/auth.js";
+    import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import { INCANTESIMI, cercaIncantesimi } from "./assets/js/incantesimi-srd.js";
 
     const veil = document.getElementById("veil");
@@ -147,7 +151,8 @@
     selectClasse.addEventListener("change", aggiorna);
     selectLivello.addEventListener("change", aggiorna);
 
-    proteggiPaginaDM(() => {
+    proteggiPaginaDM((user, profilo) => {
+      montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
       veil.style.display = "none";
       contenuto.style.display = "block";
     });

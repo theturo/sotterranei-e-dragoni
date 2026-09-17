@@ -18,7 +18,10 @@
             Nuovo personaggio
           </h1>
         </div>
-        <span id="badge-passo" class="role-badge"></span>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span id="badge-passo" class="role-badge"></span>
+          <div id="slot-utente" class="slot-utente"></div>
+        </div>
       </div>
 
       <div class="panel-wide wizard-panel">
@@ -100,6 +103,7 @@
 
   <script type="module">
     import { proteggiPagina, creaScheda } from "./assets/js/auth.js";
+    import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import {
       RAZZE,
       CLASSI,
@@ -406,8 +410,9 @@
       }
     });
 
-    proteggiPagina((user) => {
+    proteggiPagina((user, profilo) => {
       uidCorrente = user.uid;
+      montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
       mostraPasso(1);
       veil.style.display = "none";
       contenuto.style.display = "block";

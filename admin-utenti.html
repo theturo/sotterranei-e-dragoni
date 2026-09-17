@@ -18,7 +18,7 @@
             Gestione utenti
           </h1>
         </div>
-        <span class="role-badge">Admin</span>
+        <div id="slot-utente" class="slot-utente"></div>
       </div>
 
       <div class="panel-wide">
@@ -53,19 +53,14 @@
       elencaUtenti,
       aggiornaRuoloUtente,
       inviaResetPassword,
-      ROLES,
+      ETICHETTE_RUOLO,
     } from "./assets/js/auth.js";
+    import { montaMenuUtente } from "./assets/js/menu-utente.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
     const corpoTabella = document.getElementById("corpo-tabella");
     const toast = document.getElementById("toast");
-
-    const ETICHETTE_RUOLO = {
-      [ROLES.ADMIN]: "Admin",
-      [ROLES.DM]: "Dungeon Master",
-      [ROLES.PLAYER]: "Giocatore",
-    };
 
     let toastTimer = null;
     function mostraToast(testo, errore = false) {
@@ -119,7 +114,8 @@
       return tr;
     }
 
-    proteggiPaginaAdmin(async (user) => {
+    proteggiPaginaAdmin(async (user, profilo) => {
+      montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
       try {
         const utenti = await elencaUtenti();
         corpoTabella.innerHTML = "";

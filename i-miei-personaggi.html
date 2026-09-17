@@ -18,7 +18,10 @@
             I miei personaggi
           </h1>
         </div>
-        <a href="crea-personaggio.html" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Nuovo personaggio</a>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <a href="crea-personaggio.html" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Nuovo personaggio</a>
+          <div id="slot-utente" class="slot-utente"></div>
+        </div>
       </div>
 
       <div class="panel-wide">
@@ -30,12 +33,24 @@
     </div>
   </div>
 
+  <div id="modal-elimina-scheda" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <h2>Eliminare <span id="elimina-scheda-nome"></span>?</h2>
+      <p>L'azione è permanente: la scheda e tutti i suoi dati (inventario, incantesimi, progressi) andranno persi per sempre.</p>
+      <div class="impostazioni-azioni">
+        <button type="button" class="btn btn-ghost" id="btn-annulla-elimina">Annulla</button>
+        <button type="button" class="btn btn-pericolo" id="btn-conferma-elimina">Elimina definitivamente</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, elencaSchedePersonaggio, impostaSchedaAttiva } from "./assets/js/auth.js";
+    import { proteggiPagina, elencaSchedePersonaggio, impostaSchedaAttiva, eliminaScheda } from "./assets/js/auth.js";
+    import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import { CLASSI, nomeRazzaCompleto } from "./assets/js/dati-srd.js";
 
     const veil = document.getElementById("veil");
@@ -79,6 +94,7 @@
         <div class="scheda-card-azioni">
           <a class="btn-tabella" href="scheda-personaggio.html?id=${scheda.id}">Apri scheda</a>
           ${scheda.attiva ? "" : `<button class="btn-tabella btn-tabella-evidenza" data-attiva="${scheda.id}">Rendi attiva</button>`}
+          <button class="btn-tabella btn-tabella-pericolo" data-elimina="${scheda.id}" data-nome="${(scheda.nome || "questo personaggio").replace(/"/g, "&quot;")}">Elimina</button>
         </div>
       `;
       return div;
@@ -100,26 +116,61 @@
       }
     }
 
-    proteggiPagina(async (user) => {
+    proteggiPagina(async (user, profilo) => {
       uidCorrente = user.uid;
+      montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
       await caricaSchede();
       veil.style.display = "none";
       contenuto.style.display = "block";
     });
 
     griglia.addEventListener("click", async (evento) => {
-      const bottone = evento.target.closest("[data-attiva]");
-      if (!bottone) return;
+      const bottoneAttiva = evento.target.closest("[data-attiva]");
+      if (bottoneAttiva) {
+        bottoneAttiva.disabled = true;
+        try {
+          await impostaSchedaAttiva(uidCorrente, bottoneAttiva.dataset.attiva);
+          await caricaSchede();
+          mostraToast("Personaggio reso attivo.");
+        } catch (errore) {
+          mostraToast("Impossibile rendere attivo il personaggio.", true);
+          console.error(errore);
+          bottoneAttiva.disabled = false;
+        }
+        return;
+      }
 
-      bottone.disabled = true;
+      const bottoneElimina = evento.target.closest("[data-elimina]");
+      if (bottoneElimina) {
+        schedaDaEliminare = bottoneElimina.dataset.elimina;
+        document.getElementById("elimina-scheda-nome").textContent = bottoneElimina.dataset.nome;
+        document.getElementById("modal-elimina-scheda").style.display = "flex";
+      }
+    });
+
+    let schedaDaEliminare = null;
+    const modalElimina = document.getElementById("modal-elimina-scheda");
+    const btnConfermaElimina = document.getElementById("btn-conferma-elimina");
+
+    document.getElementById("btn-annulla-elimina").addEventListener("click", () => {
+      modalElimina.style.display = "none";
+      schedaDaEliminare = null;
+    });
+
+    btnConfermaElimina.addEventListener("click", async () => {
+      if (!schedaDaEliminare) return;
+      btnConfermaElimina.disabled = true;
       try {
-        await impostaSchedaAttiva(uidCorrente, bottone.dataset.attiva);
+        await eliminaScheda(uidCorrente, schedaDaEliminare);
+        modalElimina.style.display = "none";
         await caricaSchede();
-        mostraToast("Personaggio reso attivo.");
+        mostraToast("Personaggio eliminato.");
       } catch (errore) {
-        mostraToast("Impossibile rendere attivo il personaggio.", true);
+        mostraToast("Impossibile eliminare il personaggio.", true);
         console.error(errore);
-        bottone.disabled = false;
+      } finally {
+        btnConfermaElimina.disabled = false;
+        schedaDaEliminare = null;
       }
     });
   </script>

@@ -18,7 +18,10 @@
             Scheda personaggio
           </h1>
         </div>
-        <span id="badge-stato" class="role-badge"></span>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span id="badge-stato" class="role-badge"></span>
+          <div id="slot-utente" class="slot-utente"></div>
+        </div>
       </div>
 
       <!-- ===================== SCHEDA ===================== -->
@@ -407,6 +410,7 @@
       aggiornaScheda,
       consumaLivelloDaSpendere,
     } from "./assets/js/auth.js";
+    import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import {
       CLASSI,
       CARATTERISTICHE,
@@ -1721,6 +1725,7 @@
     proteggiPagina(async (user, profilo) => {
       uidCorrente = user.uid;
       profiloCorrente = profilo || {};
+      montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
       const idParam = new URLSearchParams(window.location.search).get("id");
 
       try {
