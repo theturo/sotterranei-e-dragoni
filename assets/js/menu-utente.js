@@ -14,6 +14,7 @@ import {
 
 const HTML_MENU = `
   <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
+  <button id="mu-btn-modifica-ordine" class="btn-campanella" aria-label="Modifica ordinamento" title="Modifica ordinamento" type="button" hidden>✏️</button>
   <div class="notifiche-wrap">
     <button id="mu-btn-campanella" class="btn-campanella" aria-label="Notifiche" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -264,8 +265,11 @@ function inizializzaImpostazioni() {
 }
 
 // Disegna l'header condiviso dentro `contenitore` e prepara il pannello impostazioni.
-// { contenitore, user, profilo } — profilo può essere null (schede non ancora normalizzate).
-export async function montaMenuUtente({ contenitore, user, profilo }) {
+// { contenitore, user, profilo, onModificaOrdine } — profilo può essere null (schede non
+// ancora normalizzate). onModificaOrdine, se passata, fa comparire la matita che attiva/
+// disattiva il riordinamento sulla pagina corrente (trasformandosi in una spunta):
+// riceve true quando si entra in modalità modifica, false quando si conferma.
+export async function montaMenuUtente({ contenitore, user, profilo, onModificaOrdine }) {
   contenitore.innerHTML = HTML_MENU;
 
   if (!document.getElementById("mu-modal-impostazioni")) {
@@ -280,6 +284,20 @@ export async function montaMenuUtente({ contenitore, user, profilo }) {
     await esciUtente();
     window.location.href = "index.html";
   });
+
+  const btnModificaOrdine = document.getElementById("mu-btn-modifica-ordine");
+  if (onModificaOrdine) {
+    btnModificaOrdine.hidden = false;
+    let attivo = false;
+    btnModificaOrdine.addEventListener("click", () => {
+      attivo = !attivo;
+      btnModificaOrdine.textContent = attivo ? "✓" : "✏️";
+      const etichetta = attivo ? "Conferma ordinamento" : "Modifica ordinamento";
+      btnModificaOrdine.title = etichetta;
+      btnModificaOrdine.setAttribute("aria-label", etichetta);
+      onModificaOrdine(attivo);
+    });
+  }
 
   // Restituisce l'elenco notifiche già recuperato, così una pagina come la
   // dashboard (che ne mostra un riepilogo a parte) non deve rileggerlo due volte.

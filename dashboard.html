@@ -41,12 +41,15 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, ROLES } from "./assets/js/auth.js";
+    import { proteggiPagina, salvaOrdinePannelli, ROLES } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
     const griglia = document.getElementById("griglia-pannelli");
+
+    let uidCorrente = null;
+    let modoOrdinamento = false;
 
     // Permessi a cascata: ogni ruolo vede anche le sezioni dei ruoli "sotto" di sé
     // (admin vede tutto, un DM vede anche gli strumenti da giocatore, ecc.) — utile
@@ -62,57 +65,72 @@
         ruolo: ROLES.ADMIN,
         titolo: "Area Admin",
         pannelli: [
-          { titolo: "Gestione utenti", testo: "Vedi tutti gli utenti registrati, assegna i ruoli e invia reset password.", link: "admin-utenti.html" },
+          { chiave: "utenti", titolo: "Gestione utenti", testo: "Vedi tutti gli utenti registrati, assegna i ruoli e invia reset password.", link: "admin-utenti.html" },
         ],
       },
       {
         ruolo: ROLES.DM,
         titolo: "Area Dungeon Master",
         pannelli: [
-          { titolo: "Party e livelli", testo: "Vedi il tuo party, segnala una salita di livello e consulta le schede dei giocatori.", link: "dm-party.html" },
-          { titolo: "Glossario equipaggiamento", testo: "Cerca armi, armature, oggetti e pacchi del regolamento per verifiche rapide.", link: "glossario-equipaggiamento.html" },
-          { titolo: "Glossario incantesimi", testo: "Cerca incantesimi per nome, classe o livello per verifiche rapide al tavolo.", link: "glossario-incantesimi.html" },
-          { titolo: "Controllo musica", testo: "Qui potrai gestire playlist Spotify/YouTube per la sessione. (In arrivo)" },
-          { titolo: "Impostazioni campagna", testo: "Qui potrai configurare la campagna. (In arrivo)" },
+          { chiave: "party", titolo: "Party e livelli", testo: "Vedi il tuo party, segnala una salita di livello e consulta le schede dei giocatori.", link: "dm-party.html" },
+          { chiave: "glossario-equip", titolo: "Glossario equipaggiamento", testo: "Cerca armi, armature, oggetti e pacchi del regolamento per verifiche rapide.", link: "glossario-equipaggiamento.html" },
+          { chiave: "glossario-incant", titolo: "Glossario incantesimi", testo: "Cerca incantesimi per nome, classe o livello per verifiche rapide al tavolo.", link: "glossario-incantesimi.html" },
+          { chiave: "musica-dm", titolo: "Controllo musica", testo: "Qui potrai gestire playlist Spotify/YouTube per la sessione. (In arrivo)" },
+          { chiave: "impostazioni-campagna", titolo: "Impostazioni campagna", testo: "Qui potrai configurare la campagna. (In arrivo)" },
         ],
       },
       {
         ruolo: ROLES.PLAYER,
         titolo: "Area Giocatore",
         pannelli: [
-          { titolo: "I miei personaggi", testo: "Crea uno o più personaggi e scegli quale rendere attivo per la campagna.", link: "i-miei-personaggi.html" },
-          { titolo: "Musica di sessione", testo: "Qui vedrai cosa sta suonando il Dungeon Master. (In arrivo)" },
+          { chiave: "personaggi", titolo: "I miei personaggi", testo: "Crea uno o più personaggi e scegli quale rendere attivo per la campagna.", link: "i-miei-personaggi.html" },
+          { chiave: "musica-sessione", titolo: "Musica di sessione", testo: "Qui vedrai cosa sta suonando il Dungeon Master. (In arrivo)" },
         ],
       },
     ];
 
-    function renderPannelli(ruolo) {
+    // Applica l'ordine personalizzato salvato dall'utente (per sezione): i pannelli
+    // presenti nell'elenco salvato vanno per primi in quell'ordine, quelli nuovi o
+    // mai riordinati restano in coda nell'ordine di default.
+    function ordinaPannelli(pannelli, ordineSalvato) {
+      if (!ordineSalvato || ordineSalvato.length === 0) return pannelli;
+      const indice = (chiave) => {
+        const posizione = ordineSalvato.indexOf(chiave);
+        return posizione === -1 ? ordineSalvato.length + pannelli.findIndex((p) => p.chiave === chiave) : posizione;
+      };
+      return [...pannelli].sort((a, b) => indice(a.chiave) - indice(b.chiave));
+    }
+
+    function renderPannelli(ruolo, ordinePannelli) {
       const ruoliVisibili = GERARCHIA_RUOLI[ruolo] || [ROLES.PLAYER];
 
       griglia.innerHTML = SEZIONI_PANNELLI.filter((sezione) => ruoliVisibili.includes(sezione.ruolo))
         .map((sezione) => {
-          const cardsHtml = sezione.pannelli
+          const pannelli = ordinaPannelli(sezione.pannelli, ordinePannelli?.[sezione.ruolo]);
+          const cardsHtml = pannelli
             .map((p) => {
-              const contenuto = `<h3>${p.titolo}</h3><p>${p.testo}</p>`;
+              const intestazione = `<div class="panel-intestazione"><span class="maniglia-trascina" aria-hidden="true" title="Trascina per riordinare">⠿</span><h3>${p.titolo}</h3></div>`;
+              const contenuto = `${intestazione}<p>${p.testo}</p>`;
               return p.link
-                ? `<a class="panel" href="${p.link}" style="display:block; text-decoration:none;">${contenuto}</a>`
-                : `<div class="panel">${contenuto}</div>`;
+                ? `<a class="panel" href="${p.link}" data-chiave="${p.chiave}" style="display:block; text-decoration:none;">${contenuto}</a>`
+                : `<div class="panel" data-chiave="${p.chiave}">${contenuto}</div>`;
             })
             .join("");
           return `
             <div class="sezione-titolo">${sezione.titolo}</div>
-            <div class="dashboard-grid">${cardsHtml}</div>
+            <div class="dashboard-grid" data-sezione="${sezione.ruolo}">${cardsHtml}</div>
           `;
         })
         .join("");
     }
 
     proteggiPagina(async (user, profilo) => {
+      uidCorrente = user.uid;
       const nome = profilo?.nome || user.displayName || user.email;
       const ruolo = profilo?.ruolo || ROLES.PLAYER;
 
       document.getElementById("nome-utente").textContent = nome;
-      renderPannelli(ruolo);
+      renderPannelli(ruolo, profilo?.ordinePannelli);
 
       // Il livello personale è visibile a tutti: anche un DM o un admin possono
       // avere (o volere) un proprio personaggio nella campagna.
@@ -120,7 +138,16 @@
       badgeLivello.textContent = `Livello ${profilo?.livello ?? 1}`;
       badgeLivello.style.display = "inline-block";
 
-      const notifiche = await montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+      const notifiche = await montaMenuUtente({
+        contenitore: document.getElementById("slot-utente"),
+        user,
+        profilo,
+        onModificaOrdine: (attivo) => {
+          modoOrdinamento = attivo;
+          griglia.classList.toggle("riordino-attivo", attivo);
+          griglia.querySelectorAll(".panel").forEach((pannello) => (pannello.draggable = attivo));
+        },
+      });
 
       const livelliNonLetti = notifiche.filter((n) => !n.letta && n.tipo === "livello_su");
       if (livelliNonLetti.length > 0) {
@@ -146,6 +173,60 @@
 
       veil.style.display = "none";
       contenuto.style.display = "block";
+    });
+
+    // Riordino dei pannelli via trascinamento, come per "I miei personaggi": attivo
+    // solo in modalità modifica (matita nell'header), limitato ai pannelli della
+    // stessa sezione (non si mescolano Area DM e Area Giocatore).
+    let pannelloTrascinato = null;
+
+    griglia.addEventListener("dragstart", (evento) => {
+      if (!modoOrdinamento) return;
+      const pannello = evento.target.closest(".panel");
+      if (!pannello) return;
+      pannelloTrascinato = pannello;
+      evento.dataTransfer.effectAllowed = "move";
+      setTimeout(() => pannello.classList.add("trascinato"), 0);
+    });
+
+    griglia.addEventListener("dragend", () => {
+      if (pannelloTrascinato) pannelloTrascinato.classList.remove("trascinato");
+      pannelloTrascinato = null;
+    });
+
+    griglia.addEventListener("dragover", (evento) => {
+      if (!pannelloTrascinato) return;
+      evento.preventDefault();
+      const bersaglio = evento.target.closest(".panel");
+      if (!bersaglio || bersaglio === pannelloTrascinato) return;
+      const contenitoreTrascinato = pannelloTrascinato.closest(".dashboard-grid");
+      if (bersaglio.closest(".dashboard-grid") !== contenitoreTrascinato) return;
+      const elementi = [...contenitoreTrascinato.children];
+      if (elementi.indexOf(pannelloTrascinato) < elementi.indexOf(bersaglio)) {
+        bersaglio.after(pannelloTrascinato);
+      } else {
+        bersaglio.before(pannelloTrascinato);
+      }
+    });
+
+    griglia.addEventListener("drop", async (evento) => {
+      if (!pannelloTrascinato) return;
+      evento.preventDefault();
+      const contenitore = pannelloTrascinato.closest(".dashboard-grid");
+      const ordineChiavi = [...contenitore.children].map((el) => el.dataset.chiave);
+      try {
+        await salvaOrdinePannelli(uidCorrente, contenitore.dataset.sezione, ordineChiavi);
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    // In modalità modifica, i pannelli-link non devono navigare: si sta trascinando,
+    // non aprendo la pagina.
+    griglia.addEventListener("click", (evento) => {
+      if (!modoOrdinamento) return;
+      const pannello = evento.target.closest(".panel");
+      if (pannello) evento.preventDefault();
     });
   </script>
 </body>

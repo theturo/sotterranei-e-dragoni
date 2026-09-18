@@ -25,6 +25,9 @@
       </div>
 
       <div class="panel-wide">
+        <p id="suggerimento-riordino" class="scheda-testo-libero" hidden>
+          Modalità riordino attiva: trascina le card per cambiare l'ordine, poi conferma con la spunta in alto.
+        </p>
         <div id="griglia-schede" class="griglia-schede-personaggio"></div>
         <p id="nessuna-scheda" style="display:none; color: var(--color-ink-soft);">
           Non hai ancora nessun personaggio: creane uno per iniziare l'avventura.
@@ -60,6 +63,7 @@
     const toast = document.getElementById("toast");
 
     let uidCorrente = null;
+    let modoOrdinamento = false;
 
     let toastTimer = null;
     function mostraToast(testo, errore = false) {
@@ -81,7 +85,7 @@
       const classe = CLASSI[scheda.classe];
       const div = document.createElement("div");
       div.className = `scheda-card${scheda.attiva ? " scheda-card-attiva" : ""}`;
-      div.draggable = true;
+      div.draggable = modoOrdinamento;
       div.dataset.id = scheda.id;
       div.innerHTML = `
         <div class="scheda-card-header">
@@ -121,7 +125,17 @@
 
     proteggiPagina(async (user, profilo) => {
       uidCorrente = user.uid;
-      montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+      montaMenuUtente({
+        contenitore: document.getElementById("slot-utente"),
+        user,
+        profilo,
+        onModificaOrdine: (attivo) => {
+          modoOrdinamento = attivo;
+          griglia.classList.toggle("riordino-attivo", attivo);
+          document.getElementById("suggerimento-riordino").hidden = !attivo;
+          griglia.querySelectorAll(".scheda-card").forEach((card) => (card.draggable = attivo));
+        },
+      });
       await caricaSchede();
       veil.style.display = "none";
       contenuto.style.display = "block";
@@ -192,11 +206,11 @@
       if (!card) return;
       cardTrascinata = card;
       evento.dataTransfer.effectAllowed = "move";
-      setTimeout(() => card.classList.add("scheda-card-trascinata"), 0);
+      setTimeout(() => card.classList.add("trascinato"), 0);
     });
 
     griglia.addEventListener("dragend", () => {
-      if (cardTrascinata) cardTrascinata.classList.remove("scheda-card-trascinata");
+      if (cardTrascinata) cardTrascinata.classList.remove("trascinato");
       cardTrascinata = null;
     });
 

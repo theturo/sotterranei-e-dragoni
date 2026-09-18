@@ -109,6 +109,13 @@ export async function aggiornaRuoloUtente(uid, nuovoRuolo) {
   await updateDoc(doc(db, "users", uid), { ruolo: nuovoRuolo });
 }
 
+// Salva l'ordine personalizzato dei pannelli della dashboard per una sezione
+// (admin/dm/player): ogni utente può riordinare a piacimento i propri pannelli
+// senza toccare quelli degli altri, dato che il campo vive sul proprio documento.
+export async function salvaOrdinePannelli(uid, sezione, ordineChiavi) {
+  await updateDoc(doc(db, "users", uid), { [`ordinePannelli.${sezione}`]: ordineChiavi });
+}
+
 // Invia l'email di reset password all'indirizzo indicato. Firebase Authentication
 // stesso decide se l'indirizzo corrisponde a un account esistente: qui non serve (né
 // è possibile, prima del login) verificarlo a mano contro Firestore.

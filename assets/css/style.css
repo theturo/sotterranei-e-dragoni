@@ -364,6 +364,16 @@ a:hover {
   margin-top: 0;
 }
 
+.panel-intestazione {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-intestazione h3 {
+  margin: 0;
+}
+
 .panel p {
   color: var(--color-ink-soft);
   line-height: 1.5;
@@ -1772,6 +1782,7 @@ footer.site-footer {
 }
 
 .maniglia-trascina {
+  display: none;
   cursor: grab;
   color: var(--color-ink-soft);
   font-size: 1.1rem;
@@ -1779,7 +1790,11 @@ footer.site-footer {
   user-select: none;
 }
 
-.scheda-card-trascinata {
+.riordino-attivo .maniglia-trascina {
+  display: inline;
+}
+
+.trascinato {
   opacity: 0.5;
 }
 
