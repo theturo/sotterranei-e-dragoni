@@ -202,13 +202,18 @@ export async function segnaNotificaLetta(uid, notificaId) {
 // visibile al DM.
 
 // Elenca tutte le schede di un utente (le proprie, o quelle di un giocatore
-// se chi chiama è admin/DM), più recenti create per ultime.
+// se chi chiama è admin/DM). Ordinate per "ordine" (impostato riordinando le
+// schede a mano) se tutte lo hanno già; finché anche una sola ne è priva
+// (schede più vecchie di questa funzionalità, o mai riordinate) si torna
+// all'ordine di creazione, così non serve una migrazione esplicita.
 export async function elencaSchedePersonaggio(uid) {
   const riferimento = query(collection(db, "personaggi"), where("proprietarioUid", "==", uid));
   const snapshot = await getDocs(riferimento);
-  return snapshot.docs
-    .map((documento) => ({ id: documento.id, ...documento.data() }))
-    .sort((a, b) => (a.creataIl?.toMillis?.() ?? 0) - (b.creataIl?.toMillis?.() ?? 0));
+  const schede = snapshot.docs.map((documento) => ({ id: documento.id, ...documento.data() }));
+  const tutteOrdinate = schede.every((s) => typeof s.ordine === "number");
+  return tutteOrdinate
+    ? schede.sort((a, b) => a.ordine - b.ordine)
+    : schede.sort((a, b) => (a.creataIl?.toMillis?.() ?? 0) - (b.creataIl?.toMillis?.() ?? 0));
 }
 
 // Crea una nuova scheda personaggio per un utente. Se è la sua prima scheda
@@ -219,10 +224,21 @@ export async function creaScheda(uid, dati) {
     ...dati,
     proprietarioUid: uid,
     attiva: schedeEsistenti.length === 0,
+    ordine: schedeEsistenti.length,
     creataIl: serverTimestamp(),
     aggiornatoIl: serverTimestamp(),
   });
   return riferimento.id;
+}
+
+// Salva il nuovo ordine (drag & drop) di tutte le schede di un utente: idsInOrdine
+// è l'elenco completo degli id nell'ordine desiderato.
+export async function riordinaSchede(idsInOrdine) {
+  const batch = writeBatch(db);
+  idsInOrdine.forEach((id, indice) => {
+    batch.update(doc(db, "personaggi", id), { ordine: indice });
+  });
+  await batch.commit();
 }
 
 // Recupera una scheda per id (di sola lettura per chi non è il proprietario:

@@ -272,6 +272,12 @@ a:hover {
   padding: 0 16px 48px;
 }
 
+@media (min-width: 1300px) {
+  .dashboard-wrap {
+    max-width: 1200px;
+  }
+}
+
 .dashboard-header {
   display: flex;
   flex-wrap: wrap;
@@ -312,6 +318,12 @@ a:hover {
 @media (min-width: 640px) {
   .dashboard-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1300px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -1703,6 +1715,12 @@ footer.site-footer {
   }
 }
 
+@media (min-width: 1300px) {
+  .griglia-schede-personaggio {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .scheda-card {
   border: 1px solid rgba(122, 31, 43, 0.3);
   border-radius: var(--radius-md);
@@ -1751,6 +1769,18 @@ footer.site-footer {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.maniglia-trascina {
+  cursor: grab;
+  color: var(--color-ink-soft);
+  font-size: 1.1rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.scheda-card-trascinata {
+  opacity: 0.5;
 }
 
 /* ---------- Creazione guidata del personaggio ---------- */

@@ -49,7 +49,7 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, elencaSchedePersonaggio, impostaSchedaAttiva, eliminaScheda } from "./assets/js/auth.js";
+    import { proteggiPagina, elencaSchedePersonaggio, impostaSchedaAttiva, eliminaScheda, riordinaSchede } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import { CLASSI, nomeRazzaCompleto } from "./assets/js/dati-srd.js";
 
@@ -81,8 +81,11 @@
       const classe = CLASSI[scheda.classe];
       const div = document.createElement("div");
       div.className = `scheda-card${scheda.attiva ? " scheda-card-attiva" : ""}`;
+      div.draggable = true;
+      div.dataset.id = scheda.id;
       div.innerHTML = `
         <div class="scheda-card-header">
+          <span class="maniglia-trascina" aria-hidden="true" title="Trascina per riordinare">⠿</span>
           <span class="icona-classe" aria-hidden="true">${classe?.icona || "🎲"}</span>
           <div class="scheda-card-titoli">
             <div class="scheda-card-nome">${scheda.nome || "—"}</div>
@@ -171,6 +174,55 @@
       } finally {
         btnConfermaElimina.disabled = false;
         schedaDaEliminare = null;
+      }
+    });
+
+    // Riordino delle schede via trascinamento (drag & drop nativo del browser,
+    // funziona col mouse; il supporto touch/mobile resta una rifinitura futura).
+    let cardTrascinata = null;
+
+    griglia.addEventListener("dragstart", (evento) => {
+      // Non avviare il trascinamento se si parte da un bottone o un link della
+      // card: deve restare possibile cliccarli normalmente.
+      if (evento.target.closest("a, button")) {
+        evento.preventDefault();
+        return;
+      }
+      const card = evento.target.closest(".scheda-card");
+      if (!card) return;
+      cardTrascinata = card;
+      evento.dataTransfer.effectAllowed = "move";
+      setTimeout(() => card.classList.add("scheda-card-trascinata"), 0);
+    });
+
+    griglia.addEventListener("dragend", () => {
+      if (cardTrascinata) cardTrascinata.classList.remove("scheda-card-trascinata");
+      cardTrascinata = null;
+    });
+
+    griglia.addEventListener("dragover", (evento) => {
+      if (!cardTrascinata) return;
+      evento.preventDefault();
+      const bersaglio = evento.target.closest(".scheda-card");
+      if (!bersaglio || bersaglio === cardTrascinata) return;
+      const card = [...griglia.children];
+      if (card.indexOf(cardTrascinata) < card.indexOf(bersaglio)) {
+        bersaglio.after(cardTrascinata);
+      } else {
+        bersaglio.before(cardTrascinata);
+      }
+    });
+
+    griglia.addEventListener("drop", async (evento) => {
+      if (!cardTrascinata) return;
+      evento.preventDefault();
+      const idsInOrdine = [...griglia.children].map((card) => card.dataset.id);
+      try {
+        await riordinaSchede(idsInOrdine);
+      } catch (errore) {
+        mostraToast("Impossibile salvare il nuovo ordine.", true);
+        console.error(errore);
+        await caricaSchede();
       }
     });
   </script>

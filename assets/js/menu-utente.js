@@ -13,6 +13,7 @@ import {
 } from "./auth.js";
 
 const HTML_MENU = `
+  <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
   <div class="notifiche-wrap">
     <button id="mu-btn-campanella" class="btn-campanella" aria-label="Notifiche" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true">
