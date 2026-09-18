@@ -35,7 +35,9 @@
             <thead>
               <tr>
                 <th>Giocatore</th>
-                <th>Livello attuale</th>
+                <th>Personaggio</th>
+                <th>Classe</th>
+                <th>Livello</th>
                 <th>PF</th>
                 <th>Azioni</th>
               </tr>
@@ -59,6 +61,7 @@
   <script type="module">
     import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ottieniSchedaAttiva } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { CLASSI, nomeRazzaCompleto } from "./assets/js/dati-srd.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -81,10 +84,13 @@
       tr.dataset.uid = giocatore.uid;
       tr.innerHTML = `
         <td>${giocatore.nome || giocatore.email || "—"}</td>
+        <td data-cella="personaggio">—</td>
+        <td data-cella="classe">—</td>
         <td class="cella-livello">${giocatore.livello ?? 1}</td>
         <td class="cella-pf">—</td>
-        <td>
-          <button class="btn-tabella" data-uid="${giocatore.uid}">Aumento di livello</button>
+        <td class="azioni-riga">
+          <button class="btn-tabella btn-icona-azione" data-uid="${giocatore.uid}" title="Aumento di livello" aria-label="Aumento di livello" type="button">⬆</button>
+          <a class="btn-tabella btn-icona-azione azione-disabilitata" data-cella="visualizza" title="Nessun personaggio attivo" aria-label="Visualizza scheda">👁</a>
         </td>
       `;
       return tr;
@@ -96,10 +102,29 @@
       return temporanei > 0 ? `${attuali} / ${massimi} (+${temporanei})` : `${attuali} / ${massimi}`;
     }
 
-    async function caricaPfRiga(riga) {
+    // Un'unica lettura della scheda attiva del giocatore alimenta PF, Personaggio,
+    // Classe e il link "Visualizza scheda" — evita fetch ripetute per la stessa riga.
+    async function caricaDatiRiga(riga) {
+      const cellaPersonaggio = riga.querySelector('[data-cella="personaggio"]');
+      const cellaClasse = riga.querySelector('[data-cella="classe"]');
+      const linkVisualizza = riga.querySelector('[data-cella="visualizza"]');
+
       try {
         const scheda = await ottieniSchedaAttiva(riga.dataset.uid);
         riga.querySelector(".cella-pf").textContent = testoPf(scheda);
+
+        if (scheda) {
+          cellaPersonaggio.innerHTML = `${scheda.nome || "—"}${
+            scheda.razza ? `<span class="cella-personaggio-sub">${nomeRazzaCompleto(scheda.razza, scheda.sottorazza)}</span>` : ""
+          }`;
+          const classe = CLASSI[scheda.classe];
+          cellaClasse.innerHTML = classe
+            ? `<span class="cella-classe"><span class="icona-classe" title="${classe.nome}">${classe.icona}</span>${classe.nome}</span>`
+            : "—";
+          linkVisualizza.href = `scheda-personaggio.html?id=${scheda.id}`;
+          linkVisualizza.title = "Visualizza scheda";
+          linkVisualizza.classList.remove("azione-disabilitata");
+        }
       } catch (errore) {
         console.error(errore);
       }
@@ -114,7 +139,7 @@
         } else {
           corpoTabella.innerHTML = "";
           giocatori.forEach((g) => corpoTabella.appendChild(creaRiga(g)));
-          Array.from(corpoTabella.querySelectorAll("tr")).forEach(caricaPfRiga);
+          Array.from(corpoTabella.querySelectorAll("tr")).forEach(caricaDatiRiga);
         }
       } catch (errore) {
         mostraToast("Impossibile caricare il party.", true);
@@ -141,7 +166,7 @@
     }
 
     corpoTabella.addEventListener("click", async (evento) => {
-      const bottone = evento.target.closest(".btn-tabella");
+      const bottone = evento.target.closest("[data-uid]");
       if (!bottone) return;
 
       const riga = bottone.closest("tr");
@@ -165,7 +190,7 @@
 
       const bottoneParty = evento.currentTarget;
       bottoneParty.disabled = true;
-      corpoTabella.querySelectorAll(".btn-tabella").forEach((b) => (b.disabled = true));
+      corpoTabella.querySelectorAll("[data-uid]").forEach((b) => (b.disabled = true));
 
       const risultati = await Promise.all(righe.map((riga) => aumentaLivelloRiga(riga)));
       const successi = risultati.filter(Boolean).length;
@@ -179,7 +204,7 @@
       );
 
       bottoneParty.disabled = false;
-      corpoTabella.querySelectorAll(".btn-tabella").forEach((b) => (b.disabled = false));
+      corpoTabella.querySelectorAll("[data-uid]").forEach((b) => (b.disabled = false));
     });
   </script>
 </body>
