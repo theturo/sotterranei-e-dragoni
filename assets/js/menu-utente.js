@@ -10,11 +10,15 @@ import {
   cambiaEmail,
   traduciErrore,
   ETICHETTE_RUOLO,
+  ROLES,
+  ottieniStatoSessione,
+  salvaStatoSessione,
 } from "./auth.js";
 
 const HTML_MENU = `
   <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
   <button id="mu-btn-modifica-ordine" class="btn-campanella" aria-label="Modifica ordinamento" title="Modifica ordinamento" type="button" hidden>✏️</button>
+  <button id="mu-btn-sessione" class="btn-campanella" aria-label="Sessione" title="Sessione" type="button" hidden>📜</button>
   <div class="notifiche-wrap">
     <button id="mu-btn-campanella" class="btn-campanella" aria-label="Notifiche" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -70,6 +74,41 @@ const HTML_MODALE = `
           <button type="submit" class="btn" id="mu-btn-salva-email">Invia conferma</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="mu-modal-sessione" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <button id="mu-chiudi-sessione" class="btn-chiudi-modal" aria-label="Chiudi" type="button">×</button>
+      <h2>Sessione</h2>
+
+      <div id="mu-sessione-dm" hidden>
+        <p class="card-tagline">
+          Attiva l'interruttore quando la sessione è in corso: ai giocatori comparirà il
+          bottone "Sessione" nel loro header. In futuro questo passaggio sarà legato a un
+          calendario condiviso.
+        </p>
+        <div class="impostazioni-opzioni">
+          <button id="mu-btn-toggle-sessione" class="btn-tabella" type="button"></button>
+        </div>
+        <div class="field">
+          <label for="mu-sessione-bacheca">Bacheca (visibile ai giocatori mentre la sessione è in corso)</label>
+          <textarea id="mu-sessione-bacheca" class="textarea-libero" rows="5" placeholder="Obiettivi della serata, avvisi, riepilogo..."></textarea>
+        </div>
+        <div id="mu-messaggio-sessione" class="message"></div>
+        <div class="impostazioni-azioni">
+          <button type="button" class="btn" id="mu-btn-salva-bacheca">Salva bacheca</button>
+        </div>
+        <div class="impostazioni-opzioni" style="margin-top:16px;">
+          <a class="btn-tabella" href="dm-party.html">Party e livelli</a>
+          <a class="btn-tabella" href="glossario-equipaggiamento.html">Glossario equipaggiamento</a>
+          <a class="btn-tabella" href="glossario-incantesimi.html">Glossario incantesimi</a>
+        </div>
+      </div>
+
+      <div id="mu-sessione-giocatore" hidden>
+        <p id="mu-sessione-testo-giocatore" class="scheda-testo-libero"></p>
+      </div>
     </div>
   </div>
 `;
@@ -264,6 +303,88 @@ function inizializzaImpostazioni() {
   });
 }
 
+// Bottone/modale "Sessione": il DM vede sempre il bottone e può accendere/spegnere
+// l'interruttore "sessione in corso" e aggiornare la bacheca di testo libero; un
+// giocatore vede il bottone comparire SOLO quando l'interruttore è acceso, e
+// dentro la modale trova la bacheca in sola lettura. Stato letto una sola volta
+// al caricamento della pagina (come le notifiche): un giocatore già sulla pagina
+// non vede comparire il bottone in tempo reale se il DM lo accende dopo.
+async function inizializzaSessione(ruolo) {
+  const isDmOAdmin = ruolo === ROLES.DM || ruolo === ROLES.ADMIN;
+  const btnSessione = document.getElementById("mu-btn-sessione");
+  const modale = document.getElementById("mu-modal-sessione");
+  const pannelloDm = document.getElementById("mu-sessione-dm");
+  const pannelloGiocatore = document.getElementById("mu-sessione-giocatore");
+
+  let stato;
+  try {
+    stato = await ottieniStatoSessione();
+  } catch (errore) {
+    console.error(errore);
+    stato = { inCorso: false, bacheca: "" };
+  }
+
+  if (isDmOAdmin) {
+    const btnToggle = document.getElementById("mu-btn-toggle-sessione");
+    const campoBacheca = document.getElementById("mu-sessione-bacheca");
+    const msgSessione = document.getElementById("mu-messaggio-sessione");
+
+    const aggiornaEtichettaToggle = () => {
+      btnToggle.textContent = stato.inCorso ? "Segna sessione come conclusa" : "Segna sessione come in corso";
+    };
+
+    btnSessione.hidden = false;
+    pannelloDm.hidden = false;
+    campoBacheca.value = stato.bacheca || "";
+    aggiornaEtichettaToggle();
+
+    btnToggle.addEventListener("click", async () => {
+      const nuovoStato = !stato.inCorso;
+      btnToggle.disabled = true;
+      try {
+        await salvaStatoSessione({ inCorso: nuovoStato });
+        stato.inCorso = nuovoStato;
+        aggiornaEtichettaToggle();
+        nascondiMessaggio(msgSessione);
+      } catch (errore) {
+        console.error(errore);
+        mostraMessaggio(msgSessione, "Impossibile aggiornare lo stato della sessione.", "error");
+      } finally {
+        btnToggle.disabled = false;
+      }
+    });
+
+    document.getElementById("mu-btn-salva-bacheca").addEventListener("click", async (evento) => {
+      const bottone = evento.currentTarget;
+      bottone.disabled = true;
+      try {
+        await salvaStatoSessione({ bacheca: campoBacheca.value });
+        stato.bacheca = campoBacheca.value;
+        mostraMessaggio(msgSessione, "Bacheca salvata.", "success");
+      } catch (errore) {
+        console.error(errore);
+        mostraMessaggio(msgSessione, "Impossibile salvare la bacheca.", "error");
+      } finally {
+        bottone.disabled = false;
+      }
+    });
+  } else if (stato.inCorso) {
+    btnSessione.hidden = false;
+    pannelloGiocatore.hidden = false;
+    document.getElementById("mu-sessione-testo-giocatore").textContent = stato.bacheca?.trim()
+      ? stato.bacheca
+      : "Il Dungeon Master non ha ancora aggiunto note per questa sessione.";
+  }
+
+  btnSessione.addEventListener("click", () => {
+    modale.style.display = "flex";
+  });
+
+  document.getElementById("mu-chiudi-sessione").addEventListener("click", () => {
+    modale.style.display = "none";
+  });
+}
+
 // Disegna l'header condiviso dentro `contenitore` e prepara il pannello impostazioni.
 // { contenitore, user, profilo, onModificaOrdine } — profilo può essere null (schede non
 // ancora normalizzate). onModificaOrdine, se passata, fa comparire la matita che attiva/
@@ -298,6 +419,8 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
       onModificaOrdine(attivo);
     });
   }
+
+  await inizializzaSessione(ruolo);
 
   // Restituisce l'elenco notifiche già recuperato, così una pagina come la
   // dashboard (che ne mostra un riepilogo a parte) non deve rileggerlo due volte.

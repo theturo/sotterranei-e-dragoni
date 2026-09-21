@@ -315,6 +315,22 @@ export async function aggiornaScheda(schedaId, campi) {
   await updateDoc(doc(db, "personaggi", schedaId), { ...campi, aggiornatoIl: serverTimestamp() });
 }
 
+// Stato condiviso della sessione di gioco corrente: un unico documento
+// "campagna/sessione" con un interruttore manuale ("inCorso", attivato dal DM
+// finché non esisterà un calendario condiviso) e una bacheca di testo libero
+// che il DM aggiorna e i giocatori vedono in sola lettura.
+export async function ottieniStatoSessione() {
+  const snapshot = await getDoc(doc(db, "campagna", "sessione"));
+  return snapshot.exists() ? snapshot.data() : { inCorso: false, bacheca: "" };
+}
+
+// Solo admin/DM possono scrivere (vedi firestore.rules). Usa merge così
+// l'interruttore e la bacheca si possono aggiornare separatamente senza
+// sovrascrivere l'altro campo.
+export async function salvaStatoSessione(campi) {
+  await setDoc(doc(db, "campagna", "sessione"), { ...campi, aggiornataIl: serverTimestamp() }, { merge: true });
+}
+
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,
 // poi esegue la callback con (user, profilo). Se non autenticato, reindirizza al
 // login; se autenticato ma con email non verificata, reindirizza alla pagina di

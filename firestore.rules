@@ -23,6 +23,9 @@ rules_version = '2';
 //   volta per utente, imposto lato client). Il proprietario può leggere e
 //   scrivere le proprie schede; un admin o un DM possono solo leggerle (il DM
 //   deve poter vedere i PF dei giocatori durante la sessione).
+// - Documento singolo "campagna/sessione": stato condiviso della sessione in
+//   corso (interruttore manuale + bacheca di testo per il DM). Leggibile da
+//   chiunque sia autenticato, scrivibile solo da admin/DM.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -103,6 +106,15 @@ service cloud.firestore {
       // Aggiornamento/eliminazione: solo il proprietario della scheda, o un admin.
       allow update: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin());
       allow delete: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin());
+    }
+
+    match /campagna/{docId} {
+      // Lettura: chiunque sia autenticato (serve a tutti i giocatori per sapere
+      // se una sessione è in corso e leggerne la bacheca).
+      allow get: if isAutenticato();
+
+      // Scrittura: solo admin o DM (interruttore "sessione in corso" e bacheca).
+      allow write: if isAdmin() || isDM();
     }
   }
 }
