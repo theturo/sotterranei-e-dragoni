@@ -126,19 +126,22 @@ export const RAZZE = {
 };
 
 export const CLASSI = {
-  barbaro: { nome: "Barbaro", dadoVita: 12, salvezze: ["forza", "costituzione"], icona: "🪓" },
-  bardo: { nome: "Bardo", dadoVita: 8, salvezze: ["destrezza", "carisma"], icona: "🎵" },
-  chierico: { nome: "Chierico", dadoVita: 8, salvezze: ["saggezza", "carisma"], icona: "✨" },
-  druido: { nome: "Druido", dadoVita: 8, salvezze: ["intelligenza", "saggezza"], icona: "🌿" },
-  guerriero: { nome: "Guerriero", dadoVita: 10, salvezze: ["forza", "costituzione"], icona: "⚔️" },
-  ladro: { nome: "Ladro", dadoVita: 8, salvezze: ["destrezza", "intelligenza"], icona: "🗡️" },
-  mago: { nome: "Mago", dadoVita: 6, salvezze: ["intelligenza", "saggezza"], icona: "📖" },
-  monaco: { nome: "Monaco", dadoVita: 8, salvezze: ["forza", "destrezza"], icona: "🥋" },
-  paladino: { nome: "Paladino", dadoVita: 10, salvezze: ["saggezza", "carisma"], icona: "🛡️" },
-  ranger: { nome: "Ranger", dadoVita: 10, salvezze: ["forza", "destrezza"], icona: "🏹" },
-  stregone: { nome: "Stregone", dadoVita: 6, salvezze: ["costituzione", "carisma"], icona: "🔥" },
-  warlock: { nome: "Warlock", dadoVita: 8, salvezze: ["saggezza", "carisma"], icona: "👁️" },
+  barbaro: { nome: "Barbaro", dadoVita: 12, salvezze: ["forza", "costituzione"], icona: "🪓", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="20" x2="15" y2="8"/><path d="M13 6 C16 3 21 4 20 8 C19 11 15 11 12 9 Z"/></svg>' },
+  bardo: { nome: "Bardo", dadoVita: 8, salvezze: ["destrezza", "carisma"], icona: "🎵", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="18" r="3" fill="currentColor" stroke="none"/><line x1="11" y1="18" x2="11" y2="5"/><path d="M11 5 C14 5 16 7 16 9"/></svg>' },
+  chierico: { nome: "Chierico", dadoVita: 8, salvezze: ["saggezza", "carisma"], icona: "✨", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/><line x1="16" y1="12" x2="21.5" y2="12"/><line x1="14.83" y1="14.83" x2="18.8" y2="18.8"/><line x1="12" y1="16" x2="12" y2="21.5"/><line x1="9.17" y1="14.83" x2="5.2" y2="18.8"/><line x1="8" y1="12" x2="2.5" y2="12"/><line x1="9.17" y1="9.17" x2="5.2" y2="5.2"/><line x1="12" y1="8" x2="12" y2="2.5"/><line x1="14.83" y1="9.17" x2="18.8" y2="5.2"/></svg>' },
+  druido: { nome: "Druido", dadoVita: 8, salvezze: ["intelligenza", "saggezza"], icona: "🌿", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 C18 5 20 11 12 21 C4 11 6 5 12 3 Z"/><line x1="12" y1="6" x2="12" y2="18"/></svg>' },
+  guerriero: { nome: "Guerriero", dadoVita: 10, salvezze: ["forza", "costituzione"], icona: "⚔️", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="4"/><line x1="15" y1="7" x2="18" y2="10"/><circle cx="20" cy="4" r="1.2" fill="currentColor" stroke="none"/><line x1="20" y1="20" x2="4" y2="4"/><line x1="9" y1="7" x2="6" y2="10"/><circle cx="4" cy="4" r="1.2" fill="currentColor" stroke="none"/></svg>' },
+  ladro: { nome: "Ladro", dadoVita: 8, salvezze: ["destrezza", "intelligenza"], icona: "🗡️", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L14.5 14 L12 17.5 L9.5 14 Z"/><line x1="8" y1="14.5" x2="16" y2="14.5"/><line x1="12" y1="17.5" x2="12" y2="22"/></svg>' },
+  mago: { nome: "Mago", dadoVita: 6, salvezze: ["intelligenza", "saggezza"], icona: "📖", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6 C7 4 10 5 12 7 C14 5 17 4 21 6 L21 18 C17 16 14 17 12 19 C10 17 7 16 3 18 Z"/><line x1="12" y1="7" x2="12" y2="19"/></svg>' },
+  monaco: { nome: "Monaco", dadoVita: 8, salvezze: ["forza", "destrezza"], icona: "🥋", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 4 C16 4 16 12 12 12 C8 12 8 20 12 20"/><circle cx="12" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="16" r="1.3"/></svg>' },
+  paladino: { nome: "Paladino", dadoVita: 10, salvezze: ["saggezza", "carisma"], icona: "🛡️", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 5 V12 C20 17 16.5 20.5 12 22 C7.5 20.5 4 17 4 12 V5 Z"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="8" y1="12" x2="16" y2="12"/></svg>' },
+  ranger: { nome: "Ranger", dadoVita: 10, salvezze: ["forza", "destrezza"], icona: "🏹", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3 C10 12 10 12 6 21"/><line x1="6" y1="3" x2="6" y2="21"/><line x1="6" y1="12" x2="21" y2="12"/><path d="M17 9 L21 12 L17 15"/></svg>' },
+  stregone: { nome: "Stregone", dadoVita: 6, salvezze: ["costituzione", "carisma"], icona: "🔥", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 C8 7 6 10 6 14 C6 18.5 9 21 12 21 C15 21 18 18.5 18 14 C18 11 16.5 9 15 7 C15 10 13 11 12 9 C11 7 12 4 12 2 Z"/></svg>' },
+  warlock: { nome: "Warlock", dadoVita: 8, salvezze: ["saggezza", "carisma"], icona: "👁️", iconaSvg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 C6 6 18 6 22 12 C18 18 6 18 2 12 Z"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>' },
 };
+
+// Icona di riserva quando non c'è ancora una classe scelta (usata al posto di "🎲").
+export const ICONA_CLASSE_FALLBACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>';
 
 // Nome completo di una razza, comprensivo di sottorazza se presente.
 export function nomeRazzaCompleto(razzaChiave, sottorazzaChiave) {

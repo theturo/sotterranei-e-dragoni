@@ -7,7 +7,25 @@
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
-  <div id="veil" class="loading-veil">Consultando gli antichi registri…</div>
+  <div id="veil" class="loading-veil">
+    <div class="die-stage">
+      <div class="die-shadow"></div>
+      <div class="die-svg-wrap">
+        <svg class="die-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.1" opacity="0.5"/>
+          <text class="num num-20" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">20</text>
+          <text class="num num-7" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">7</text>
+          <text class="num num-3" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">3</text>
+          <text class="num num-14" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">14</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="loading-text">Consultando gli antichi registri…</div>
+      <div class="loading-sub">un istante: il destino si sta scrivendo</div>
+    </div>
+  </div>
 
   <div id="contenuto" style="display:none;">
     <div class="dashboard-wrap scheda-wrap-esterno">
@@ -39,7 +57,7 @@
               <span>
                 <span id="icona-classe" class="icona-classe" aria-hidden="true"></span><span id="scheda-classe-livello"></span>
                 <button type="button" id="btn-livello-su" class="btn-livello-su" title="Passa al livello successivo" aria-label="Passa al livello successivo" hidden>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l8 8h-5v8h-6v-8H4z" /></svg>
+                  <svg viewBox="0 0 24 24" fill-rule="evenodd" aria-hidden="true"><path d="M12 3 L18.5 10 L14 10 L14 20 L10 20 L10 10 L5.5 10 Z M12 5 L13.1 7.3 L12 9.2 L10.9 7.3 Z M11.55 11 L12.45 11 L12.45 19 L11.55 19 Z"/></svg>
                 </button>
               </span>
             </div>
@@ -164,15 +182,15 @@
                   </div>
                   <div class="pallini-morte">
                     <span class="pallini-morte-etichetta">Successi</span>
-                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="0"></span>
-                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="1"></span>
-                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="2"></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 L19 5 V11 C19 15.5 16 19 12 21 C8 19 5 15.5 5 11 V5 Z"/></svg></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 L19 5 V11 C19 15.5 16 19 12 21 C8 19 5 15.5 5 11 V5 Z"/></svg></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="successi" data-indice="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 L19 5 V11 C19 15.5 16 19 12 21 C8 19 5 15.5 5 11 V5 Z"/></svg></span>
                   </div>
                   <div class="pallini-morte">
                     <span class="pallini-morte-etichetta">Fallimenti</span>
-                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="0"></span>
-                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="1"></span>
-                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="2"></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="10" r="6"/><path d="M8.5 10.5 L10.5 12.5 M10.5 10.5 L8.5 12.5"/><path d="M13.5 10.5 L15.5 12.5 M15.5 10.5 L13.5 12.5"/><path d="M9 15 C10 16.5 14 16.5 15 15"/><line x1="9" y1="16.5" x2="9" y2="19"/><line x1="15" y1="16.5" x2="15" y2="19"/></svg></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="10" r="6"/><path d="M8.5 10.5 L10.5 12.5 M10.5 10.5 L8.5 12.5"/><path d="M13.5 10.5 L15.5 12.5 M15.5 10.5 L13.5 12.5"/><path d="M9 15 C10 16.5 14 16.5 15 15"/><line x1="9" y1="16.5" x2="9" y2="19"/><line x1="15" y1="16.5" x2="15" y2="19"/></svg></span>
+                    <span class="pallino pallino-cliccabile" data-tipo="fallimenti" data-indice="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="10" r="6"/><path d="M8.5 10.5 L10.5 12.5 M10.5 10.5 L8.5 12.5"/><path d="M13.5 10.5 L15.5 12.5 M15.5 10.5 L13.5 12.5"/><path d="M9 15 C10 16.5 14 16.5 15 15"/><line x1="9" y1="16.5" x2="9" y2="19"/><line x1="15" y1="16.5" x2="15" y2="19"/></svg></span>
                   </div>
                 </div>
               </div>
@@ -413,6 +431,7 @@
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import {
       CLASSI,
+      ICONA_CLASSE_FALLBACK,
       CARATTERISTICHE,
       ABILITA,
       ABBREVIAZIONI_CARATTERISTICHE,
@@ -459,7 +478,7 @@
     function renderIntestazione() {
       const classe = CLASSI[scheda.classe];
       document.getElementById("scheda-nome-valore").textContent = scheda.nome || "—";
-      document.getElementById("icona-classe").textContent = classe?.icona || "🎲";
+      document.getElementById("icona-classe").innerHTML = classe?.iconaSvg || ICONA_CLASSE_FALLBACK;
       document.getElementById("scheda-classe-livello").textContent = `${classe?.nome || "—"} ${scheda.livello || 1}`;
       document.getElementById("scheda-razza").textContent = nomeRazzaCompleto(scheda.razza, scheda.sottorazza);
     }
@@ -920,6 +939,10 @@
         btn.addEventListener("click", () => selezionaAllineamento(voce));
         anello.appendChild(btn);
       });
+
+      const decorazione = document.createElement("div");
+      decorazione.className = "ruota-decorazione";
+      anello.appendChild(decorazione);
 
       host.appendChild(anello);
       const bordo = document.createElement("div");

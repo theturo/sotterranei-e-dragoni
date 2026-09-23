@@ -33,7 +33,19 @@ const HTML_MENU = `
     </div>
   </div>
   <span id="mu-badge-ruolo" class="role-badge"></span>
-  <button id="mu-btn-impostazioni" class="btn-campanella" aria-label="Impostazioni" title="Impostazioni" type="button">⚙</button>
+  <button id="mu-btn-impostazioni" class="btn-campanella" aria-label="Impostazioni" title="Impostazioni" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="6.3" fill="none" stroke="currentColor" stroke-width="3.5"/>
+      <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(0 12 12)"/>
+      <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(45 12 12)"/>
+      <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(90 12 12)"/>
+      <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(135 12 12)"/>
+      <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(180 12 12)"/>
+      <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(225 12 12)"/>
+      <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(270 12 12)"/>
+      <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(315 12 12)"/>
+    </svg>
+  </button>
   <button id="mu-btn-logout" class="btn btn-ghost" type="button">Esci</button>
 `;
 
@@ -399,7 +411,9 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
   }
 
   const ruolo = profilo?.ruolo || "player";
-  document.getElementById("mu-badge-ruolo").textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
+  const elementoBadgeRuolo = document.getElementById("mu-badge-ruolo");
+  elementoBadgeRuolo.textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
+  elementoBadgeRuolo.dataset.ruolo = ruolo;
 
   document.getElementById("mu-btn-logout").addEventListener("click", async () => {
     await esciUtente();

@@ -245,10 +245,23 @@ a:hover {
   font-size: 0.92rem;
   margin-bottom: 18px;
   display: none;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .message.visible {
-  display: block;
+  display: flex;
+}
+
+.message::before {
+  content: "";
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 
 .message.error {
@@ -257,10 +270,18 @@ a:hover {
   color: var(--color-danger);
 }
 
+.message.error::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a5293a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2 L19 5 V11 C19 15.5 16 19 12 21 C8 19 5 15.5 5 11 V5 Z'/%3E%3Cpath d='M12 5 L10.5 12 L13.5 12.5 L11.5 19' transform='translate(0.6,0)'/%3E%3C/svg%3E");
+}
+
 .message.success {
   background: rgba(47, 107, 79, 0.12);
   border: 1px solid var(--color-success);
   color: var(--color-success);
+}
+
+.message.success::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f6b4f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2 L19 5 V11 C19 15.5 16 19 12 21 C8 19 5 15.5 5 11 V5 Z'/%3E%3Cpath d='M8.5 11.5 L11 14 L16 8'/%3E%3C/svg%3E");
 }
 
 /* ---------- Dashboard ---------- */
@@ -296,7 +317,9 @@ a:hover {
 }
 
 .role-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-heading);
   font-size: 0.78rem;
   text-transform: uppercase;
@@ -306,6 +329,33 @@ a:hover {
   border: 1px solid var(--color-gold);
   color: var(--color-gold-bright);
   background: rgba(201, 162, 39, 0.08);
+}
+
+.role-badge::before {
+  content: "";
+  display: none;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.role-badge[data-ruolo]::before {
+  display: inline-block;
+}
+
+.role-badge[data-ruolo="admin"]::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8c65a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 18 L4 10 L8 13 L12 6 L16 13 L20 10 L20 18 Z'/%3E%3Cline x1='4' y1='18' x2='20' y2='18'/%3E%3C/svg%3E");
+}
+
+.role-badge[data-ruolo="dm"]::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8c65a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12 C6 7 18 7 22 12 C18 17 6 17 2 12 Z'/%3E%3Ccircle cx='12' cy='12' r='2.4' fill='%23e8c65a' stroke='none'/%3E%3C/svg%3E");
+}
+
+.role-badge[data-ruolo="player"]::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8c65a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2 L20 7 L20 17 L12 22 L4 17 L4 7 Z'/%3E%3Cpath d='M12 2 L12 22 M4 7 L20 17 M20 7 L4 17' opacity='0.5'/%3E%3C/svg%3E");
 }
 
 .dashboard-grid {
@@ -381,12 +431,118 @@ a:hover {
 
 .loading-veil {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 14px;
   min-height: 60vh;
+  padding: 32px;
+}
+
+.die-stage {
+  position: relative;
+  width: 170px;
+  height: 190px;
+  perspective: 480px;
+}
+
+.die-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  width: 74px;
+  height: 16px;
+  margin-left: -37px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6), transparent 72%);
+  animation: dieShadow 3.6s cubic-bezier(.45, .05, .55, .95) infinite;
+}
+
+.die-svg-wrap {
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
+  width: 104px;
+  height: 104px;
+  margin-left: -52px;
+  transform-style: preserve-3d;
+  animation: dieToss 3.6s cubic-bezier(.45, .05, .55, .95) infinite;
+}
+
+.die-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.die-svg .num { opacity: 0; }
+.die-svg .num-20 { animation: dieShow20 3.6s linear infinite; }
+.die-svg .num-7  { animation: dieShow7  3.6s linear infinite; }
+.die-svg .num-3  { animation: dieShow3  3.6s linear infinite; }
+.die-svg .num-14 { animation: dieShow14 3.6s linear infinite; }
+
+@keyframes dieShow20 {
+  0%, 4%   { opacity: 1; }
+  8%, 74%  { opacity: 0; }
+  80%, 100% { opacity: 1; }
+}
+@keyframes dieShow7 {
+  0%, 8%   { opacity: 0; }
+  14%, 22% { opacity: 1; }
+  28%, 100% { opacity: 0; }
+}
+@keyframes dieShow3 {
+  0%, 28%  { opacity: 0; }
+  34%, 42% { opacity: 1; }
+  48%, 100% { opacity: 0; }
+}
+@keyframes dieShow14 {
+  0%, 48%  { opacity: 0; }
+  54%, 62% { opacity: 1; }
+  68%, 100% { opacity: 0; }
+}
+
+@keyframes dieToss {
+  0%   { transform: translateY(0)     rotateX(0deg)   rotateY(0deg)   rotateZ(-4deg)  scale(1, 1);      filter: blur(0); }
+  5%   { transform: translateY(2px)   rotateX(-6deg)  rotateY(-4deg)  rotateZ(-7deg)  scale(1.06, 0.9); filter: blur(0); }
+  16%  { transform: translateY(-32px) rotateX(150deg) rotateY(75deg)  rotateZ(45deg)  scale(0.97, 1.04); filter: blur(0.6px); }
+  30%  { transform: translateY(-48px) rotateX(270deg) rotateY(160deg) rotateZ(100deg) scale(1, 1);      filter: blur(0); }
+  44%  { transform: translateY(-20px) rotateX(440deg) rotateY(235deg) rotateZ(205deg) scale(1, 1);      filter: blur(0.6px); }
+  58%  { transform: translateY(0)     rotateX(610deg) rotateY(300deg) rotateZ(315deg) scale(1.02, 0.97); filter: blur(0.8px); }
+  68%  { transform: translateY(4px)   rotateX(655deg) rotateY(330deg) rotateZ(345deg) scale(1.07, 0.87); filter: blur(0); }
+  74%  { transform: translateY(-6px)  rotateX(700deg) rotateY(352deg) rotateZ(362deg) scale(0.98, 1.03); filter: blur(0); }
+  80%  { transform: translateY(1px)   rotateX(716deg) rotateY(358deg) rotateZ(354deg) scale(1.01, 0.995); filter: blur(0); }
+  100% { transform: translateY(0)     rotateX(720deg) rotateY(360deg) rotateZ(356deg) scale(1, 1);      filter: blur(0); }
+}
+
+@keyframes dieShadow {
+  0%   { opacity: 0.45; transform: scale(1, 1); }
+  5%   { opacity: 0.5;  transform: scale(1.05, 1); }
+  16%  { opacity: 0.26; transform: scale(0.68, 0.68); }
+  30%  { opacity: 0.15; transform: scale(0.5, 0.5); }
+  44%  { opacity: 0.3;  transform: scale(0.74, 0.74); }
+  58%  { opacity: 0.48; transform: scale(0.98, 0.98); }
+  68%  { opacity: 0.55; transform: scale(1.1, 1); }
+  74%  { opacity: 0.4;  transform: scale(0.9, 1); }
+  80%  { opacity: 0.46; transform: scale(1.02, 1); }
+  100% { opacity: 0.45; transform: scale(1, 1); }
+}
+
+.loading-text {
   font-family: var(--font-heading);
+  font-size: 0.95rem;
+  letter-spacing: 1.5px;
   color: var(--color-gold-bright);
-  letter-spacing: 1px;
+  text-align: center;
+  text-shadow: 0 2px 0 #000;
+}
+
+.loading-sub {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(230, 211, 163, 0.55);
+  text-align: center;
+  margin-top: -6px;
 }
 
 /* ---------- Pannello admin: gestione utenti ---------- */
@@ -506,6 +662,11 @@ table.tabella-utenti td.cella-email {
   line-height: 1;
 }
 
+.btn-icona-azione svg {
+  width: 17px;
+  height: 17px;
+}
+
 .azione-disabilitata {
   opacity: 0.4;
   cursor: default;
@@ -581,6 +742,21 @@ table.tabella-utenti td.cella-email {
   z-index: 100;
   max-width: 90vw;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.toast::before {
+  content: "";
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f6b4f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2 L19 5 V11 C19 15.5 16 19 12 21 C8 19 5 15.5 5 11 V5 Z'/%3E%3Cpath d='M8.5 11.5 L11 14 L16 8'/%3E%3C/svg%3E");
 }
 
 .toast.visibile {
@@ -590,6 +766,10 @@ table.tabella-utenti td.cella-email {
 
 .toast.toast-errore {
   border-color: var(--color-danger);
+}
+
+.toast.toast-errore::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a5293a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2 L19 5 V11 C19 15.5 16 19 12 21 C8 19 5 15.5 5 11 V5 Z'/%3E%3Cpath d='M12 5 L10.5 12 L13.5 12.5 L11.5 19' transform='translate(0.6,0)'/%3E%3C/svg%3E");
 }
 
 /* ---------- Campanella notifiche ---------- */
@@ -947,6 +1127,29 @@ table.tabella-utenti td.cella-email {
   border-color: var(--color-burgundy);
 }
 
+.tiri-morte .pallino {
+  width: 18px;
+  height: 18px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--color-ink-soft);
+}
+
+.tiri-morte .pallino svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tiri-morte .pallino[data-tipo="successi"].competente {
+  color: var(--color-success);
+}
+
+.tiri-morte .pallino[data-tipo="fallimenti"].competente {
+  color: var(--color-danger);
+}
+
 .riga-hp {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1021,6 +1224,12 @@ table.tabella-utenti td.cella-email {
 
 .icona-classe {
   margin-right: 6px;
+}
+
+.icona-classe svg {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
 }
 
 .input-hp {
@@ -1377,10 +1586,25 @@ table.tabella-utenti td.cella-email {
 .spicchio-allineamento-etichetta {
   position: absolute;
   transform: translate(-50%, -50%);
+  font-family: var(--font-heading);
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--color-bg-dark);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.ruota-decorazione {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    repeating-conic-gradient(from 22.5deg, rgba(21, 13, 8, 0.32) 0deg 0.6deg, transparent 0.6deg 45deg),
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.16), transparent 55%),
+    radial-gradient(circle, transparent 68%, rgba(21, 13, 8, 0.28) 100%);
+  -webkit-mask-image: radial-gradient(circle, transparent 16%, black 17%, black 100%);
+  mask-image: radial-gradient(circle, transparent 16%, black 17%, black 100%);
 }
 
 .hub-allineamento {
@@ -1788,6 +2012,11 @@ footer.site-footer {
   font-size: 1.1rem;
   line-height: 1;
   user-select: none;
+}
+
+.maniglia-trascina svg {
+  width: 16px;
+  height: 16px;
 }
 
 .riordino-attivo .maniglia-trascina {
