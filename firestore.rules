@@ -11,9 +11,10 @@ rules_version = '2';
 // - Solo un admin può modificare ruolo/dati di un altro utente, oppure
 //   eliminare un account.
 // - Solo un admin può elencare TUTTI gli utenti (pannello di gestione utenti).
-// - Un DM può elencare SOLO gli utenti con ruolo "player" (roster di party) e
-//   può aggiornarne esclusivamente i campi legati al livello
-//   ("livello", "livelliDaSpendere"), non altro.
+//   Chiunque sia autenticato può invece elencare SOLO i documenti con ruolo
+//   "player" (roster del party, visibile a tutti nella pagina Sessione).
+// - Un DM può aggiornare esclusivamente i campi legati al livello di un
+//   giocatore ("livello", "livelliDaSpendere"), non altro.
 // - Ogni utente ha una sotto-collezione "notifiche": solo il proprietario (o un
 //   admin) può leggerla; solo il proprietario può segnarle come lette; solo un
 //   admin o un DM (verso un giocatore) può crearne di nuove.
@@ -21,11 +22,20 @@ rules_version = '2';
 //   con un campo "proprietarioUid" che indica di chi è. Un utente può avere più
 //   schede (più personaggi), ognuna col proprio flag "attiva" (una sola alla
 //   volta per utente, imposto lato client). Il proprietario può leggere e
-//   scrivere le proprie schede; un admin o un DM possono solo leggerle (il DM
-//   deve poter vedere i PF dei giocatori durante la sessione).
+//   scrivere le proprie schede; un admin o un DM possono sempre solo leggerle;
+//   chiunque sia autenticato può leggere una scheda ALTRUI se è quella attiva
+//   (il party è "trasparente" tra i giocatori nella pagina Sessione), non le
+//   schede non attive di altri.
 // - Documento singolo "campagna/sessione": stato condiviso della sessione in
-//   corso (interruttore manuale + bacheca di testo per il DM). Leggibile da
-//   chiunque sia autenticato, scrivibile solo da admin/DM.
+//   corso (interruttore manuale, attivato dal DM, e riferimento alla voce di
+//   registro aperta). Leggibile da chiunque sia autenticato, scrivibile solo
+//   da admin/DM.
+// - Collezione "registroSessioni/{sessioneId}": una voce per ogni sessione
+//   giocata (numero progressivo, data di apertura/chiusura), creata e chiusa
+//   solo da admin/DM. Sotto-collezione "appunti": il registro vero e proprio,
+//   in cui chiunque sia autenticato (DM e giocatori) può scrivere una nuova
+//   riga a proprio nome; è un log di sola aggiunta, nessuno può modificarlo o
+//   cancellarlo dopo averlo scritto.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -55,9 +65,10 @@ service cloud.firestore {
       allow get: if isAutenticato() && (request.auth.uid == uid || isAdmin());
 
       // Elenco dell'intera collezione (pannello utenti): solo admin.
-      // Un DM può elencare solo i documenti con ruolo "player" (roster di party):
-      // la query lato client deve filtrare esplicitamente su ruolo == "player".
-      allow list: if isAdmin() || (isDM() && resource.data.ruolo == "player");
+      // Chiunque sia autenticato può invece elencare i soli documenti con
+      // ruolo "player" (roster del party nella pagina Sessione): la query
+      // lato client deve filtrare esplicitamente su ruolo == "player".
+      allow list: if isAdmin() || (isAutenticato() && resource.data.ruolo == "player");
 
       // Creazione: solo il proprio documento, in fase di registrazione.
       allow create: if isAutenticato() && request.auth.uid == uid;
@@ -92,13 +103,20 @@ service cloud.firestore {
     }
 
     match /personaggi/{schedaId} {
-      // Lettura di una scheda: il proprietario, un admin, o un DM (deve vedere i PF in sessione).
-      allow get: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin() || isDM());
+      // Lettura di una scheda: il proprietario, un admin, un DM, oppure
+      // chiunque sia autenticato se la scheda è quella ATTIVA (party trasparente
+      // nella pagina Sessione — le schede non attive di altri restano private).
+      allow get: if isAutenticato() && (
+        request.auth.uid == resource.data.proprietarioUid || isAdmin() || isDM() || resource.data.attiva == true
+      );
 
       // Elenco: il proprietario può elencare le PROPRIE schede (query filtrata su
       // proprietarioUid lato client); admin/DM possono elencare quelle di chiunque
-      // (es. per trovare la scheda attiva di un giocatore).
-      allow list: if isAdmin() || isDM() || (isAutenticato() && request.auth.uid == resource.data.proprietarioUid);
+      // (es. per trovare la scheda attiva di un giocatore); chiunque sia
+      // autenticato può elencare le schede ATTIVE di chiunque (roster del party).
+      allow list: if isAdmin() || isDM() || (
+        isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || resource.data.attiva == true)
+      );
 
       // Creazione: solo a proprio nome.
       allow create: if isAutenticato() && request.resource.data.proprietarioUid == request.auth.uid;
@@ -110,11 +128,33 @@ service cloud.firestore {
 
     match /campagna/{docId} {
       // Lettura: chiunque sia autenticato (serve a tutti i giocatori per sapere
-      // se una sessione è in corso e leggerne la bacheca).
+      // se una sessione è in corso).
       allow get: if isAutenticato();
 
-      // Scrittura: solo admin o DM (interruttore "sessione in corso" e bacheca).
+      // Scrittura: solo admin o DM (apertura/chiusura della sessione).
       allow write: if isAdmin() || isDM();
+    }
+
+    match /registroSessioni/{sessioneId} {
+      // Lettura: chiunque sia autenticato (storico consultabile da tutti).
+      allow get: if isAutenticato();
+      allow list: if isAutenticato();
+
+      // Apertura/chiusura di una sessione: solo admin/DM.
+      allow create: if isAdmin() || isDM();
+      allow update: if isAdmin() || isDM();
+      allow delete: if isAdmin();
+
+      match /appunti/{appuntoId} {
+        // Lettura: chiunque sia autenticato.
+        allow get: if isAutenticato();
+        allow list: if isAutenticato();
+
+        // Creazione: chiunque sia autenticato, solo a proprio nome (autoreUid
+        // deve coincidere con chi scrive). Nessun update/delete: è un log di
+        // sola aggiunta, non modificabile dopo la scrittura.
+        allow create: if isAutenticato() && request.resource.data.autoreUid == request.auth.uid;
+      }
     }
   }
 }

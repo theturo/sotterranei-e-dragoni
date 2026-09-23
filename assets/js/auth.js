@@ -26,9 +26,11 @@ import {
   query,
   where,
   orderBy,
+  limit,
   serverTimestamp,
   increment,
   writeBatch,
+  onSnapshot,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 export const ROLES = {
@@ -317,18 +319,87 @@ export async function aggiornaScheda(schedaId, campi) {
 
 // Stato condiviso della sessione di gioco corrente: un unico documento
 // "campagna/sessione" con un interruttore manuale ("inCorso", attivato dal DM
-// finché non esisterà un calendario condiviso) e una bacheca di testo libero
-// che il DM aggiorna e i giocatori vedono in sola lettura.
+// finché non esisterà un calendario condiviso) e il riferimento alla voce di
+// registro attualmente aperta.
 export async function ottieniStatoSessione() {
   const snapshot = await getDoc(doc(db, "campagna", "sessione"));
-  return snapshot.exists() ? snapshot.data() : { inCorso: false, bacheca: "" };
+  return snapshot.exists() ? snapshot.data() : { inCorso: false, sessioneAttivaId: null };
 }
 
-// Solo admin/DM possono scrivere (vedi firestore.rules). Usa merge così
-// l'interruttore e la bacheca si possono aggiornare separatamente senza
-// sovrascrivere l'altro campo.
-export async function salvaStatoSessione(campi) {
-  await setDoc(doc(db, "campagna", "sessione"), { ...campi, aggiornataIl: serverTimestamp() }, { merge: true });
+// Il DM apre una nuova sessione: crea una voce di registro con numero
+// progressivo (calcolato dall'ultima voce esistente) e la collega come
+// "sessione attiva" — da qui in poi gli appunti scritti da chiunque finiscono
+// in questa voce. Solo admin/DM (vedi firestore.rules).
+export async function apriSessione() {
+  const ultime = await getDocs(query(collection(db, "registroSessioni"), orderBy("numero", "desc"), limit(1)));
+  const prossimoNumero = ultime.empty ? 1 : ultime.docs[0].data().numero + 1;
+  const nuovaSessione = await addDoc(collection(db, "registroSessioni"), {
+    numero: prossimoNumero,
+    apertaIl: serverTimestamp(),
+    chiusaIl: null,
+  });
+  await setDoc(doc(db, "campagna", "sessione"), { inCorso: true, sessioneAttivaId: nuovaSessione.id }, { merge: true });
+  return { id: nuovaSessione.id, numero: prossimoNumero };
+}
+
+// Il DM chiude la sessione in corso: la voce di registro resta nello storico
+// (sola lettura), l'interruttore torna spento.
+export async function chiudiSessione(sessioneAttivaId) {
+  if (sessioneAttivaId) {
+    await updateDoc(doc(db, "registroSessioni", sessioneAttivaId), { chiusaIl: serverTimestamp() });
+  }
+  await setDoc(doc(db, "campagna", "sessione"), { inCorso: false, sessioneAttivaId: null }, { merge: true });
+}
+
+// Aggiunge un appunto alla sessione indicata: chiunque sia autenticato può
+// scriverne (DM e giocatori), sempre a proprio nome (vedi firestore.rules).
+export async function aggiungiAppunto(sessioneId, autoreUid, autoreNome, testo) {
+  await addDoc(collection(db, "registroSessioni", sessioneId, "appunti"), {
+    autoreUid,
+    autoreNome,
+    testo,
+    creatoIl: serverTimestamp(),
+  });
+}
+
+// Ascolta in tempo reale gli appunti della sessione indicata (usata dalla
+// pagina Sessione mentre è in corso, così tutti vedono comparire le note
+// senza dover ricaricare la pagina). Restituisce la funzione per interrompere
+// l'ascolto.
+export function ascoltaAppunti(sessioneId, callback) {
+  const riferimento = query(collection(db, "registroSessioni", sessioneId, "appunti"), orderBy("creatoIl", "asc"));
+  return onSnapshot(riferimento, (snapshot) => {
+    callback(snapshot.docs.map((documento) => ({ id: documento.id, ...documento.data() })));
+  });
+}
+
+// Elenco delle sessioni passate (storico), più recente prima. Gli appunti di
+// ogni sessione si caricano a parte (elencaAppuntiSessione) solo quando
+// l'utente apre quella voce: evita di scaricare tutto lo storico in un colpo
+// solo, man mano che le sessioni si accumulano nel tempo.
+export async function elencaRegistroSessioni() {
+  const riferimento = query(collection(db, "registroSessioni"), orderBy("numero", "desc"));
+  const snapshot = await getDocs(riferimento);
+  return snapshot.docs.map((documento) => ({ id: documento.id, ...documento.data() }));
+}
+
+// Appunti di una singola sessione (lettura una tantum, per lo storico: non
+// serve il tempo reale su una sessione già conclusa).
+export async function elencaAppuntiSessione(sessioneId) {
+  const riferimento = query(collection(db, "registroSessioni", sessioneId, "appunti"), orderBy("creatoIl", "asc"));
+  const snapshot = await getDocs(riferimento);
+  return snapshot.docs.map((documento) => ({ id: documento.id, ...documento.data() }));
+}
+
+// Roster del party con la scheda attiva di ciascun giocatore (nome
+// personaggio, classe, PF): usato dalla pagina Sessione, visibile a tutti —
+// una scheda "attiva" è leggibile da chiunque sia autenticato, non solo dal
+// proprietario o da admin/DM (vedi firestore.rules).
+export async function elencaPartyConSchede() {
+  const giocatori = await elencaGiocatori();
+  return Promise.all(
+    giocatori.map(async (giocatore) => ({ ...giocatore, schedaAttiva: await ottieniSchedaAttiva(giocatore.uid) }))
+  );
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,

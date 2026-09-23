@@ -2259,3 +2259,150 @@ table.tabella-punteggi select {
 .glossario-riga-effetto label {
   color: var(--color-burgundy);
 }
+
+/* ---------- Pagina Sessione ---------- */
+
+.sessione-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .sessione-layout {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.sessione-colonna {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sessione-box-mappa {
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.sessione-placeholder {
+  color: var(--color-ink-soft);
+  font-family: var(--font-heading);
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.sessione-appunti-intestazione {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sessione-appunti-intestazione h3 {
+  margin: 0;
+}
+
+.sessione-appunti-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 14px;
+}
+
+.sessione-appunto {
+  background: rgba(122, 31, 43, 0.06);
+  border: 1px solid rgba(122, 31, 43, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.sessione-appunto-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-burgundy);
+  margin-bottom: 4px;
+}
+
+.sessione-appunto-testo {
+  color: var(--color-ink);
+  white-space: pre-wrap;
+}
+
+.sessione-appunti-form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.sessione-appunti-form .textarea-libero {
+  flex: 1;
+}
+
+.lista-party-sessione {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.party-sessione-riga {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.party-sessione-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.party-sessione-nome {
+  font-weight: 600;
+}
+
+.party-sessione-sub {
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+}
+
+.party-sessione-pf {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  white-space: nowrap;
+}
+
+.registro-sessione-voce {
+  border: 1px solid rgba(122, 31, 43, 0.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.registro-sessione-voce summary {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.registro-sessione-appunti {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}

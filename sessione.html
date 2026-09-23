@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — Sessione</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="veil" class="loading-veil">Consultando gli antichi registri…</div>
+
+  <div id="contenuto" style="display:none;">
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div>
+          <span id="badge-stato-sessione" class="role-badge" style="margin-bottom:6px; display:inline-flex;"></span>
+          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:6px 0 0;">
+            Sessione
+          </h1>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div id="slot-utente" class="slot-utente"></div>
+        </div>
+      </div>
+
+      <div id="controlli-dm" style="display:flex; gap:12px; margin-bottom:24px;" hidden>
+        <button id="btn-apri-sessione" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Apri nuova sessione</button>
+        <button id="btn-chiudi-sessione" class="btn btn-ghost" hidden>Chiudi sessione</button>
+      </div>
+
+      <div class="sessione-layout">
+        <div class="sessione-colonna">
+          <div class="panel sessione-box-mappa">
+            <p class="sessione-placeholder">Mappa (in arrivo)</p>
+          </div>
+
+          <div class="panel">
+            <div class="sessione-appunti-intestazione">
+              <h3>Appunti della sessione</h3>
+              <button id="btn-apri-registro" class="btn-tabella" type="button">Registro</button>
+            </div>
+            <div id="lista-appunti" class="sessione-appunti-lista"></div>
+            <p id="appunti-vuoto" class="scheda-testo-libero" hidden>Nessun appunto ancora per questa sessione.</p>
+            <p id="nessuna-sessione-msg" class="scheda-testo-libero" hidden>
+              Nessuna sessione in corso: gli appunti si potranno scrivere quando il Dungeon Master ne aprirà una.
+            </p>
+            <form id="form-appunto" class="sessione-appunti-form" hidden>
+              <textarea id="campo-appunto" class="textarea-libero" rows="2" placeholder="Scrivi un appunto..." required></textarea>
+              <button type="submit" class="btn" style="width:auto; padding:10px 22px;">Aggiungi</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="sessione-colonna">
+          <div class="panel">
+            <h3>Musica</h3>
+            <p class="sessione-placeholder">Controllo musica (in arrivo)</p>
+          </div>
+
+          <div class="panel">
+            <h3>Personaggi del party</h3>
+            <ul id="lista-party" class="lista-party-sessione"></ul>
+            <p id="party-vuoto" class="scheda-testo-libero" hidden>Nessun giocatore registrato ancora.</p>
+          </div>
+
+          <div class="panel">
+            <h3>PNG e nemici</h3>
+            <p class="sessione-placeholder">Elenco PNG/nemici (in arrivo)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-registro" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <button id="chiudi-registro" class="btn-chiudi-modal" aria-label="Chiudi" type="button">×</button>
+      <h2>Registro delle sessioni</h2>
+      <div id="lista-registro"></div>
+      <p id="registro-vuoto" class="scheda-testo-libero" hidden>Nessuna sessione registrata ancora.</p>
+    </div>
+  </div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module">
+    import {
+      proteggiPagina,
+      ROLES,
+      ottieniStatoSessione,
+      apriSessione,
+      chiudiSessione,
+      aggiungiAppunto,
+      ascoltaAppunti,
+      elencaRegistroSessioni,
+      elencaAppuntiSessione,
+      elencaPartyConSchede,
+    } from "./assets/js/auth.js";
+    import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { CLASSI } from "./assets/js/dati-srd.js";
+
+    const veil = document.getElementById("veil");
+    const contenuto = document.getElementById("contenuto");
+
+    let uidCorrente = null;
+    let nomeCorrente = null;
+    let sessioneAttivaId = null;
+    let smettiAscolto = null;
+
+    function formattaData(timestamp) {
+      if (!timestamp?.toDate) return "";
+      return timestamp.toDate().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    function formattaOrario(timestamp) {
+      if (!timestamp?.toDate) return "";
+      return timestamp.toDate().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function rigaAppunto(appunto) {
+      return `
+        <div class="sessione-appunto">
+          <div class="sessione-appunto-meta"><span>${appunto.autoreNome || "—"}</span><span>${formattaOrario(appunto.creatoIl)}</span></div>
+          <div class="sessione-appunto-testo">${appunto.testo}</div>
+        </div>
+      `;
+    }
+
+    function renderAppunti(appunti) {
+      const lista = document.getElementById("lista-appunti");
+      const vuoto = document.getElementById("appunti-vuoto");
+      if (appunti.length === 0) {
+        lista.innerHTML = "";
+        vuoto.hidden = false;
+        return;
+      }
+      vuoto.hidden = true;
+      lista.innerHTML = appunti.map(rigaAppunto).join("");
+      lista.scrollTop = lista.scrollHeight;
+    }
+
+    function testoPf(scheda) {
+      if (!scheda?.hp) return "—";
+      const { massimi, attuali, temporanei } = scheda.hp;
+      return temporanei > 0 ? `${attuali} / ${massimi} (+${temporanei})` : `${attuali} / ${massimi}`;
+    }
+
+    function creaRigaParty(giocatore) {
+      const li = document.createElement("li");
+      li.className = "party-sessione-riga";
+      const scheda = giocatore.schedaAttiva;
+      if (!scheda) {
+        li.innerHTML = `
+          <div class="party-sessione-info">
+            <div class="party-sessione-nome">${giocatore.nome || giocatore.email || "—"}</div>
+            <div class="party-sessione-sub">Nessun personaggio attivo</div>
+          </div>
+        `;
+        return li;
+      }
+      const classe = CLASSI[scheda.classe];
+      li.innerHTML = `
+        <span class="icona-classe" aria-hidden="true">${classe?.icona || "🎲"}</span>
+        <div class="party-sessione-info">
+          <div class="party-sessione-nome">${scheda.nome || "—"}</div>
+          <div class="party-sessione-sub">${giocatore.nome || giocatore.email} · ${classe?.nome || "—"} ${scheda.livello || 1}</div>
+        </div>
+        <div class="party-sessione-pf">${testoPf(scheda)}</div>
+      `;
+      return li;
+    }
+
+    async function caricaParty() {
+      const lista = document.getElementById("lista-party");
+      const vuoto = document.getElementById("party-vuoto");
+      try {
+        const party = await elencaPartyConSchede();
+        if (party.length === 0) {
+          vuoto.hidden = false;
+          return;
+        }
+        vuoto.hidden = true;
+        lista.innerHTML = "";
+        party.forEach((giocatore) => lista.appendChild(creaRigaParty(giocatore)));
+      } catch (errore) {
+        console.error(errore);
+      }
+    }
+
+    function aggiornaBadgeStato(inCorso) {
+      const badge = document.getElementById("badge-stato-sessione");
+      badge.textContent = inCorso ? "Sessione in corso" : "Nessuna sessione in corso";
+    }
+
+    function attivaAscolto(id) {
+      if (smettiAscolto) smettiAscolto();
+      smettiAscolto = ascoltaAppunti(id, renderAppunti);
+    }
+
+    function mostraStatoAttivo(id) {
+      sessioneAttivaId = id;
+      aggiornaBadgeStato(true);
+      document.getElementById("btn-apri-sessione").hidden = true;
+      document.getElementById("btn-chiudi-sessione").hidden = false;
+      document.getElementById("nessuna-sessione-msg").hidden = true;
+      document.getElementById("form-appunto").hidden = false;
+      attivaAscolto(id);
+    }
+
+    function mostraStatoInattivo() {
+      sessioneAttivaId = null;
+      aggiornaBadgeStato(false);
+      document.getElementById("btn-apri-sessione").hidden = false;
+      document.getElementById("btn-chiudi-sessione").hidden = true;
+      document.getElementById("form-appunto").hidden = true;
+      document.getElementById("nessuna-sessione-msg").hidden = false;
+      document.getElementById("appunti-vuoto").hidden = true;
+      document.getElementById("lista-appunti").innerHTML = "";
+    }
+
+    proteggiPagina(async (user, profilo) => {
+      uidCorrente = user.uid;
+      nomeCorrente = profilo?.nome || user.displayName || user.email;
+      const ruolo = profilo?.ruolo || ROLES.PLAYER;
+      const isDmOAdmin = ruolo === ROLES.DM || ruolo === ROLES.ADMIN;
+
+      montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+      document.getElementById("controlli-dm").hidden = !isDmOAdmin;
+
+      let stato;
+      try {
+        stato = await ottieniStatoSessione();
+      } catch (errore) {
+        console.error(errore);
+        stato = { inCorso: false, sessioneAttivaId: null };
+      }
+
+      if (stato.inCorso && stato.sessioneAttivaId) {
+        mostraStatoAttivo(stato.sessioneAttivaId);
+      } else {
+        mostraStatoInattivo();
+      }
+
+      await caricaParty();
+
+      veil.style.display = "none";
+      contenuto.style.display = "block";
+    });
+
+    document.getElementById("btn-apri-sessione").addEventListener("click", async (evento) => {
+      const bottone = evento.currentTarget;
+      bottone.disabled = true;
+      try {
+        const { id } = await apriSessione();
+        mostraStatoAttivo(id);
+      } catch (errore) {
+        console.error(errore);
+      } finally {
+        bottone.disabled = false;
+      }
+    });
+
+    document.getElementById("btn-chiudi-sessione").addEventListener("click", async (evento) => {
+      const bottone = evento.currentTarget;
+      bottone.disabled = true;
+      try {
+        await chiudiSessione(sessioneAttivaId);
+        if (smettiAscolto) {
+          smettiAscolto();
+          smettiAscolto = null;
+        }
+        mostraStatoInattivo();
+      } catch (errore) {
+        console.error(errore);
+      } finally {
+        bottone.disabled = false;
+      }
+    });
+
+    document.getElementById("form-appunto").addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      const campo = document.getElementById("campo-appunto");
+      const testo = campo.value.trim();
+      if (!testo || !sessioneAttivaId) return;
+
+      const bottone = evento.target.querySelector("button[type=submit]");
+      bottone.disabled = true;
+      try {
+        await aggiungiAppunto(sessioneAttivaId, uidCorrente, nomeCorrente, testo);
+        campo.value = "";
+      } catch (errore) {
+        console.error(errore);
+      } finally {
+        bottone.disabled = false;
+      }
+    });
+
+    // Registro storico: elenco delle sessioni passate, con gli appunti di ognuna
+    // caricati solo quando la si apre (accordion), per non scaricare tutto lo
+    // storico in un colpo solo man mano che le sessioni si accumulano.
+    const modaleRegistro = document.getElementById("modal-registro");
+
+    document.getElementById("btn-apri-registro").addEventListener("click", async () => {
+      modaleRegistro.style.display = "flex";
+      const lista = document.getElementById("lista-registro");
+      const vuoto = document.getElementById("registro-vuoto");
+      lista.innerHTML = "";
+      vuoto.hidden = true;
+
+      try {
+        const sessioni = await elencaRegistroSessioni();
+        if (sessioni.length === 0) {
+          vuoto.hidden = false;
+          return;
+        }
+        sessioni.forEach((sessione) => {
+          const dettagli = document.createElement("details");
+          dettagli.className = "registro-sessione-voce";
+          const statoSessione = sessione.chiusaIl ? "" : " (in corso)";
+          dettagli.innerHTML = `
+            <summary>Sessione ${sessione.numero} — ${formattaData(sessione.apertaIl)}${statoSessione}</summary>
+            <div class="registro-sessione-appunti" data-corpo></div>
+          `;
+          dettagli.addEventListener("toggle", async () => {
+            if (!dettagli.open) return;
+            const corpo = dettagli.querySelector("[data-corpo]");
+            if (corpo.dataset.caricato) return;
+            corpo.dataset.caricato = "true";
+            corpo.innerHTML = '<p class="scheda-testo-libero">Caricamento…</p>';
+            try {
+              const appunti = await elencaAppuntiSessione(sessione.id);
+              corpo.innerHTML = appunti.length === 0
+                ? '<p class="scheda-testo-libero">Nessun appunto per questa sessione.</p>'
+                : appunti.map(rigaAppunto).join("");
+            } catch (errore) {
+              console.error(errore);
+              corpo.innerHTML = '<p class="scheda-testo-libero">Impossibile caricare gli appunti.</p>';
+            }
+          });
+          lista.appendChild(dettagli);
+        });
+      } catch (errore) {
+        console.error(errore);
+      }
+    });
+
+    document.getElementById("chiudi-registro").addEventListener("click", () => {
+      modaleRegistro.style.display = "none";
+    });
+  </script>
+</body>
+</html>
