@@ -26,10 +26,13 @@ rules_version = '2';
 //   chiunque sia autenticato può leggere una scheda ALTRUI se è quella attiva
 //   (il party è "trasparente" tra i giocatori nella pagina Sessione), non le
 //   schede non attive di altri.
-// - Documento singolo "campagna/sessione": stato condiviso della sessione in
-//   corso (interruttore manuale, attivato dal DM, e riferimento alla voce di
-//   registro aperta). Leggibile da chiunque sia autenticato, scrivibile solo
-//   da admin/DM.
+// - Documenti singoli nella collezione "campagna" (es. "sessione", "musica"):
+//   stato condiviso scrivibile solo da admin/DM e leggibile da chiunque sia
+//   autenticato — regola generica per {docId}, unica per tutti i documenti di
+//   questa collezione. "sessione" = interruttore manuale + riferimento alla
+//   voce di registro aperta. "musica" = sorgente audio trasmessa ai giocatori
+//   (Spotify/YouTube) e relativo snapshot (brano/artista/copertina), scritto
+//   dal browser del DM.
 // - Collezione "registroSessioni/{sessioneId}": una voce per ogni sessione
 //   giocata (numero progressivo, data di apertura/chiusura), creata e chiusa
 //   solo da admin/DM. Sotto-collezione "appunti": il registro vero e proprio,

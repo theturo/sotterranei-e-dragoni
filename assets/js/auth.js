@@ -391,6 +391,32 @@ export async function elencaAppuntiSessione(sessioneId) {
   return snapshot.docs.map((documento) => ({ id: documento.id, ...documento.data() }));
 }
 
+// Stato condiviso della musica di sessione: un unico documento
+// "campagna/musica" con la sorgente attualmente trasmessa ai giocatori
+// ("spotify"/"youtube"/null) e uno snapshot per ciascuna sorgente (scritto dal
+// browser del DM, che è l'unico ad avere accesso diretto a Spotify/YouTube).
+export async function ottieniStatoMusica() {
+  const snapshot = await getDoc(doc(db, "campagna", "musica"));
+  return snapshot.exists() ? snapshot.data() : { sorgente: null };
+}
+
+// Solo admin/DM possono scrivere (vedi firestore.rules, stessa regola generica
+// già usata per "campagna/sessione"). Merge così sorgente e snapshot dei brani
+// si aggiornano indipendentemente.
+export async function salvaStatoMusica(campi) {
+  await setDoc(doc(db, "campagna", "musica"), campi, { merge: true });
+}
+
+// Ascolta in tempo reale lo stato della musica: usata dal pannello "Musica di
+// sessione" in dashboard, così ogni giocatore vede comparire cambi di brano o
+// di sorgente senza dover ricaricare. Restituisce la funzione per interrompere
+// l'ascolto.
+export function ascoltaStatoMusica(callback) {
+  return onSnapshot(doc(db, "campagna", "musica"), (snapshot) => {
+    callback(snapshot.exists() ? snapshot.data() : { sorgente: null });
+  });
+}
+
 // Roster del party con la scheda attiva di ciascun giocatore (nome
 // personaggio, classe, PF): usato dalla pagina Sessione, visibile a tutti —
 // una scheda "attiva" è leggibile da chiunque sia autenticato, non solo dal
