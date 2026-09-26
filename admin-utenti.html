@@ -47,6 +47,7 @@
                 <th>Nome</th>
                 <th>Email</th>
                 <th>Verificata</th>
+                <th>Accesso</th>
                 <th>Ruolo</th>
                 <th>Registrato il</th>
                 <th>Azioni</th>
@@ -71,9 +72,12 @@
       elencaUtenti,
       aggiornaRuoloUtente,
       inviaResetPassword,
+      approvaUtente,
+      profiloApprovato,
       ETICHETTE_RUOLO,
     } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { esc } from "./assets/js/utils.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -106,7 +110,7 @@
       const opzioniRuolo = Object.entries(ETICHETTE_RUOLO)
         .map(
           ([valore, etichetta]) =>
-            `<option value="${valore}" ${utente.ruolo === valore ? "selected" : ""}>${etichetta}</option>`
+            `<option value="${esc(valore)}" ${utente.ruolo === valore ? "selected" : ""}>${esc(etichetta)}</option>`
         )
         .join("");
 
@@ -115,18 +119,25 @@
         ? '<span class="simbolo-verifica" title="Email verificata" aria-label="Email verificata">✓</span>'
         : '<span class="simbolo-verifica" title="Email non verificata" aria-label="Email non verificata">✗</span>';
 
+      // Nuovi iscritti in attesa: pulsante per approvarli (entrano nella
+      // campagna solo dopo). Gli account già approvati mostrano solo lo stato.
+      const cellaAccesso = profiloApprovato(utente)
+        ? '<span class="simbolo-verifica" title="Approvato" aria-label="Approvato">✓</span>'
+        : `<button class="btn-tabella btn-tabella-evidenza" data-approva="${esc(utente.uid)}">Approva</button>`;
+
       tr.innerHTML = `
-        <td>${utente.nome || "—"}${eIlTuoAccount ? '<span class="badge-tu">(tu)</span>' : ""}</td>
-        <td class="cella-email">${utente.email || "—"}</td>
+        <td>${esc(utente.nome) || "—"}${eIlTuoAccount ? '<span class="badge-tu">(tu)</span>' : ""}</td>
+        <td class="cella-email">${esc(utente.email) || "—"}</td>
         <td>${simboloVerifica}</td>
+        <td>${cellaAccesso}</td>
         <td>
-          <select class="select-ruolo" data-uid="${utente.uid}" ${eIlTuoAccount ? "disabled" : ""}>
+          <select class="select-ruolo" data-uid="${esc(utente.uid)}" ${eIlTuoAccount ? "disabled" : ""}>
             ${opzioniRuolo}
           </select>
         </td>
         <td>${formattaData(utente.creatoIl)}</td>
         <td>
-          <button class="btn-tabella" data-email="${utente.email || ""}">Reset password</button>
+          <button class="btn-tabella" data-email="${esc(utente.email)}">Reset password</button>
         </td>
       `;
       return tr;
@@ -136,6 +147,8 @@
       montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
       try {
         const utenti = await elencaUtenti();
+        // Chi è in attesa di approvazione in cima, così non passa inosservato.
+        utenti.sort((a, b) => Number(profiloApprovato(a)) - Number(profiloApprovato(b)));
         corpoTabella.innerHTML = "";
         utenti.forEach((utente) => {
           corpoTabella.appendChild(creaRiga(utente, user.uid));
@@ -169,9 +182,25 @@
       }
     });
 
+    // Approvazione di un nuovo iscritto
+    corpoTabella.addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-approva]");
+      if (!bottone) return;
+      bottone.disabled = true;
+      try {
+        await approvaUtente(bottone.dataset.approva);
+        bottone.outerHTML = '<span class="simbolo-verifica" title="Approvato" aria-label="Approvato">✓</span>';
+        mostraToast("Utente approvato: ora può entrare nella campagna.");
+      } catch (errore) {
+        mostraToast("Impossibile approvare l'utente.", true);
+        console.error(errore);
+        bottone.disabled = false;
+      }
+    });
+
     // Reset password
     corpoTabella.addEventListener("click", async (evento) => {
-      const bottone = evento.target.closest(".btn-tabella");
+      const bottone = evento.target.closest(".btn-tabella[data-email]");
       if (!bottone) return;
 
       const email = bottone.dataset.email;

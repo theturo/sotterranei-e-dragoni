@@ -103,9 +103,10 @@
   <script type="module">
     import {
       proteggiPaginaDM,
-      elencaCampagneDM,
+      elencaCampagneDMConTitolo,
       creaCampagna,
       aggiornaCampagna,
+      aggiornaTitoloCampagna,
       impostaCampagnaAttiva,
       aggiungiMembroCampagna,
       rimuoviMembroCampagna,
@@ -116,6 +117,7 @@
       migraDatiEsistenti,
     } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { esc } from "./assets/js/utils.js";
 
     const veil = document.getElementById("veil");
     const contenuto = document.getElementById("contenuto");
@@ -140,7 +142,8 @@
     }
 
     async function ricaricaTutto() {
-      campagne = await elencaCampagneDM(uidCorrente);
+      // Con il titolo vero (anche se provvisorio), letto dal documento privato.
+      campagne = await elencaCampagneDMConTitolo(uidCorrente);
       campagnaAttiva = campagne.find((c) => c.stato === "attiva") || null;
 
       const nessunaCampagna = campagne.length === 0;
@@ -168,7 +171,7 @@
         <form id="form-titolo-campagna" class="field-riga" style="align-items:flex-end;">
           <div class="field" style="flex:1; margin-bottom:0;">
             <label for="campo-titolo-attiva">Titolo</label>
-            <input type="text" id="campo-titolo-attiva" value="${(campagnaAttiva.titolo || "").replace(/"/g, "&quot;")}" required />
+            <input type="text" id="campo-titolo-attiva" value="${esc(campagnaAttiva.titolo)}" maxlength="120" required />
           </div>
           <button type="submit" class="btn-tabella">Salva titolo</button>
         </form>
@@ -186,7 +189,10 @@
         const titolo = document.getElementById("campo-titolo-attiva").value.trim();
         if (!titolo) return;
         try {
-          await aggiornaCampagna(campagnaAttiva.id, { titolo });
+          await aggiornaTitoloCampagna(campagnaAttiva.id, {
+            titolo,
+            titoloProvvisorio: campagnaAttiva.titoloProvvisorio,
+          });
           mostraToast("Titolo aggiornato.");
           await ricaricaTutto();
         } catch (errore) {
@@ -197,7 +203,12 @@
 
       document.getElementById("campo-provvisorio-attiva").addEventListener("change", async (evento) => {
         try {
-          await aggiornaCampagna(campagnaAttiva.id, { titoloProvvisorio: evento.target.checked });
+          // Togliere la spunta = "reveal": il titolo diventa visibile ai giocatori.
+          await aggiornaTitoloCampagna(campagnaAttiva.id, {
+            titolo: campagnaAttiva.titolo,
+            titoloProvvisorio: evento.target.checked,
+          });
+          campagnaAttiva.titoloProvvisorio = evento.target.checked;
           mostraToast(evento.target.checked ? "Titolo segnato come provvisorio." : "Titolo rivelato ai giocatori.");
         } catch (errore) {
           console.error(errore);
@@ -243,8 +254,8 @@
           const label = document.createElement("label");
           label.className = "checkbox-scudo";
           label.innerHTML = `
-            <input type="checkbox" data-membro="${giocatore.uid}" ${membriUid.includes(giocatore.uid) ? "checked" : ""} />
-            ${giocatore.nome || giocatore.email || "—"}
+            <input type="checkbox" data-membro="${esc(giocatore.uid)}" ${membriUid.includes(giocatore.uid) ? "checked" : ""} />
+            ${esc(giocatore.nome || giocatore.email) || "—"}
           `;
           lista.appendChild(label);
         });
@@ -278,10 +289,10 @@
           riga.className = "sessione-programmata-riga";
           riga.innerHTML = `
             <div>
-              <strong>Sessione ${sessione.numero}</strong>${sessione.titolo ? ` — ${sessione.titolo}` : ""}
-              <div class="party-sessione-sub">${formattaData(sessione.dataProgrammata)}</div>
+              <strong>Sessione ${esc(sessione.numero)}</strong>${sessione.titolo ? ` — ${esc(sessione.titolo)}` : ""}
+              <div class="party-sessione-sub">${esc(formattaData(sessione.dataProgrammata))}</div>
             </div>
-            <button type="button" class="btn-tabella btn-tabella-pericolo" data-elimina-programmata="${sessione.id}">Annulla</button>
+            <button type="button" class="btn-tabella btn-tabella-pericolo" data-elimina-programmata="${esc(sessione.id)}">Annulla</button>
           `;
           lista.appendChild(riga);
         });
@@ -307,10 +318,10 @@
         riga.className = "sessione-programmata-riga";
         riga.innerHTML = `
           <div>
-            <strong>${campagna.titolo}</strong>
-            <div class="party-sessione-sub">${campagna.stato}${campagna.titoloProvvisorio ? " · titolo provvisorio" : ""}</div>
+            <strong>${esc(campagna.titolo)}</strong>
+            <div class="party-sessione-sub">${esc(campagna.stato)}${campagna.titoloProvvisorio ? " · titolo provvisorio" : ""}</div>
           </div>
-          <button type="button" class="btn-tabella btn-tabella-evidenza" data-rendi-attiva="${campagna.id}">Rendi attiva</button>
+          <button type="button" class="btn-tabella btn-tabella-evidenza" data-rendi-attiva="${esc(campagna.id)}">Rendi attiva</button>
         `;
         lista.appendChild(riga);
       });

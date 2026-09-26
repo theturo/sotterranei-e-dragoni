@@ -49,7 +49,7 @@
               Nessuna sessione in corso: gli appunti si potranno scrivere quando il Dungeon Master ne aprirà una.
             </p>
             <form id="form-appunto" class="sessione-appunti-form" hidden>
-              <textarea id="campo-appunto" class="textarea-libero" rows="2" placeholder="Scrivi un appunto..." required></textarea>
+              <textarea id="campo-appunto" class="textarea-libero" rows="2" placeholder="Scrivi un appunto..." maxlength="2000" required></textarea>
               <button type="submit" class="btn" style="width:auto; padding:10px 22px;">Aggiungi</button>
             </form>
           </div>
@@ -100,9 +100,13 @@
       elencaRegistroSessioni,
       elencaAppuntiSessione,
       elencaSessioniProgrammate,
-      elencaPartyConSchede,
+      elencaRiepiloghiParty,
+      rigeneraRiepiloghiParty,
+      sincronizzaMioRiepilogo,
+      eliminaAppunto,
     } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { esc } from "./assets/js/utils.js";
     import { CLASSI } from "./assets/js/dati-srd.js";
 
     const veil = document.getElementById("veil");
@@ -113,6 +117,8 @@
     let campagnaIdCorrente = null;
     let sessioneAttivaId = null;
     let smettiAscolto = null;
+    // DM/admin: possono eliminare appunti (moderazione).
+    let puoModerare = false;
 
     function formattaData(timestamp) {
       if (!timestamp?.toDate) return "";
@@ -124,11 +130,14 @@
       return timestamp.toDate().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
     }
 
-    function rigaAppunto(appunto) {
+    function rigaAppunto(appunto, sessioneId) {
+      const bottoneElimina = puoModerare
+        ? `<button type="button" class="btn-rimuovi-talento" data-elimina-appunto="${esc(appunto.id)}" data-sessione="${esc(sessioneId)}" aria-label="Elimina appunto" title="Elimina appunto">×</button>`
+        : "";
       return `
         <div class="sessione-appunto">
-          <div class="sessione-appunto-meta"><span>${appunto.autoreNome || "—"}</span><span>${formattaOrario(appunto.creatoIl)}</span></div>
-          <div class="sessione-appunto-testo">${appunto.testo}</div>
+          <div class="sessione-appunto-meta"><span>${esc(appunto.autoreNome) || "—"}</span><span>${formattaOrario(appunto.creatoIl)}${bottoneElimina}</span></div>
+          <div class="sessione-appunto-testo">${esc(appunto.testo)}</div>
         </div>
       `;
     }
@@ -142,7 +151,7 @@
         return;
       }
       vuoto.hidden = true;
-      lista.innerHTML = appunti.map(rigaAppunto).join("");
+      lista.innerHTML = appunti.map((appunto) => rigaAppunto(appunto, sessioneAttivaId)).join("");
       lista.scrollTop = lista.scrollHeight;
     }
 
@@ -152,27 +161,28 @@
       return temporanei > 0 ? `${attuali} / ${massimi} (+${temporanei})` : `${attuali} / ${massimi}`;
     }
 
-    function creaRigaParty(giocatore) {
+    // "riepilogo" = documento di campagne/{id}/party/{uid}: i giocatori non
+    // leggono le schede complete né i profili (con l'email) degli altri.
+    function creaRigaParty(riepilogo) {
       const li = document.createElement("li");
       li.className = "party-sessione-riga";
-      const scheda = giocatore.schedaAttiva;
-      if (!scheda) {
+      if (!riepilogo.schedaId) {
         li.innerHTML = `
           <div class="party-sessione-info">
-            <div class="party-sessione-nome">${giocatore.nome || giocatore.email || "—"}</div>
+            <div class="party-sessione-nome">${esc(riepilogo.nomeGiocatore) || "—"}</div>
             <div class="party-sessione-sub">Nessun personaggio attivo</div>
           </div>
         `;
         return li;
       }
-      const classe = CLASSI[scheda.classe];
+      const classe = CLASSI[riepilogo.classe];
       li.innerHTML = `
         <span class="icona-classe" aria-hidden="true">${classe?.icona || "🎲"}</span>
         <div class="party-sessione-info">
-          <div class="party-sessione-nome">${scheda.nome || "—"}</div>
-          <div class="party-sessione-sub">${giocatore.nome || giocatore.email} · ${classe?.nome || "—"} ${scheda.livello || 1}</div>
+          <div class="party-sessione-nome">${esc(riepilogo.nomePersonaggio) || "—"}</div>
+          <div class="party-sessione-sub">${esc(riepilogo.nomeGiocatore) || "—"} · ${esc(classe?.nome) || "—"} ${esc(riepilogo.livello || 1)}</div>
         </div>
-        <div class="party-sessione-pf">${testoPf(scheda)}</div>
+        <div class="party-sessione-pf">${esc(testoPf(riepilogo))}</div>
       `;
       return li;
     }
@@ -181,14 +191,21 @@
       const lista = document.getElementById("lista-party");
       const vuoto = document.getElementById("party-vuoto");
       try {
-        const party = await elencaPartyConSchede(campagnaIdCorrente);
+        // Il DM riallinea tutti i riepiloghi alle schede vere (e toglie chi
+        // non è più membro); un giocatore riallinea solo il proprio.
+        if (puoModerare) {
+          await rigeneraRiepiloghiParty(campagnaIdCorrente);
+        } else {
+          await sincronizzaMioRiepilogo(uidCorrente, campagnaIdCorrente);
+        }
+        const party = await elencaRiepiloghiParty(campagnaIdCorrente);
         if (party.length === 0) {
           vuoto.hidden = false;
           return;
         }
         vuoto.hidden = true;
         lista.innerHTML = "";
-        party.forEach((giocatore) => lista.appendChild(creaRigaParty(giocatore)));
+        party.forEach((riepilogo) => lista.appendChild(creaRigaParty(riepilogo)));
       } catch (errore) {
         console.error(errore);
       }
@@ -227,9 +244,11 @@
 
     proteggiPagina(async (user, profilo) => {
       uidCorrente = user.uid;
-      nomeCorrente = profilo?.nome || user.displayName || user.email;
+      // Deve coincidere con il nome del profilo: le regole lo verificano.
+      nomeCorrente = profilo?.nome ?? null;
       const ruolo = profilo?.ruolo || ROLES.PLAYER;
       const isDmOAdmin = ruolo === ROLES.DM || ruolo === ROLES.ADMIN;
+      puoModerare = isDmOAdmin;
 
       montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
 
@@ -327,7 +346,7 @@
       const dataFormattata = sessione.dataProgrammata
         ? sessione.dataProgrammata.split("-").reverse().join("/")
         : "";
-      div.innerHTML = `<p style="margin:0; padding:10px 0;">Sessione ${sessione.numero} — programmata per il ${dataFormattata}${sessione.titolo ? ` (${sessione.titolo})` : ""}</p>`;
+      div.innerHTML = `<p style="margin:0; padding:10px 0;">Sessione ${esc(sessione.numero)} — programmata per il ${esc(dataFormattata)}${sessione.titolo ? ` (${esc(sessione.titolo)})` : ""}</p>`;
       return div;
     }
 
@@ -354,7 +373,7 @@
           dettagli.className = "registro-sessione-voce";
           const statoSessione = sessione.chiusaIl ? "" : " (in corso)";
           dettagli.innerHTML = `
-            <summary>Sessione ${sessione.numero} — ${formattaData(sessione.apertaIl)}${statoSessione}</summary>
+            <summary>Sessione ${esc(sessione.numero)} — ${formattaData(sessione.apertaIl)}${statoSessione}</summary>
             <div class="registro-sessione-appunti" data-corpo></div>
           `;
           dettagli.addEventListener("toggle", async () => {
@@ -367,7 +386,7 @@
               const appunti = await elencaAppuntiSessione(sessione.id);
               corpo.innerHTML = appunti.length === 0
                 ? '<p class="scheda-testo-libero">Nessun appunto per questa sessione.</p>'
-                : appunti.map(rigaAppunto).join("");
+                : appunti.map((appunto) => rigaAppunto(appunto, sessione.id)).join("");
             } catch (errore) {
               console.error(errore);
               corpo.innerHTML = '<p class="scheda-testo-libero">Impossibile caricare gli appunti.</p>';
@@ -382,6 +401,22 @@
 
     document.getElementById("chiudi-registro").addEventListener("click", () => {
       modaleRegistro.style.display = "none";
+    });
+
+    // Moderazione (solo DM/admin): elimina un appunto, sia dalla sessione in
+    // corso (la lista si aggiorna da sola, è in tempo reale) sia dal registro.
+    document.addEventListener("click", async (evento) => {
+      const bottone = evento.target.closest("[data-elimina-appunto]");
+      if (!bottone) return;
+      if (!confirm("Eliminare questo appunto? Non si potrà recuperare.")) return;
+      bottone.disabled = true;
+      try {
+        await eliminaAppunto(bottone.dataset.sessione, bottone.dataset.eliminaAppunto);
+        bottone.closest(".sessione-appunto")?.remove();
+      } catch (errore) {
+        console.error(errore);
+        bottone.disabled = false;
+      }
     });
   </script>
 </body>

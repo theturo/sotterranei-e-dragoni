@@ -1,208 +1,319 @@
 rules_version = '2';
 
 // Regole di sicurezza Firestore per Sotterranei e Dragoni.
-// Da incollare in: Console Firebase > Firestore Database > Regole.
+// Da incollare in: Console Firebase > Firestore Database > Regole (oppure
+// pubblicabili con "firebase deploy --only firestore:rules", vedi firebase.json).
+// I test automatici di queste regole sono in test/regole (vedi il README lì).
+//
+// Premessa: la configurazione Firebase è pubblica (il repo è pubblico), quindi
+// chiunque può parlare direttamente con il database saltando le pagine del sito.
+// I controlli nel JavaScript delle pagine sono solo interfaccia: la sicurezza
+// vera è tutta qui.
 //
 // Logica:
-// - Ogni utente autenticato può leggere e creare il PROPRIO documento in "users"
-//   (creato automaticamente in fase di registrazione), ma NON può modificare
-//   il proprio campo "ruolo" né "livello" (per evitare di auto-promuoversi o
-//   auto-livellarsi).
-// - Solo un admin può modificare ruolo/dati di un altro utente, oppure
-//   eliminare un account.
-// - Solo un admin può elencare TUTTI gli utenti (pannello di gestione utenti).
-//   Chiunque sia autenticato può invece elencare SOLO i documenti con ruolo
-//   "player" (roster del party, visibile a tutti nella pagina Sessione).
-// - Un DM può aggiornare esclusivamente i campi legati al livello di un
-//   giocatore ("livello", "livelliDaSpendere"), non altro.
-// - Ogni utente ha una sotto-collezione "notifiche": solo il proprietario (o un
-//   admin) può leggerla; solo il proprietario può segnarle come lette; solo un
-//   admin o un DM (verso un giocatore) può crearne di nuove.
-// - Collezione "personaggi/{schedaId}": ogni documento è UNA scheda personaggio,
-//   con un campo "proprietarioUid" che indica di chi è e un campo "campagnaId"
-//   che indica a quale campagna appartiene (un utente può avere personaggi
-//   diversi in campagne diverse). Un utente può avere più schede, ognuna col
-//   proprio flag "attiva" (una sola alla volta PER CAMPAGNA, imposto lato
-//   client). Il proprietario può leggere e scrivere le proprie schede; un
-//   admin o un DM possono sempre solo leggerle; chiunque sia autenticato può
-//   leggere una scheda ALTRUI se è quella attiva (il party è "trasparente" tra
-//   i giocatori nella pagina Sessione), non le schede non attive di altri.
-//   Nota: l'isolamento per campagna qui è solo "organizzativo" (il campo
-//   campagnaId), non di accesso — il modello di sicurezza resta quello di un
-//   singolo tavolo di amici reciprocamente fidati, non quello di un servizio
-//   multi-tenant tra estranei.
-// - Collezione "campagne/{campagnaId}": una campagna, con un DM proprietario
-//   ("dmUid") e un elenco di giocatori membri ("membriUid"). Lettura ed
-//   elenco riservati a chi ci ha a che fare (il DM proprietario, un membro,
-//   o un admin) — a differenza di quasi tutta l'app, qui NON basta essere
-//   autenticati: un titolo può essere "provvisorio" apposta per restare una
-//   sorpresa fino alla prima sessione, quindi non deve essere leggibile da
-//   chi non è del tavolo. Scrittura riservata al DM proprietario (o admin).
-//   Sotto-collezione "stato/{sessione|musica}": lo stato condiviso in tempo
-//   reale di quella campagna (stessi due usi di prima, solo ora annidati
-//   sotto la campagna invece che in una collezione unica globale).
-// - Documento singolo "campagna/{docId}" (vecchio, pre-campagne): mantenuto
-//   SOLO in lettura per admin/DM, il tempo di eseguire la migrazione una
-//   tantum (vedi migraDatiEsistenti in auth.js) dei vecchi "sessione"/"musica"
-//   dentro la prima campagna creata. Può essere rimosso da qui una volta
-//   confermato che la migrazione è stata fatta.
-// - Collezione "registroSessioni/{sessioneId}": una voce per ogni sessione di
-//   una campagna ("campagnaId"), numero progressivo PER campagna, con stato
-//   "programmata" (data futura, creata dal DM dal pannello Campagna, senza
-//   appunti) / "in-corso" / "chiusa" — create, promosse e chiuse solo da
-//   admin/DM. Sotto-collezione "appunti": il registro vero e proprio, in cui
-//   chiunque sia autenticato (DM e giocatori) può scrivere una nuova riga a
-//   proprio nome; è un log di sola aggiunta, nessuno può modificarlo o
-//   cancellarlo dopo averlo scritto.
+// - Registrazione aperta, ma con APPROVAZIONE: chi si registra crea il proprio
+//   documento in "users" sempre come "player", livello 1, "approvato: false".
+//   Finché l'admin non lo approva (e finché l'email non è verificata) può
+//   leggere solo il proprio profilo: nessun altro dato della campagna.
+//   I profili creati prima dell'introduzione dell'approvazione (senza il campo
+//   "approvato") valgono come approvati.
+// - Il proprietario di un profilo può modificare solo pochi campi tecnici
+//   (email sincronizzata, flag di verifica, ordine dei pannelli) e può SOLO
+//   consumare (-1) un credito "livelliDaSpendere", mai aggiungerne.
+// - Solo un admin può modificare ruolo/approvazione/dati di un altro utente o
+//   eliminare un account. Un DM può solo segnalare un passaggio di livello
+//   (+1 a "livello" e "livelliDaSpendere") di un giocatore.
+// - Profili utente (con le email) leggibili solo dal proprietario, dal DM e
+//   dall'admin: i giocatori vedono gli altri solo tramite il riepilogo del
+//   party (vedi "campagne/{id}/party").
+// - "users/{uid}/notifiche": leggibili dal destinatario (o admin), create da
+//   admin o da un DM verso un giocatore, segnabili come lette dal destinatario.
+// - "personaggi/{schedaId}": una scheda per documento, con "proprietarioUid" e
+//   "campagnaId" (entrambi immutabili dopo la creazione). Leggibile per intero
+//   solo dal proprietario, dal DM e dall'admin. Il livello di una scheda può
+//   salire solo di 1 e solo spendendo, nella STESSA scrittura atomica, un
+//   credito "livelliDaSpendere" del proprietario (concesso dal DM).
+// - "campagne/{campagnaId}": DM proprietario ("dmUid", immutabile per il DM) e
+//   membri ("membriUid"). Leggibile solo da DM, membri e admin. Se il titolo è
+//   provvisorio, il campo pubblico "titolo" deve essere null: il titolo vero
+//   vive in "campagne/{id}/privato/titolo", leggibile solo dal DM e dall'admin.
+//   - "stato/{sessione|musica}": stato condiviso in tempo reale (lettura:
+//     DM/membri/admin; scrittura: DM/admin).
+//   - "party/{uid}": riepilogo pubblico della scheda attiva di ogni membro
+//     (nome giocatore, personaggio, classe, livello, PF). Le regole verificano
+//     che coincida con la scheda vera, quindi non può essere falsificato.
+// - "campagna/{docId}" (vecchio, pre-campagne): solo lettura per admin/DM, per
+//   la migrazione una tantum. Rimovibile a migrazione confermata.
+// - "registroSessioni/{sessioneId}": sessioni (programmata/in-corso/chiusa),
+//   leggibili dagli utenti approvati, gestite da admin/DM. Un DM può eliminare
+//   solo le sessioni ancora "programmata"; l'admin qualsiasi.
+//   - "appunti": log scritto da tutti gli utenti approvati, sempre a proprio
+//     nome (nome verificato contro il profilo), max 2000 caratteri, solo
+//     mentre la sessione è in corso. Non modificabili; eliminabili solo da
+//     DM/admin (moderazione).
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ---------- Funzioni di supporto ----------
 
     function isAutenticato() {
       return request.auth != null;
     }
 
+    function percorsoUtente(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function profiloCorrente() {
+      return get(percorsoUtente(request.auth.uid)).data;
+    }
+
     function ruoloUtente(uid) {
-      return get(/databases/$(database)/documents/users/$(uid)).data.ruolo;
+      return get(percorsoUtente(uid)).data.ruolo;
+    }
+
+    // Utente "del tavolo": autenticato, email verificata, con un profilo, e
+    // approvato dall'admin (i profili senza il campo valgono come approvati).
+    function isApprovato() {
+      return isAutenticato()
+        && request.auth.token.email_verified == true
+        && exists(percorsoUtente(request.auth.uid))
+        && profiloCorrente().get('approvato', true) == true;
     }
 
     function isAdmin() {
-      return isAutenticato() && ruoloUtente(request.auth.uid) == "admin";
+      return isApprovato() && profiloCorrente().ruolo == "admin";
     }
 
     function isDM() {
-      return isAutenticato() && ruoloUtente(request.auth.uid) == "dm";
+      return isApprovato() && profiloCorrente().ruolo == "dm";
     }
 
-    function soloCampiLivello() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['livello', 'livelliDaSpendere']);
+    function isDMoAdmin() {
+      return isApprovato() && profiloCorrente().ruolo in ["dm", "admin"];
     }
+
+    function campiModificati() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function testoValido(valore, minimo, massimo) {
+      return valore is string && valore.size() >= minimo && valore.size() <= massimo;
+    }
+
+    function datiCampagna(campagnaId) {
+      return get(/databases/$(database)/documents/campagne/$(campagnaId)).data;
+    }
+
+    function datiCampagnaDopo(campagnaId) {
+      return getAfter(/databases/$(database)/documents/campagne/$(campagnaId)).data;
+    }
+
+    function isDMdellaCampagna(campagnaId) {
+      return isAdmin() || (isDM() && datiCampagna(campagnaId).dmUid == request.auth.uid);
+    }
+
+    function isNellaCampagna(campagnaId) {
+      return isAdmin() || (isApprovato() && (
+        datiCampagna(campagnaId).dmUid == request.auth.uid ||
+        request.auth.uid in datiCampagna(campagnaId).membriUid
+      ));
+    }
+
+    // ---------- Utenti ----------
 
     match /users/{uid} {
-      // Lettura di un singolo documento: il proprietario o un admin.
-      allow get: if isAutenticato() && (request.auth.uid == uid || isAdmin());
+      allow get: if isAutenticato() && (request.auth.uid == uid || isDMoAdmin());
 
-      // Elenco dell'intera collezione (pannello utenti): solo admin.
-      // Chiunque sia autenticato può invece elencare i soli documenti con
-      // ruolo "player" (roster del party nella pagina Sessione): la query
-      // lato client deve filtrare esplicitamente su ruolo == "player".
-      allow list: if isAdmin() || (isAutenticato() && resource.data.ruolo == "player");
+      // Elenco: solo admin (pannello utenti) e DM (gestione membri/party).
+      allow list: if isDMoAdmin();
 
-      // Creazione: solo il proprio documento, in fase di registrazione.
-      allow create: if isAutenticato() && request.auth.uid == uid;
+      // Creazione: solo il proprio documento, sempre come giocatore in attesa di
+      // approvazione — nessuno può registrarsi direttamente come admin/DM.
+      allow create: if isAutenticato() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(
+          ['nome', 'email', 'ruolo', 'livello', 'livelliDaSpendere', 'emailVerificata', 'approvato', 'creatoIl'])
+        && testoValido(request.resource.data.nome, 1, 60)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.ruolo == "player"
+        && request.resource.data.livello == 1
+        && request.resource.data.livelliDaSpendere == 0
+        && request.resource.data.emailVerificata == false
+        && request.resource.data.approvato == false
+        && request.resource.data.creatoIl == request.time;
 
-      // Aggiornamento:
-      // - il proprietario può modificare tutto TRANNE "ruolo" e "livello";
-      // - un admin può modificare qualunque campo di chiunque;
-      // - un DM può modificare SOLO i campi legati al livello di un giocatore.
       allow update: if isAutenticato() && (
-        (request.auth.uid == uid
-          && request.resource.data.ruolo == resource.data.ruolo
-          && request.resource.data.livello == resource.data.livello) ||
+        (request.auth.uid == uid && aggiornamentoProprioProfiloValido()) ||
         isAdmin() ||
-        (isDM() && resource.data.ruolo == "player" && soloCampiLivello())
+        (isDM() && resource.data.ruolo == "player" && passaggioLivelloDM())
       );
 
       allow delete: if isAdmin();
 
+      function aggiornamentoProprioProfiloValido() {
+        let campi = campiModificati();
+        let dati = request.resource.data;
+        return campi.hasOnly(['email', 'emailVerificata', 'ordinePannelli', 'livelliDaSpendere'])
+          && (!campi.hasAny(['email']) || dati.email == request.auth.token.email)
+          && (!campi.hasAny(['emailVerificata']) ||
+              (dati.emailVerificata == true && request.auth.token.email_verified == true))
+          && (!campi.hasAny(['ordinePannelli']) || dati.ordinePannelli is map)
+          && (!campi.hasAny(['livelliDaSpendere']) ||
+              (resource.data.livelliDaSpendere >= 1
+                && dati.livelliDaSpendere == resource.data.livelliDaSpendere - 1));
+      }
+
+      // Il DM segnala un passaggio di livello: +1 a entrambi i contatori, nient'altro.
+      function passaggioLivelloDM() {
+        return campiModificati().hasOnly(['livello', 'livelliDaSpendere'])
+          && request.resource.data.livello == resource.data.get('livello', 0) + 1
+          && request.resource.data.livelliDaSpendere == resource.data.get('livelliDaSpendere', 0) + 1;
+      }
+
       match /notifiche/{notificaId} {
-        // Lettura: solo il destinatario o un admin.
         allow read: if isAutenticato() && (request.auth.uid == uid || isAdmin());
-
-        // Creazione: un admin, oppure un DM verso un giocatore.
         allow create: if isAdmin() || (isDM() && ruoloUtente(uid) == "player");
-
-        // Aggiornamento: solo il destinatario, e solo per segnarla come letta.
         allow update: if isAutenticato() && request.auth.uid == uid &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letta']);
-
         allow delete: if isAdmin();
       }
     }
 
+    // ---------- Schede personaggio ----------
+
     match /personaggi/{schedaId} {
-      // Lettura di una scheda: il proprietario, un admin, un DM, oppure
-      // chiunque sia autenticato se la scheda è quella ATTIVA (party trasparente
-      // nella pagina Sessione — le schede non attive di altri restano private).
-      allow get: if isAutenticato() && (
-        request.auth.uid == resource.data.proprietarioUid || isAdmin() || isDM() || resource.data.attiva == true
-      );
+      allow get: if isApprovato() && (request.auth.uid == resource.data.proprietarioUid || isDMoAdmin());
+      allow list: if isDMoAdmin() || (isApprovato() && request.auth.uid == resource.data.proprietarioUid);
 
-      // Elenco: il proprietario può elencare le PROPRIE schede (query filtrata su
-      // proprietarioUid lato client); admin/DM possono elencare quelle di chiunque
-      // (es. per trovare la scheda attiva di un giocatore); chiunque sia
-      // autenticato può elencare le schede ATTIVE di chiunque (roster del party).
-      allow list: if isAdmin() || isDM() || (
-        isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || resource.data.attiva == true)
-      );
+      // Creazione: solo a proprio nome, a livello 1, in una campagna di cui si
+      // fa parte (come membro o come DM).
+      allow create: if isApprovato()
+        && request.resource.data.proprietarioUid == request.auth.uid
+        && request.resource.data.livello == 1
+        && isNellaCampagna(request.resource.data.campagnaId);
 
-      // Creazione: solo a proprio nome.
-      allow create: if isAutenticato() && request.resource.data.proprietarioUid == request.auth.uid;
+      allow update: if isAdmin()
+        || (isApprovato() && request.auth.uid == resource.data.proprietarioUid && aggiornamentoSchedaValido())
+        // Migrazione dei dati pre-campagne: il DM può solo ASSEGNARE una
+        // campagna a una scheda che non ne ha ancora una.
+        || (isDM() && campiModificati().hasOnly(['campagnaId']) && !('campagnaId' in resource.data));
 
-      // Aggiornamento/eliminazione: solo il proprietario della scheda, o un admin.
-      allow update: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin());
-      allow delete: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin());
+      allow delete: if isAdmin() || (isApprovato() && request.auth.uid == resource.data.proprietarioUid);
+
+      function aggiornamentoSchedaValido() {
+        let campi = campiModificati();
+        return !campi.hasAny(['proprietarioUid', 'campagnaId', 'creataIl'])
+          && (!campi.hasAny(['livello']) || passaggioLivelloGiocatore());
+      }
+
+      // +1 livello solo consumando, nella stessa scrittura atomica (batch), un
+      // credito "livelliDaSpendere" del proprietario.
+      function passaggioLivelloGiocatore() {
+        let utente = percorsoUtente(request.auth.uid);
+        return request.resource.data.livello == resource.data.get('livello', 1) + 1
+          && getAfter(utente).data.livelliDaSpendere == get(utente).data.livelliDaSpendere - 1;
+      }
+    }
+
+    // ---------- Campagne ----------
+
+    // Titolo provvisorio => il campo pubblico "titolo" deve restare vuoto.
+    function titoloPubblicoCoerente() {
+      return request.resource.data.get('titoloProvvisorio', false) != true
+        || request.resource.data.get('titolo', null) == null;
     }
 
     match /campagne/{campagnaId} {
-      // Lettura (singolo documento o elenco): il DM proprietario, un membro, o
-      // un admin — non "chiunque sia autenticato", a differenza del resto
-      // dell'app, per non svelare in anteprima il titolo (magari ancora
-      // provvisorio) di campagne di altri tavoli.
-      allow get, list: if isAdmin() || (isAutenticato() && (
+      allow get, list: if isAdmin() || (isApprovato() && (
         resource.data.dmUid == request.auth.uid || request.auth.uid in resource.data.membriUid
       ));
 
-      // Creazione: un DM crea una campagna a proprio nome.
-      allow create: if isAdmin() || (isDM() && request.resource.data.dmUid == request.auth.uid);
+      allow create: if titoloPubblicoCoerente() && (
+        isAdmin() || (isDM() && request.resource.data.dmUid == request.auth.uid)
+      );
 
-      // Aggiornamento (titolo, stato, membriUid...): solo il DM proprietario o un admin.
-      allow update: if isAdmin() || (isDM() && resource.data.dmUid == request.auth.uid);
+      allow update: if titoloPubblicoCoerente() && (
+        isAdmin() || (
+          isDM() && resource.data.dmUid == request.auth.uid
+          && request.resource.data.dmUid == resource.data.dmUid
+        )
+      );
 
       allow delete: if isAdmin();
 
       match /stato/{docId} {
-        // Lettura: il DM proprietario, un membro della campagna, o un admin.
-        allow get: if isAdmin() || (isAutenticato() && (
-          get(/databases/$(database)/documents/campagne/$(campagnaId)).data.dmUid == request.auth.uid ||
-          request.auth.uid in get(/databases/$(database)/documents/campagne/$(campagnaId)).data.membriUid
-        ));
+        allow get: if isNellaCampagna(campagnaId);
+        allow write: if isDMdellaCampagna(campagnaId);
+      }
 
-        // Scrittura: solo il DM proprietario o un admin.
-        allow write: if isAdmin() || (
-          isDM() && get(/databases/$(database)/documents/campagne/$(campagnaId)).data.dmUid == request.auth.uid
+      // Titolo vero della campagna (anche quando è ancora provvisorio).
+      match /privato/{docId} {
+        allow get: if isDMdellaCampagna(campagnaId);
+        // getAfter: la campagna può nascere nella stessa scrittura atomica.
+        allow write: if isAdmin() || (isDM() && datiCampagnaDopo(campagnaId).dmUid == request.auth.uid);
+      }
+
+      // Riepilogo pubblico della scheda attiva di un membro.
+      match /party/{uid} {
+        allow get, list: if isNellaCampagna(campagnaId);
+
+        allow create, update: if riepilogoValido(campagnaId, uid) && (
+          isDMdellaCampagna(campagnaId) ||
+          (isApprovato() && request.auth.uid == uid && uid in datiCampagna(campagnaId).membriUid)
         );
+
+        allow delete: if isDMdellaCampagna(campagnaId);
       }
     }
 
-    // Vecchia collezione pre-campagne: solo lettura per admin/DM, mantenuta
-    // temporaneamente per permettere la migrazione una tantum dei dati (vedi
-    // il commento in testa al file). Nessuna scrittura: da qui in poi lo stato
-    // condiviso vive sotto "campagne/{campagnaId}/stato".
-    match /campagna/{docId} {
-      allow get: if isAdmin() || isDM();
+    // Il riepilogo deve coincidere con il profilo e con la scheda attiva vera.
+    function riepilogoValido(campagnaId, uid) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['nomeGiocatore', 'schedaId', 'nomePersonaggio', 'classe', 'livello', 'hp', 'aggiornatoIl'])
+        && d.nomeGiocatore == get(percorsoUtente(uid)).data.get('nome', null)
+        && d.aggiornatoIl == request.time
+        && (d.schedaId == null
+          ? (d.nomePersonaggio == null && d.classe == null && d.livello == null && d.hp == null)
+          : riepilogoCoincideConScheda(campagnaId, uid, d));
     }
 
-    match /registroSessioni/{sessioneId} {
-      // Lettura: chiunque sia autenticato (storico consultabile da tutti).
-      allow get: if isAutenticato();
-      allow list: if isAutenticato();
+    function riepilogoCoincideConScheda(campagnaId, uid, d) {
+      let scheda = getAfter(/databases/$(database)/documents/personaggi/$(d.schedaId)).data;
+      return scheda.proprietarioUid == uid
+        && scheda.get('campagnaId', null) == campagnaId
+        && scheda.get('attiva', false) == true
+        && d.nomePersonaggio == scheda.get('nome', null)
+        && d.classe == scheda.get('classe', null)
+        && d.livello == scheda.get('livello', null)
+        && d.hp == scheda.get('hp', null);
+    }
 
-      // Creazione/programmazione, apertura, chiusura, cancellazione di una
-      // sessione programmata: solo admin/DM.
-      allow create: if isAdmin() || isDM();
-      allow update: if isAdmin() || isDM();
-      allow delete: if isAdmin() || isDM();
+    // Vecchia collezione pre-campagne: solo lettura per admin/DM (migrazione).
+    match /campagna/{docId} {
+      allow get: if isDMoAdmin();
+    }
+
+    // ---------- Registro sessioni ----------
+
+    match /registroSessioni/{sessioneId} {
+      allow get, list: if isApprovato();
+
+      allow create, update: if isDMoAdmin();
+      allow delete: if isAdmin() || (isDM() && resource.data.get('stato', null) == "programmata");
 
       match /appunti/{appuntoId} {
-        // Lettura: chiunque sia autenticato.
-        allow get: if isAutenticato();
-        allow list: if isAutenticato();
+        allow get, list: if isApprovato();
 
-        // Creazione: chiunque sia autenticato, solo a proprio nome (autoreUid
-        // deve coincidere con chi scrive). Nessun update/delete: è un log di
-        // sola aggiunta, non modificabile dopo la scrittura.
-        allow create: if isAutenticato() && request.resource.data.autoreUid == request.auth.uid;
+        allow create: if isApprovato()
+          && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'creatoIl'])
+          && request.resource.data.autoreUid == request.auth.uid
+          && request.resource.data.autoreNome == profiloCorrente().get('nome', null)
+          && testoValido(request.resource.data.testo, 1, 2000)
+          && request.resource.data.creatoIl == request.time
+          && get(/databases/$(database)/documents/registroSessioni/$(sessioneId)).data.get('stato', 'in-corso') == "in-corso";
+
+        // Nessuna modifica; eliminazione solo per moderazione.
+        allow delete: if isDMoAdmin();
       }
     }
   }

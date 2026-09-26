@@ -86,6 +86,7 @@
       riordinaSchede,
     } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { esc } from "./assets/js/utils.js";
     import { CLASSI, ICONA_CLASSE_FALLBACK, nomeRazzaCompleto } from "./assets/js/dati-srd.js";
 
     const veil = document.getElementById("veil");
@@ -125,16 +126,16 @@
           <span class="maniglia-trascina" aria-hidden="true" title="Trascina per riordinare"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></span>
           <span class="icona-classe" aria-hidden="true">${classe?.iconaSvg || ICONA_CLASSE_FALLBACK}</span>
           <div class="scheda-card-titoli">
-            <div class="scheda-card-nome">${scheda.nome || "—"}</div>
-            <div class="scheda-card-sub">${nomeRazzaCompleto(scheda.razza, scheda.sottorazza)} · ${classe?.nome || "—"} ${scheda.livello || 1}</div>
+            <div class="scheda-card-nome">${esc(scheda.nome) || "—"}</div>
+            <div class="scheda-card-sub">${esc(nomeRazzaCompleto(scheda.razza, scheda.sottorazza))} · ${esc(classe?.nome) || "—"} ${esc(scheda.livello || 1)}</div>
           </div>
           ${scheda.attiva ? '<span class="role-badge">Attiva</span>' : ""}
         </div>
-        <div class="scheda-card-pf">PF ${testoPf(scheda)}</div>
+        <div class="scheda-card-pf">PF ${esc(testoPf(scheda))}</div>
         <div class="scheda-card-azioni">
-          <a class="btn-tabella" href="scheda-personaggio.html?id=${scheda.id}">Apri scheda</a>
-          ${scheda.attiva ? "" : `<button class="btn-tabella btn-tabella-evidenza" data-attiva="${scheda.id}">Rendi attiva</button>`}
-          <button class="btn-tabella btn-tabella-pericolo" data-elimina="${scheda.id}" data-nome="${(scheda.nome || "questo personaggio").replace(/"/g, "&quot;")}">Elimina</button>
+          <a class="btn-tabella" href="scheda-personaggio.html?id=${esc(encodeURIComponent(scheda.id))}">Apri scheda</a>
+          ${scheda.attiva ? "" : `<button class="btn-tabella btn-tabella-evidenza" data-attiva="${esc(scheda.id)}">Rendi attiva</button>`}
+          <button class="btn-tabella btn-tabella-pericolo" data-elimina="${esc(scheda.id)}" data-nome="${esc(scheda.nome || "questo personaggio")}">Elimina</button>
         </div>
       `;
       return div;
