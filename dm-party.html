@@ -39,7 +39,13 @@
         <div id="slot-utente" class="slot-utente"></div>
       </div>
 
-      <div class="panel-wide">
+      <div id="nessuna-campagna" class="panel-wide" hidden>
+        <p class="scheda-testo-libero">
+          Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>.
+        </p>
+      </div>
+
+      <div id="pannello-party" class="panel-wide">
         <p style="margin-top:0; color: var(--color-ink-soft);">
           Quando un giocatore sale di livello durante la sessione, segnalalo qui:
           al suo prossimo accesso vedrà un avviso e potrà gestire i punti guadagnati
@@ -77,7 +83,13 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPaginaDM, elencaGiocatori, segnalaLivelloSu, ottieniSchedaAttiva } from "./assets/js/auth.js";
+    import {
+      proteggiPaginaDM,
+      ottieniCampagnaCorrente,
+      elencaMembriCampagna,
+      segnalaLivelloSu,
+      ottieniSchedaAttiva,
+    } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import { CLASSI, nomeRazzaCompleto } from "./assets/js/dati-srd.js";
 
@@ -122,13 +134,15 @@
 
     // Un'unica lettura della scheda attiva del giocatore alimenta PF, Personaggio,
     // Classe e il link "Visualizza scheda" — evita fetch ripetute per la stessa riga.
+    let campagnaIdCorrente = null;
+
     async function caricaDatiRiga(riga) {
       const cellaPersonaggio = riga.querySelector('[data-cella="personaggio"]');
       const cellaClasse = riga.querySelector('[data-cella="classe"]');
       const linkVisualizza = riga.querySelector('[data-cella="visualizza"]');
 
       try {
-        const scheda = await ottieniSchedaAttiva(riga.dataset.uid);
+        const scheda = await ottieniSchedaAttiva(riga.dataset.uid, campagnaIdCorrente);
         riga.querySelector(".cella-pf").textContent = testoPf(scheda);
 
         if (scheda) {
@@ -150,8 +164,19 @@
 
     proteggiPaginaDM(async (user, profilo) => {
       montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+
+      const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
+      if (!campagna) {
+        document.getElementById("nessuna-campagna").hidden = false;
+        document.getElementById("pannello-party").hidden = true;
+        veil.style.display = "none";
+        contenuto.style.display = "block";
+        return;
+      }
+      campagnaIdCorrente = campagna.id;
+
       try {
-        const giocatori = await elencaGiocatori();
+        const giocatori = await elencaMembriCampagna(campagnaIdCorrente);
         if (giocatori.length === 0) {
           nessunGiocatore.style.display = "block";
         } else {

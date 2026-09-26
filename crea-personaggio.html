@@ -120,7 +120,7 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, creaScheda } from "./assets/js/auth.js";
+    import { proteggiPagina, ottieniCampagnaCorrente, creaScheda } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import {
       RAZZE,
@@ -145,6 +145,7 @@
     const TOTALE_PASSI = 5;
     let passoCorrente = 1;
     let uidCorrente = null;
+    let campagnaIdCorrente = null;
 
     const stato = {
       nome: "",
@@ -408,7 +409,7 @@
           caratteristicheFinali[chiave] = stato.punteggi[chiave] + bonusRazzaCaratteristica(chiave);
         });
 
-        const id = await creaScheda(uidCorrente, {
+        const id = await creaScheda(uidCorrente, campagnaIdCorrente, {
           nome: stato.nome,
           razza: stato.razza,
           sottorazza: stato.sottorazza || null,
@@ -428,9 +429,17 @@
       }
     });
 
-    proteggiPagina((user, profilo) => {
+    proteggiPagina(async (user, profilo) => {
       uidCorrente = user.uid;
       montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+
+      const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
+      if (!campagna) {
+        window.location.href = "i-miei-personaggi.html";
+        return;
+      }
+      campagnaIdCorrente = campagna.id;
+
       mostraPasso(1);
       veil.style.display = "none";
       contenuto.style.display = "block";

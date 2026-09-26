@@ -59,7 +59,7 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, salvaOrdinePannelli, ROLES, ascoltaStatoMusica } from "./assets/js/auth.js";
+    import { proteggiPagina, salvaOrdinePannelli, ROLES, ascoltaStatoMusica, ottieniCampagnaCorrente } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
 
     const veil = document.getElementById("veil");
@@ -95,7 +95,7 @@
           { chiave: "glossario-equip", titolo: "Glossario equipaggiamento", testo: "Cerca armi, armature, oggetti e pacchi del regolamento per verifiche rapide.", link: "glossario-equipaggiamento.html" },
           { chiave: "glossario-incant", titolo: "Glossario incantesimi", testo: "Cerca incantesimi per nome, classe o livello per verifiche rapide al tavolo.", link: "glossario-incantesimi.html" },
           { chiave: "musica-dm", titolo: "Controllo musica", testo: "Collega Spotify o incolla una playlist YouTube per la colonna sonora della sessione.", link: "controllo-musica.html" },
-          { chiave: "impostazioni-campagna", titolo: "Impostazioni campagna", testo: "Qui potrai configurare la campagna. (In arrivo)" },
+          { chiave: "impostazioni-campagna", titolo: "Gestione campagna", testo: "Crea o gestisci la tua campagna: titolo, party e sessioni pianificate.", link: "campagna.html" },
         ],
       },
       {
@@ -287,7 +287,20 @@
 
       document.getElementById("nome-utente").textContent = nome;
       renderPannelli(ruolo, profilo?.ordinePannelli);
-      ascoltaStatoMusica(renderWidgetMusica);
+
+      if (ruolo === ROLES.PLAYER) {
+        try {
+          const campagna = await ottieniCampagnaCorrente(uidCorrente, ruolo);
+          if (campagna) {
+            ascoltaStatoMusica(campagna.id, renderWidgetMusica);
+          } else {
+            const corpo = document.getElementById("corpo-musica-giocatore");
+            if (corpo) corpo.innerHTML = '<p class="sessione-placeholder">Non sei ancora in una campagna attiva.</p>';
+          }
+        } catch (errore) {
+          console.error(errore);
+        }
+      }
 
       // Il livello personale è visibile a tutti: anche un DM o un admin possono
       // avere (o volere) un proprio personaggio nella campagna.

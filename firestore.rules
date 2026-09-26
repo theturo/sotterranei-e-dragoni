@@ -19,25 +19,40 @@ rules_version = '2';
 //   admin) può leggerla; solo il proprietario può segnarle come lette; solo un
 //   admin o un DM (verso un giocatore) può crearne di nuove.
 // - Collezione "personaggi/{schedaId}": ogni documento è UNA scheda personaggio,
-//   con un campo "proprietarioUid" che indica di chi è. Un utente può avere più
-//   schede (più personaggi), ognuna col proprio flag "attiva" (una sola alla
-//   volta per utente, imposto lato client). Il proprietario può leggere e
-//   scrivere le proprie schede; un admin o un DM possono sempre solo leggerle;
-//   chiunque sia autenticato può leggere una scheda ALTRUI se è quella attiva
-//   (il party è "trasparente" tra i giocatori nella pagina Sessione), non le
-//   schede non attive di altri.
-// - Documenti singoli nella collezione "campagna" (es. "sessione", "musica"):
-//   stato condiviso scrivibile solo da admin/DM e leggibile da chiunque sia
-//   autenticato — regola generica per {docId}, unica per tutti i documenti di
-//   questa collezione. "sessione" = interruttore manuale + riferimento alla
-//   voce di registro aperta. "musica" = sorgente audio trasmessa ai giocatori
-//   (Spotify/YouTube) e relativo snapshot (brano/artista/copertina), scritto
-//   dal browser del DM.
-// - Collezione "registroSessioni/{sessioneId}": una voce per ogni sessione
-//   giocata (numero progressivo, data di apertura/chiusura), creata e chiusa
-//   solo da admin/DM. Sotto-collezione "appunti": il registro vero e proprio,
-//   in cui chiunque sia autenticato (DM e giocatori) può scrivere una nuova
-//   riga a proprio nome; è un log di sola aggiunta, nessuno può modificarlo o
+//   con un campo "proprietarioUid" che indica di chi è e un campo "campagnaId"
+//   che indica a quale campagna appartiene (un utente può avere personaggi
+//   diversi in campagne diverse). Un utente può avere più schede, ognuna col
+//   proprio flag "attiva" (una sola alla volta PER CAMPAGNA, imposto lato
+//   client). Il proprietario può leggere e scrivere le proprie schede; un
+//   admin o un DM possono sempre solo leggerle; chiunque sia autenticato può
+//   leggere una scheda ALTRUI se è quella attiva (il party è "trasparente" tra
+//   i giocatori nella pagina Sessione), non le schede non attive di altri.
+//   Nota: l'isolamento per campagna qui è solo "organizzativo" (il campo
+//   campagnaId), non di accesso — il modello di sicurezza resta quello di un
+//   singolo tavolo di amici reciprocamente fidati, non quello di un servizio
+//   multi-tenant tra estranei.
+// - Collezione "campagne/{campagnaId}": una campagna, con un DM proprietario
+//   ("dmUid") e un elenco di giocatori membri ("membriUid"). Lettura ed
+//   elenco riservati a chi ci ha a che fare (il DM proprietario, un membro,
+//   o un admin) — a differenza di quasi tutta l'app, qui NON basta essere
+//   autenticati: un titolo può essere "provvisorio" apposta per restare una
+//   sorpresa fino alla prima sessione, quindi non deve essere leggibile da
+//   chi non è del tavolo. Scrittura riservata al DM proprietario (o admin).
+//   Sotto-collezione "stato/{sessione|musica}": lo stato condiviso in tempo
+//   reale di quella campagna (stessi due usi di prima, solo ora annidati
+//   sotto la campagna invece che in una collezione unica globale).
+// - Documento singolo "campagna/{docId}" (vecchio, pre-campagne): mantenuto
+//   SOLO in lettura per admin/DM, il tempo di eseguire la migrazione una
+//   tantum (vedi migraDatiEsistenti in auth.js) dei vecchi "sessione"/"musica"
+//   dentro la prima campagna creata. Può essere rimosso da qui una volta
+//   confermato che la migrazione è stata fatta.
+// - Collezione "registroSessioni/{sessioneId}": una voce per ogni sessione di
+//   una campagna ("campagnaId"), numero progressivo PER campagna, con stato
+//   "programmata" (data futura, creata dal DM dal pannello Campagna, senza
+//   appunti) / "in-corso" / "chiusa" — create, promosse e chiuse solo da
+//   admin/DM. Sotto-collezione "appunti": il registro vero e proprio, in cui
+//   chiunque sia autenticato (DM e giocatori) può scrivere una nuova riga a
+//   proprio nome; è un log di sola aggiunta, nessuno può modificarlo o
 //   cancellarlo dopo averlo scritto.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -129,13 +144,43 @@ service cloud.firestore {
       allow delete: if isAutenticato() && (request.auth.uid == resource.data.proprietarioUid || isAdmin());
     }
 
-    match /campagna/{docId} {
-      // Lettura: chiunque sia autenticato (serve a tutti i giocatori per sapere
-      // se una sessione è in corso).
-      allow get: if isAutenticato();
+    match /campagne/{campagnaId} {
+      // Lettura (singolo documento o elenco): il DM proprietario, un membro, o
+      // un admin — non "chiunque sia autenticato", a differenza del resto
+      // dell'app, per non svelare in anteprima il titolo (magari ancora
+      // provvisorio) di campagne di altri tavoli.
+      allow get, list: if isAdmin() || (isAutenticato() && (
+        resource.data.dmUid == request.auth.uid || request.auth.uid in resource.data.membriUid
+      ));
 
-      // Scrittura: solo admin o DM (apertura/chiusura della sessione).
-      allow write: if isAdmin() || isDM();
+      // Creazione: un DM crea una campagna a proprio nome.
+      allow create: if isAdmin() || (isDM() && request.resource.data.dmUid == request.auth.uid);
+
+      // Aggiornamento (titolo, stato, membriUid...): solo il DM proprietario o un admin.
+      allow update: if isAdmin() || (isDM() && resource.data.dmUid == request.auth.uid);
+
+      allow delete: if isAdmin();
+
+      match /stato/{docId} {
+        // Lettura: il DM proprietario, un membro della campagna, o un admin.
+        allow get: if isAdmin() || (isAutenticato() && (
+          get(/databases/$(database)/documents/campagne/$(campagnaId)).data.dmUid == request.auth.uid ||
+          request.auth.uid in get(/databases/$(database)/documents/campagne/$(campagnaId)).data.membriUid
+        ));
+
+        // Scrittura: solo il DM proprietario o un admin.
+        allow write: if isAdmin() || (
+          isDM() && get(/databases/$(database)/documents/campagne/$(campagnaId)).data.dmUid == request.auth.uid
+        );
+      }
+    }
+
+    // Vecchia collezione pre-campagne: solo lettura per admin/DM, mantenuta
+    // temporaneamente per permettere la migrazione una tantum dei dati (vedi
+    // il commento in testa al file). Nessuna scrittura: da qui in poi lo stato
+    // condiviso vive sotto "campagne/{campagnaId}/stato".
+    match /campagna/{docId} {
+      allow get: if isAdmin() || isDM();
     }
 
     match /registroSessioni/{sessioneId} {
@@ -143,10 +188,11 @@ service cloud.firestore {
       allow get: if isAutenticato();
       allow list: if isAutenticato();
 
-      // Apertura/chiusura di una sessione: solo admin/DM.
+      // Creazione/programmazione, apertura, chiusura, cancellazione di una
+      // sessione programmata: solo admin/DM.
       allow create: if isAdmin() || isDM();
       allow update: if isAdmin() || isDM();
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isDM();
 
       match /appunti/{appuntoId} {
         // Lettura: chiunque sia autenticato.

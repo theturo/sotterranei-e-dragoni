@@ -21,7 +21,14 @@
         <div id="slot-utente" class="slot-utente"></div>
       </div>
 
-      <div class="panel-wide">
+      <div id="nessuna-campagna" class="panel-wide" hidden>
+        <p class="scheda-testo-libero">
+          Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>
+          prima di controllare la musica.
+        </p>
+      </div>
+
+      <div id="pannello-musica" class="panel-wide">
         <div class="sorgente-toggle-riga">
           <span>Sorgente trasmessa ai giocatori:</span>
           <div class="sorgente-toggle">
@@ -73,7 +80,7 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica } from "./assets/js/auth.js";
+    import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagnaCorrente } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import * as Spotify from "./assets/js/spotify.js";
 
@@ -90,6 +97,7 @@
     }
 
     let sorgenteCorrente = null;
+    let campagnaIdCorrente = null;
 
     function aggiornaPulsantiSorgente() {
       document.querySelectorAll("[data-sorgente-btn]").forEach((bottone) => {
@@ -102,7 +110,7 @@
         sorgenteCorrente = bottone.dataset.sorgenteBtn;
         aggiornaPulsantiSorgente();
         try {
-          await salvaStatoMusica({ sorgente: sorgenteCorrente });
+          await salvaStatoMusica(campagnaIdCorrente, { sorgente: sorgenteCorrente });
         } catch (errore) {
           console.error(errore);
           mostraToast("Impossibile aggiornare la sorgente trasmessa.", true);
@@ -149,7 +157,7 @@
         const stato = await Spotify.otteniRiproduzioneCorrente();
         renderSpotifyNowPlaying(stato);
         if (sorgenteCorrente === "spotify" && stato) {
-          await salvaStatoMusica({ spotify: stato });
+          await salvaStatoMusica(campagnaIdCorrente, { spotify: stato });
         }
       } catch (errore) {
         console.error(errore);
@@ -236,7 +244,7 @@
     function alCambioStatoYouTube(evento) {
       renderYouTubeNowPlaying();
       if (sorgenteCorrente !== "youtube" || !playlistIdCorrente) return;
-      salvaStatoMusica({
+      salvaStatoMusica(campagnaIdCorrente, {
         youtube: {
           playlistId: playlistIdCorrente,
           indice: playerYouTube.getPlaylistIndex ? playerYouTube.getPlaylistIndex() : 0,
@@ -281,6 +289,16 @@
     proteggiPaginaDM(async (user, profilo) => {
       montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
 
+      const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
+      if (!campagna) {
+        document.getElementById("nessuna-campagna").hidden = false;
+        document.getElementById("pannello-musica").hidden = true;
+        veil.style.display = "none";
+        contenuto.style.display = "block";
+        return;
+      }
+      campagnaIdCorrente = campagna.id;
+
       try {
         const loginAppenaFatto = await Spotify.gestisciCallback();
         if (loginAppenaFatto) mostraToast("Spotify collegato.");
@@ -291,7 +309,7 @@
 
       let stato;
       try {
-        stato = await ottieniStatoMusica();
+        stato = await ottieniStatoMusica(campagnaIdCorrente);
       } catch (errore) {
         console.error(errore);
         stato = { sorgente: null };

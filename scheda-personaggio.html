@@ -420,6 +420,7 @@
   <script type="module">
     import {
       proteggiPagina,
+      ottieniCampagnaCorrente,
       ottieniScheda,
       ottieniSchedaAttiva,
       aggiornaHp,
@@ -1752,7 +1753,12 @@
       const idParam = new URLSearchParams(window.location.search).get("id");
 
       try {
-        scheda = idParam ? await ottieniScheda(idParam) : await ottieniSchedaAttiva(user.uid);
+        if (idParam) {
+          scheda = await ottieniScheda(idParam);
+        } else {
+          const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
+          scheda = campagna ? await ottieniSchedaAttiva(user.uid, campagna.id) : null;
+        }
       } catch (errore) {
         console.error(errore);
         scheda = null;

@@ -37,12 +37,18 @@
           </h1>
         </div>
         <div style="display:flex; align-items:center; gap:14px;">
-          <a href="crea-personaggio.html" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Nuovo personaggio</a>
+          <a id="link-nuovo-personaggio" href="crea-personaggio.html" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Nuovo personaggio</a>
           <div id="slot-utente" class="slot-utente"></div>
         </div>
       </div>
 
-      <div class="panel-wide">
+      <div id="nessuna-campagna" class="panel-wide" hidden>
+        <p class="scheda-testo-libero">
+          Non sei ancora membro di una campagna attiva: chiedi al tuo Dungeon Master di aggiungerti prima di creare un personaggio.
+        </p>
+      </div>
+
+      <div id="pannello-schede" class="panel-wide">
         <p id="suggerimento-riordino" class="scheda-testo-libero" hidden>
           Modalità riordino attiva: trascina le card per cambiare l'ordine, poi conferma con la spunta in alto.
         </p>
@@ -71,7 +77,14 @@
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module">
-    import { proteggiPagina, elencaSchedePersonaggio, impostaSchedaAttiva, eliminaScheda, riordinaSchede } from "./assets/js/auth.js";
+    import {
+      proteggiPagina,
+      ottieniCampagnaCorrente,
+      elencaSchedePersonaggio,
+      impostaSchedaAttiva,
+      eliminaScheda,
+      riordinaSchede,
+    } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
     import { CLASSI, ICONA_CLASSE_FALLBACK, nomeRazzaCompleto } from "./assets/js/dati-srd.js";
 
@@ -82,6 +95,7 @@
     const toast = document.getElementById("toast");
 
     let uidCorrente = null;
+    let campagnaIdCorrente = null;
     let modoOrdinamento = false;
 
     let toastTimer = null;
@@ -128,7 +142,7 @@
 
     async function caricaSchede() {
       try {
-        const schede = await elencaSchedePersonaggio(uidCorrente);
+        const schede = await elencaSchedePersonaggio(uidCorrente, campagnaIdCorrente);
         griglia.innerHTML = "";
         if (schede.length === 0) {
           nessunaScheda.style.display = "block";
@@ -155,6 +169,18 @@
           griglia.querySelectorAll(".scheda-card").forEach((card) => (card.draggable = attivo));
         },
       });
+
+      const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
+      if (!campagna) {
+        document.getElementById("nessuna-campagna").hidden = false;
+        document.getElementById("pannello-schede").hidden = true;
+        document.getElementById("link-nuovo-personaggio").hidden = true;
+        veil.style.display = "none";
+        contenuto.style.display = "block";
+        return;
+      }
+      campagnaIdCorrente = campagna.id;
+
       await caricaSchede();
       veil.style.display = "none";
       contenuto.style.display = "block";
@@ -165,7 +191,7 @@
       if (bottoneAttiva) {
         bottoneAttiva.disabled = true;
         try {
-          await impostaSchedaAttiva(uidCorrente, bottoneAttiva.dataset.attiva);
+          await impostaSchedaAttiva(uidCorrente, campagnaIdCorrente, bottoneAttiva.dataset.attiva);
           await caricaSchede();
           mostraToast("Personaggio reso attivo.");
         } catch (errore) {
@@ -197,7 +223,7 @@
       if (!schedaDaEliminare) return;
       btnConfermaElimina.disabled = true;
       try {
-        await eliminaScheda(uidCorrente, schedaDaEliminare);
+        await eliminaScheda(uidCorrente, campagnaIdCorrente, schedaDaEliminare);
         modalElimina.style.display = "none";
         await caricaSchede();
         mostraToast("Personaggio eliminato.");

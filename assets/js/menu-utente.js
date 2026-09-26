@@ -12,6 +12,7 @@ import {
   ETICHETTE_RUOLO,
   ROLES,
   ottieniStatoSessione,
+  ottieniCampagnaCorrente,
 } from "./auth.js";
 
 const HTML_MENU = `
@@ -281,17 +282,23 @@ function inizializzaImpostazioni() {
 
 // Link "Sessione" nell'header: porta alla pagina dedicata (sessione.html), non
 // più a una modale. Sempre visibile al DM/admin; a un giocatore compare SOLO
-// quando una sessione è segnata "in corso" — stato letto una sola volta al
-// caricamento della pagina (come le notifiche), quindi un giocatore già sulla
-// pagina non lo vede comparire in tempo reale se il DM la apre nel frattempo.
-async function inizializzaLinkSessione(ruolo) {
+// quando la sua campagna attiva ha una sessione segnata "in corso" — stato
+// letto una sola volta al caricamento della pagina (come le notifiche), quindi
+// un giocatore già sulla pagina non lo vede comparire in tempo reale se il DM
+// la apre nel frattempo.
+async function inizializzaLinkSessione(uid, ruolo) {
   const link = document.getElementById("mu-link-sessione");
   if (ruolo === ROLES.DM || ruolo === ROLES.ADMIN) {
     link.hidden = false;
     return;
   }
   try {
-    const stato = await ottieniStatoSessione();
+    const campagna = await ottieniCampagnaCorrente(uid, ruolo);
+    if (!campagna) {
+      link.hidden = true;
+      return;
+    }
+    const stato = await ottieniStatoSessione(campagna.id);
     link.hidden = !stato.inCorso;
   } catch (errore) {
     console.error(errore);
@@ -335,7 +342,7 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
     });
   }
 
-  await inizializzaLinkSessione(ruolo);
+  await inizializzaLinkSessione(user.uid, ruolo);
 
   // Restituisce l'elenco notifiche già recuperato, così una pagina come la
   // dashboard (che ne mostra un riepilogo a parte) non deve rileggerlo due volte.

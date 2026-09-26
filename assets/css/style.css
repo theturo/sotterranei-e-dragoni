@@ -2543,3 +2543,28 @@ table.tabella-punteggi select {
 .playlist-mini-info {
   margin-top: 10px;
 }
+
+/* ---------- Gestione campagna ---------- */
+
+.lista-membri-campagna {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lista-sessioni-programmate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sessione-programmata-riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.4);
+}

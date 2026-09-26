@@ -28,7 +28,11 @@
         <button id="btn-chiudi-sessione" class="btn btn-ghost" hidden>Chiudi sessione</button>
       </div>
 
-      <div class="sessione-layout">
+      <div id="nessuna-campagna" class="panel-wide" hidden>
+        <p class="scheda-testo-libero" id="testo-nessuna-campagna"></p>
+      </div>
+
+      <div id="hub-sessione" class="sessione-layout">
         <div class="sessione-colonna">
           <div class="panel sessione-box-mappa">
             <p class="sessione-placeholder">Mappa (in arrivo)</p>
@@ -87,6 +91,7 @@
     import {
       proteggiPagina,
       ROLES,
+      ottieniCampagnaCorrente,
       ottieniStatoSessione,
       apriSessione,
       chiudiSessione,
@@ -94,6 +99,7 @@
       ascoltaAppunti,
       elencaRegistroSessioni,
       elencaAppuntiSessione,
+      elencaSessioniProgrammate,
       elencaPartyConSchede,
     } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
@@ -104,6 +110,7 @@
 
     let uidCorrente = null;
     let nomeCorrente = null;
+    let campagnaIdCorrente = null;
     let sessioneAttivaId = null;
     let smettiAscolto = null;
 
@@ -174,7 +181,7 @@
       const lista = document.getElementById("lista-party");
       const vuoto = document.getElementById("party-vuoto");
       try {
-        const party = await elencaPartyConSchede();
+        const party = await elencaPartyConSchede(campagnaIdCorrente);
         if (party.length === 0) {
           vuoto.hidden = false;
           return;
@@ -225,11 +232,25 @@
       const isDmOAdmin = ruolo === ROLES.DM || ruolo === ROLES.ADMIN;
 
       montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+
+      const campagna = await ottieniCampagnaCorrente(user.uid, ruolo);
+      if (!campagna) {
+        document.getElementById("testo-nessuna-campagna").textContent = isDmOAdmin
+          ? "Non hai ancora una campagna attiva: creane una dal pannello Gestione campagna."
+          : "Non sei ancora membro di una campagna attiva: chiedi al tuo Dungeon Master di aggiungerti.";
+        document.getElementById("nessuna-campagna").hidden = false;
+        document.getElementById("hub-sessione").hidden = true;
+        veil.style.display = "none";
+        contenuto.style.display = "block";
+        return;
+      }
+      campagnaIdCorrente = campagna.id;
+
       document.getElementById("controlli-dm").hidden = !isDmOAdmin;
 
       let stato;
       try {
-        stato = await ottieniStatoSessione();
+        stato = await ottieniStatoSessione(campagnaIdCorrente);
       } catch (errore) {
         console.error(errore);
         stato = { inCorso: false, sessioneAttivaId: null };
@@ -251,7 +272,7 @@
       const bottone = evento.currentTarget;
       bottone.disabled = true;
       try {
-        const { id } = await apriSessione();
+        const { id } = await apriSessione(campagnaIdCorrente);
         mostraStatoAttivo(id);
       } catch (errore) {
         console.error(errore);
@@ -264,7 +285,7 @@
       const bottone = evento.currentTarget;
       bottone.disabled = true;
       try {
-        await chiudiSessione(sessioneAttivaId);
+        await chiudiSessione(campagnaIdCorrente, sessioneAttivaId);
         if (smettiAscolto) {
           smettiAscolto();
           smettiAscolto = null;
@@ -300,6 +321,16 @@
     // storico in un colpo solo man mano che le sessioni si accumulano.
     const modaleRegistro = document.getElementById("modal-registro");
 
+    function rigaSessioneProgrammata(sessione) {
+      const div = document.createElement("div");
+      div.className = "registro-sessione-voce";
+      const dataFormattata = sessione.dataProgrammata
+        ? sessione.dataProgrammata.split("-").reverse().join("/")
+        : "";
+      div.innerHTML = `<p style="margin:0; padding:10px 0;">Sessione ${sessione.numero} — programmata per il ${dataFormattata}${sessione.titolo ? ` (${sessione.titolo})` : ""}</p>`;
+      return div;
+    }
+
     document.getElementById("btn-apri-registro").addEventListener("click", async () => {
       modaleRegistro.style.display = "flex";
       const lista = document.getElementById("lista-registro");
@@ -308,9 +339,14 @@
       vuoto.hidden = true;
 
       try {
-        const sessioni = await elencaRegistroSessioni();
+        const [programmate, sessioni] = await Promise.all([
+          elencaSessioniProgrammate(campagnaIdCorrente),
+          elencaRegistroSessioni(campagnaIdCorrente),
+        ]);
+        programmate.forEach((sessione) => lista.appendChild(rigaSessioneProgrammata(sessione)));
+
         if (sessioni.length === 0) {
-          vuoto.hidden = false;
+          if (programmate.length === 0) vuoto.hidden = false;
           return;
         }
         sessioni.forEach((sessione) => {
