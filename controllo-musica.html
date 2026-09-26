@@ -82,6 +82,7 @@
   <script type="module">
     import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagnaCorrente } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { esc, escUrl } from "./assets/js/utils.js";
     import * as Spotify from "./assets/js/spotify.js";
 
     const veil = document.getElementById("veil");
@@ -131,12 +132,12 @@
         <div style="display:flex; gap:16px; align-items:center;">
           ${
             stato.copertinaUrl
-              ? `<img src="${stato.copertinaUrl}" class="cover-quadrata-img" alt="" />`
+              ? `<img src="${escUrl(stato.copertinaUrl)}" class="cover-quadrata-img" alt="" />`
               : '<div class="cover-quadrata">🎵</div>'
           }
           <div style="flex:1; min-width:0;">
-            <div class="musica-titolo-brano">${stato.brano}</div>
-            <div class="musica-sottotitolo">${stato.artista}</div>
+            <div class="musica-titolo-brano">${esc(stato.brano)}</div>
+            <div class="musica-sottotitolo">${esc(stato.artista)}</div>
             <div class="trasporto" style="margin-top:10px;">
               <button type="button" data-azione="precedente">⏮</button>
               <button type="button" data-azione="play-pausa">${stato.inRiproduzione ? "⏸" : "▶"}</button>
@@ -227,9 +228,9 @@
 
       document.getElementById("yt-now-playing").innerHTML = `
         <div style="display:flex; gap:16px; align-items:center;">
-          <img src="https://img.youtube.com/vi/${dati.video_id}/hqdefault.jpg" class="cover-quadrata-img" alt="" />
+          <img src="https://img.youtube.com/vi/${esc(encodeURIComponent(dati.video_id))}/hqdefault.jpg" class="cover-quadrata-img" alt="" />
           <div style="flex:1; min-width:0;">
-            <div class="musica-titolo-brano">${dati.title || "—"}</div>
+            <div class="musica-titolo-brano">${esc(dati.title) || "—"}</div>
             <div class="musica-sottotitolo">${lista.length ? `Brano ${indice + 1} di ${lista.length}` : ""}</div>
             <div class="trasporto" style="margin-top:10px;">
               <button type="button" data-azione="precedente">⏮</button>

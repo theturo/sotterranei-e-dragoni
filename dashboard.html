@@ -60,6 +60,7 @@
 
   <script type="module">
     import { proteggiPagina, salvaOrdinePannelli, ROLES, ascoltaStatoMusica, ottieniCampagnaCorrente } from "./assets/js/auth.js";
+    import { esc, escUrl } from "./assets/js/utils.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
 
     const veil = document.getElementById("veil");
@@ -211,7 +212,7 @@
       const titolo = document.getElementById("yt-titolo-giocatore");
       if (!immagine || !titolo) return;
       if (dati?.video_id) {
-        immagine.src = `https://img.youtube.com/vi/${dati.video_id}/hqdefault.jpg`;
+        immagine.src = `https://img.youtube.com/vi/${encodeURIComponent(dati.video_id)}/hqdefault.jpg`;
         immagine.style.display = "block";
         if (placeholder) placeholder.style.display = "none";
       }
@@ -239,11 +240,11 @@
           ? `
             ${
               s.copertinaUrl
-                ? `<img src="${s.copertinaUrl}" class="cover-grande" alt="" />`
+                ? `<img src="${escUrl(s.copertinaUrl)}" class="cover-grande" alt="" />`
                 : '<div class="cover-grande cover-quadrata">🎵</div>'
             }
-            <div class="musica-titolo-brano">${s.brano}</div>
-            <div class="musica-sottotitolo">${s.artista}</div>
+            <div class="musica-titolo-brano">${esc(s.brano)}</div>
+            <div class="musica-sottotitolo">${esc(s.artista)}</div>
             <p class="sessione-placeholder" style="margin-top:10px;">Musica dal dispositivo del Dungeon Master.</p>
           `
           : '<p class="sessione-placeholder">In attesa che il Dungeon Master avvii la riproduzione…</p>';

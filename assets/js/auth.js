@@ -1,5 +1,5 @@
 // Funzioni condivise di autenticazione e gestione ruoli.
-import { auth, db, ADMIN_EMAILS } from "./firebase-config.js";
+import { auth, db } from "./firebase-config.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -64,25 +64,40 @@ export function traduciErrore(codice) {
   return mappa[codice] || "Si è verificato un errore. Riprova.";
 }
 
-// Crea un nuovo account e il relativo documento utente in Firestore.
+// Crea un nuovo account e il relativo documento utente in Firestore. Chiunque si
+// registri nasce "player" in attesa di approvazione: il ruolo admin/DM e
+// l'approvazione li assegna solo un admin (le regole di sicurezza rifiutano
+// qualsiasi altro valore, anche se qualcuno scrivesse al database a mano).
 export async function registraUtente({ nome, email, password }) {
   const credenziali = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(credenziali.user, { displayName: nome });
   await sendEmailVerification(credenziali.user);
 
-  const ruolo = ADMIN_EMAILS.includes(email.toLowerCase()) ? ROLES.ADMIN : ROLES.PLAYER;
-
   await setDoc(doc(db, "users", credenziali.user.uid), {
     nome,
-    email,
-    ruolo,
+    // L'email normalizzata da Firebase Authentication, che le regole
+    // confrontano con quella del token.
+    email: credenziali.user.email,
+    ruolo: ROLES.PLAYER,
     livello: 1,
     livelliDaSpendere: 0,
     emailVerificata: false,
+    approvato: false,
     creatoIl: serverTimestamp(),
   });
 
-  return { uid: credenziali.user.uid, ruolo };
+  return { uid: credenziali.user.uid, ruolo: ROLES.PLAYER };
+}
+
+// Un profilo è approvato se l'admin l'ha approvato, oppure se è stato creato
+// prima che esistesse l'approvazione (nessun campo "approvato").
+export function profiloApprovato(profilo) {
+  return profilo?.approvato !== false;
+}
+
+// L'admin approva un nuovo iscritto (vedi firestore.rules).
+export async function approvaUtente(uid) {
+  await updateDoc(doc(db, "users", uid), { approvato: true });
 }
 
 export async function accediUtente({ email, password }) {
@@ -169,12 +184,21 @@ export async function elencaGiocatori() {
     .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
 }
 
-// Il giocatore consuma un credito di livello (concesso dal DM) applicandolo a una
-// delle proprie schede. Non richiede permessi speciali: le regole di sicurezza
-// permettono già al proprietario di un account di modificare "livelliDaSpendere"
-// (solo "ruolo" e "livello" dell'utente sono bloccati per il proprietario).
-export async function consumaLivelloDaSpendere(uid) {
-  await updateDoc(doc(db, "users", uid), { livelliDaSpendere: increment(-1) });
+// Il giocatore applica un passaggio di livello a una propria scheda, consumando
+// un credito "livelliDaSpendere" concesso dal DM. Le due scritture DEVONO
+// avvenire insieme (batch atomico): le regole di sicurezza accettano il +1 al
+// livello della scheda solo se, nella stessa operazione, il credito scende di 1.
+// "campi" contiene gli altri campi aggiornati dalla procedura (PF, caratteristiche...).
+export async function applicaPassaggioLivello(scheda, campi) {
+  const batch = writeBatch(db);
+  batch.update(doc(db, "personaggi", scheda.id), {
+    ...campi,
+    livello: (scheda.livello || 1) + 1,
+    aggiornatoIl: serverTimestamp(),
+  });
+  batch.update(doc(db, "users", scheda.proprietarioUid), { livelliDaSpendere: increment(-1) });
+  await batch.commit();
+  await sincronizzaRiepilogoParty({ ...scheda, ...campi, livello: (scheda.livello || 1) + 1 });
 }
 
 // Il DM segnala che un giocatore è salito di livello (solo DM/admin, vedi firestore.rules).
@@ -213,15 +237,24 @@ export async function segnaNotificaLetta(uid, notificaId) {
 // membri. Un DM può avere più campagne nel tempo, ma solo una alla volta ha
 // stato "attiva" (non esiste ancora un selettore in dashboard): è quella
 // campagna a determinare party, personaggi e registro sessioni mostrati.
+//
+// Titolo provvisorio: finché la campagna non viene "rivelata", il titolo vero
+// vive SOLO in "campagne/{id}/privato/titolo" (leggibile dal DM e dall'admin),
+// mentre il campo pubblico "titolo" resta null — i giocatori membri possono
+// leggere il documento della campagna, quindi non deve contenerlo.
 export async function creaCampagna(dmUid, { titolo, titoloProvvisorio }) {
-  const riferimento = await addDoc(collection(db, "campagne"), {
-    titolo,
+  const riferimento = doc(collection(db, "campagne"));
+  const batch = writeBatch(db);
+  batch.set(riferimento, {
+    titolo: titoloProvvisorio ? null : titolo,
     titoloProvvisorio: !!titoloProvvisorio,
     dmUid,
     membriUid: [],
     stato: "pianificazione",
     creataIl: serverTimestamp(),
   });
+  batch.set(doc(db, "campagne", riferimento.id, "privato", "titolo"), { titolo });
+  await batch.commit();
   return riferimento.id;
 }
 
@@ -232,6 +265,42 @@ export async function elencaCampagneDM(dmUid) {
   return snapshot.docs
     .map((documento) => ({ id: documento.id, ...documento.data() }))
     .sort((a, b) => (a.creataIl?.toMillis?.() ?? 0) - (b.creataIl?.toMillis?.() ?? 0));
+}
+
+// Come elencaCampagneDM, ma con il titolo VERO di ogni campagna (per il
+// pannello del DM). Le campagne create prima del titolo privato vengono
+// sistemate qui la prima volta: il titolo passa nel documento privato e, se
+// provvisorio, sparisce da quello pubblico.
+export async function elencaCampagneDMConTitolo(dmUid) {
+  const campagne = await elencaCampagneDM(dmUid);
+  return Promise.all(
+    campagne.map(async (campagna) => {
+      const privato = await getDoc(doc(db, "campagne", campagna.id, "privato", "titolo"));
+      if (privato.exists()) return { ...campagna, titolo: privato.data().titolo };
+
+      const titolo = campagna.titolo || "";
+      const batch = writeBatch(db);
+      batch.set(doc(db, "campagne", campagna.id, "privato", "titolo"), { titolo });
+      if (campagna.titoloProvvisorio && campagna.titolo) {
+        batch.update(doc(db, "campagne", campagna.id), { titolo: null });
+      }
+      await batch.commit();
+      return { ...campagna, titolo };
+    })
+  );
+}
+
+// Aggiorna titolo e/o stato "provvisorio" di una campagna, tenendo allineati
+// il documento privato (sempre il titolo vero) e quello pubblico (il titolo
+// solo se rivelato). Rivelare = passare titoloProvvisorio a false.
+export async function aggiornaTitoloCampagna(campagnaId, { titolo, titoloProvvisorio }) {
+  const batch = writeBatch(db);
+  batch.set(doc(db, "campagne", campagnaId, "privato", "titolo"), { titolo });
+  batch.update(doc(db, "campagne", campagnaId), {
+    titolo: titoloProvvisorio ? null : titolo,
+    titoloProvvisorio: !!titoloProvvisorio,
+  });
+  await batch.commit();
 }
 
 // Restituisce la campagna "corrente" per un utente: per un DM/admin, la
@@ -374,6 +443,7 @@ export async function creaScheda(uid, campagnaId, dati) {
     creataIl: serverTimestamp(),
     aggiornatoIl: serverTimestamp(),
   });
+  if (schedeEsistenti.length === 0) await sincronizzaRiepilogoUtente(uid, campagnaId);
   return riferimento.id;
 }
 
@@ -418,6 +488,7 @@ export async function impostaSchedaAttiva(uid, campagnaId, schedaId) {
     batch.update(doc(db, "personaggi", scheda.id), { attiva: scheda.id === schedaId });
   });
   await batch.commit();
+  await sincronizzaRiepilogoUtente(uid, campagnaId);
 }
 
 // Elimina una scheda personaggio. Se era quella attiva e ne restano altre
@@ -434,11 +505,15 @@ export async function eliminaScheda(uid, campagnaId, schedaId) {
     if (restanti.length > 0) {
       await updateDoc(doc(db, "personaggi", restanti[0].id), { attiva: true });
     }
+    await sincronizzaRiepilogoUtente(uid, campagnaId);
   }
 }
 
-export async function aggiornaHp(schedaId, hp) {
-  await updateDoc(doc(db, "personaggi", schedaId), { hp, aggiornatoIl: serverTimestamp() });
+// Riceve la scheda intera (non solo l'id) per poter aggiornare anche il
+// riepilogo del party, se è quella attiva.
+export async function aggiornaHp(scheda, hp) {
+  await updateDoc(doc(db, "personaggi", scheda.id), { hp, aggiornatoIl: serverTimestamp() });
+  await sincronizzaRiepilogoParty({ ...scheda, hp });
 }
 
 export async function aggiornaTiriSalvezzaMorte(schedaId, tiriSalvezzaMorte) {
@@ -555,8 +630,9 @@ export async function chiudiSessione(campagnaId, sessioneAttivaId) {
   );
 }
 
-// Aggiunge un appunto alla sessione indicata: chiunque sia autenticato può
-// scriverne (DM e giocatori), sempre a proprio nome (vedi firestore.rules).
+// Aggiunge un appunto alla sessione indicata: ogni utente approvato può
+// scriverne (DM e giocatori), sempre a proprio nome — le regole verificano che
+// autoreNome coincida con il nome del profilo (vedi firestore.rules).
 export async function aggiungiAppunto(sessioneId, autoreUid, autoreNome, testo) {
   await addDoc(collection(db, "registroSessioni", sessioneId, "appunti"), {
     autoreUid,
@@ -564,6 +640,11 @@ export async function aggiungiAppunto(sessioneId, autoreUid, autoreNome, testo) 
     testo,
     creatoIl: serverTimestamp(),
   });
+}
+
+// Moderazione: il DM (o l'admin) elimina un appunto.
+export async function eliminaAppunto(sessioneId, appuntoId) {
+  await deleteDoc(doc(db, "registroSessioni", sessioneId, "appunti", appuntoId));
 }
 
 // Ascolta in tempo reale gli appunti della sessione indicata (usata dalla
@@ -624,18 +705,91 @@ export function ascoltaStatoMusica(campagnaId, callback) {
   });
 }
 
-// Roster del party di una campagna con la scheda attiva di ciascun membro
-// (nome personaggio, classe, PF): usato dalla pagina Sessione, visibile a
-// tutti — una scheda "attiva" è leggibile da chiunque sia autenticato, non
-// solo dal proprietario o da admin/DM (vedi firestore.rules).
-export async function elencaPartyConSchede(campagnaId) {
-  const giocatori = await elencaMembriCampagna(campagnaId);
-  return Promise.all(
-    giocatori.map(async (giocatore) => ({
-      ...giocatore,
-      schedaAttiva: await ottieniSchedaAttiva(giocatore.uid, campagnaId),
-    }))
+// ---------- Riepilogo pubblico del party ----------
+// I giocatori non possono leggere le schede complete degli altri né i loro
+// profili (con l'email): per la pagina Sessione esiste un riepilogo per membro,
+// "campagne/{campagnaId}/party/{uid}", con solo nome del giocatore e nome,
+// classe, livello e PF della scheda attiva. Lo scrive il giocatore stesso a
+// ogni modifica rilevante della propria scheda attiva (o il DM, rigenerandoli
+// tutti); le regole di sicurezza verificano che coincida con la scheda vera.
+
+// Nomi dei profili già letti, per non rileggerli a ogni aggiornamento dei PF.
+const cacheNomiProfilo = new Map();
+
+async function nomeProfilo(uid) {
+  if (!cacheNomiProfilo.has(uid)) {
+    const profilo = await ottieniProfiloUtente(uid);
+    cacheNomiProfilo.set(uid, profilo?.nome ?? null);
+  }
+  return cacheNomiProfilo.get(uid);
+}
+
+function datiRiepilogo(nomeGiocatore, scheda) {
+  return {
+    nomeGiocatore,
+    schedaId: scheda?.id ?? null,
+    nomePersonaggio: scheda ? scheda.nome ?? null : null,
+    classe: scheda ? scheda.classe ?? null : null,
+    livello: scheda ? scheda.livello ?? null : null,
+    hp: scheda ? scheda.hp ?? null : null,
+    aggiornatoIl: serverTimestamp(),
+  };
+}
+
+// Aggiorna il riepilogo a partire da una scheda già in memoria (e già salvata),
+// se è quella attiva. Mai bloccante: se fallisce (es. il giocatore non è più
+// membro della campagna) la modifica alla scheda resta comunque salvata.
+async function sincronizzaRiepilogoParty(scheda) {
+  if (!scheda?.attiva || !scheda.campagnaId || !scheda.proprietarioUid) return;
+  try {
+    const nome = await nomeProfilo(scheda.proprietarioUid);
+    await setDoc(
+      doc(db, "campagne", scheda.campagnaId, "party", scheda.proprietarioUid),
+      datiRiepilogo(nome, scheda)
+    );
+  } catch (errore) {
+    console.error(errore);
+  }
+}
+
+// Riscrive il riepilogo di un utente rileggendo la sua scheda attiva (dopo un
+// cambio di scheda attiva, una creazione o un'eliminazione).
+async function sincronizzaRiepilogoUtente(uid, campagnaId) {
+  try {
+    const scheda = await ottieniSchedaAttiva(uid, campagnaId);
+    const nome = await nomeProfilo(uid);
+    await setDoc(doc(db, "campagne", campagnaId, "party", uid), datiRiepilogo(nome, scheda));
+  } catch (errore) {
+    console.error(errore);
+  }
+}
+
+// Il giocatore riallinea il proprio riepilogo (es. all'apertura della pagina
+// Sessione), così anche le schede create prima di questa funzione compaiono.
+export async function sincronizzaMioRiepilogo(uid, campagnaId) {
+  await sincronizzaRiepilogoUtente(uid, campagnaId);
+}
+
+// Il DM rigenera tutti i riepiloghi della campagna dalle schede vere, e
+// rimuove quelli di chi non è più membro.
+export async function rigeneraRiepiloghiParty(campagnaId) {
+  const membri = await elencaMembriCampagna(campagnaId);
+  membri.forEach((membro) => cacheNomiProfilo.set(membro.uid, membro.nome ?? null));
+  await Promise.all(membri.map((membro) => sincronizzaRiepilogoUtente(membro.uid, campagnaId)));
+
+  const uidMembri = new Set(membri.map((membro) => membro.uid));
+  const esistenti = await getDocs(collection(db, "campagne", campagnaId, "party"));
+  await Promise.all(
+    esistenti.docs.filter((documento) => !uidMembri.has(documento.id)).map((documento) => deleteDoc(documento.ref))
   );
+}
+
+// Riepiloghi del party di una campagna, in ordine di nome del giocatore.
+export async function elencaRiepiloghiParty(campagnaId) {
+  const snapshot = await getDocs(collection(db, "campagne", campagnaId, "party"));
+  return snapshot.docs
+    .map((documento) => ({ uid: documento.id, ...documento.data() }))
+    .sort((a, b) => (a.nomeGiocatore || "").localeCompare(b.nomeGiocatore || ""));
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,
@@ -652,23 +806,38 @@ export function proteggiPagina(callback) {
       window.location.href = "verifica-email.html";
       return;
     }
+    // Le regole di sicurezza leggono "email_verified" dal token di accesso, che
+    // Firebase aggiorna da solo solo ogni ora: se l'email è stata appena
+    // verificata, forziamo subito un token nuovo.
+    const token = await user.getIdTokenResult();
+    if (token.claims.email_verified !== true) await user.getIdToken(true);
+
     const profilo = await ottieniProfiloUtente(user.uid);
     // A questo punto sappiamo per certo che l'email è verificata: se il documento
     // Firestore non lo riflette ancora (account creato prima di questa funzione,
     // o verificato in un'altra scheda), lo allineiamo. Non blocca il rendering.
+    const allineamenti = [];
     if (profilo && profilo.emailVerificata !== true) {
       profilo.emailVerificata = true;
-      updateDoc(doc(db, "users", user.uid), { emailVerificata: true }).catch((errore) =>
-        console.error(errore)
+      allineamenti.push(
+        updateDoc(doc(db, "users", user.uid), { emailVerificata: true }).catch((errore) => console.error(errore))
       );
     }
     // Se l'utente ha completato un cambio email (verifyBeforeUpdateEmail), l'indirizzo
     // su Authentication è già aggiornato: allineiamo la copia su Firestore.
     if (profilo && user.email && profilo.email !== user.email) {
       profilo.email = user.email;
-      updateDoc(doc(db, "users", user.uid), { email: user.email }).catch((errore) =>
-        console.error(errore)
+      allineamenti.push(
+        updateDoc(doc(db, "users", user.uid), { email: user.email }).catch((errore) => console.error(errore))
       );
+    }
+    // Iscritto non ancora approvato dall'admin: resta nella pagina di attesa
+    // (dopo aver completato gli allineamenti, così l'admin vede l'email come
+    // verificata prima di approvarlo).
+    if (!profiloApprovato(profilo)) {
+      await Promise.all(allineamenti);
+      window.location.href = "attesa-approvazione.html";
+      return;
     }
     callback(user, profilo);
   });

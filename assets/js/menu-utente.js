@@ -14,6 +14,7 @@ import {
   ottieniStatoSessione,
   ottieniCampagnaCorrente,
 } from "./auth.js";
+import { esc } from "./utils.js";
 
 const HTML_MENU = `
   <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
@@ -92,7 +93,7 @@ const HTML_MODALE = `
 
 function testoNotifica(notifica) {
   if (notifica.tipo === "livello_su") {
-    return `Passaggio di livello: ${notifica.livelloPrecedente} → ${notifica.livelloNuovo}`;
+    return `Passaggio di livello: ${esc(notifica.livelloPrecedente)} → ${esc(notifica.livelloNuovo)}`;
   }
   return "Notifica";
 }
@@ -130,7 +131,7 @@ function renderNotifiche(notifiche, uid) {
     lista.innerHTML = notifiche
       .map(
         (n) => `
-      <div class="notifica-riga ${n.letta ? "" : "non-letta"}" data-id="${n.id}">
+      <div class="notifica-riga ${n.letta ? "" : "non-letta"}" data-id="${esc(n.id)}">
         <span class="notifica-testo">${testoNotifica(n)}</span>
         <span class="notifica-data">${formattaDataNotifica(n.creataIl)}</span>
       </div>`

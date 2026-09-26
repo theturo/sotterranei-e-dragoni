@@ -91,6 +91,7 @@
       ottieniSchedaAttiva,
     } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { esc } from "./assets/js/utils.js";
     import { CLASSI, nomeRazzaCompleto } from "./assets/js/dati-srd.js";
 
     const veil = document.getElementById("veil");
@@ -113,13 +114,13 @@
       const tr = document.createElement("tr");
       tr.dataset.uid = giocatore.uid;
       tr.innerHTML = `
-        <td>${giocatore.nome || giocatore.email || "—"}</td>
+        <td>${esc(giocatore.nome || giocatore.email) || "—"}</td>
         <td data-cella="personaggio">—</td>
         <td data-cella="classe">—</td>
-        <td class="cella-livello">${giocatore.livello ?? 1}</td>
+        <td class="cella-livello">${esc(giocatore.livello ?? 1)}</td>
         <td class="cella-pf">—</td>
         <td class="azioni-riga">
-          <button class="btn-tabella btn-icona-azione" data-uid="${giocatore.uid}" title="Aumento di livello" aria-label="Aumento di livello" type="button"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M12 3 L18.5 10 L14 10 L14 20 L10 20 L10 10 L5.5 10 Z M12 5 L13.1 7.3 L12 9.2 L10.9 7.3 Z M11.55 11 L12.45 11 L12.45 19 L11.55 19 Z"/></svg></button>
+          <button class="btn-tabella btn-icona-azione" data-uid="${esc(giocatore.uid)}" title="Aumento di livello" aria-label="Aumento di livello" type="button"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M12 3 L18.5 10 L14 10 L14 20 L10 20 L10 10 L5.5 10 Z M12 5 L13.1 7.3 L12 9.2 L10.9 7.3 Z M11.55 11 L12.45 11 L12.45 19 L11.55 19 Z"/></svg></button>
           <a class="btn-tabella btn-icona-azione azione-disabilitata" data-cella="visualizza" title="Nessun personaggio attivo" aria-label="Visualizza scheda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12 C6 7 18 7 22 12 C18 17 6 17 2 12 Z"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg></a>
         </td>
       `;
@@ -146,14 +147,14 @@
         riga.querySelector(".cella-pf").textContent = testoPf(scheda);
 
         if (scheda) {
-          cellaPersonaggio.innerHTML = `${scheda.nome || "—"}${
-            scheda.razza ? `<span class="cella-personaggio-sub">${nomeRazzaCompleto(scheda.razza, scheda.sottorazza)}</span>` : ""
+          cellaPersonaggio.innerHTML = `${esc(scheda.nome) || "—"}${
+            scheda.razza ? `<span class="cella-personaggio-sub">${esc(nomeRazzaCompleto(scheda.razza, scheda.sottorazza))}</span>` : ""
           }`;
           const classe = CLASSI[scheda.classe];
           cellaClasse.innerHTML = classe
             ? `<span class="cella-classe"><span class="icona-classe" title="${classe.nome}">${classe.iconaSvg}</span>${classe.nome}</span>`
             : "—";
-          linkVisualizza.href = `scheda-personaggio.html?id=${scheda.id}`;
+          linkVisualizza.href = `scheda-personaggio.html?id=${encodeURIComponent(scheda.id)}`;
           linkVisualizza.title = "Visualizza scheda";
           linkVisualizza.classList.remove("azione-disabilitata");
         }

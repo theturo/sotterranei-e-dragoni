@@ -11,11 +11,9 @@ const firebaseConfig = {
   appId: "1:473990205377:web:24438c015fdb55e1416940"
 };
 
-// Email che, alla registrazione, ricevono automaticamente il ruolo "admin".
-// Aggiungi qui la tua email prima di registrarti la prima volta.
-export const ADMIN_EMAILS = ["theturo93@gmail.com"
-  // "tuonome@esempio.com"
-];
+// Nota: il ruolo admin NON si assegna più da qui. Ogni nuovo iscritto nasce
+// "player" in attesa di approvazione (lo impongono le regole di sicurezza);
+// ruoli e approvazioni li gestisce l'admin dal pannello "Gestione utenti".
 
 // ID della chiave reCAPTCHA Enterprise collegata a QUESTO progetto Firebase/Google
 // Cloud (per Firebase App Check, la protezione anti-bot sulle registrazioni).

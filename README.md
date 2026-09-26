@@ -10,8 +10,9 @@ it isn't set up to onboard outside users or accept contributions at this time.
 
 ## What it does today
 
-- **Accounts & roles** — players sign themselves up; the campaign owner (admin) and the
-  Dungeon Master each get a distinct view and distinct capabilities.
+- **Accounts & roles** — players sign themselves up and verify their email; the admin
+  approves each new account before it can see anything of the campaign. The campaign
+  owner (admin) and the Dungeon Master each get a distinct view and distinct capabilities.
 - **Admin tools** — manage registered users, assign roles, trigger password resets.
 - **Dungeon Master tools** — a party roster view and level-up controls, for a single player
   or the whole party at once.
@@ -31,6 +32,10 @@ it isn't set up to onboard outside users or accept contributions at this time.
 
 A static site (hosted on GitHub Pages) backed by Firebase for authentication and shared
 data — no custom backend server. Plain HTML/CSS/JS, no build step.
+
+Since there is no backend and the Firebase config is public, all access control lives in
+`firestore.rules`; the page-level checks are only UI. The rules are covered by an
+automated test suite running on the Firestore emulator — see `test/regole/README.md`.
 
 Any Dungeons & Dragons rules content referenced by this project is based on the freely
 licensed System Reference Document (SRD); this project is not affiliated with or endorsed

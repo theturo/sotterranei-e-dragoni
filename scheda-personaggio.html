@@ -427,9 +427,10 @@
       aggiornaTiriSalvezzaMorte,
       aggiornaInventario,
       aggiornaScheda,
-      consumaLivelloDaSpendere,
+      applicaPassaggioLivello,
     } from "./assets/js/auth.js";
     import { montaMenuUtente } from "./assets/js/menu-utente.js";
+    import { esc } from "./assets/js/utils.js";
     import {
       CLASSI,
       ICONA_CLASSE_FALLBACK,
@@ -675,7 +676,7 @@
       statoLivello.tratti = TRATTI_PER_LIVELLO[scheda.classe]?.[nuovoLivello] || [];
 
       if (statoLivello.tratti.length > 0) {
-        document.getElementById("lista-tratti-livello").innerHTML = statoLivello.tratti.map((t) => `<li><b>${t}</b></li>`).join("");
+        document.getElementById("lista-tratti-livello").innerHTML = statoLivello.tratti.map((t) => `<li><b>${esc(t)}</b></li>`).join("");
         mostraPassoLivello("passo-tratti-livello");
       } else {
         procediDopoTratti();
@@ -724,7 +725,7 @@
       lista.innerHTML = statoLivello.incantesimiScelti
         .map((chiave) => {
           const dati = ottieniIncantesimo(chiave);
-          return `<li><b>${dati?.nome || chiave}</b> <button class="btn-rimuovi-talento" data-chiave="${chiave}" type="button" aria-label="Rimuovi">×</button></li>`;
+          return `<li><b>${esc(dati?.nome || chiave)}</b> <button class="btn-rimuovi-talento" data-chiave="${esc(chiave)}" type="button" aria-label="Rimuovi">×</button></li>`;
         })
         .join("");
     }
@@ -748,8 +749,8 @@
         .map((voce) => {
           const etichettaLivello = voce.livello === 0 ? "Trucchetto" : `Livello ${voce.livello}`;
           return `<div class="risultato-riga">
-            <span>${voce.nome} <small>(${etichettaLivello} · ${voce.scuola})</small></span>
-            <button class="btn-tabella" data-scegli-incantesimo="${voce.chiave}" type="button">Aggiungi</button>
+            <span>${esc(voce.nome)} <small>(${esc(etichettaLivello)} · ${esc(voce.scuola)})</small></span>
+            <button class="btn-tabella" data-scegli-incantesimo="${esc(voce.chiave)}" type="button">Aggiungi</button>
           </div>`;
         })
         .join("");
@@ -806,16 +807,16 @@
       const righeAsi = Object.entries(statoLivello.asi)
         .map(([chiave, bonus]) => {
           const nome = CARATTERISTICHE.find((c) => c.chiave === chiave)?.nome || chiave;
-          return `<li>${nome}: ${scheda.caratteristiche[chiave]} → <b>${scheda.caratteristiche[chiave] + bonus}</b></li>`;
+          return `<li>${esc(nome)}: ${esc(scheda.caratteristiche[chiave])} → <b>${esc(scheda.caratteristiche[chiave] + bonus)}</b></li>`;
         })
         .join("");
-      const righeTratti = statoLivello.tratti.map((t) => `<li>${t}</li>`).join("");
+      const righeTratti = statoLivello.tratti.map((t) => `<li>${esc(t)}</li>`).join("");
       const righeIncantesimi = statoLivello.incantesimiScelti
-        .map((chiave) => `<li>${ottieniIncantesimo(chiave)?.nome || chiave}</li>`)
+        .map((chiave) => `<li>${esc(ottieniIncantesimo(chiave)?.nome || chiave)}</li>`)
         .join("");
       document.getElementById("riepilogo-livello").innerHTML = `
-        <p><label>Nuovo livello</label> <b>${nuovoLivello}</b></p>
-        <p><label>Punti Ferita massimi</label> <b>${pfAttuali} → ${pfAttuali + statoLivello.guadagnoPF}</b></p>
+        <p><label>Nuovo livello</label> <b>${esc(nuovoLivello)}</b></p>
+        <p><label>Punti Ferita massimi</label> <b>${esc(pfAttuali)} → ${esc(pfAttuali + statoLivello.guadagnoPF)}</b></p>
         ${righeAsi ? `<p><label>Caratteristiche</label></p><ul class="lista-competenze">${righeAsi}</ul>` : ""}
         ${righeTratti ? `<p><label>Nuovi tratti</label></p><ul class="lista-competenze">${righeTratti}</ul>` : ""}
         ${righeIncantesimi ? `<p><label>Nuovi incantesimi</label></p><ul class="lista-competenze">${righeIncantesimi}</ul>` : ""}
@@ -826,7 +827,7 @@
       const bottone = document.getElementById("btn-conferma-livello");
       bottone.disabled = true;
       try {
-        scheda.livello = (scheda.livello || 1) + 1;
+        const nuovoLivello = (scheda.livello || 1) + 1;
         scheda.hp.massimi += statoLivello.guadagnoPF;
         scheda.hp.attuali += statoLivello.guadagnoPF;
         Object.entries(statoLivello.asi).forEach(([chiave, bonus]) => {
@@ -837,14 +838,15 @@
           new Set([...(scheda.incantesimiConosciuti || []), ...statoLivello.incantesimiScelti])
         );
 
-        await aggiornaScheda(scheda.id, {
-          livello: scheda.livello,
+        // Livello e consumo del credito vengono salvati insieme, in un'unica
+        // scrittura atomica: le regole di sicurezza rifiutano l'uno senza l'altro.
+        await applicaPassaggioLivello(scheda, {
           hp: scheda.hp,
           caratteristiche: scheda.caratteristiche,
           talenti: scheda.talenti,
           incantesimiConosciuti: scheda.incantesimiConosciuti,
         });
-        await consumaLivelloDaSpendere(uidCorrente);
+        scheda.livello = nuovoLivello;
         profiloCorrente.livelliDaSpendere = (profiloCorrente.livelliDaSpendere || 1) - 1;
 
         document.getElementById("modal-livello").style.display = "none";
@@ -1044,7 +1046,7 @@
 
       select.innerHTML =
         '<option value="">Nessuna (senza armatura)</option>' +
-        armorItems.map((v) => `<option value="${v.chiave}">${v.nome}</option>`).join("");
+        armorItems.map((v) => `<option value="${esc(v.chiave)}">${esc(v.nome)}</option>`).join("");
       select.value = scheda.armaturaIndossata || "";
       select.disabled = soloLettura;
 
@@ -1089,14 +1091,14 @@
         .map((voce) => {
           const dati = ARMI[voce.chiave];
           const bonus = voce.bonusAttacco || 0;
-          return `<tr data-chiave="${voce.chiave}">
-            <td>${voce.nome}</td>
+          return `<tr data-chiave="${esc(voce.chiave)}">
+            <td>${esc(voce.nome)}</td>
             <td>${
               soloLettura
-                ? formattaModificatore(bonus)
-                : `<input type="number" class="input-bonus-attacco" data-chiave="${voce.chiave}" value="${bonus}" />`
+                ? esc(formattaModificatore(bonus))
+                : `<input type="number" class="input-bonus-attacco" data-chiave="${esc(voce.chiave)}" value="${esc(bonus)}" />`
             }</td>
-            <td>${dati ? `${dati.danno} ${dati.tipoDanno}` : "—"}</td>
+            <td>${dati ? `${esc(dati.danno)} ${esc(dati.tipoDanno)}` : "—"}</td>
           </tr>`;
         })
         .join("");
@@ -1203,9 +1205,9 @@
           const dati = ottieniIncantesimo(chiave);
           if (!dati) return "";
           const bottoneLancia = !soloLettura && lanciabile && dati.livello > 0 ? renderControlloLancio(chiave, dati) : "";
-          const bottoneRimuovi = soloLettura ? "" : `<button class="btn-tabella" data-rimuovi="${campo}:${chiave}" type="button">Rimuovi</button>`;
-          return `<li class="inventario-riga" data-chiave="${chiave}">
-            <span class="inventario-nome" title="${tooltipIncantesimo(dati)}">${dati.nome} <small>(${etichettaIncantesimo(dati)})</small></span>
+          const bottoneRimuovi = soloLettura ? "" : `<button class="btn-tabella" data-rimuovi="${esc(campo)}:${esc(chiave)}" type="button">Rimuovi</button>`;
+          return `<li class="inventario-riga" data-chiave="${esc(chiave)}">
+            <span class="inventario-nome" title="${esc(tooltipIncantesimo(dati))}">${esc(dati.nome)} <small>(${esc(etichettaIncantesimo(dati))})</small></span>
             ${bottoneLancia}${bottoneRimuovi}
           </li>`;
         })
@@ -1281,8 +1283,8 @@
       contenitore.innerHTML = risultati
         .map(
           (voce) => `<div class="risultato-riga">
-        <span>${voce.nome} <small>(${etichettaIncantesimo(voce)} · ${voce.scuola})</small></span>
-        <button class="btn-tabella" data-${attributoDati}="${voce.chiave}" type="button">Aggiungi</button>
+        <span>${esc(voce.nome)} <small>(${esc(etichettaIncantesimo(voce))} · ${esc(voce.scuola)})</small></span>
+        <button class="btn-tabella" data-${attributoDati}="${esc(voce.chiave)}" type="button">Aggiungi</button>
       </div>`
         )
         .join("");
@@ -1516,9 +1518,9 @@
             ? ""
             : usato
             ? `<span class="etichetta-incantesimo-razza-usato">Usato oggi</span>`
-            : `<button class="btn-tabella btn-lancia-incantesimo" data-lancia-razza="${chiave}" type="button">Lancia</button>`;
+            : `<button class="btn-tabella btn-lancia-incantesimo" data-lancia-razza="${esc(chiave)}" type="button">Lancia</button>`;
           return `<li class="inventario-riga">
-            <span class="inventario-nome" title="${tooltipIncantesimo(dati)}">${pip} ${dati.nome} <small>(1/giorno)</small></span>
+            <span class="inventario-nome" title="${esc(tooltipIncantesimo(dati))}">${pip} ${esc(dati.nome)} <small>(1/giorno)</small></span>
             ${azione}
           </li>`;
         })
@@ -1619,7 +1621,7 @@
         .map(
           (testo, indice) => `
         <li>
-          <b>${testo}</b>
+          <b>${esc(testo)}</b>
           ${soloLettura ? "" : `<button class="btn-rimuovi-talento" data-indice="${indice}" type="button" aria-label="Rimuovi">×</button>`}
         </li>`
         )
@@ -1691,13 +1693,13 @@
         lista.innerHTML = inventario
           .map(
             (voce) => `
-          <li class="inventario-riga" data-chiave="${voce.chiave}">
-            <span class="inventario-nome">${voce.nome}</span>
+          <li class="inventario-riga" data-chiave="${esc(voce.chiave)}">
+            <span class="inventario-nome">${esc(voce.nome)}</span>
             ${
               soloLettura
-                ? `<span class="inventario-quantita">×${voce.quantita}</span>`
-                : `<input type="number" class="input-quantita" min="1" value="${voce.quantita}" data-chiave="${voce.chiave}" />
-                   <button class="btn-tabella" data-rimuovi="${voce.chiave}" type="button">Rimuovi</button>`
+                ? `<span class="inventario-quantita">×${esc(voce.quantita)}</span>`
+                : `<input type="number" class="input-quantita" min="1" value="${esc(voce.quantita)}" data-chiave="${esc(voce.chiave)}" />
+                   <button class="btn-tabella" data-rimuovi="${esc(voce.chiave)}" type="button">Rimuovi</button>`
             }
           </li>`
           )
@@ -1726,8 +1728,8 @@
         .map(
           (voce) => `
         <div class="risultato-riga">
-          <span>${voce.nome} <small>(${ETICHETTE_CATEGORIA[voce.categoria]}${voce.costo ? " · " + voce.costo : ""})</small></span>
-          <button class="btn-tabella" data-aggiungi="${voce.chiave}" data-nome="${voce.nome}" data-categoria="${voce.categoria}" type="button">Aggiungi</button>
+          <span>${esc(voce.nome)} <small>(${esc(ETICHETTE_CATEGORIA[voce.categoria])}${voce.costo ? " · " + esc(voce.costo) : ""})</small></span>
+          <button class="btn-tabella" data-aggiungi="${esc(voce.chiave)}" data-nome="${esc(voce.nome)}" data-categoria="${esc(voce.categoria)}" type="button">Aggiungi</button>
         </div>`
         )
         .join("");
@@ -1820,7 +1822,7 @@
       scheda.hp.temporanei = temporanei;
       renderHp();
       try {
-        await aggiornaHp(scheda.id, scheda.hp);
+        await aggiornaHp(scheda, scheda.hp);
       } catch (errore) {
         console.error(errore);
       }
