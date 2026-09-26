@@ -29,7 +29,8 @@ rules_version = '2';
 // - "users/{uid}/notifiche": leggibili dal destinatario (o admin), create da
 //   admin o da un DM verso un giocatore, segnabili come lette dal destinatario.
 // - "personaggi/{schedaId}": una scheda per documento, con "proprietarioUid" e
-//   "campagnaId" (entrambi immutabili dopo la creazione). Leggibile per intero
+//   "campagnaId" (entrambi immutabili dopo la creazione). Sono ammessi solo i
+//   campi noti di una scheda, con tipo e dimensione controllati. Leggibile per intero
 //   solo dal proprietario, dal DM e dall'admin. Il livello di una scheda può
 //   salire solo di 1 e solo spendendo, nella STESSA scrittura atomica, un
 //   credito "livelliDaSpendere" del proprietario (concesso dal DM).
@@ -99,6 +100,10 @@ service cloud.firestore {
 
     function testoValido(valore, minimo, massimo) {
       return valore is string && valore.size() >= minimo && valore.size() <= massimo;
+    }
+
+    function testoOpzionale(valore, massimo) {
+      return valore == null || (valore is string && valore.size() <= massimo);
     }
 
     function datiCampagna(campagnaId) {
@@ -190,7 +195,8 @@ service cloud.firestore {
       allow create: if isApprovato()
         && request.resource.data.proprietarioUid == request.auth.uid
         && request.resource.data.livello == 1
-        && isNellaCampagna(request.resource.data.campagnaId);
+        && isNellaCampagna(request.resource.data.campagnaId)
+        && campiSchedaValidi(request.resource.data.keys());
 
       allow update: if isAdmin()
         || (isApprovato() && request.auth.uid == resource.data.proprietarioUid && aggiornamentoSchedaValido())
@@ -203,7 +209,57 @@ service cloud.firestore {
       function aggiornamentoSchedaValido() {
         let campi = campiModificati();
         return !campi.hasAny(['proprietarioUid', 'campagnaId', 'creataIl'])
+          && campiSchedaValidi(campi)
           && (!campi.hasAny(['livello']) || passaggioLivelloGiocatore());
+      }
+
+      // Solo i campi noti di una scheda, ciascuno col tipo giusto e una
+      // dimensione ragionevole (niente campi arbitrari né testi enormi). Si
+      // controllano solo i campi scritti in questa operazione ("campi"), così
+      // eventuali campi di schede molto vecchie non bloccano gli aggiornamenti.
+      function campiSchedaValidi(campi) {
+        let d = request.resource.data;
+        return campi.hasOnly([
+            'nome', 'razza', 'sottorazza', 'classe', 'livello', 'caratteristiche', 'hp', 'tiriSalvezzaMorte',
+            'proprietarioUid', 'campagnaId', 'attiva', 'ordine', 'creataIl', 'aggiornatoIl',
+            'inventario', 'allineamento', 'background', 'incantesimiConosciuti', 'incantesimiPreparati',
+            'slotIncantesimoUsati', 'incantesimiRazzaUsati', 'armaturaIndossata', 'scudoIndossato',
+            'abilitaCompetenti', 'personalita', 'competenzeLinguaggi', 'talenti', 'monete'])
+          && (!campi.hasAny(['nome']) || testoValido(d.nome, 1, 60))
+          && (!campi.hasAny(['razza']) || testoOpzionale(d.razza, 40))
+          && (!campi.hasAny(['sottorazza']) || testoOpzionale(d.sottorazza, 40))
+          && (!campi.hasAny(['classe']) || testoOpzionale(d.classe, 40))
+          && (!campi.hasAny(['livello']) || (d.livello is int && d.livello >= 1 && d.livello <= 20))
+          && (!campi.hasAny(['caratteristiche']) || (d.caratteristiche is map && d.caratteristiche.keys().hasOnly(
+              ['forza', 'destrezza', 'costituzione', 'intelligenza', 'saggezza', 'carisma'])))
+          && (!campi.hasAny(['hp']) || (d.hp is map && d.hp.keys().hasOnly(['massimi', 'attuali', 'temporanei'])))
+          && (!campi.hasAny(['tiriSalvezzaMorte']) || (d.tiriSalvezzaMorte is map
+              && d.tiriSalvezzaMorte.keys().hasOnly(['successi', 'fallimenti'])))
+          && (!campi.hasAny(['attiva']) || d.attiva is bool)
+          && (!campi.hasAny(['ordine']) || (d.ordine is int && d.ordine >= 0 && d.ordine < 1000))
+          && (!campi.hasAny(['inventario']) || (d.inventario is list && d.inventario.size() <= 200))
+          && (!campi.hasAny(['allineamento']) || testoOpzionale(d.allineamento, 40))
+          && (!campi.hasAny(['background']) || testoOpzionale(d.background, 100))
+          && (!campi.hasAny(['incantesimiConosciuti']) || (d.incantesimiConosciuti is list && d.incantesimiConosciuti.size() <= 300))
+          && (!campi.hasAny(['incantesimiPreparati']) || (d.incantesimiPreparati is list && d.incantesimiPreparati.size() <= 300))
+          && (!campi.hasAny(['incantesimiRazzaUsati']) || (d.incantesimiRazzaUsati is list && d.incantesimiRazzaUsati.size() <= 50))
+          && (!campi.hasAny(['slotIncantesimoUsati']) || (d.slotIncantesimoUsati is map && d.slotIncantesimoUsati.size() <= 12))
+          && (!campi.hasAny(['armaturaIndossata']) || testoOpzionale(d.armaturaIndossata, 60))
+          && (!campi.hasAny(['scudoIndossato']) || d.scudoIndossato is bool)
+          && (!campi.hasAny(['abilitaCompetenti']) || (d.abilitaCompetenti is list && d.abilitaCompetenti.size() <= 30))
+          && (!campi.hasAny(['personalita']) || personalitaValida(d.personalita))
+          && (!campi.hasAny(['competenzeLinguaggi']) || testoOpzionale(d.competenzeLinguaggi, 2000))
+          && (!campi.hasAny(['talenti']) || (d.talenti is list && d.talenti.size() <= 100))
+          && (!campi.hasAny(['monete']) || (d.monete is map
+              && d.monete.keys().hasOnly(['rame', 'argento', 'elettro', 'oro', 'platino'])));
+      }
+
+      function personalitaValida(p) {
+        return p is map && p.keys().hasOnly(['tratti', 'ideali', 'legami', 'difetti'])
+          && testoOpzionale(p.get('tratti', null), 2000)
+          && testoOpzionale(p.get('ideali', null), 2000)
+          && testoOpzionale(p.get('legami', null), 2000)
+          && testoOpzionale(p.get('difetti', null), 2000);
       }
 
       // +1 livello solo consumando, nella stessa scrittura atomica (batch), un

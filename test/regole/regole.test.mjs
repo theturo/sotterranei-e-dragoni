@@ -155,6 +155,31 @@ describe("Schede personaggio", () => {
     return assertFails(batch.commit());
   });
 
+  test("si crea una scheda completa come quella del sito", () =>
+    assertSucceeds(addDoc(collection(come("p1"), "personaggi"), {
+      proprietarioUid: "p1", campagnaId: "c1", livello: 1, nome: "Nuovo", razza: "umano", sottorazza: null, classe: "mago",
+      caratteristiche: { forza: 8, destrezza: 14, costituzione: 12, intelligenza: 15, saggezza: 10, carisma: 13 },
+      hp: { massimi: 7, attuali: 7, temporanei: 0 },
+      tiriSalvezzaMorte: { successi: [false, false, false], fallimenti: [false, false, false] },
+      attiva: false, ordine: 1, creataIl: serverTimestamp(), aggiornatoIl: serverTimestamp(),
+    })));
+  test("NON si crea una scheda con campi arbitrari", () =>
+    assertFails(addDoc(collection(come("p1"), "personaggi"), { proprietarioUid: "p1", campagnaId: "c1", livello: 1, spazzatura: "x" })));
+  test("si salvano personalità, talenti e monete", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), {
+      personalita: { tratti: "Coraggiosa", ideali: "Giustizia" }, talenti: ["Allerta"],
+      monete: { rame: 1, argento: 2, elettro: 0, oro: 3, platino: 0 }, background: "Soldato",
+    })));
+  test("NON si salva un campo sconosciuto", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { campoInventato: "x".repeat(1000) })));
+  test("NON si salva un testo di personalità enorme", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { personalita: { tratti: "x".repeat(2001) } })));
+  test("NON si salva un nome del personaggio troppo lungo", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { nome: "x".repeat(61) })));
+  test("NON si salvano migliaia di talenti", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { talenti: Array(101).fill("x") })));
+  test("NON si cambia tipo a un campo (PF come testo)", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { hp: "tanti" })));
   test("il DM assegna la campagna a una scheda che non ne ha (migrazione)", () =>
     assertSucceeds(updateDoc(doc(come("dm"), "personaggi/vecchia"), { campagnaId: "c1" })));
   test("il DM NON modifica altro nelle schede", () =>
