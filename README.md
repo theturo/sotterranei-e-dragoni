@@ -36,6 +36,9 @@ data — no custom backend server. Plain HTML/CSS/JS, no build step.
 Since there is no backend and the Firebase config is public, all access control lives in
 `firestore.rules`; the page-level checks are only UI. The rules are covered by an
 automated test suite running on the Firestore emulator — see `test/regole/README.md`.
+Every page also ships a Content Security Policy (no inline scripts: each page's code
+lives in `assets/js/pagine/`), checked by `test/pagine`. Both suites run on GitHub
+Actions for every pull request.
 
 Any Dungeons & Dragons rules content referenced by this project is based on the freely
 licensed System Reference Document (SRD); this project is not affiliated with or endorsed

@@ -1,0 +1,342 @@
+// Script della pagina dashboard.html (spostato fuori dall'HTML per la Content Security Policy:
+// la policy consente solo script serviti dal sito stesso, niente script inline).
+import { proteggiPagina, salvaOrdinePannelli, ROLES, ascoltaStatoMusica, ottieniCampagnaCorrente } from "../auth.js";
+import { esc, escUrl } from "../utils.js";
+import { montaMenuUtente } from "../menu-utente.js";
+
+const veil = document.getElementById("veil");
+const contenuto = document.getElementById("contenuto");
+const griglia = document.getElementById("griglia-pannelli");
+
+let uidCorrente = null;
+let modoOrdinamento = false;
+
+// Permessi a cascata: ogni ruolo vede anche le sezioni dei ruoli "sotto" di sé
+// (admin vede tutto, un DM vede anche gli strumenti da giocatore, ecc.) — utile
+// perché nella pratica una stessa persona ricopre più ruoli nella campagna.
+const GERARCHIA_RUOLI = {
+  [ROLES.ADMIN]: [ROLES.ADMIN, ROLES.DM, ROLES.PLAYER],
+  [ROLES.DM]: [ROLES.DM, ROLES.PLAYER],
+  [ROLES.PLAYER]: [ROLES.PLAYER],
+};
+
+const SEZIONI_PANNELLI = [
+  {
+    ruolo: ROLES.ADMIN,
+    titolo: "Area Admin",
+    pannelli: [
+      { chiave: "utenti", titolo: "Gestione utenti", testo: "Vedi tutti gli utenti registrati, assegna i ruoli e invia reset password.", link: "admin-utenti.html" },
+    ],
+  },
+  {
+    ruolo: ROLES.DM,
+    titolo: "Area Dungeon Master",
+    pannelli: [
+      { chiave: "sessione", titolo: "Sessione", testo: "Il punto di ritrovo per la sessione in corso: party, appunti condivisi e registro delle sessioni passate.", link: "sessione.html" },
+      { chiave: "party", titolo: "Party e livelli", testo: "Vedi il tuo party, segnala una salita di livello e consulta le schede dei giocatori.", link: "dm-party.html" },
+      { chiave: "glossario-equip", titolo: "Glossario equipaggiamento", testo: "Cerca armi, armature, oggetti e pacchi del regolamento per verifiche rapide.", link: "glossario-equipaggiamento.html" },
+      { chiave: "glossario-incant", titolo: "Glossario incantesimi", testo: "Cerca incantesimi per nome, classe o livello per verifiche rapide al tavolo.", link: "glossario-incantesimi.html" },
+      { chiave: "musica-dm", titolo: "Controllo musica", testo: "Collega Spotify o incolla una playlist YouTube per la colonna sonora della sessione.", link: "controllo-musica.html" },
+      { chiave: "impostazioni-campagna", titolo: "Gestione campagna", testo: "Crea o gestisci la tua campagna: titolo, party e sessioni pianificate.", link: "campagna.html" },
+    ],
+  },
+  {
+    ruolo: ROLES.PLAYER,
+    titolo: "Area Giocatore",
+    pannelli: [
+      { chiave: "sessione", titolo: "Sessione", testo: "Il punto di ritrovo per la sessione in corso: party, appunti condivisi e registro delle sessioni passate.", link: "sessione.html" },
+      { chiave: "personaggi", titolo: "I miei personaggi", testo: "Crea uno o più personaggi e scegli quale rendere attivo per la campagna.", link: "i-miei-personaggi.html" },
+      {
+        chiave: "musica-sessione",
+        titolo: "Musica di sessione",
+        corpoHtml:
+          '<div id="corpo-musica-giocatore"><p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>' +
+          '<div id="yt-player-giocatore" style="position:absolute; width:1px; height:1px; overflow:hidden;"></div>',
+      },
+    ],
+  },
+];
+
+// Applica l'ordine personalizzato salvato dall'utente (per sezione): i pannelli
+// presenti nell'elenco salvato vanno per primi in quell'ordine, quelli nuovi o
+// mai riordinati restano in coda nell'ordine di default.
+function ordinaPannelli(pannelli, ordineSalvato) {
+  if (!ordineSalvato || ordineSalvato.length === 0) return pannelli;
+  const indice = (chiave) => {
+    const posizione = ordineSalvato.indexOf(chiave);
+    return posizione === -1 ? ordineSalvato.length + pannelli.findIndex((p) => p.chiave === chiave) : posizione;
+  };
+  return [...pannelli].sort((a, b) => indice(a.chiave) - indice(b.chiave));
+}
+
+function renderPannelli(ruolo, ordinePannelli) {
+  const ruoliVisibili = GERARCHIA_RUOLI[ruolo] || [ROLES.PLAYER];
+
+  griglia.innerHTML = SEZIONI_PANNELLI.filter((sezione) => ruoliVisibili.includes(sezione.ruolo))
+    .map((sezione) => {
+      const pannelli = ordinaPannelli(sezione.pannelli, ordinePannelli?.[sezione.ruolo]);
+      const cardsHtml = pannelli
+        .map((p) => {
+          const intestazione = `<div class="panel-intestazione"><span class="maniglia-trascina" aria-hidden="true" title="Trascina per riordinare"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></span><h3>${p.titolo}</h3></div>`;
+          const contenuto = p.corpoHtml ? `${intestazione}${p.corpoHtml}` : `${intestazione}<p>${p.testo}</p>`;
+          return p.link
+            ? `<a class="panel" href="${p.link}" data-chiave="${p.chiave}" style="display:block; text-decoration:none;">${contenuto}</a>`
+            : `<div class="panel" data-chiave="${p.chiave}">${contenuto}</div>`;
+        })
+        .join("");
+      return `
+        <div class="sezione-titolo">${sezione.titolo}</div>
+        <div class="dashboard-grid" data-sezione="${sezione.ruolo}">${cardsHtml}</div>
+      `;
+    })
+    .join("");
+}
+
+// Widget "Musica di sessione": in sola lettura per la sorgente Spotify
+// (l'audio suona sul dispositivo del DM, non c'è nulla da pilotare qui);
+// per YouTube, ogni browser mantiene una propria istanza del player IFrame
+// sincronizzata su brano/riproduzione decisi dal DM, ma con volume/muto
+// gestiti in autonomia — non scritti da nessuna parte, restano locali.
+let playerYouTubeGiocatore = null;
+let playerYouTubePronto = false;
+let statoYouTubeInAttesa = null;
+let ultimoStatoYouTubeApplicato = null;
+let modalitaWidgetCorrente = null;
+let audioAttivato = false;
+
+const tagYouTube = document.createElement("script");
+tagYouTube.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tagYouTube);
+
+function creaPlayerYouTubeGiocatore() {
+  if (playerYouTubeGiocatore || typeof YT === "undefined") return;
+  playerYouTubeGiocatore = new YT.Player("yt-player-giocatore", {
+    height: "0",
+    width: "0",
+    events: {
+      onReady: () => {
+        playerYouTubePronto = true;
+        playerYouTubeGiocatore.mute();
+        if (statoYouTubeInAttesa) applicaStatoYouTube(statoYouTubeInAttesa);
+      },
+      onStateChange: () => aggiornaCopertinaETitoloYouTube(),
+    },
+  });
+}
+window.onYouTubeIframeAPIReady = () => {
+  if (modalitaWidgetCorrente === "youtube") creaPlayerYouTubeGiocatore();
+};
+
+function applicaStatoYouTube(yt) {
+  if (!playerYouTubePronto) {
+    statoYouTubeInAttesa = yt;
+    return;
+  }
+  const cambiato =
+    !ultimoStatoYouTubeApplicato ||
+    ultimoStatoYouTubeApplicato.playlistId !== yt.playlistId ||
+    ultimoStatoYouTubeApplicato.indice !== yt.indice;
+  if (cambiato) {
+    playerYouTubeGiocatore.loadPlaylist({ list: yt.playlistId, index: yt.indice || 0 });
+    if (!yt.inRiproduzione) setTimeout(() => playerYouTubeGiocatore.pauseVideo(), 600);
+  } else if (ultimoStatoYouTubeApplicato.inRiproduzione !== yt.inRiproduzione) {
+    yt.inRiproduzione ? playerYouTubeGiocatore.playVideo() : playerYouTubeGiocatore.pauseVideo();
+  }
+  ultimoStatoYouTubeApplicato = yt;
+}
+
+function aggiornaCopertinaETitoloYouTube() {
+  if (!playerYouTubePronto || typeof playerYouTubeGiocatore.getVideoData !== "function") return;
+  const dati = playerYouTubeGiocatore.getVideoData();
+  const immagine = document.getElementById("yt-cover-giocatore");
+  const placeholder = document.getElementById("yt-cover-placeholder");
+  const titolo = document.getElementById("yt-titolo-giocatore");
+  if (!immagine || !titolo) return;
+  if (dati?.video_id) {
+    immagine.src = `https://img.youtube.com/vi/${encodeURIComponent(dati.video_id)}/hqdefault.jpg`;
+    immagine.style.display = "block";
+    if (placeholder) placeholder.style.display = "none";
+  }
+  if (dati?.title) titolo.textContent = dati.title;
+}
+
+// Il DOM dei controlli YouTube (slider, muto) viene creato UNA volta sola
+// al passaggio a questa modalità, non ad ogni aggiornamento: altrimenti un
+// cambio brano deciso dal DM azzererebbe in continuazione il volume che il
+// giocatore ha appena regolato.
+function renderWidgetMusica(stato) {
+  const corpo = document.getElementById("corpo-musica-giocatore");
+  if (!corpo) return;
+
+  if (!stato.sorgente) {
+    modalitaWidgetCorrente = null;
+    corpo.innerHTML = '<p class="sessione-placeholder">Nessuna musica in riproduzione.</p>';
+    return;
+  }
+
+  if (stato.sorgente === "spotify") {
+    modalitaWidgetCorrente = "spotify";
+    const s = stato.spotify;
+    corpo.innerHTML = s
+      ? `
+        ${
+          s.copertinaUrl
+            ? `<img src="${escUrl(s.copertinaUrl)}" class="cover-grande" alt="" />`
+            : '<div class="cover-grande cover-quadrata">🎵</div>'
+        }
+        <div class="musica-titolo-brano">${esc(s.brano)}</div>
+        <div class="musica-sottotitolo">${esc(s.artista)}</div>
+        <p class="sessione-placeholder" style="margin-top:10px;">Musica dal dispositivo del Dungeon Master.</p>
+      `
+      : '<p class="sessione-placeholder">In attesa che il Dungeon Master avvii la riproduzione…</p>';
+    return;
+  }
+
+  if (stato.sorgente === "youtube" && stato.youtube) {
+    creaPlayerYouTubeGiocatore();
+    applicaStatoYouTube(stato.youtube);
+
+    if (modalitaWidgetCorrente !== "youtube") {
+      modalitaWidgetCorrente = "youtube";
+      corpo.innerHTML = `
+        <img id="yt-cover-giocatore" class="cover-grande" style="display:none;" alt="" />
+        <div class="cover-grande cover-quadrata" id="yt-cover-placeholder">▶</div>
+        <div class="musica-titolo-brano" id="yt-titolo-giocatore">Caricamento…</div>
+        <div class="volume-riga" style="justify-content:center;">
+          <button type="button" id="btn-muto-musica">🔈</button>
+          <input type="range" id="cursore-volume-musica" min="0" max="100" value="70" style="max-width:140px;" />
+        </div>
+      `;
+      document.getElementById("cursore-volume-musica").addEventListener("input", (evento) => {
+        if (playerYouTubePronto) playerYouTubeGiocatore.setVolume(Number(evento.target.value));
+      });
+      document.getElementById("btn-muto-musica").addEventListener("click", (evento) => {
+        audioAttivato = !audioAttivato;
+        if (playerYouTubePronto) {
+          audioAttivato ? playerYouTubeGiocatore.unMute() : playerYouTubeGiocatore.mute();
+        }
+        evento.currentTarget.textContent = audioAttivato ? "🔊" : "🔈";
+      });
+    }
+    aggiornaCopertinaETitoloYouTube();
+  }
+}
+
+proteggiPagina(async (user, profilo) => {
+  uidCorrente = user.uid;
+  const nome = profilo?.nome || user.displayName || user.email;
+  const ruolo = profilo?.ruolo || ROLES.PLAYER;
+
+  document.getElementById("nome-utente").textContent = nome;
+  renderPannelli(ruolo, profilo?.ordinePannelli);
+
+  if (ruolo === ROLES.PLAYER) {
+    try {
+      const campagna = await ottieniCampagnaCorrente(uidCorrente, ruolo);
+      if (campagna) {
+        ascoltaStatoMusica(campagna.id, renderWidgetMusica);
+      } else {
+        const corpo = document.getElementById("corpo-musica-giocatore");
+        if (corpo) corpo.innerHTML = '<p class="sessione-placeholder">Non sei ancora in una campagna attiva.</p>';
+      }
+    } catch (errore) {
+      console.error(errore);
+    }
+  }
+
+  // Il livello personale è visibile a tutti: anche un DM o un admin possono
+  // avere (o volere) un proprio personaggio nella campagna.
+  const badgeLivello = document.getElementById("badge-livello");
+  badgeLivello.textContent = `Livello ${profilo?.livello ?? 1}`;
+  badgeLivello.style.display = "inline-block";
+
+  const notifiche = await montaMenuUtente({
+    contenitore: document.getElementById("slot-utente"),
+    user,
+    profilo,
+    onModificaOrdine: (attivo) => {
+      modoOrdinamento = attivo;
+      griglia.classList.toggle("riordino-attivo", attivo);
+      griglia.querySelectorAll(".panel").forEach((pannello) => (pannello.draggable = attivo));
+    },
+  });
+
+  const livelliNonLetti = notifiche.filter((n) => !n.letta && n.tipo === "livello_su");
+  if (livelliNonLetti.length > 0) {
+    const ultima = livelliNonLetti[0];
+    let testo =
+      `Il tuo Dungeon Master ti ha fatto salire dal livello ${ultima.livelloPrecedente} ` +
+      `al livello ${ultima.livelloNuovo}. Potrai spendere i punti guadagnati non appena ` +
+      `sarà pronta la scheda personaggio.`;
+    if (livelliNonLetti.length > 1) {
+      testo += ` Hai ${livelliNonLetti.length} notifiche di livello non lette: consultale dalla campanella.`;
+    }
+    document.getElementById("testo-livello").textContent = testo;
+    document.getElementById("overlay-livello").style.display = "flex";
+
+    document.getElementById("btn-chiudi-livello").addEventListener(
+      "click",
+      () => {
+        document.getElementById("overlay-livello").style.display = "none";
+      },
+      { once: true }
+    );
+  }
+
+  veil.style.display = "none";
+  contenuto.style.display = "block";
+});
+
+// Riordino dei pannelli via trascinamento, come per "I miei personaggi": attivo
+// solo in modalità modifica (matita nell'header), limitato ai pannelli della
+// stessa sezione (non si mescolano Area DM e Area Giocatore).
+let pannelloTrascinato = null;
+
+griglia.addEventListener("dragstart", (evento) => {
+  if (!modoOrdinamento) return;
+  const pannello = evento.target.closest(".panel");
+  if (!pannello) return;
+  pannelloTrascinato = pannello;
+  evento.dataTransfer.effectAllowed = "move";
+  setTimeout(() => pannello.classList.add("trascinato"), 0);
+});
+
+griglia.addEventListener("dragend", () => {
+  if (pannelloTrascinato) pannelloTrascinato.classList.remove("trascinato");
+  pannelloTrascinato = null;
+});
+
+griglia.addEventListener("dragover", (evento) => {
+  if (!pannelloTrascinato) return;
+  evento.preventDefault();
+  const bersaglio = evento.target.closest(".panel");
+  if (!bersaglio || bersaglio === pannelloTrascinato) return;
+  const contenitoreTrascinato = pannelloTrascinato.closest(".dashboard-grid");
+  if (bersaglio.closest(".dashboard-grid") !== contenitoreTrascinato) return;
+  const elementi = [...contenitoreTrascinato.children];
+  if (elementi.indexOf(pannelloTrascinato) < elementi.indexOf(bersaglio)) {
+    bersaglio.after(pannelloTrascinato);
+  } else {
+    bersaglio.before(pannelloTrascinato);
+  }
+});
+
+griglia.addEventListener("drop", async (evento) => {
+  if (!pannelloTrascinato) return;
+  evento.preventDefault();
+  const contenitore = pannelloTrascinato.closest(".dashboard-grid");
+  const ordineChiavi = [...contenitore.children].map((el) => el.dataset.chiave);
+  try {
+    await salvaOrdinePannelli(uidCorrente, contenitore.dataset.sezione, ordineChiavi);
+  } catch (errore) {
+    console.error(errore);
+  }
+});
+
+// In modalità modifica, i pannelli-link non devono navigare: si sta trascinando,
+// non aprendo la pagina.
+griglia.addEventListener("click", (evento) => {
+  if (!modoOrdinamento) return;
+  const pannello = evento.target.closest(".panel");
+  if (pannello) evento.preventDefault();
+});

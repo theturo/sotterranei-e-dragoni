@@ -2,6 +2,9 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
+  <!-- Content Security Policy: vedi il commento in testa a test/pagine/pagine.test.mjs -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sotterranei e Dragoni — Crea il tuo account</title>
   <link rel="stylesheet" href="assets/css/style.css" />
@@ -49,47 +52,6 @@
 
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
-  <script type="module">
-    import { registraUtente, traduciErrore } from "./assets/js/auth.js";
-
-    const form = document.getElementById("form-registrazione");
-    const messaggio = document.getElementById("messaggio");
-    const bottone = document.getElementById("btn-registrazione");
-
-    function mostraMessaggio(testo, tipo) {
-      messaggio.textContent = testo;
-      messaggio.className = `message visible ${tipo}`;
-    }
-
-    form.addEventListener("submit", async (evento) => {
-      evento.preventDefault();
-      messaggio.className = "message";
-
-      const nome = document.getElementById("nome").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const confermaPassword = document.getElementById("conferma-password").value;
-
-      if (password !== confermaPassword) {
-        mostraMessaggio("Le due password non coincidono.", "error");
-        return;
-      }
-
-      bottone.disabled = true;
-      bottone.textContent = "Creazione in corso…";
-
-      try {
-        const { uid } = await registraUtente({ nome, email, password });
-        // registraUtente ha già inviato l'email di verifica: evita che
-        // verifica-email.html ne invii subito una seconda al primo caricamento.
-        sessionStorage.setItem(`verificaInviata:${uid}`, "1");
-        window.location.href = "verifica-email.html";
-      } catch (errore) {
-        mostraMessaggio(traduciErrore(errore.code), "error");
-        bottone.disabled = false;
-        bottone.textContent = "Crea account";
-      }
-    });
-  </script>
+  <script type="module" src="assets/js/pagine/register.js"></script>
 </body>
 </html>

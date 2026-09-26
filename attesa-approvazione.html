@@ -2,6 +2,9 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
+  <!-- Content Security Policy: vedi il commento in testa a test/pagine/pagine.test.mjs -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sotterranei e Dragoni — In attesa di approvazione</title>
   <link rel="stylesheet" href="assets/css/style.css" />
@@ -37,68 +40,6 @@
 
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
-  <script type="module">
-    import {
-      proteggiPaginaSenzaVerifica,
-      ottieniProfiloUtente,
-      profiloApprovato,
-      esciUtente,
-    } from "./assets/js/auth.js";
-
-    const messaggio = document.getElementById("messaggio");
-    const btnControlla = document.getElementById("btn-controlla");
-
-    let utenteCorrente = null;
-
-    // Se l'utente è già approvato (o non ha ancora verificato l'email) non è
-    // questa la pagina giusta per lui.
-    async function verificaStato() {
-      if (!utenteCorrente.emailVerified) {
-        window.location.href = "verifica-email.html";
-        return true;
-      }
-      const profilo = await ottieniProfiloUtente(utenteCorrente.uid);
-      if (profiloApprovato(profilo)) {
-        window.location.href = "dashboard.html";
-        return true;
-      }
-      return false;
-    }
-
-    proteggiPaginaSenzaVerifica(async (user) => {
-      utenteCorrente = user;
-      document.getElementById("email-utente").textContent = user.email;
-      try {
-        await verificaStato();
-      } catch (errore) {
-        console.error(errore);
-      }
-    });
-
-    btnControlla.addEventListener("click", async () => {
-      if (!utenteCorrente) return;
-      btnControlla.disabled = true;
-      btnControlla.textContent = "Controllo…";
-      try {
-        if (!(await verificaStato())) {
-          messaggio.textContent = "Non ancora approvato: riprova più tardi.";
-          messaggio.className = "message visible error";
-        }
-      } catch (errore) {
-        console.error(errore);
-        messaggio.textContent = "Impossibile controllare lo stato. Riprova.";
-        messaggio.className = "message visible error";
-      } finally {
-        btnControlla.disabled = false;
-        btnControlla.textContent = "Controlla di nuovo";
-      }
-    });
-
-    document.getElementById("link-esci").addEventListener("click", async (evento) => {
-      evento.preventDefault();
-      await esciUtente();
-      window.location.href = "index.html";
-    });
-  </script>
+  <script type="module" src="assets/js/pagine/attesa-approvazione.js"></script>
 </body>
 </html>
