@@ -30,10 +30,17 @@ beforeEach(async () => {
     await setDoc(doc(d, "users/p1"), { nome: "Pia", ruolo: "player", approvato: true });
     await setDoc(doc(d, "users/esterno"), { nome: "Esterno", ruolo: "player", approvato: true });
     await setDoc(doc(d, "users/attesa"), { nome: "Nuovo", ruolo: "player", approvato: false });
-    await setDoc(doc(d, "campagne/c1"), { dmUid: "dm", membriUid: ["p1"], titolo: "x" });
+    await setDoc(doc(d, "campagne/c1"), { dmUid: "dm", membriUid: ["p1", "p2"], titolo: "x" });
+    await setDoc(doc(d, "users/p2"), { nome: "Leo", ruolo: "player", approvato: true });
+    const descrizione = (visibilita, lettori = []) => ({ titolo: "x", categoria: "mappa", visibilita, lettori, larghezza: 1, altezza: 1 });
+    await setDoc(doc(d, "campagne/c1/immagini/nascosta"), descrizione("dm"));
+    await setDoc(doc(d, "campagne/c1/immagini/pubblica"), descrizione("tutti"));
+    await setDoc(doc(d, "campagne/c1/immagini/soloP1"), descrizione("selezionati", ["p1"]));
     const s = ctx.storage();
     await uploadBytes(ref(s, "ritratti/p1/volto.png"), new Uint8Array([1, 2, 3]), { contentType: "image/png" });
-    await uploadBytes(ref(s, "campagne/c1/mappa.webp"), new Uint8Array([1, 2, 3]), { contentType: "image/webp" });
+    for (const nome of ["nascosta", "pubblica", "pubblica-mini", "soloP1"]) {
+      await uploadBytes(ref(s, `campagne/c1/${nome}`), new Uint8Array([1, 2, 3]), { contentType: "image/webp" });
+    }
   });
 });
 
@@ -72,10 +79,20 @@ describe("Immagini della campagna", () => {
     assertFails(uploadBytes(ref(come("dm"), "campagne/c1/enorme.jpg"), png(5 * MB + 1), { contentType: "image/jpeg" })));
   test("un giocatore NON carica immagini della campagna", () =>
     assertFails(uploadBytes(ref(come("p1"), "campagne/c1/x.png"), png(), { contentType: "image/png" })));
-  test("un membro vede le immagini della campagna", () => assertSucceeds(getBytes(ref(come("p1"), "campagne/c1/mappa.webp"))));
-  test("chi non è membro NON le vede", () => assertFails(getBytes(ref(come("esterno"), "campagne/c1/mappa.webp"))));
+  test("il DM vede anche le immagini nascoste", () => assertSucceeds(getBytes(ref(come("dm"), "campagne/c1/nascosta"))));
+  test("il DM vede un'immagine appena caricata, prima che esista la sua descrizione", async () => {
+    await uploadBytes(ref(come("dm"), "campagne/c1/appena"), png(), { contentType: "image/webp" });
+    await assertSucceeds(getBytes(ref(come("dm"), "campagne/c1/appena")));
+  });
+  test("un membro NON scarica un'immagine nascosta", () => assertFails(getBytes(ref(come("p1"), "campagne/c1/nascosta"))));
+  test("un membro scarica un'immagine visibile a tutti", () => assertSucceeds(getBytes(ref(come("p2"), "campagne/c1/pubblica"))));
+  test("un membro scarica anche la miniatura", () => assertSucceeds(getBytes(ref(come("p2"), "campagne/c1/pubblica-mini"))));
+  test("il giocatore scelto scarica la sua immagine", () => assertSucceeds(getBytes(ref(come("p1"), "campagne/c1/soloP1"))));
+  test("un altro giocatore NON la scarica", () => assertFails(getBytes(ref(come("p2"), "campagne/c1/soloP1"))));
+  test("chi non è membro NON scarica nemmeno quelle per tutti", () =>
+    assertFails(getBytes(ref(come("esterno"), "campagne/c1/pubblica"))));
   test("un giocatore NON cancella le immagini della campagna", () =>
-    assertFails(deleteObject(ref(come("p1"), "campagne/c1/mappa.webp"))));
+    assertFails(deleteObject(ref(come("p1"), "campagne/c1/pubblica"))));
 });
 
 describe("Percorsi non previsti", () => {

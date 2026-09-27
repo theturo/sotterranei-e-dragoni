@@ -10,7 +10,18 @@ import {
   aggiornaInventario,
   aggiornaScheda,
   applicaPassaggioLivello,
+  impostaRitratto,
 } from "../auth.js";
+import {
+  ridimensionaImmagine,
+  caricaImmagine,
+  eliminaImmagine,
+  mostraImmagine,
+  percorsiRitratto,
+  LATO_RITRATTO,
+  LATO_ICONA,
+  ErroreImmagine,
+} from "../immagini.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
 import {
@@ -66,6 +77,81 @@ function renderIntestazione() {
   document.getElementById("scheda-classe-livello").textContent = `${classe?.nome || "—"} ${scheda.livello || 1}`;
   document.getElementById("scheda-razza").textContent = nomeRazzaCompleto(scheda.razza, scheda.sottorazza);
 }
+
+// ---------- Ritratto ----------
+// Il proprietario carica un'immagine: il browser ne ricava una versione per la
+// scheda (512 px) e un'icona per il party (96 px); la scheda salva solo il
+// numero di versione (vedi immagini.js).
+function renderRitratto() {
+  const img = document.getElementById("ritratto-img");
+  const vuoto = document.getElementById("ritratto-vuoto");
+  document.getElementById("ritratto-azioni").hidden = soloLettura;
+  document.getElementById("btn-rimuovi-ritratto").hidden = !scheda.ritratto;
+  document.getElementById("ritratto-etichetta-carica").textContent = scheda.ritratto ? "Cambia" : "Carica ritratto";
+  if (!scheda.ritratto) {
+    img.hidden = true;
+    img.removeAttribute("src");
+    vuoto.hidden = false;
+    return;
+  }
+  vuoto.hidden = true;
+  mostraImmagine(img, percorsiRitratto(scheda.proprietarioUid, scheda.id, scheda.ritratto).grande).then(() => {
+    if (img.hidden) vuoto.hidden = false;
+  });
+}
+
+function mostraAvviso(testo) {
+  const toast = document.getElementById("toast");
+  toast.textContent = testo;
+  toast.className = "toast visibile toast-errore";
+  setTimeout(() => (toast.className = "toast"), 3600);
+}
+
+document.getElementById("ritratto-file").addEventListener("change", async (evento) => {
+  const file = evento.target.files?.[0];
+  evento.target.value = "";
+  if (!file || soloLettura) return;
+  const azioni = document.getElementById("ritratto-azioni");
+  azioni.classList.add("in-caricamento");
+  const precedente = scheda.ritratto;
+  try {
+    const [grande, icona] = await Promise.all([
+      ridimensionaImmagine(file, LATO_RITRATTO),
+      ridimensionaImmagine(file, LATO_ICONA),
+    ]);
+    const versione = Date.now();
+    const percorsi = percorsiRitratto(scheda.proprietarioUid, scheda.id, versione);
+    await caricaImmagine(percorsi.grande, grande.blob);
+    await caricaImmagine(percorsi.icona, icona.blob);
+    await impostaRitratto(scheda, versione);
+    scheda.ritratto = versione;
+    renderRitratto();
+    if (precedente) {
+      const vecchi = percorsiRitratto(scheda.proprietarioUid, scheda.id, precedente);
+      Promise.all([eliminaImmagine(vecchi.grande), eliminaImmagine(vecchi.icona)]).catch((e) => console.error(e));
+    }
+  } catch (errore) {
+    console.error(errore);
+    mostraAvviso(errore instanceof ErroreImmagine ? errore.message : "Impossibile caricare il ritratto. Riprova.");
+  } finally {
+    azioni.classList.remove("in-caricamento");
+  }
+});
+
+document.getElementById("btn-rimuovi-ritratto").addEventListener("click", async () => {
+  if (soloLettura || !scheda.ritratto) return;
+  if (!confirm("Rimuovere il ritratto di questo personaggio?")) return;
+  const vecchi = percorsiRitratto(scheda.proprietarioUid, scheda.id, scheda.ritratto);
+  try {
+    await impostaRitratto(scheda, null);
+    scheda.ritratto = null;
+    renderRitratto();
+    await Promise.all([eliminaImmagine(vecchi.grande), eliminaImmagine(vecchi.icona)]);
+  } catch (errore) {
+    console.error(errore);
+    mostraAvviso("Impossibile rimuovere il ritratto. Riprova.");
+  }
+});
 
 function renderBackground() {
   const campo = document.getElementById("input-background");
@@ -1373,6 +1459,7 @@ proteggiPagina(async (user, profilo) => {
 
   renderBadgeStato();
   renderIntestazione();
+  renderRitratto();
   renderBackground();
   renderAllineamento();
   renderCaratteristiche();

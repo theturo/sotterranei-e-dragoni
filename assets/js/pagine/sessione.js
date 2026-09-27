@@ -21,6 +21,7 @@ import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { CLASSI } from "../dati-srd.js";
+import { mostraImmagine, percorsiRitratto } from "../immagini.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -97,6 +98,19 @@ function creaRigaParty(riepilogo) {
     </div>
     <div class="party-sessione-pf">${esc(testoPf(riepilogo))}</div>
   `;
+  // Con un ritratto, l'icona della classe lascia il posto alla sua miniatura
+  // (e ricompare se l'immagine non si può caricare).
+  if (riepilogo.ritratto) {
+    const icona = li.querySelector(".icona-classe");
+    const img = document.createElement("img");
+    img.className = "icona-ritratto";
+    img.alt = "";
+    img.hidden = true;
+    icona.before(img);
+    mostraImmagine(img, percorsiRitratto(riepilogo.uid, riepilogo.schedaId, riepilogo.ritratto).icona).then(() => {
+      icona.hidden = !img.hidden;
+    });
+  }
   return li;
 }
 

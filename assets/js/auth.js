@@ -1,5 +1,6 @@
 // Funzioni condivise di autenticazione e gestione ruoli.
 import { auth, db } from "./firebase-config.js";
+import { eliminaImmagine, percorsiRitratto } from "./immagini.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -508,6 +509,11 @@ export async function eliminaScheda(uid, campagnaId, schedaId) {
   const schede = await elencaSchedePersonaggio(uid, campagnaId);
   const scheda = schede.find((s) => s.id === schedaId);
   await deleteDoc(doc(db, "personaggi", schedaId));
+  if (scheda?.ritratto) {
+    // Via anche i file del ritratto (senza bloccare se non riesce).
+    const { grande, icona } = percorsiRitratto(uid, schedaId, scheda.ritratto);
+    await Promise.all([eliminaImmagine(grande), eliminaImmagine(icona)]).catch((errore) => console.error(errore));
+  }
 
   if (scheda?.attiva) {
     const restanti = schede.filter((s) => s.id !== schedaId);
@@ -532,6 +538,13 @@ export async function aggiornaTiriSalvezzaMorte(schedaId, tiriSalvezzaMorte) {
 // Inventario di una scheda: array di { chiave, nome, categoria, quantita, bonusAttacco? }.
 export async function aggiornaInventario(schedaId, inventario) {
   await updateDoc(doc(db, "personaggi", schedaId), { inventario, aggiornatoIl: serverTimestamp() });
+}
+
+// Imposta (o toglie, con null) la versione del ritratto di una scheda, dopo
+// averne caricato i file (vedi immagini.js), e aggiorna il riepilogo del party.
+export async function impostaRitratto(scheda, versione) {
+  await updateDoc(doc(db, "personaggi", scheda.id), { ritratto: versione, aggiornatoIl: serverTimestamp() });
+  await sincronizzaRiepilogoParty({ ...scheda, ritratto: versione });
 }
 
 // Aggiornamento generico di uno o più campi di una scheda (abilità competenti,
@@ -743,6 +756,7 @@ function datiRiepilogo(nomeGiocatore, scheda) {
     classe: scheda ? scheda.classe ?? null : null,
     livello: scheda ? scheda.livello ?? null : null,
     hp: scheda ? scheda.hp ?? null : null,
+    ritratto: scheda ? scheda.ritratto ?? null : null,
     aggiornatoIl: serverTimestamp(),
   };
 }
@@ -801,6 +815,77 @@ export async function elencaRiepiloghiParty(campagnaId) {
   return snapshot.docs
     .map((documento) => ({ uid: documento.id, ...documento.data() }))
     .sort((a, b) => (a.nomeGiocatore || "").localeCompare(b.nomeGiocatore || ""));
+}
+
+// ---------- Immagini della campagna ----------
+// Documento campagne/{campagnaId}/immagini/{id}: titolo, categoria e
+// visibilità ("dm" = nascosta, "tutti" = tutti i membri, "selezionati" = solo
+// i giocatori in "lettori"). Il file sta in Storage con lo stesso ID.
+
+// ID per una nuova immagine, da usare anche come nome del file.
+export function nuovoIdImmagine(campagnaId) {
+  return doc(collection(db, "campagne", campagnaId, "immagini")).id;
+}
+
+export async function salvaImmagineCampagna(campagnaId, immagineId, { titolo, descrizione, categoria, larghezza, altezza }) {
+  await setDoc(doc(db, "campagne", campagnaId, "immagini", immagineId), {
+    titolo,
+    descrizione: descrizione || null,
+    categoria,
+    visibilita: "dm",
+    lettori: [],
+    larghezza,
+    altezza,
+    caricataIl: serverTimestamp(),
+  });
+}
+
+export async function impostaVisibilitaImmagine(campagnaId, immagineId, visibilita, lettori = []) {
+  await updateDoc(doc(db, "campagne", campagnaId, "immagini", immagineId), {
+    visibilita,
+    lettori: visibilita === "selezionati" ? lettori : [],
+  });
+}
+
+export async function eliminaDocumentoImmagine(campagnaId, immagineId) {
+  await deleteDoc(doc(db, "campagne", campagnaId, "immagini", immagineId));
+}
+
+function ordinaImmagini(elenco) {
+  return elenco.sort((a, b) => (b.caricataIl?.toMillis?.() ?? Infinity) - (a.caricataIl?.toMillis?.() ?? Infinity));
+}
+
+// Ascolta in tempo reale le immagini visibili all'utente: tutte per il DM,
+// per un giocatore quelle "tutti" più quelle "selezionati" che lo includono
+// (due query, perché le regole di sicurezza devono poter verificare ciascuna).
+export function ascoltaImmaginiCampagna(campagnaId, { dm, uid }, callback, alErrore = (e) => console.error(e)) {
+  const raccolta = collection(db, "campagne", campagnaId, "immagini");
+  const converti = (snapshot) => snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  if (dm) {
+    return onSnapshot(raccolta, (snapshot) => callback(ordinaImmagini(converti(snapshot))), alErrore);
+  }
+  let pubbliche = [];
+  let personali = [];
+  const aggiorna = () => {
+    const uniche = new Map([...pubbliche, ...personali].map((immagine) => [immagine.id, immagine]));
+    callback(ordinaImmagini([...uniche.values()]));
+  };
+  const stop1 = onSnapshot(query(raccolta, where("visibilita", "==", "tutti")), (s) => {
+    pubbliche = converti(s);
+    aggiorna();
+  }, alErrore);
+  const stop2 = onSnapshot(
+    query(raccolta, where("visibilita", "==", "selezionati"), where("lettori", "array-contains", uid)),
+    (s) => {
+      personali = converti(s);
+      aggiorna();
+    },
+    alErrore
+  );
+  return () => {
+    stop1();
+    stop2();
+  };
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,

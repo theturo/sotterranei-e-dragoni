@@ -33,6 +33,7 @@ const SEZIONI_PANNELLI = [
     titolo: "Area Dungeon Master",
     pannelli: [
       { chiave: "sessione", titolo: "Sessione", testo: "Il punto di ritrovo per la sessione in corso: party, appunti condivisi e registro delle sessioni passate.", link: "sessione.html" },
+      { chiave: "galleria-dm", titolo: "Galleria della campagna", testo: "Carica mappe, luoghi e ritratti dei PNG e decidi quando rivelarli, a tutto il party o solo ad alcuni.", link: "immagini.html" },
       { chiave: "party", titolo: "Party e livelli", testo: "Vedi il tuo party, segnala una salita di livello e consulta le schede dei giocatori.", link: "dm-party.html" },
       { chiave: "glossario-equip", titolo: "Glossario equipaggiamento", testo: "Cerca armi, armature, oggetti e pacchi del regolamento per verifiche rapide.", link: "glossario-equipaggiamento.html" },
       { chiave: "glossario-incant", titolo: "Glossario incantesimi", testo: "Cerca incantesimi per nome, classe o livello per verifiche rapide al tavolo.", link: "glossario-incantesimi.html" },
@@ -45,6 +46,7 @@ const SEZIONI_PANNELLI = [
     titolo: "Area Giocatore",
     pannelli: [
       { chiave: "sessione", titolo: "Sessione", testo: "Il punto di ritrovo per la sessione in corso: party, appunti condivisi e registro delle sessioni passate.", link: "sessione.html" },
+      { chiave: "galleria", titolo: "Galleria della campagna", testo: "Mappe, luoghi e personaggi che il Dungeon Master ti ha mostrato durante l'avventura.", link: "immagini.html" },
       { chiave: "personaggi", titolo: "I miei personaggi", testo: "Crea uno o più personaggi e scegli quale rendere attivo per la campagna.", link: "i-miei-personaggi.html" },
       {
         chiave: "musica-sessione",

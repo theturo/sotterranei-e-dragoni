@@ -16,6 +16,9 @@ it isn't set up to onboard outside users or accept contributions at this time.
 - **Admin tools** — manage registered users, assign roles, trigger password resets.
 - **Dungeon Master tools** — a party roster view and level-up controls, for a single player
   or the whole party at once.
+- **Images** — each player uploads a portrait for their character, shown on the sheet and
+  as an icon in the party; the Dungeon Master keeps a campaign gallery (maps, places,
+  NPCs, handouts) and decides, image by image, when to reveal it and to whom.
 - **Notifications** — players get notified in-app when their character levels up, with a
   persistent notification history.
 - **Fantasy-themed UI** — designed to feel in-keeping with the tabletop experience, and to

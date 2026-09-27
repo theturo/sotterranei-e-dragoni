@@ -37,6 +37,12 @@ beforeEach(async () => {
     await set("users/attesa", { nome: "Nuovo", email: "n@x.it", ruolo: "player", livello: 1, livelliDaSpendere: 0, approvato: false });
     await set("campagne/c1", { titolo: null, titoloProvvisorio: true, dmUid: "dm", membriUid: ["p1", "p2"], stato: "attiva" });
     await set("campagne/c1/privato/titolo", { titolo: "La Tomba degli Orrori" });
+    const immagine = (visibilita, lettori = []) => ({
+      titolo: "Mappa", descrizione: null, categoria: "mappa", visibilita, lettori, larghezza: 800, altezza: 600,
+    });
+    await set("campagne/c1/immagini/nascosta", immagine("dm"));
+    await set("campagne/c1/immagini/pubblica", immagine("tutti"));
+    await set("campagne/c1/immagini/soloP1", immagine("selezionati", ["p1"]));
     await set("campagne/c1/stato/sessione", { inCorso: true, sessioneAttivaId: "r1" });
     await set("personaggi/s1", {
       proprietarioUid: "p1", campagnaId: "c1", attiva: true, nome: "Eroe", classe: "guerriero", livello: 1,
@@ -211,6 +217,58 @@ describe("Campagne e titolo provvisorio", () => {
   });
   test("un giocatore NON crea campagne", () =>
     assertFails(setDoc(doc(come("p1"), "campagne/c9"), { titolo: "x", dmUid: "p1", membriUid: [] })));
+});
+
+describe("Ritratti", () => {
+  test("il proprietario imposta la versione del ritratto", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), { ritratto: 1790000000000 })));
+  test("il proprietario toglie il ritratto", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), { ritratto: null })));
+  test("NON si salva un ritratto che non è una versione numerica", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { ritratto: "https://evil.example/x.png" })));
+  test("il riepilogo porta la stessa versione del ritratto della scheda", async () => {
+    await env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore(), "personaggi/s1"), { ritratto: 42 }));
+    const base = {
+      nomeGiocatore: "Pia", schedaId: "s1", nomePersonaggio: "Eroe", classe: "guerriero", livello: 1,
+      hp: { massimi: 12, attuali: 12, temporanei: 0 }, aggiornatoIl: serverTimestamp(),
+    };
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/party/p1"), { ...base, ritratto: 43 }));
+    await assertSucceeds(setDoc(doc(come("p1"), "campagne/c1/party/p1"), { ...base, ritratto: 42 }));
+  });
+});
+
+describe("Immagini della campagna", () => {
+  const nuova = (extra = {}) => ({
+    titolo: "Taverna", descrizione: null, categoria: "luogo", visibilita: "dm", lettori: [], larghezza: 1920, altezza: 1080,
+    caricataIl: serverTimestamp(), ...extra,
+  });
+  test("il DM descrive una nuova immagine", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuova())));
+  test("un giocatore NON crea immagini", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/immagini/nuova"), nuova())));
+  test("NON si salva una categoria o visibilità inventata", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuova({ visibilita: "tutto il mondo" }))));
+  test("NON si salvano campi extra", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuova({ url: "https://x" }))));
+  test("il DM rivela un'immagine a un giocatore", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"), { visibilita: "selezionati", lettori: ["p2"] })));
+  test("il DM vede anche le immagini nascoste", () => assertSucceeds(getDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"))));
+  test("un membro NON vede un'immagine nascosta", () => assertFails(getDoc(doc(come("p1"), "campagne/c1/immagini/nascosta"))));
+  test("un membro vede un'immagine visibile a tutti", () => assertSucceeds(getDoc(doc(come("p2"), "campagne/c1/immagini/pubblica"))));
+  test("il giocatore scelto vede la sua immagine", () => assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/immagini/soloP1"))));
+  test("un altro giocatore NON la vede", () => assertFails(getDoc(doc(come("p2"), "campagne/c1/immagini/soloP1"))));
+  test("chi non è membro NON vede nemmeno quelle per tutti", () =>
+    assertFails(getDoc(doc(come("vecchio"), "campagne/c1/immagini/pubblica"))));
+  test("un membro elenca le immagini per tutti", () =>
+    assertSucceeds(getDocs(query(collection(come("p2"), "campagne/c1/immagini"), where("visibilita", "==", "tutti")))));
+  test("un membro elenca quelle rivelate a lui", () =>
+    assertSucceeds(getDocs(query(collection(come("p1"), "campagne/c1/immagini"),
+      where("visibilita", "==", "selezionati"), where("lettori", "array-contains", "p1")))));
+  test("un membro NON elenca tutte le immagini", () =>
+    assertFails(getDocs(collection(come("p1"), "campagne/c1/immagini"))));
+  test("un giocatore NON si rivela un'immagine da solo", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1/immagini/nascosta"), { visibilita: "tutti" })));
+  test("il DM elimina un'immagine", () => assertSucceeds(deleteDoc(doc(come("dm"), "campagne/c1/immagini/pubblica"))));
 });
 
 describe("Riepilogo del party", () => {

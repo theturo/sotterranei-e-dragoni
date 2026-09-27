@@ -26,11 +26,13 @@ const RECAPTCHA_ENTERPRISE_KEY_ID = "6Lf9trstAAAAABB6N2k1bHisVpkXja_Y2csy9iwE";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app-check.js";
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 const appCheckConfigurato = !RECAPTCHA_ENTERPRISE_KEY_ID.startsWith("INSERISCI_");
 
