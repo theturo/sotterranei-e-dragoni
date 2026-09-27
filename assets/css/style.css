@@ -2568,3 +2568,23 @@ table.tabella-punteggi select {
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.4);
 }
+
+/* Contatore degli iscritti in attesa di approvazione (dashboard admin) */
+.badge-attesa {
+  margin-left: auto;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-burgundy);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.avviso-attesa {
+  margin-top: 8px;
+  font-weight: 600;
+  color: var(--color-burgundy);
+}

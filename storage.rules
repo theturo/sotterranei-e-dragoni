@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// Regole di sicurezza di Cloud Storage per Sotterranei e Dragoni.
+// Da incollare in: Console Firebase > Storage > Regole (oppure pubblicabili con
+// "firebase deploy --only storage", vedi firebase.json). Test in test/regole.
+//
+// Con il piano Blaze lo spazio occupato e i download si pagano oltre la quota
+// gratuita: queste regole servono anche a evitare spese impreviste.
+// - Solo gli utenti approvati (email verificata e account approvato
+//   dall'admin, come in firestore.rules) possono leggere o caricare file.
+// - Si carica solo in cartelle previste, solo immagini (PNG, JPEG, WebP, GIF)
+//   e con un limite di dimensione per file.
+// - Qualsiasi altro percorso è vietato.
+// Le regole leggono profili e campagne da Firestore: alla prima pubblicazione la
+// Console chiede di autorizzare Storage a leggere Firestore, va accettato.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function percorsoUtente(uid) {
+      return /databases/(default)/documents/users/$(uid);
+    }
+
+    function profilo() {
+      return firestore.get(percorsoUtente(request.auth.uid)).data;
+    }
+
+    function isApprovato() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && firestore.exists(percorsoUtente(request.auth.uid))
+        && profilo().get('approvato', true) == true;
+    }
+
+    function isAdmin() {
+      return isApprovato() && profilo().ruolo == "admin";
+    }
+
+    function campagna(campagnaId) {
+      return firestore.get(/databases/(default)/documents/campagne/$(campagnaId)).data;
+    }
+
+    function isDMdellaCampagna(campagnaId) {
+      return isAdmin() || (isApprovato() && profilo().ruolo == "dm" && campagna(campagnaId).dmUid == request.auth.uid);
+    }
+
+    function isNellaCampagna(campagnaId) {
+      return isDMdellaCampagna(campagnaId)
+        || (isApprovato() && request.auth.uid in campagna(campagnaId).membriUid);
+    }
+
+    // Nome file semplice (niente percorsi annidati o caratteri strani).
+    function nomeValido(nome) {
+      return nome.matches('[A-Za-z0-9._-]{1,100}');
+    }
+
+    // Solo immagini, sotto la dimensione indicata (in MB).
+    function immagineValida(massimoMB) {
+      return request.resource.size > 0
+        && request.resource.size <= massimoMB * 1024 * 1024
+        && request.resource.contentType.matches('image/(png|jpeg|webp|gif)');
+    }
+
+    // Ritratti dei personaggi: ogni utente gestisce la propria cartella; li
+    // vedono tutti gli utenti approvati (servono anche nel party).
+    match /ritratti/{uid}/{nome} {
+      allow read: if isApprovato();
+      allow create, update: if isApprovato() && request.auth.uid == uid && nomeValido(nome) && immagineValida(2);
+      allow delete: if isApprovato() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // Immagini di una campagna (PNG, dispense, mappe): le carica il DM, le
+    // vedono solo DM e membri di quella campagna.
+    match /campagne/{campagnaId}/{nome} {
+      allow read: if isNellaCampagna(campagnaId);
+      allow create, update: if isDMdellaCampagna(campagnaId) && nomeValido(nome) && immagineValida(5);
+      allow delete: if isDMdellaCampagna(campagnaId);
+    }
+
+    // Tutto il resto è vietato.
+    match /{percorso=**} {
+      allow read, write: if false;
+    }
+  }
+}

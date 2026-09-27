@@ -1,6 +1,6 @@
 // Script della pagina dashboard.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import { proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente } from "../auth.js";
+import { proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente, contaUtentiInAttesa } from "../auth.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { montaMenuUtente } from "../menu-utente.js";
 
@@ -98,6 +98,30 @@ proteggiPagina(async (user, profilo) => {
 
   document.getElementById("nome-utente").textContent = nome;
   renderPannelli(ruolo, profilo?.ordinePannelli);
+
+  // Admin: segnala sul pannello "Gestione utenti" quanti iscritti aspettano
+  // l'approvazione, così non passano inosservati.
+  if (ruolo === ROLES.ADMIN) {
+    contaUtentiInAttesa()
+      .then((inAttesa) => {
+        if (inAttesa === 0) return;
+        const pannello = griglia.querySelector('[data-chiave="utenti"]');
+        if (!pannello) return;
+        const badge = document.createElement("span");
+        badge.className = "badge-attesa";
+        badge.textContent = inAttesa === 1 ? "1 in attesa" : `${inAttesa} in attesa`;
+        badge.title = "Iscritti in attesa di approvazione";
+        pannello.querySelector(".panel-intestazione").appendChild(badge);
+        const avviso = document.createElement("p");
+        avviso.className = "avviso-attesa";
+        avviso.textContent =
+          inAttesa === 1
+            ? "C'è un nuovo iscritto da approvare."
+            : `Ci sono ${inAttesa} nuovi iscritti da approvare.`;
+        pannello.appendChild(avviso);
+      })
+      .catch((errore) => console.error(errore));
+  }
 
   // Widget musica: per chiunque veda il pannello (anche DM e admin, che hanno
   // la sezione giocatore visibile a cascata), sulla propria campagna corrente.

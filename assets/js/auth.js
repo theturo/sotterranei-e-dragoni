@@ -33,6 +33,7 @@ import {
   arrayUnion,
   arrayRemove,
   documentId,
+  getCountFromServer,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 export const ROLES = {
@@ -93,6 +94,14 @@ export async function registraUtente({ nome, email, password }) {
 // prima che esistesse l'approvazione (nessun campo "approvato").
 export function profiloApprovato(profilo) {
   return profilo?.approvato !== false;
+}
+
+// Quanti iscritti aspettano l'approvazione dell'admin. È una query di
+// conteggio: Firestore la fattura come una sola lettura ogni 1000 documenti
+// contati, invece di leggere i profili uno per uno.
+export async function contaUtentiInAttesa() {
+  const snapshot = await getCountFromServer(query(collection(db, "users"), where("approvato", "==", false)));
+  return snapshot.data().count;
 }
 
 // L'admin approva un nuovo iscritto (vedi firestore.rules).

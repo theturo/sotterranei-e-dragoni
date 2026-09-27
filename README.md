@@ -36,6 +36,8 @@ data — no custom backend server. Plain HTML/CSS/JS, no build step.
 Since there is no backend and the Firebase config is public, all access control lives in
 `firestore.rules`; the page-level checks are only UI. The rules are covered by an
 automated test suite running on the Firestore emulator — see `test/regole/README.md`.
+Uploaded images are guarded the same way by `storage.rules`; the Console-side
+safeguards against unexpected costs are listed in `docs/sicurezza-e-costi.md`.
 Every page also ships a Content Security Policy (no inline scripts: each page's code
 lives in `assets/js/pagine/`), checked by `test/pagine`. Both suites run on GitHub
 Actions for every pull request.
