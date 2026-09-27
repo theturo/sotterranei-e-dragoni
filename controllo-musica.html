@@ -35,10 +35,12 @@
         <div class="sorgente-toggle-riga">
           <span>Sorgente trasmessa ai giocatori:</span>
           <div class="sorgente-toggle">
+            <button type="button" data-sorgente-btn="">Nessuna</button>
             <button type="button" data-sorgente-btn="spotify">Spotify</button>
             <button type="button" data-sorgente-btn="youtube">YouTube</button>
           </div>
         </div>
+        <p id="sorgente-stato" class="sessione-placeholder" style="margin:-6px 0 18px;"></p>
 
         <div class="musica-doppio-pannello">
           <div>
@@ -65,13 +67,18 @@
           <div>
             <h3 style="margin-top:0;">YouTube</h3>
             <form id="form-youtube" class="field" style="margin-bottom:0;">
-              <label for="campo-youtube-link">Link o ID della playlist</label>
-              <input type="text" id="campo-youtube-link" placeholder="https://youtube.com/playlist?list=..." />
+              <label for="campo-youtube-link">Link di un video o di una playlist</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="campo-youtube-link" placeholder="https://www.youtube.com/watch?v=… oppure …/playlist?list=…" style="flex:1;" />
+                <button type="submit" class="btn-tabella">Carica</button>
+              </div>
             </form>
+            <p id="yt-messaggio" class="sessione-placeholder" hidden></p>
             <div id="yt-now-playing" class="playlist-mini-info">
-              <p class="sessione-placeholder">Nessuna playlist caricata.</p>
+              <p class="sessione-placeholder">Nessun video caricato.</p>
             </div>
-            <div id="yt-player" style="position:absolute; width:1px; height:1px; overflow:hidden;"></div>
+            <!-- YouTube riproduce solo in player di almeno 200×200 pixel. -->
+            <div style="margin-top:12px; max-width:356px;"><div id="yt-player"></div></div>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagna
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, escUrl } from "../utils.js";
 import * as Spotify from "../spotify.js";
+import { caricaApiYouTube, interpretaLinkYouTube, sorgenteDaStato, messaggioErroreYouTube } from "../youtube.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -22,24 +23,38 @@ let campagnaIdCorrente = null;
 
 function aggiornaPulsantiSorgente() {
   document.querySelectorAll("[data-sorgente-btn]").forEach((bottone) => {
-    bottone.classList.toggle("attivo", bottone.dataset.sorgenteBtn === sorgenteCorrente);
+    bottone.classList.toggle("attivo", (bottone.dataset.sorgenteBtn || null) === sorgenteCorrente);
   });
+  const testi = {
+    spotify: "I giocatori vedono il brano di Spotify in riproduzione sul tuo dispositivo (tieni aperta questa pagina: si aggiorna ogni 10 secondi).",
+    youtube: "I giocatori ascoltano il contenuto YouTube caricato qui, sincronizzato con play/pausa e cambi brano.",
+  };
+  document.getElementById("sorgente-stato").textContent =
+    testi[sorgenteCorrente] || "Nessuna sorgente trasmessa: i giocatori non vedono né sentono nulla.";
+}
+
+async function impostaSorgente(sorgente) {
+  sorgenteCorrente = sorgente || null;
+  aggiornaPulsantiSorgente();
+  try {
+    await salvaStatoMusica(campagnaIdCorrente, { sorgente: sorgenteCorrente });
+    // Pubblica subito lo stato aggiornato della sorgente scelta, senza
+    // aspettare il prossimo aggiornamento periodico.
+    if (sorgenteCorrente === "spotify") await aggiornaSchermataSpotify();
+    if (sorgenteCorrente === "youtube") pubblicaStatoYouTube();
+  } catch (errore) {
+    console.error(errore);
+    mostraToast("Impossibile aggiornare la sorgente trasmessa.", true);
+  }
 }
 
 document.querySelectorAll("[data-sorgente-btn]").forEach((bottone) => {
-  bottone.addEventListener("click", async () => {
-    sorgenteCorrente = bottone.dataset.sorgenteBtn;
-    aggiornaPulsantiSorgente();
-    try {
-      await salvaStatoMusica(campagnaIdCorrente, { sorgente: sorgenteCorrente });
-    } catch (errore) {
-      console.error(errore);
-      mostraToast("Impossibile aggiornare la sorgente trasmessa.", true);
-    }
-  });
+  bottone.addEventListener("click", () => impostaSorgente(bottone.dataset.sorgenteBtn));
 });
 
 // ---------- Spotify ----------
+
+let ultimaFirmaSpotify = null;
 
 function renderSpotifyNowPlaying(stato) {
   const box = document.getElementById("spotify-now-playing");
@@ -77,8 +92,13 @@ async function aggiornaSchermataSpotify() {
   try {
     const stato = await Spotify.otteniRiproduzioneCorrente();
     renderSpotifyNowPlaying(stato);
-    if (sorgenteCorrente === "spotify" && stato) {
+    // Lo stato di Spotify viene pubblicato sempre (non solo quando è la
+    // sorgente scelta), così passando a Spotify i giocatori lo vedono subito;
+    // si scrive solo quando cambia, per non consumare scritture inutili.
+    const firma = JSON.stringify(stato);
+    if (firma !== ultimaFirmaSpotify) {
       await salvaStatoMusica(campagnaIdCorrente, { spotify: stato });
+      ultimaFirmaSpotify = firma;
     }
   } catch (errore) {
     console.error(errore);
@@ -124,26 +144,52 @@ document.getElementById("spotify-now-playing").addEventListener("click", async (
 // ---------- YouTube ----------
 
 let playerYouTube = null;
-let playlistIdCorrente = null;
+let playerYouTubePronto = false;
+let youtubeCorrente = null; // { tipo: "playlist" | "video", id }
+let youtubeDaRipristinare = null;
 
-window.onYouTubeIframeAPIReady = () => {
+function mostraMessaggioYouTube(testo) {
+  const messaggio = document.getElementById("yt-messaggio");
+  messaggio.textContent = testo || "";
+  messaggio.hidden = !testo;
+}
+
+caricaApiYouTube().then((YT) => {
   playerYouTube = new YT.Player("yt-player", {
-    height: "90",
-    width: "160",
-    events: { onStateChange: alCambioStatoYouTube },
+    width: "356",
+    height: "200",
+    playerVars: { playsinline: 1 },
+    events: {
+      onReady: () => {
+        playerYouTubePronto = true;
+        // Ripristina (senza avviarlo) il contenuto trasmesso l'ultima volta.
+        if (youtubeDaRipristinare) carica(youtubeDaRipristinare, { avvia: false });
+      },
+      onStateChange: () => {
+        renderYouTubeNowPlaying();
+        pubblicaStatoYouTube();
+      },
+      onError: (evento) => mostraMessaggioYouTube(messaggioErroreYouTube(evento.data)),
+    },
   });
-};
+});
 
-const tagYouTube = document.createElement("script");
-tagYouTube.src = "https://www.youtube.com/iframe_api";
-document.head.appendChild(tagYouTube);
+function carica(sorgente, { avvia }) {
+  youtubeCorrente = sorgente;
+  mostraMessaggioYouTube("");
+  if (sorgente.tipo === "playlist") {
+    avvia ? playerYouTube.loadPlaylist({ list: sorgente.id }) : playerYouTube.cuePlaylist({ list: sorgente.id });
+  } else {
+    avvia ? playerYouTube.loadVideoById(sorgente.id) : playerYouTube.cueVideoById(sorgente.id);
+  }
+}
 
 function renderYouTubeNowPlaying() {
-  if (!playerYouTube || typeof playerYouTube.getVideoData !== "function") return;
+  if (!playerYouTubePronto || typeof playerYouTube.getVideoData !== "function") return;
   const dati = playerYouTube.getVideoData();
   if (!dati?.video_id) return;
-  const indice = playerYouTube.getPlaylistIndex ? playerYouTube.getPlaylistIndex() : 0;
-  const lista = playerYouTube.getPlaylist ? playerYouTube.getPlaylist() || [] : [];
+  const indice = playerYouTube.getPlaylistIndex?.() ?? 0;
+  const lista = playerYouTube.getPlaylist?.() || [];
   const inRiproduzione = playerYouTube.getPlayerState() === YT.PlayerState.PLAYING;
 
   document.getElementById("yt-now-playing").innerHTML = `
@@ -153,55 +199,53 @@ function renderYouTubeNowPlaying() {
         <div class="musica-titolo-brano">${esc(dati.title) || "—"}</div>
         <div class="musica-sottotitolo">${lista.length ? `Brano ${indice + 1} di ${lista.length}` : ""}</div>
         <div class="trasporto" style="margin-top:10px;">
-          <button type="button" data-azione="precedente">⏮</button>
-          <button type="button" data-azione="play-pausa">${inRiproduzione ? "⏸" : "▶"}</button>
-          <button type="button" data-azione="successivo">⏭</button>
+          <button type="button" data-azione="precedente" aria-label="Brano precedente">⏮</button>
+          <button type="button" data-azione="play-pausa" aria-label="${inRiproduzione ? "Pausa" : "Riproduci"}">${inRiproduzione ? "⏸" : "▶"}</button>
+          <button type="button" data-azione="successivo" aria-label="Brano successivo">⏭</button>
         </div>
       </div>
     </div>
   `;
 }
 
-function alCambioStatoYouTube(evento) {
-  renderYouTubeNowPlaying();
-  if (sorgenteCorrente !== "youtube" || !playlistIdCorrente) return;
+// Pubblica sempre lo stato del player (contenuto, brano, play/pausa): i
+// giocatori lo applicano solo quando la sorgente trasmessa è YouTube.
+function pubblicaStatoYouTube() {
+  if (!playerYouTubePronto || !youtubeCorrente) return;
+  const stato = playerYouTube.getPlayerState();
   salvaStatoMusica(campagnaIdCorrente, {
     youtube: {
-      playlistId: playlistIdCorrente,
-      indice: playerYouTube.getPlaylistIndex ? playerYouTube.getPlaylistIndex() : 0,
-      inRiproduzione: evento.data === YT.PlayerState.PLAYING,
+      tipo: youtubeCorrente.tipo,
+      id: youtubeCorrente.id,
+      indice: playerYouTube.getPlaylistIndex?.() ?? 0,
+      inRiproduzione: stato === YT.PlayerState.PLAYING || stato === YT.PlayerState.BUFFERING,
     },
   }).catch((errore) => console.error(errore));
 }
 
-function estraiPlaylistId(testo) {
-  const valore = testo.trim();
-  try {
-    const url = new URL(valore);
-    return url.searchParams.get("list") || valore;
-  } catch {
-    return valore;
-  }
-}
-
 document.getElementById("form-youtube").addEventListener("submit", (evento) => {
   evento.preventDefault();
-  const campo = document.getElementById("campo-youtube-link");
-  const playlistId = estraiPlaylistId(campo.value);
-  if (!playlistId || !playerYouTube) return;
-  playlistIdCorrente = playlistId;
-  playerYouTube.loadPlaylist({ list: playlistId });
+  const sorgente = interpretaLinkYouTube(document.getElementById("campo-youtube-link").value);
+  if (!sorgente) {
+    mostraMessaggioYouTube("Link non riconosciuto: incolla l'indirizzo di un video o di una playlist di YouTube.");
+    return;
+  }
+  if (!playerYouTubePronto) {
+    mostraMessaggioYouTube("Il player di YouTube non è ancora pronto: riprova tra un istante.");
+    return;
+  }
+  carica(sorgente, { avvia: true });
+  // Caricare un contenuto YouTube significa volerlo trasmettere.
+  if (sorgenteCorrente !== "youtube") impostaSorgente("youtube");
 });
 
 document.getElementById("yt-now-playing").addEventListener("click", (evento) => {
   const bottone = evento.target.closest("[data-azione]");
-  if (!bottone || !playerYouTube) return;
+  if (!bottone || !playerYouTubePronto) return;
   if (bottone.dataset.azione === "precedente") playerYouTube.previousVideo();
   if (bottone.dataset.azione === "successivo") playerYouTube.nextVideo();
   if (bottone.dataset.azione === "play-pausa") {
-    playerYouTube.getPlayerState() === YT.PlayerState.PLAYING
-      ? playerYouTube.pauseVideo()
-      : playerYouTube.playVideo();
+    playerYouTube.getPlayerState() === YT.PlayerState.PLAYING ? playerYouTube.pauseVideo() : playerYouTube.playVideo();
   }
 });
 
@@ -237,6 +281,17 @@ proteggiPaginaDM(async (user, profilo) => {
   }
   sorgenteCorrente = stato.sorgente || null;
   aggiornaPulsantiSorgente();
+
+  // Ultimo contenuto YouTube trasmesso: lo ripresenta nel campo e nel player.
+  const ultimoYouTube = sorgenteDaStato(stato.youtube);
+  if (ultimoYouTube) {
+    document.getElementById("campo-youtube-link").value =
+      ultimoYouTube.tipo === "playlist"
+        ? `https://www.youtube.com/playlist?list=${ultimoYouTube.id}`
+        : `https://www.youtube.com/watch?v=${ultimoYouTube.id}`;
+    if (playerYouTubePronto) carica(ultimoYouTube, { avvia: false });
+    else youtubeDaRipristinare = ultimoYouTube;
+  }
 
   await aggiornaSchermataSpotify();
   setInterval(aggiornaSchermataSpotify, 10000);

@@ -19,6 +19,7 @@ import {
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
+import { montaWidgetMusica } from "../widget-musica.js";
 import { CLASSI } from "../dati-srd.js";
 
 const veil = document.getElementById("veil");
@@ -178,6 +179,8 @@ proteggiPagina(async (user, profilo) => {
   campagnaIdCorrente = campagna.id;
 
   document.getElementById("controlli-dm").hidden = !isDmOAdmin;
+  document.getElementById("link-controllo-musica").hidden = !isDmOAdmin;
+  montaWidgetMusica(document.getElementById("corpo-musica-sessione"), campagnaIdCorrente);
 
   let stato;
   try {

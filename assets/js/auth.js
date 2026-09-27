@@ -699,10 +699,12 @@ export async function salvaStatoMusica(campagnaId, campi) {
 // sessione" in dashboard, così ogni giocatore vede comparire cambi di brano o
 // di sorgente senza dover ricaricare. Restituisce la funzione per interrompere
 // l'ascolto.
-export function ascoltaStatoMusica(campagnaId, callback) {
-  return onSnapshot(doc(db, "campagne", campagnaId, "stato", "musica"), (snapshot) => {
-    callback(snapshot.exists() ? snapshot.data() : { sorgente: null });
-  });
+export function ascoltaStatoMusica(campagnaId, callback, alErrore = (errore) => console.error(errore)) {
+  return onSnapshot(
+    doc(db, "campagne", campagnaId, "stato", "musica"),
+    (snapshot) => callback(snapshot.exists() ? snapshot.data() : { sorgente: null }),
+    alErrore
+  );
 }
 
 // ---------- Riepilogo pubblico del party ----------
