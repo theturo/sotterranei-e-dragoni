@@ -2,3 +2,7 @@
 node_modules/
 *.log
 .claude/
+
+# Parametri e segreti delle Cloud Functions (mai nel repo)
+functions/.env*
+functions/.secret.local
