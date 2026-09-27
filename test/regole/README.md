@@ -1,6 +1,7 @@
-# Test delle regole Firestore
+# Test delle regole Firestore e Storage
 
-Verificano, sull'emulatore di Firestore, che `firestore.rules` permetta le
+Verificano, sugli emulatori, che `firestore.rules` (in `regole.test.mjs`) e
+`storage.rules` (in `storage.test.mjs`) permettano le
 operazioni legittime e **neghi** quelle pericolose (auto-promozione ad admin,
 lettura delle email altrui, livelli regalati, appunti falsificati, titolo
 provvisorio svelato...). Ogni modifica alle regole dovrebbe passare da qui
@@ -22,5 +23,5 @@ Pubblicazione delle regole (al posto del copia-incolla nella Console), dalla
 cartella principale del progetto:
 
 ```sh
-npx firebase-tools deploy --only firestore:rules --project sotterranei-e-dragoni
+npx firebase-tools deploy --only firestore:rules,storage --project sotterranei-e-dragoni
 ```

@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
 import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection, query, where,
-  documentId, serverTimestamp, increment, writeBatch,
+  documentId, serverTimestamp, increment, writeBatch, getCountFromServer,
 } from "firebase/firestore";
 
 const REGOLE = readFileSync(fileURLToPath(new URL("../../firestore.rules", import.meta.url)), "utf8");
@@ -92,6 +92,10 @@ describe("Registrazione e profili", () => {
     assertFails(getDoc(doc(come("p1"), "users/p2"))));
   test("un giocatore NON elenca i giocatori", () =>
     assertFails(getDocs(query(collection(come("p1"), "users"), where("ruolo", "==", "player")))));
+  test("l'admin conta gli iscritti in attesa", () =>
+    assertSucceeds(getCountFromServer(query(collection(come("admin"), "users"), where("approvato", "==", false)))));
+  test("un giocatore NON conta gli iscritti in attesa", () =>
+    assertFails(getCountFromServer(query(collection(come("p1"), "users"), where("approvato", "==", false)))));
   test("il DM elenca i membri della campagna", () =>
     assertSucceeds(getDocs(query(collection(come("dm"), "users"), where(documentId(), "in", ["p1", "p2"])))));
 });
