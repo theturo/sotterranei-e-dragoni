@@ -22,13 +22,27 @@ Tutti i comandi qui sotto si eseguono in **Google Cloud Shell**: in
 destra, con il progetto `sotterranei-e-dragoni` selezionato. Non serve installare
 nulla sul proprio computer.
 
+Come usare il terminale:
+- incollare **un comando alla volta** e aspettare che ricompaia il prompt (`$`)
+  prima del successivo; molti comandi, se vanno a buon fine, scrivono poco o
+  nulla, e `gcloud services enable` può restare fermo un paio di minuti;
+- i comandi su più righe (che finiscono con `\`) vanno incollati tutti insieme;
+- le righe che iniziano con `#` sono commenti, non vanno eseguite;
+- nei blocchi di codice di questo file, le righe con i tre accenti gravi
+  (```` ``` ````) sono solo formattazione: non vanno copiate.
+
 ## 1. Account Gmail di appoggio (una volta)
 
 1. Creare un account Gmail dedicato al portale (es. `portale.sotterranei@gmail.com`).
 2. Attivare la **verifica in due passaggi** su quell'account.
 3. Creare una **password per le app** in
    [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-   (nome: "Portale"). Sono 16 lettere: servono al punto 4, non vanno salvate altrove.
+   (nome: "Portale"). Sono 16 lettere, mostrate in gruppi di quattro: al punto 4
+   vanno inserite **senza spazi** (se incollate con spazi o a capo, Gmail rifiuta
+   l'accesso con "Username and Password not accepted"). Non vanno salvate altrove.
+
+L'account di appoggio serve **solo** come casella da cui partono le email: non va
+usato per il login della CLI (punto 4) e non va aggiunto ai membri del progetto.
 
 ## 2. Preparare il progetto (una volta)
 
@@ -70,6 +84,8 @@ git clone https://github.com/theturo/sotterranei-e-dragoni.git
 cd sotterranei-e-dragoni
 (cd functions && npm ci)
 
+# Login con il PROPRIO account (proprietario del progetto), non con quello di
+# appoggio: quest'ultimo non ha permessi sul progetto (errore 403).
 npx firebase-tools@latest login --no-localhost
 
 # Chiede la password per le app del punto 1 e la salva in Secret Manager
@@ -92,11 +108,61 @@ finiscono nel repo pubblico):
 Se la CLI propone una **politica di pulizia delle immagini dei container**,
 accettarla (tiene Artifact Registry entro la quota gratuita).
 
+Se il primo deploy fallisce con un errore sui permessi di Eventarc o di un
+"service agent", aspettare 3–5 minuti (Google sta ancora propagando i permessi
+appena creati) e rilanciare lo stesso comando.
+
+Avvisi innocui durante `npm ci` in Cloud Shell: `EBADENGINE` (Cloud Shell ha una
+versione di Node più recente; in produzione le funzioni girano con Node 22),
+pacchetti `deprecated`, `install scripts blocked` e le vulnerabilità "moderate"
+segnalate da `npm audit` (dipendenze interne dei pacchetti Google). Non lanciare
+`npm audit fix` in Cloud Shell.
+
+### 4b. Permesso di invocazione per gli attivatori (una volta, dopo il primo deploy)
+
+Gli attivatori delle funzioni devono poterle chiamare, altrimenti nei log
+compare "The request was not authenticated … lacks run.routes.invoke" e la
+funzione non parte. Controllare quale account usa ciascun attivatore:
+
+```sh
+# Blocco spese (attivatore Pub/Sub, in europe-west1)
+gcloud eventarc triggers list --location=europe-west1 --format="table(name, serviceAccount)"
+
+# Email dei nuovi iscritti (attivatore Firestore: sta nella località del
+# database, eur3, anche se la funzione gira in europe-west1)
+gcloud eventarc triggers list --location=eur3 --format="table(name, serviceAccount)"
+```
+
+e concedere il ruolo a quegli account (sostituire `ACCOUNT` con quello mostrato
+per `notificanuovoiscritto`):
+
+```sh
+gcloud run services add-iam-policy-binding bloccaspeseoltresoglia --region=europe-west1 \
+  --member="serviceAccount:blocco-spese@sotterranei-e-dragoni.iam.gserviceaccount.com" \
+  --role="roles/run.invoker"
+
+gcloud run services add-iam-policy-binding notificanuovoiscritto --region=europe-west1 \
+  --member="serviceAccount:ACCOUNT" --role="roles/run.invoker"
+```
+
+Gli eventi rimasti in sospeso nel frattempo vengono riconsegnati da soli (fino a
+circa 24 ore).
+
 ## 5. Verificare
 
-- **Email**: registrare un account di prova dal sito → entro un minuto arriva
-  l'email all'indirizzo `EMAIL_ADMIN`. Poi eliminare l'account di prova
-  (Authentication + documento in `users`).
+- **Email**: il modo più rapido è creare a mano, in Console Firebase →
+  Firestore → collezione `users`, un documento con ID nuovo (es.
+  `prova-notifica-1`) e i campi `nome` (string), `email` (string) e `approvato`
+  (boolean, **false**): entro un minuto arriva l'email a `EMAIL_ADMIN`
+  (controllare anche lo spam). Poi eliminare il documento. In alternativa ci si
+  può registrare dal sito con un alias Gmail (`nome+prova1@gmail.com`), che
+  arriva nella stessa casella.
+  Il limite di 10 email all'ora conta anche i tentativi falliti: se nei log
+  compare "Troppe registrazioni nell'ultima ora", aspettare o eliminare il
+  documento `sistema/notificheEmail` per azzerare il contatore.
+  Se nei log compare "Invalid login", reimpostare la password per le app
+  (`functions:secrets:set PASSWORD_APP_GMAIL`, senza spazi) e ripubblicare con
+  `deploy --only functions:notificaNuovoIscritto`.
 - **Blocco spese** (senza farlo scattare davvero): pubblicare un avviso finto
   **sotto** la soglia
 
