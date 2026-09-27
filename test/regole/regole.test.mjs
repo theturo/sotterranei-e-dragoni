@@ -264,6 +264,13 @@ describe("Registro sessioni e appunti", () => {
     assertFails(addDoc(collection(come("p1"), "registroSessioni"), { campagnaId: "c1", numero: 9, stato: "in-corso" })));
 });
 
+describe("Documenti tecnici delle Cloud Functions", () => {
+  test("nemmeno l'admin legge sistema/* dal browser", () =>
+    assertFails(getDoc(doc(come("admin"), "sistema/notificheEmail"))));
+  test("nessuno azzera il limitatore delle email", () =>
+    assertFails(setDoc(doc(come("admin"), "sistema/notificheEmail"), { invii: [] })));
+});
+
 describe("Stato condiviso della campagna", () => {
   test("un membro legge lo stato della sessione", () =>
     assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/stato/sessione"))));

@@ -35,11 +35,13 @@ soglie al **50%, 90% e 100%** della spesa effettiva e al **100% della spesa
 prevista** (forecast), con invio email agli amministratori della fatturazione.
 Gli avvisi possono arrivare con qualche ora (a volte giorni) di ritardo.
 
-### 4. Limitare le registrazioni automatiche
-Console Firebase → **Authentication** → **Impostazioni**:
-- **Protezione dall'enumerazione delle email**: attiva.
-- **Quota di registrazione** (sign-up quota): abbassarla (es. 5 nuovi account
-  all'ora per indirizzo IP) per rendere inutile la creazione massiva di account.
+### 4. Registrazioni automatiche
+Console Firebase → **Authentication** → **Impostazioni**: tenere attiva la
+**protezione dall'enumerazione delle email**. La quota di registrazione
+predefinita (100 account all'ora per IP) si può abbassare solo temporaneamente,
+e va bene lasciarla così: App Check blocca gli script esterni, un account non
+approvato non vede nulla e può scrivere solo il proprio profilo, e la notifica
+email all'admin ha un tetto di 10 messaggi all'ora.
 
 ### 5. Chiave API
 Console Google Cloud → **API e servizi** → **Credenziali** → chiave del sito:
@@ -51,6 +53,10 @@ caricamento delle immagini verrà rifiutato.
 Console Firebase → **Utilizzo e fatturazione**: dare un'occhiata ogni tanto,
 soprattutto dopo le prime sessioni con le immagini. Per 6–7 persone ci si
 aspetta di restare entro le quote gratuite.
+
+### 7. Cloud Functions e blocco spese automatico
+Notifica email degli iscritti e "interruttore" che scollega la fatturazione
+oltre una soglia: pubblicazione e configurazione in `docs/funzioni.md`.
 
 ## Quote gratuite di riferimento (verificare nella Console, cambiano nel tempo)
 
