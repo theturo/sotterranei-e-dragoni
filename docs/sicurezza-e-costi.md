@@ -13,6 +13,12 @@ della Console (qui sotto, da fare una volta) e limiti nel codice.
 - `storage.rules`: solo utenti approvati leggono o caricano file; solo immagini
   (PNG, JPEG, WebP, GIF), massimo 2 MB per i ritratti e 5 MB per le immagini
   della campagna, solo nelle cartelle previste; tutto il resto è vietato.
+- Le immagini vengono ridimensionate nel browser prima dell'invio (ritratti
+  512 px con icona da 96 px, immagini della campagna 1920 px con miniatura da
+  480 px, in WebP): pochi KB/centinaia di KB ciascuna invece di foto da vari MB.
+- Le immagini si scaricano con l'SDK, non con link pubblici: ogni lettura passa
+  dalle regole. Un'immagine della campagna nascosta dal DM non si scarica
+  nemmeno conoscendone il percorso.
 - Test automatici di entrambe le regole a ogni pull request (`test/regole`).
 
 ## Da fare nella Console (una volta)
@@ -22,6 +28,21 @@ Console Firebase → **Storage** → **Regole** → incollare il contenuto di
 `storage.rules` → **Pubblica**. Alla prima pubblicazione la Console chiede di
 autorizzare Storage a leggere Firestore (le regole controllano profili e
 campagne): va **accettato**, altrimenti ogni accesso viene negato.
+
+### 1b. CORS del bucket (serve per mostrare le immagini)
+Il sito scarica le immagini direttamente dal bucket, che per farlo deve
+accettare richieste dal dominio del sito (`cors.json` nel repo: solo lettura, solo
+da `https://theturo.github.io`). Una volta, in Google Cloud Shell (vedi
+`docs/funzioni.md` su come usarla):
+
+```sh
+cd sotterranei-e-dragoni && git pull
+gcloud storage buckets update gs://sotterranei-e-dragoni.firebasestorage.app --cors-file=cors.json
+```
+
+Verifica: `gcloud storage buckets describe gs://sotterranei-e-dragoni.firebasestorage.app --format="default(cors_config)"`.
+Senza questo passaggio il caricamento funziona ma le immagini non compaiono (nella
+console del browser: errore "CORS").
 
 ### 2. App Check anche su Storage
 Console Firebase → **App Check** → scheda **API** → **Cloud Storage** →

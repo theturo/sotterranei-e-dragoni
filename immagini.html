@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sotterranei e Dragoni — Glossario equipaggiamento</title>
+  <title>Sotterranei e Dragoni — Galleria</title>
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
@@ -36,42 +36,75 @@
         <div>
           <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
           <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Glossario equipaggiamento
+            Galleria della campagna
           </h1>
         </div>
-        <div style="display:flex; align-items:center; gap:14px;">
-          <span class="role-badge">SRD 5.1</span>
-          <div id="slot-utente" class="slot-utente"></div>
-        </div>
+        <div id="slot-utente" class="slot-utente"></div>
       </div>
 
-      <div class="panel-wide">
-        <div class="glossario-controlli">
-          <input type="text" id="ricerca-glossario" class="input-ricerca" placeholder="Cerca un'arma, un'armatura, un oggetto…" autocomplete="off" />
-          <select id="filtro-categoria" class="select-filtro">
+      <div id="nessuna-campagna" class="panel-wide" hidden>
+        <p id="testo-nessuna-campagna" class="scheda-testo-libero"></p>
+      </div>
+
+      <!-- Solo DM: caricamento di una nuova immagine (parte nascosta ai giocatori) -->
+      <div id="pannello-carica" class="panel-wide" hidden>
+        <h3 style="margin-top:0;">Carica un'immagine</h3>
+        <p class="card-tagline" style="text-align:left;">
+          Ogni immagine nasce <strong>nascosta</strong>: decidi tu quando rivelarla a tutto il party
+          o solo ad alcuni giocatori. L'immagine viene ridimensionata prima dell'invio.
+        </p>
+        <form id="form-carica" class="form-galleria">
+          <div class="field">
+            <label for="carica-file">Immagine</label>
+            <input type="file" id="carica-file" required />
+          </div>
+          <div class="field-riga">
+            <div class="field" style="flex:1;">
+              <label for="carica-titolo">Titolo</label>
+              <input type="text" id="carica-titolo" maxlength="80" placeholder="Es. Mappa della palude di Kalkash" required />
+            </div>
+            <div class="field">
+              <label for="carica-categoria">Categoria</label>
+              <select id="carica-categoria" class="select-galleria"></select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="carica-descrizione">Descrizione (opzionale)</label>
+            <textarea id="carica-descrizione" maxlength="500" rows="2" class="textarea-galleria"></textarea>
+          </div>
+          <button type="submit" id="btn-carica" class="btn" style="width:auto; padding:10px 22px;">Carica</button>
+        </form>
+      </div>
+
+      <div id="pannello-galleria" class="panel-wide" hidden>
+        <div class="galleria-barra">
+          <label for="filtro-categoria">Mostra</label>
+          <select id="filtro-categoria" class="select-galleria">
             <option value="">Tutte le categorie</option>
-            <option value="arma">Armi</option>
-            <option value="armatura">Armature</option>
-            <option value="oggetto">Oggetti da avventura</option>
-            <option value="strumento">Strumenti</option>
-            <option value="pacco">Pacchi equipaggiamento</option>
-            <option value="montatura">Cavalcature</option>
           </select>
         </div>
-        <div id="risultati-glossario" class="glossario-risultati"></div>
-        <p id="glossario-vuoto" class="scheda-testo-libero" hidden style="text-align:center;">
-          <svg viewBox="0 0 64 64" fill="none" stroke="#7a1f2b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:56px;height:56px;display:block;margin:0 auto 12px;" aria-hidden="true"><path d="M10 34 L54 34 L54 54 C54 56.2 52.2 58 50 58 L14 58 C11.8 58 10 56.2 10 54 Z"/><path d="M10 34 C10 20 18 12 32 12 C46 12 54 20 54 34"/><rect x="29" y="31" width="6" height="6" rx="1.2"/><line x1="10" y1="42" x2="54" y2="42" opacity="0.35"/><circle cx="24" cy="46" r="1" fill="#7a1f2b" stroke="none" opacity="0.6"/><circle cx="33" cy="50" r="1.2" fill="#7a1f2b" stroke="none" opacity="0.6"/><circle cx="41" cy="46" r="1" fill="#7a1f2b" stroke="none" opacity="0.6"/></svg>
-          Nessun oggetto trovato: prova un altro termine.
-        </p>
-        <p id="glossario-suggerimento" class="scheda-testo-libero">
-          Digita un termine di ricerca, oppure scegli una categoria qui sopra per sfogliarla per intero.
-        </p>
+        <ul id="griglia-immagini" class="griglia-immagini"></ul>
+        <p id="galleria-vuota" class="scheda-testo-libero" hidden></p>
       </div>
     </div>
   </div>
 
+  <!-- Visualizzazione a tutto schermo -->
+  <div id="lightbox" class="modal-overlay lightbox" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="lightbox-titolo">
+    <figure class="lightbox-figura">
+      <button id="btn-chiudi-lightbox" class="btn-chiudi-modal" type="button" aria-label="Chiudi">×</button>
+      <img id="lightbox-img" alt="" />
+      <figcaption>
+        <strong id="lightbox-titolo"></strong>
+        <span id="lightbox-descrizione"></span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
-  <script type="module" src="assets/js/pagine/glossario-equipaggiamento.js"></script>
+  <script type="module" src="assets/js/pagine/immagini.js"></script>
 </body>
 </html>

@@ -10,6 +10,8 @@ rules_version = '2';
 //   dall'admin, come in firestore.rules) possono leggere o caricare file.
 // - Si carica solo in cartelle previste, solo immagini (PNG, JPEG, WebP, GIF)
 //   e con un limite di dimensione per file.
+// - Le immagini della campagna si leggono solo se il DM le ha rese visibili
+//   (a tutti i membri o a giocatori scelti), come in firestore.rules.
 // - Qualsiasi altro percorso è vietato.
 // Le regole leggono profili e campagne da Firestore: alla prima pubblicazione la
 // Console chiede di autorizzare Storage a leggere Firestore, va accettato.
@@ -68,12 +70,32 @@ service firebase.storage {
       allow delete: if isApprovato() && (request.auth.uid == uid || isAdmin());
     }
 
-    // Immagini di una campagna (PNG, dispense, mappe): le carica il DM, le
-    // vedono solo DM e membri di quella campagna.
+    // Immagini di una campagna (PNG, luoghi, mappe, dispense): le carica il
+    // DM. Il file "{immagineId}" (e la miniatura "{immagineId}-mini") si legge
+    // solo se il documento campagne/{id}/immagini/{immagineId} lo rende
+    // visibile a chi lo chiede: stesso filtro di firestore.rules, così chi non
+    // deve vedere un'immagine non la scarica nemmeno conoscendone il percorso.
+    // (Al massimo 2 documenti Firestore letti per valutazione: campagna e
+    // descrizione dell'immagine.)
     match /campagne/{campagnaId}/{nome} {
-      allow read: if isNellaCampagna(campagnaId);
+      allow read: if request.auth != null && request.auth.token.email_verified == true
+        && immagineVisibile(campagnaId, nome.split('-')[0]);
       allow create, update: if isDMdellaCampagna(campagnaId) && nomeValido(nome) && immagineValida(5);
       allow delete: if isDMdellaCampagna(campagnaId);
+    }
+
+    // Il DM passa subito (l'"||" si ferma al primo vero), senza leggere la
+    // descrizione dell'immagine, che subito dopo il caricamento può non esistere ancora.
+    function immagineVisibile(campagnaId, immagineId) {
+      return request.auth.uid == campagna(campagnaId).dmUid
+        || visibileAlMembro(campagnaId, immagineId);
+    }
+
+    function visibileAlMembro(campagnaId, immagineId) {
+      let immagine = firestore.get(/databases/(default)/documents/campagne/$(campagnaId)/immagini/$(immagineId)).data;
+      return request.auth.uid in campagna(campagnaId).membriUid
+        && (immagine.visibilita == "tutti"
+          || (immagine.visibilita == "selezionati" && request.auth.uid in immagine.lettori));
     }
 
     // Tutto il resto è vietato.

@@ -10,6 +10,7 @@ import {
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
 import { CLASSI, nomeRazzaCompleto } from "../dati-srd.js";
+import { mostraImmagine, percorsiRitratto } from "../immagini.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -67,6 +68,15 @@ async function caricaDatiRiga(riga) {
       cellaPersonaggio.innerHTML = `${esc(scheda.nome) || "—"}${
         scheda.razza ? `<span class="cella-personaggio-sub">${esc(nomeRazzaCompleto(scheda.razza, scheda.sottorazza))}</span>` : ""
       }`;
+      if (scheda.ritratto) {
+        const img = document.createElement("img");
+        img.className = "icona-ritratto";
+        img.alt = "";
+        img.hidden = true;
+        cellaPersonaggio.classList.add("cella-con-ritratto");
+        cellaPersonaggio.prepend(img);
+        mostraImmagine(img, percorsiRitratto(riga.dataset.uid, scheda.id, scheda.ritratto).icona);
+      }
       const classe = CLASSI[scheda.classe];
       cellaClasse.innerHTML = classe
         ? `<span class="cella-classe"><span class="icona-classe" title="${classe.nome}">${classe.iconaSvg}</span>${classe.nome}</span>`

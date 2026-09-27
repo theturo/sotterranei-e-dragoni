@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <!-- Content Security Policy: vedi il commento in testa a test/pagine/pagine.test.mjs -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sotterranei e Dragoni — Scheda personaggio</title>
@@ -50,9 +50,24 @@
 
         <!-- Intestazione personaggio -->
         <div class="scheda-intestazione">
-          <div class="scheda-nome">
-            <label>Nome del personaggio</label>
-            <div id="scheda-nome-valore" class="scheda-nome-valore"></div>
+          <div class="scheda-intestazione-riga">
+            <figure class="ritratto-scheda">
+              <img id="ritratto-img" alt="Ritratto del personaggio" hidden />
+              <div id="ritratto-vuoto" class="ritratto-vuoto" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 21c1.5-4.2 4.5-6.2 8-6.2s6.5 2 8 6.2"/></svg>
+              </div>
+              <figcaption id="ritratto-azioni" hidden>
+                <label class="btn-tabella">
+                  <span id="ritratto-etichetta-carica">Carica ritratto</span>
+                  <input type="file" id="ritratto-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                </label>
+                <button type="button" id="btn-rimuovi-ritratto" class="btn-tabella btn-tabella-pericolo" hidden>Rimuovi</button>
+              </figcaption>
+            </figure>
+            <div class="scheda-nome">
+              <label>Nome del personaggio</label>
+              <div id="scheda-nome-valore" class="scheda-nome-valore"></div>
+            </div>
           </div>
           <div class="scheda-sottotitoli">
             <div>

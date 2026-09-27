@@ -41,8 +41,11 @@ rules_version = '2';
 //   - "stato/{sessione|musica}": stato condiviso in tempo reale (lettura:
 //     DM/membri/admin; scrittura: DM/admin).
 //   - "party/{uid}": riepilogo pubblico della scheda attiva di ogni membro
-//     (nome giocatore, personaggio, classe, livello, PF). Le regole verificano
-//     che coincida con la scheda vera, quindi non può essere falsificato.
+//     (nome giocatore, personaggio, classe, livello, PF, versione del
+//     ritratto). Le regole verificano che coincida con la scheda vera, quindi
+//     non può essere falsificato.
+//   - "immagini/{id}": titolo e visibilità delle immagini caricate dal DM
+//     (nascosta, visibile a tutti i membri o solo ad alcuni).
 // - "campagna/{docId}" (vecchio, pre-campagne): solo lettura per admin/DM, per
 //   la migrazione una tantum. Rimovibile a migrazione confermata.
 // - "registroSessioni/{sessioneId}": sessioni (programmata/in-corso/chiusa),
@@ -224,7 +227,7 @@ service cloud.firestore {
             'proprietarioUid', 'campagnaId', 'attiva', 'ordine', 'creataIl', 'aggiornatoIl',
             'inventario', 'allineamento', 'background', 'incantesimiConosciuti', 'incantesimiPreparati',
             'slotIncantesimoUsati', 'incantesimiRazzaUsati', 'armaturaIndossata', 'scudoIndossato',
-            'abilitaCompetenti', 'personalita', 'competenzeLinguaggi', 'talenti', 'monete'])
+            'abilitaCompetenti', 'personalita', 'competenzeLinguaggi', 'talenti', 'monete', 'ritratto'])
           && (!campi.hasAny(['nome']) || testoValido(d.nome, 1, 60))
           && (!campi.hasAny(['razza']) || testoOpzionale(d.razza, 40))
           && (!campi.hasAny(['sottorazza']) || testoOpzionale(d.sottorazza, 40))
@@ -250,6 +253,7 @@ service cloud.firestore {
           && (!campi.hasAny(['personalita']) || personalitaValida(d.personalita))
           && (!campi.hasAny(['competenzeLinguaggi']) || testoOpzionale(d.competenzeLinguaggi, 2000))
           && (!campi.hasAny(['talenti']) || (d.talenti is list && d.talenti.size() <= 100))
+          && (!campi.hasAny(['ritratto']) || d.ritratto == null || (d.ritratto is int && d.ritratto > 0))
           && (!campi.hasAny(['monete']) || (d.monete is map
               && d.monete.keys().hasOnly(['rame', 'argento', 'elettro', 'oro', 'platino'])));
       }
@@ -309,6 +313,21 @@ service cloud.firestore {
         allow write: if isAdmin() || (isDM() && datiCampagnaDopo(campagnaId).dmUid == request.auth.uid);
       }
 
+      // Immagini della campagna (PNG, luoghi, mappe, dispense): il file è in
+      // Storage (campagne/{campagnaId}/{immagineId}), qui titolo e visibilità.
+      // Il DM le vede tutte; un membro solo quelle rese visibili a tutti o a
+      // lui in particolare. Le stesse condizioni valgono per i file (storage.rules).
+      match /immagini/{immagineId} {
+        allow get, list: if isDMdellaCampagna(campagnaId) || (
+          isApprovato()
+          && request.auth.uid in datiCampagna(campagnaId).membriUid
+          && (resource.data.visibilita == "tutti"
+            || (resource.data.visibilita == "selezionati" && request.auth.uid in resource.data.lettori))
+        );
+        allow create, update: if isDMdellaCampagna(campagnaId) && immagineCampagnaValida();
+        allow delete: if isDMdellaCampagna(campagnaId);
+      }
+
       // Riepilogo pubblico della scheda attiva di un membro.
       match /party/{uid} {
         allow get, list: if isNellaCampagna(campagnaId);
@@ -322,14 +341,26 @@ service cloud.firestore {
       }
     }
 
+    function immagineCampagnaValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['titolo', 'descrizione', 'categoria', 'visibilita', 'lettori', 'larghezza', 'altezza', 'caricataIl'])
+        && testoValido(d.titolo, 1, 80)
+        && testoOpzionale(d.get('descrizione', null), 500)
+        && d.categoria in ['png', 'luogo', 'mappa', 'oggetto', 'dispensa', 'altro']
+        && d.visibilita in ['dm', 'tutti', 'selezionati']
+        && d.lettori is list && d.lettori.size() <= 30
+        && d.larghezza is int && d.altezza is int;
+    }
+
     // Il riepilogo deve coincidere con il profilo e con la scheda attiva vera.
     function riepilogoValido(campagnaId, uid) {
       let d = request.resource.data;
-      return d.keys().hasOnly(['nomeGiocatore', 'schedaId', 'nomePersonaggio', 'classe', 'livello', 'hp', 'aggiornatoIl'])
+      return d.keys().hasOnly(['nomeGiocatore', 'schedaId', 'nomePersonaggio', 'classe', 'livello', 'hp', 'ritratto', 'aggiornatoIl'])
         && d.nomeGiocatore == get(percorsoUtente(uid)).data.get('nome', null)
         && d.aggiornatoIl == request.time
         && (d.schedaId == null
-          ? (d.nomePersonaggio == null && d.classe == null && d.livello == null && d.hp == null)
+          ? (d.nomePersonaggio == null && d.classe == null && d.livello == null && d.hp == null
+              && d.get('ritratto', null) == null)
           : riepilogoCoincideConScheda(campagnaId, uid, d));
     }
 
@@ -341,7 +372,8 @@ service cloud.firestore {
         && d.nomePersonaggio == scheda.get('nome', null)
         && d.classe == scheda.get('classe', null)
         && d.livello == scheda.get('livello', null)
-        && d.hp == scheda.get('hp', null);
+        && d.hp == scheda.get('hp', null)
+        && d.get('ritratto', null) == scheda.get('ritratto', null);
     }
 
     // Vecchia collezione pre-campagne: solo lettura per admin/DM (migrazione).
