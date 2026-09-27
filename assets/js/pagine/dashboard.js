@@ -1,7 +1,7 @@
 // Script della pagina dashboard.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import { proteggiPagina, salvaOrdinePannelli, ROLES, ascoltaStatoMusica, ottieniCampagnaCorrente } from "../auth.js";
-import { esc, escUrl } from "../utils.js";
+import { proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente } from "../auth.js";
+import { montaWidgetMusica } from "../widget-musica.js";
 import { montaMenuUtente } from "../menu-utente.js";
 
 const veil = document.getElementById("veil");
@@ -36,7 +36,7 @@ const SEZIONI_PANNELLI = [
       { chiave: "party", titolo: "Party e livelli", testo: "Vedi il tuo party, segnala una salita di livello e consulta le schede dei giocatori.", link: "dm-party.html" },
       { chiave: "glossario-equip", titolo: "Glossario equipaggiamento", testo: "Cerca armi, armature, oggetti e pacchi del regolamento per verifiche rapide.", link: "glossario-equipaggiamento.html" },
       { chiave: "glossario-incant", titolo: "Glossario incantesimi", testo: "Cerca incantesimi per nome, classe o livello per verifiche rapide al tavolo.", link: "glossario-incantesimi.html" },
-      { chiave: "musica-dm", titolo: "Controllo musica", testo: "Collega Spotify o incolla una playlist YouTube per la colonna sonora della sessione.", link: "controllo-musica.html" },
+      { chiave: "musica-dm", titolo: "Controllo musica", testo: "Collega Spotify o incolla un link YouTube (video o playlist) per la colonna sonora della sessione.", link: "controllo-musica.html" },
       { chiave: "impostazioni-campagna", titolo: "Gestione campagna", testo: "Crea o gestisci la tua campagna: titolo, party e sessioni pianificate.", link: "campagna.html" },
     ],
   },
@@ -50,8 +50,7 @@ const SEZIONI_PANNELLI = [
         chiave: "musica-sessione",
         titolo: "Musica di sessione",
         corpoHtml:
-          '<div id="corpo-musica-giocatore"><p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>' +
-          '<div id="yt-player-giocatore" style="position:absolute; width:1px; height:1px; overflow:hidden;"></div>',
+          '<div id="corpo-musica-giocatore"><p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>',
       },
     ],
   },
@@ -92,136 +91,6 @@ function renderPannelli(ruolo, ordinePannelli) {
     .join("");
 }
 
-// Widget "Musica di sessione": in sola lettura per la sorgente Spotify
-// (l'audio suona sul dispositivo del DM, non c'è nulla da pilotare qui);
-// per YouTube, ogni browser mantiene una propria istanza del player IFrame
-// sincronizzata su brano/riproduzione decisi dal DM, ma con volume/muto
-// gestiti in autonomia — non scritti da nessuna parte, restano locali.
-let playerYouTubeGiocatore = null;
-let playerYouTubePronto = false;
-let statoYouTubeInAttesa = null;
-let ultimoStatoYouTubeApplicato = null;
-let modalitaWidgetCorrente = null;
-let audioAttivato = false;
-
-const tagYouTube = document.createElement("script");
-tagYouTube.src = "https://www.youtube.com/iframe_api";
-document.head.appendChild(tagYouTube);
-
-function creaPlayerYouTubeGiocatore() {
-  if (playerYouTubeGiocatore || typeof YT === "undefined") return;
-  playerYouTubeGiocatore = new YT.Player("yt-player-giocatore", {
-    height: "0",
-    width: "0",
-    events: {
-      onReady: () => {
-        playerYouTubePronto = true;
-        playerYouTubeGiocatore.mute();
-        if (statoYouTubeInAttesa) applicaStatoYouTube(statoYouTubeInAttesa);
-      },
-      onStateChange: () => aggiornaCopertinaETitoloYouTube(),
-    },
-  });
-}
-window.onYouTubeIframeAPIReady = () => {
-  if (modalitaWidgetCorrente === "youtube") creaPlayerYouTubeGiocatore();
-};
-
-function applicaStatoYouTube(yt) {
-  if (!playerYouTubePronto) {
-    statoYouTubeInAttesa = yt;
-    return;
-  }
-  const cambiato =
-    !ultimoStatoYouTubeApplicato ||
-    ultimoStatoYouTubeApplicato.playlistId !== yt.playlistId ||
-    ultimoStatoYouTubeApplicato.indice !== yt.indice;
-  if (cambiato) {
-    playerYouTubeGiocatore.loadPlaylist({ list: yt.playlistId, index: yt.indice || 0 });
-    if (!yt.inRiproduzione) setTimeout(() => playerYouTubeGiocatore.pauseVideo(), 600);
-  } else if (ultimoStatoYouTubeApplicato.inRiproduzione !== yt.inRiproduzione) {
-    yt.inRiproduzione ? playerYouTubeGiocatore.playVideo() : playerYouTubeGiocatore.pauseVideo();
-  }
-  ultimoStatoYouTubeApplicato = yt;
-}
-
-function aggiornaCopertinaETitoloYouTube() {
-  if (!playerYouTubePronto || typeof playerYouTubeGiocatore.getVideoData !== "function") return;
-  const dati = playerYouTubeGiocatore.getVideoData();
-  const immagine = document.getElementById("yt-cover-giocatore");
-  const placeholder = document.getElementById("yt-cover-placeholder");
-  const titolo = document.getElementById("yt-titolo-giocatore");
-  if (!immagine || !titolo) return;
-  if (dati?.video_id) {
-    immagine.src = `https://img.youtube.com/vi/${encodeURIComponent(dati.video_id)}/hqdefault.jpg`;
-    immagine.style.display = "block";
-    if (placeholder) placeholder.style.display = "none";
-  }
-  if (dati?.title) titolo.textContent = dati.title;
-}
-
-// Il DOM dei controlli YouTube (slider, muto) viene creato UNA volta sola
-// al passaggio a questa modalità, non ad ogni aggiornamento: altrimenti un
-// cambio brano deciso dal DM azzererebbe in continuazione il volume che il
-// giocatore ha appena regolato.
-function renderWidgetMusica(stato) {
-  const corpo = document.getElementById("corpo-musica-giocatore");
-  if (!corpo) return;
-
-  if (!stato.sorgente) {
-    modalitaWidgetCorrente = null;
-    corpo.innerHTML = '<p class="sessione-placeholder">Nessuna musica in riproduzione.</p>';
-    return;
-  }
-
-  if (stato.sorgente === "spotify") {
-    modalitaWidgetCorrente = "spotify";
-    const s = stato.spotify;
-    corpo.innerHTML = s
-      ? `
-        ${
-          s.copertinaUrl
-            ? `<img src="${escUrl(s.copertinaUrl)}" class="cover-grande" alt="" />`
-            : '<div class="cover-grande cover-quadrata">🎵</div>'
-        }
-        <div class="musica-titolo-brano">${esc(s.brano)}</div>
-        <div class="musica-sottotitolo">${esc(s.artista)}</div>
-        <p class="sessione-placeholder" style="margin-top:10px;">Musica dal dispositivo del Dungeon Master.</p>
-      `
-      : '<p class="sessione-placeholder">In attesa che il Dungeon Master avvii la riproduzione…</p>';
-    return;
-  }
-
-  if (stato.sorgente === "youtube" && stato.youtube) {
-    creaPlayerYouTubeGiocatore();
-    applicaStatoYouTube(stato.youtube);
-
-    if (modalitaWidgetCorrente !== "youtube") {
-      modalitaWidgetCorrente = "youtube";
-      corpo.innerHTML = `
-        <img id="yt-cover-giocatore" class="cover-grande" style="display:none;" alt="" />
-        <div class="cover-grande cover-quadrata" id="yt-cover-placeholder">▶</div>
-        <div class="musica-titolo-brano" id="yt-titolo-giocatore">Caricamento…</div>
-        <div class="volume-riga" style="justify-content:center;">
-          <button type="button" id="btn-muto-musica">🔈</button>
-          <input type="range" id="cursore-volume-musica" min="0" max="100" value="70" style="max-width:140px;" />
-        </div>
-      `;
-      document.getElementById("cursore-volume-musica").addEventListener("input", (evento) => {
-        if (playerYouTubePronto) playerYouTubeGiocatore.setVolume(Number(evento.target.value));
-      });
-      document.getElementById("btn-muto-musica").addEventListener("click", (evento) => {
-        audioAttivato = !audioAttivato;
-        if (playerYouTubePronto) {
-          audioAttivato ? playerYouTubeGiocatore.unMute() : playerYouTubeGiocatore.mute();
-        }
-        evento.currentTarget.textContent = audioAttivato ? "🔊" : "🔈";
-      });
-    }
-    aggiornaCopertinaETitoloYouTube();
-  }
-}
-
 proteggiPagina(async (user, profilo) => {
   uidCorrente = user.uid;
   const nome = profilo?.nome || user.displayName || user.email;
@@ -230,14 +99,16 @@ proteggiPagina(async (user, profilo) => {
   document.getElementById("nome-utente").textContent = nome;
   renderPannelli(ruolo, profilo?.ordinePannelli);
 
-  if (ruolo === ROLES.PLAYER) {
+  // Widget musica: per chiunque veda il pannello (anche DM e admin, che hanno
+  // la sezione giocatore visibile a cascata), sulla propria campagna corrente.
+  const corpoMusica = document.getElementById("corpo-musica-giocatore");
+  if (corpoMusica) {
     try {
       const campagna = await ottieniCampagnaCorrente(uidCorrente, ruolo);
       if (campagna) {
-        ascoltaStatoMusica(campagna.id, renderWidgetMusica);
+        montaWidgetMusica(corpoMusica, campagna.id);
       } else {
-        const corpo = document.getElementById("corpo-musica-giocatore");
-        if (corpo) corpo.innerHTML = '<p class="sessione-placeholder">Non sei ancora in una campagna attiva.</p>';
+        corpoMusica.innerHTML = '<p class="sessione-placeholder">Non sei ancora in una campagna attiva.</p>';
       }
     } catch (errore) {
       console.error(errore);
