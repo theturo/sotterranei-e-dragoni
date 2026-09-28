@@ -44,8 +44,11 @@ rules_version = '2';
 //     (nome giocatore, personaggio, classe, livello, PF, versione del
 //     ritratto). Le regole verificano che coincida con la scheda vera, quindi
 //     non può essere falsificato.
-//   - "immagini/{id}": titolo e visibilità delle immagini caricate dal DM
-//     (nascosta, visibile a tutti i membri o solo ad alcuni).
+//   - "immagini/{id}": libreria dei contenuti caricati dal DM (titolo,
+//     descrizione, a chi è mostrato ora e nell'archivio di chi è); un membro
+//     vede solo quelli in cui compare in "visibileA".
+//   - "immaginiDM/{id}": note, tag, destinazione all'archivio e sessioni
+//     collegate di ogni contenuto: solo DM e admin.
 // - "campagna/{docId}" (vecchio, pre-campagne): solo lettura per admin/DM, per
 //   la migrazione una tantum. Rimovibile a migrazione confermata.
 // - "registroSessioni/{sessioneId}": sessioni (programmata/in-corso/chiusa),
@@ -313,19 +316,28 @@ service cloud.firestore {
         allow write: if isAdmin() || (isDM() && datiCampagnaDopo(campagnaId).dmUid == request.auth.uid);
       }
 
-      // Immagini della campagna (PNG, luoghi, mappe, dispense): il file è in
-      // Storage (campagne/{campagnaId}/{immagineId}), qui titolo e visibilità.
-      // Il DM le vede tutte; un membro solo quelle rese visibili a tutti o a
-      // lui in particolare. Le stesse condizioni valgono per i file (storage.rules).
+      // Libreria dei contenuti della campagna (mappe, luoghi, PNG, nemici,
+      // oggetti, dispense). Il file è in Storage (campagne/{campagnaId}/{id}).
+      // Qui i dati che un giocatore può vedere: titolo, descrizione, a chi è
+      // mostrato ora durante la sessione ("mostrataA"), nell'archivio di chi è
+      // ("archiviataPer"). "visibileA" è l'unione dei due, verificata qui sotto:
+      // un membro legge il documento (e scarica il file, vedi storage.rules)
+      // solo se ci compare.
       match /immagini/{immagineId} {
         allow get, list: if isDMdellaCampagna(campagnaId) || (
           isApprovato()
           && request.auth.uid in datiCampagna(campagnaId).membriUid
-          && (resource.data.visibilita == "tutti"
-            || (resource.data.visibilita == "selezionati" && request.auth.uid in resource.data.lettori))
+          && request.auth.uid in resource.data.visibileA
         );
-        allow create, update: if isDMdellaCampagna(campagnaId) && immagineCampagnaValida();
+        allow create, update: if isDMdellaCampagna(campagnaId) && contenutoValido();
         allow delete: if isDMdellaCampagna(campagnaId);
+      }
+
+      // Dati riservati al DM per ogni contenuto: note, tag (possono contenere
+      // spoiler), destinazione all'archivio e sessioni a cui è collegato.
+      match /immaginiDM/{immagineId} {
+        allow get, list, delete: if isDMdellaCampagna(campagnaId);
+        allow create, update: if isDMdellaCampagna(campagnaId) && contenutoDMValido();
       }
 
       // Riepilogo pubblico della scheda attiva di un membro.
@@ -341,15 +353,31 @@ service cloud.firestore {
       }
     }
 
-    function immagineCampagnaValida() {
+    function listaUid(valore) {
+      return valore is list && valore.size() <= 30;
+    }
+
+    function contenutoValido() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['titolo', 'descrizione', 'categoria', 'visibilita', 'lettori', 'larghezza', 'altezza', 'caricataIl'])
+      return d.keys().hasOnly(['titolo', 'descrizione', 'categoria', 'larghezza', 'altezza', 'caricataIl',
+          'mostrataA', 'vistaDa', 'archiviataPer', 'visibileA', 'sessioniMostrata'])
         && testoValido(d.titolo, 1, 80)
         && testoOpzionale(d.get('descrizione', null), 500)
-        && d.categoria in ['png', 'luogo', 'mappa', 'oggetto', 'dispensa', 'altro']
-        && d.visibilita in ['dm', 'tutti', 'selezionati']
-        && d.lettori is list && d.lettori.size() <= 30
-        && d.larghezza is int && d.altezza is int;
+        && d.categoria in ['mappa', 'luogo', 'png', 'nemico', 'oggetto', 'dispensa', 'altro']
+        && d.larghezza is int && d.altezza is int
+        && listaUid(d.mostrataA) && listaUid(d.vistaDa) && listaUid(d.archiviataPer)
+        && d.visibileA is list
+        && d.visibileA.toSet() == d.mostrataA.toSet().union(d.archiviataPer.toSet())
+        && d.sessioniMostrata is list && d.sessioniMostrata.size() <= 200;
+    }
+
+    function contenutoDMValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['note', 'tag', 'archivio', 'sessioniCollegate'])
+        && testoOpzionale(d.get('note', null), 2000)
+        && d.tag is list && d.tag.size() <= 20
+        && d.archivio is bool
+        && d.sessioniCollegate is list && d.sessioniCollegate.size() <= 200;
     }
 
     // Il riepilogo deve coincidere con il profilo e con la scheda attiva vera.

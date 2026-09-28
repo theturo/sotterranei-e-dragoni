@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sotterranei e Dragoni — Galleria</title>
+  <title>Sotterranei e Dragoni — Archivio</title>
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
@@ -36,7 +36,7 @@
         <div>
           <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
           <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Galleria della campagna
+            Archivio della campagna
           </h1>
         </div>
         <div id="slot-utente" class="slot-utente"></div>
@@ -46,65 +46,34 @@
         <p id="testo-nessuna-campagna" class="scheda-testo-libero"></p>
       </div>
 
-      <!-- Solo DM: caricamento di una nuova immagine (parte nascosta ai giocatori) -->
-      <div id="pannello-carica" class="panel-wide" hidden>
-        <h3 style="margin-top:0;">Carica un'immagine</h3>
+      <div id="pannello-archivio" class="panel-wide" hidden>
         <p class="card-tagline" style="text-align:left;">
-          Ogni immagine nasce <strong>nascosta</strong>: decidi tu quando rivelarla a tutto il party
-          o solo ad alcuni giocatori. L'immagine viene ridimensionata prima dell'invio.
+          Mappe, luoghi, personaggi e documenti incontrati durante l'avventura.
         </p>
-        <form id="form-carica" class="form-galleria">
-          <div class="field">
-            <label for="carica-file">Immagine</label>
-            <input type="file" id="carica-file" required />
-          </div>
-          <div class="field-riga">
-            <div class="field" style="flex:1;">
-              <label for="carica-titolo">Titolo</label>
-              <input type="text" id="carica-titolo" maxlength="80" placeholder="Es. Mappa della palude di Kalkash" required />
-            </div>
-            <div class="field">
-              <label for="carica-categoria">Categoria</label>
-              <select id="carica-categoria" class="select-galleria"></select>
-            </div>
-          </div>
-          <div class="field">
-            <label for="carica-descrizione">Descrizione (opzionale)</label>
-            <textarea id="carica-descrizione" maxlength="500" rows="2" class="textarea-galleria"></textarea>
-          </div>
-          <button type="submit" id="btn-carica" class="btn" style="width:auto; padding:10px 22px;">Carica</button>
-        </form>
-      </div>
-
-      <div id="pannello-galleria" class="panel-wide" hidden>
-        <div class="galleria-barra">
-          <label for="filtro-categoria">Mostra</label>
-          <select id="filtro-categoria" class="select-galleria">
+        <div class="galleria-barra galleria-filtri">
+          <input type="search" id="filtro-testo" class="select-galleria" placeholder="Cerca per titolo" aria-label="Cerca" />
+          <select id="filtro-categoria" class="select-galleria" aria-label="Categoria">
             <option value="">Tutte le categorie</option>
           </select>
+          <select id="filtro-sessione" class="select-galleria" aria-label="Sessione">
+            <option value="">Tutte le sessioni</option>
+          </select>
+          <select id="filtro-ordine" class="select-galleria" aria-label="Ordine">
+            <option value="recenti">Più recenti</option>
+            <option value="vecchi">Meno recenti</option>
+            <option value="titolo">Per titolo</option>
+          </select>
         </div>
-        <ul id="griglia-immagini" class="griglia-immagini"></ul>
-        <p id="galleria-vuota" class="scheda-testo-libero" hidden></p>
+        <ul id="griglia-archivio" class="griglia-immagini"></ul>
+        <p id="archivio-vuoto" class="scheda-testo-libero" hidden></p>
       </div>
     </div>
-  </div>
-
-  <!-- Visualizzazione a tutto schermo -->
-  <div id="lightbox" class="modal-overlay lightbox" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="lightbox-titolo">
-    <figure class="lightbox-figura">
-      <button id="btn-chiudi-lightbox" class="btn-chiudi-modal" type="button" aria-label="Chiudi">×</button>
-      <img id="lightbox-img" alt="" />
-      <figcaption>
-        <strong id="lightbox-titolo"></strong>
-        <span id="lightbox-descrizione"></span>
-      </figcaption>
-    </figure>
   </div>
 
   <div id="toast" class="toast"></div>
 
   <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
 
-  <script type="module" src="assets/js/pagine/immagini.js"></script>
+  <script type="module" src="assets/js/pagine/archivio.js"></script>
 </body>
 </html>

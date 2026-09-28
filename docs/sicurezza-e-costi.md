@@ -17,7 +17,8 @@ della Console (qui sotto, da fare una volta) e limiti nel codice.
   512 px con icona da 96 px, immagini della campagna 1920 px con miniatura da
   480 px, in WebP): pochi KB/centinaia di KB ciascuna invece di foto da vari MB.
 - Le immagini si scaricano con l'SDK, non con link pubblici: ogni lettura passa
-  dalle regole. Un'immagine della campagna nascosta dal DM non si scarica
+  dalle regole. Un contenuto della libreria che il DM non ha mostrato a un
+  giocatore (o messo nel suo archivio) non si scarica
   nemmeno conoscendone il percorso.
 - Test automatici di entrambe le regole a ogni pull request (`test/regole`).
 

@@ -10,8 +10,8 @@ rules_version = '2';
 //   dall'admin, come in firestore.rules) possono leggere o caricare file.
 // - Si carica solo in cartelle previste, solo immagini (PNG, JPEG, WebP, GIF)
 //   e con un limite di dimensione per file.
-// - Le immagini della campagna si leggono solo se il DM le ha rese visibili
-//   (a tutti i membri o a giocatori scelti), come in firestore.rules.
+// - I contenuti della campagna si leggono solo se il DM li ha mostrati a chi
+//   li chiede o li ha messi nel suo archivio, come in firestore.rules.
 // - Qualsiasi altro percorso è vietato.
 // Le regole leggono profili e campagne da Firestore: alla prima pubblicazione la
 // Console chiede di autorizzare Storage a leggere Firestore, va accettato.
@@ -70,11 +70,12 @@ service firebase.storage {
       allow delete: if isApprovato() && (request.auth.uid == uid || isAdmin());
     }
 
-    // Immagini di una campagna (PNG, luoghi, mappe, dispense): le carica il
-    // DM. Il file "{immagineId}" (e la miniatura "{immagineId}-mini") si legge
-    // solo se il documento campagne/{id}/immagini/{immagineId} lo rende
-    // visibile a chi lo chiede: stesso filtro di firestore.rules, così chi non
-    // deve vedere un'immagine non la scarica nemmeno conoscendone il percorso.
+    // Contenuti della libreria della campagna: li carica il DM. Il file
+    // "{immagineId}" (e la miniatura "{immagineId}-mini") si legge solo se il
+    // documento campagne/{id}/immagini/{immagineId} elenca chi lo chiede in
+    // "visibileA" (mostrato ora o nel suo archivio): stesso filtro di
+    // firestore.rules, così chi non deve vedere un contenuto non lo scarica
+    // nemmeno conoscendone il percorso.
     // (Al massimo 2 documenti Firestore letti per valutazione: campagna e
     // descrizione dell'immagine.)
     match /campagne/{campagnaId}/{nome} {
@@ -94,8 +95,7 @@ service firebase.storage {
     function visibileAlMembro(campagnaId, immagineId) {
       let immagine = firestore.get(/databases/(default)/documents/campagne/$(campagnaId)/immagini/$(immagineId)).data;
       return request.auth.uid in campagna(campagnaId).membriUid
-        && (immagine.visibilita == "tutti"
-          || (immagine.visibilita == "selezionati" && request.auth.uid in immagine.lettori));
+        && request.auth.uid in immagine.visibileA;
     }
 
     // Tutto il resto è vietato.

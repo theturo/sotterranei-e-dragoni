@@ -33,7 +33,7 @@ const SEZIONI_PANNELLI = [
     titolo: "Area Dungeon Master",
     pannelli: [
       { chiave: "sessione", titolo: "Sessione", testo: "Il punto di ritrovo per la sessione in corso: party, appunti condivisi e registro delle sessioni passate.", link: "sessione.html" },
-      { chiave: "galleria-dm", titolo: "Galleria della campagna", testo: "Carica mappe, luoghi e ritratti dei PNG e decidi quando rivelarli, a tutto il party o solo ad alcuni.", link: "immagini.html" },
+      { chiave: "libreria", titolo: "Libreria dei contenuti", testo: "Carica mappe, luoghi, PNG, nemici e dispense con note e tag privati, collegali alle sessioni e scegli cosa finirà nell'archivio dei giocatori.", link: "libreria.html" },
       { chiave: "party", titolo: "Party e livelli", testo: "Vedi il tuo party, segnala una salita di livello e consulta le schede dei giocatori.", link: "dm-party.html" },
       { chiave: "glossario-equip", titolo: "Glossario equipaggiamento", testo: "Cerca armi, armature, oggetti e pacchi del regolamento per verifiche rapide.", link: "glossario-equipaggiamento.html" },
       { chiave: "glossario-incant", titolo: "Glossario incantesimi", testo: "Cerca incantesimi per nome, classe o livello per verifiche rapide al tavolo.", link: "glossario-incantesimi.html" },
@@ -46,7 +46,7 @@ const SEZIONI_PANNELLI = [
     titolo: "Area Giocatore",
     pannelli: [
       { chiave: "sessione", titolo: "Sessione", testo: "Il punto di ritrovo per la sessione in corso: party, appunti condivisi e registro delle sessioni passate.", link: "sessione.html" },
-      { chiave: "galleria", titolo: "Galleria della campagna", testo: "Mappe, luoghi e personaggi che il Dungeon Master ti ha mostrato durante l'avventura.", link: "immagini.html" },
+      { chiave: "archivio", titolo: "Archivio della campagna", testo: "Mappe, luoghi, personaggi e documenti incontrati durante l'avventura.", link: "archivio.html", soloRuolo: ROLES.PLAYER },
       { chiave: "personaggi", titolo: "I miei personaggi", testo: "Crea uno o più personaggi e scegli quale rendere attivo per la campagna.", link: "i-miei-personaggi.html" },
       {
         chiave: "musica-sessione",
@@ -75,7 +75,12 @@ function renderPannelli(ruolo, ordinePannelli) {
 
   griglia.innerHTML = SEZIONI_PANNELLI.filter((sezione) => ruoliVisibili.includes(sezione.ruolo))
     .map((sezione) => {
-      const pannelli = ordinaPannelli(sezione.pannelli, ordinePannelli?.[sezione.ruolo]);
+      // Alcuni pannelli servono solo a un ruolo (es. l'archivio dei giocatori:
+      // il DM ha già la libreria completa).
+      const pannelli = ordinaPannelli(
+        sezione.pannelli.filter((p) => !p.soloRuolo || p.soloRuolo === ruolo),
+        ordinePannelli?.[sezione.ruolo]
+      );
       const cardsHtml = pannelli
         .map((p) => {
           const intestazione = `<div class="panel-intestazione"><span class="maniglia-trascina" aria-hidden="true" title="Trascina per riordinare"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></span><h3>${p.titolo}</h3></div>`;

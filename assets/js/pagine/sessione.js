@@ -16,12 +16,25 @@ import {
   rigeneraRiepiloghiParty,
   sincronizzaMioRiepilogo,
   eliminaAppunto,
+  elencaMembriCampagna,
+  ascoltaLibreriaDM,
+  ascoltaContenutiVisibili,
+  mostraContenuto,
+  collegaContenutiSessione,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { CLASSI } from "../dati-srd.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
+import {
+  CATEGORIE,
+  creaElemento,
+  creaMiniatura,
+  apriLightbox,
+  chiudiLightboxSeSparito,
+  scegliContenuti,
+} from "../contenuti.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -156,6 +169,7 @@ function mostraStatoAttivo(id) {
   document.getElementById("nessuna-sessione-msg").hidden = true;
   document.getElementById("form-appunto").hidden = false;
   attivaAscolto(id);
+  renderContenuti();
 }
 
 function mostraStatoInattivo() {
@@ -167,7 +181,205 @@ function mostraStatoInattivo() {
   document.getElementById("nessuna-sessione-msg").hidden = false;
   document.getElementById("appunti-vuoto").hidden = true;
   document.getElementById("lista-appunti").innerHTML = "";
+  renderContenuti();
 }
+
+// ---------- Contenuti mostrati dal DM ----------
+// Il DM vede i contenuti collegati alla sessione in corso e decide a chi
+// mostrarli; i giocatori vedono in tempo reale quelli mostrati a loro.
+// Alla chiusura della sessione (chiudiSessione) spariscono dalla vista "dal
+// vivo" e quelli destinati all'archivio passano nell'archivio di chi li ha visti.
+
+let isDmContenuti = false;
+let contenuti = [];
+let membriCampagna = [];
+let contenutiGiaVisti = null;
+
+const nomeMembro = (uid) => membriCampagna.find((m) => m.uid === uid)?.nome || "Giocatore";
+
+function testoVisibilita(c) {
+  const a = c.mostrataA || [];
+  if (a.length === 0) return "Nascosto ai giocatori";
+  if (membriCampagna.length > 0 && membriCampagna.every((m) => a.includes(m.uid))) return "Visibile a tutto il party";
+  return `Visibile a: ${a.map(nomeMembro).join(", ")}`;
+}
+
+async function cambiaVisibilita(c, uids, bottoni) {
+  bottoni.forEach((b) => (b.disabled = true));
+  try {
+    await mostraContenuto(campagnaIdCorrente, c, uids, sessioneAttivaId);
+  } catch (errore) {
+    console.error(errore);
+    alert("Impossibile cambiare la visibilità del contenuto.");
+  } finally {
+    bottoni.forEach((b) => (b.disabled = false));
+  }
+}
+
+function rigaContenutoDM(c) {
+  const li = creaElemento("li", "riga-contenuto-sessione");
+  const anteprima = creaElemento("button", "miniatura-contenuto");
+  anteprima.type = "button";
+  anteprima.setAttribute("aria-label", `Apri: ${c.titolo}`);
+  anteprima.append(creaMiniatura(campagnaIdCorrente, c.id));
+  anteprima.addEventListener("click", () => apriLightbox(campagnaIdCorrente, c));
+
+  const info = creaElemento("div", "riga-contenuto-info");
+  const titolo = creaElemento("div", "party-sessione-nome", c.titolo);
+  const sotto = creaElemento("div", "party-sessione-sub",
+    `${CATEGORIE[c.categoria] || "Altro"} · ${c.riservati.archivio ? "per l'archivio" : "solo in sessione"}`);
+  const stato = creaElemento("div", "riga-contenuto-stato", testoVisibilita(c));
+  stato.dataset.visibile = (c.mostrataA || []).length > 0 ? "si" : "no";
+
+  const azioni = creaElemento("div", "riga-contenuto-azioni");
+  const aTutti = creaElemento("button", "btn-tabella btn-tabella-evidenza", "Mostra a tutti");
+  const scegli = creaElemento("button", "btn-tabella", "Solo ad alcuni…");
+  const nascondi = creaElemento("button", "btn-tabella", "Nascondi");
+  [aTutti, scegli, nascondi].forEach((b) => (b.type = "button"));
+  nascondi.hidden = (c.mostrataA || []).length === 0;
+  const bottoni = [aTutti, scegli, nascondi];
+
+  const scelta = creaElemento("div", "scelta-giocatori");
+  scelta.hidden = true;
+  membriCampagna.forEach((m) => {
+    const etichetta = creaElemento("label", "checkbox-scudo");
+    const casella = document.createElement("input");
+    casella.type = "checkbox";
+    casella.value = m.uid;
+    casella.checked = (c.mostrataA || []).includes(m.uid);
+    etichetta.append(casella, ` ${m.nome || "Giocatore"}`);
+    scelta.append(etichetta);
+  });
+  const applica = creaElemento("button", "btn-tabella btn-tabella-evidenza", "Mostra");
+  applica.type = "button";
+  scelta.append(applica);
+
+  aTutti.addEventListener("click", () => cambiaVisibilita(c, membriCampagna.map((m) => m.uid), bottoni));
+  nascondi.addEventListener("click", () => cambiaVisibilita(c, [], bottoni));
+  scegli.addEventListener("click", () => {
+    scelta.hidden = !scelta.hidden;
+  });
+  applica.addEventListener("click", () => {
+    const uids = [...scelta.querySelectorAll("input:checked")].map((x) => x.value);
+    cambiaVisibilita(c, uids, [...bottoni, applica]);
+  });
+
+  azioni.append(aTutti, scegli, nascondi);
+  info.append(titolo, sotto, stato, azioni, scelta);
+  li.append(anteprima, info);
+  return li;
+}
+
+function rigaContenutoGiocatore(c) {
+  const li = creaElemento("li", "riga-contenuto-sessione");
+  const anteprima = creaElemento("button", "miniatura-contenuto");
+  anteprima.type = "button";
+  anteprima.setAttribute("aria-label", `Apri: ${c.titolo}`);
+  anteprima.append(creaMiniatura(campagnaIdCorrente, c.id));
+  anteprima.addEventListener("click", () => apriLightbox(campagnaIdCorrente, c));
+  const info = creaElemento("div", "riga-contenuto-info");
+  info.append(
+    creaElemento("div", "party-sessione-nome", c.titolo),
+    creaElemento("div", "party-sessione-sub", CATEGORIE[c.categoria] || "Altro")
+  );
+  li.append(anteprima, info);
+  return li;
+}
+
+function renderContenuti() {
+  if (!campagnaIdCorrente) return;
+  const lista = document.getElementById("lista-contenuti-sessione");
+  const vuoto = document.getElementById("contenuti-vuoto");
+  const collega = document.getElementById("btn-collega-contenuti");
+  const link = document.getElementById("link-contenuti");
+  let elenco;
+
+  if (isDmContenuti) {
+    document.getElementById("titolo-contenuti").textContent = "Contenuti della sessione";
+    link.hidden = false;
+    link.href = "libreria.html";
+    link.textContent = "Libreria";
+    collega.hidden = !sessioneAttivaId;
+    // Collegati alla sessione in corso, più quelli ancora visibili (es. da una
+    // sessione precedente non chiusa).
+    elenco = contenuti.filter((c) =>
+      (sessioneAttivaId && c.riservati.sessioniCollegate.includes(sessioneAttivaId)) || (c.mostrataA || []).length > 0);
+    vuoto.textContent = sessioneAttivaId
+      ? "Nessun contenuto collegato a questa sessione: collegane dalla libreria."
+      : "Nessuna sessione in corso. Prepara i contenuti dalla Libreria o da Gestione campagna, poi mostrali qui durante la sessione.";
+    lista.replaceChildren(...elenco.map(rigaContenutoDM));
+  } else {
+    link.hidden = false;
+    link.href = "archivio.html";
+    link.textContent = "Archivio";
+    elenco = contenuti.filter((c) => (c.mostrataA || []).includes(uidCorrente));
+    vuoto.textContent = "Nulla da mostrare al momento.";
+    lista.replaceChildren(...elenco.map(rigaContenutoGiocatore));
+    // Avviso quando il DM mostra qualcosa di nuovo.
+    const idOra = new Set(elenco.map((c) => c.id));
+    if (contenutiGiaVisti) {
+      const nuovi = elenco.filter((c) => !contenutiGiaVisti.has(c.id));
+      if (nuovi.length) mostraAvvisoContenuto(nuovi.length === 1 ? `Il DM ti mostra: ${nuovi[0].titolo}` : `Il DM ti mostra ${nuovi.length} contenuti`);
+    }
+    contenutiGiaVisti = idOra;
+    chiudiLightboxSeSparito(idOra);
+  }
+  vuoto.hidden = elenco.length > 0;
+}
+
+let timerAvviso = null;
+function mostraAvvisoContenuto(testo) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+  toast.textContent = testo;
+  toast.className = "toast visibile";
+  clearTimeout(timerAvviso);
+  timerAvviso = setTimeout(() => (toast.className = "toast"), 4000);
+}
+
+async function avviaContenuti(isDmOAdmin) {
+  isDmContenuti = isDmOAdmin;
+  const alErrore = (errore) => console.error(errore);
+  if (isDmOAdmin) {
+    try {
+      membriCampagna = await elencaMembriCampagna(campagnaIdCorrente);
+    } catch (errore) {
+      console.error(errore);
+    }
+    ascoltaLibreriaDM(campagnaIdCorrente, (elenco) => {
+      contenuti = elenco;
+      renderContenuti();
+    }, alErrore);
+  } else {
+    ascoltaContenutiVisibili(campagnaIdCorrente, uidCorrente, (elenco) => {
+      contenuti = elenco;
+      renderContenuti();
+    }, alErrore);
+  }
+}
+
+document.getElementById("btn-collega-contenuti").addEventListener("click", async () => {
+  if (!sessioneAttivaId) return;
+  const collegati = new Set(contenuti.filter((c) => c.riservati.sessioniCollegate.includes(sessioneAttivaId)).map((c) => c.id));
+  const scelti = await scegliContenuti({
+    campagnaId: campagnaIdCorrente,
+    titolo: "Contenuti di questa sessione",
+    contenuti,
+    selezionati: collegati,
+  });
+  if (!scelti) return;
+  try {
+    await collegaContenutiSessione(
+      campagnaIdCorrente,
+      sessioneAttivaId,
+      [...scelti].filter((id) => !collegati.has(id)),
+      [...collegati].filter((id) => !scelti.has(id))
+    );
+  } catch (errore) {
+    console.error(errore);
+    alert("Impossibile collegare i contenuti.");
+  }
+});
 
 proteggiPagina(async (user, profilo) => {
   uidCorrente = user.uid;
@@ -210,7 +422,7 @@ proteggiPagina(async (user, profilo) => {
     mostraStatoInattivo();
   }
 
-  await caricaParty();
+  await Promise.all([caricaParty(), avviaContenuti(isDmOAdmin)]);
 
   veil.style.display = "none";
   contenuto.style.display = "block";

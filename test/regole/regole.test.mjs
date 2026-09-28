@@ -37,12 +37,15 @@ beforeEach(async () => {
     await set("users/attesa", { nome: "Nuovo", email: "n@x.it", ruolo: "player", livello: 1, livelliDaSpendere: 0, approvato: false });
     await set("campagne/c1", { titolo: null, titoloProvvisorio: true, dmUid: "dm", membriUid: ["p1", "p2"], stato: "attiva" });
     await set("campagne/c1/privato/titolo", { titolo: "La Tomba degli Orrori" });
-    const immagine = (visibilita, lettori = []) => ({
-      titolo: "Mappa", descrizione: null, categoria: "mappa", visibilita, lettori, larghezza: 800, altezza: 600,
+    // Contenuti: nascosto, mostrato ora a tutti, nell'archivio solo di p1.
+    const contenuto = (mostrataA = [], archiviataPer = []) => ({
+      titolo: "Mappa", descrizione: null, categoria: "mappa", larghezza: 800, altezza: 600,
+      mostrataA, vistaDa: mostrataA, archiviataPer, visibileA: [...new Set([...mostrataA, ...archiviataPer])], sessioniMostrata: [],
     });
-    await set("campagne/c1/immagini/nascosta", immagine("dm"));
-    await set("campagne/c1/immagini/pubblica", immagine("tutti"));
-    await set("campagne/c1/immagini/soloP1", immagine("selezionati", ["p1"]));
+    await set("campagne/c1/immagini/nascosta", contenuto());
+    await set("campagne/c1/immagini/pubblica", contenuto(["p1", "p2"]));
+    await set("campagne/c1/immagini/soloP1", contenuto([], ["p1"]));
+    await set("campagne/c1/immaginiDM/nascosta", { note: "È il traditore", tag: ["spoiler"], archivio: true, sessioniCollegate: ["r1"] });
     await set("campagne/c1/stato/sessione", { inCorso: true, sessioneAttivaId: "r1" });
     await set("personaggi/s1", {
       proprietarioUid: "p1", campagnaId: "c1", attiva: true, nome: "Eroe", classe: "guerriero", livello: 1,
@@ -237,38 +240,64 @@ describe("Ritratti", () => {
   });
 });
 
-describe("Immagini della campagna", () => {
-  const nuova = (extra = {}) => ({
-    titolo: "Taverna", descrizione: null, categoria: "luogo", visibilita: "dm", lettori: [], larghezza: 1920, altezza: 1080,
-    caricataIl: serverTimestamp(), ...extra,
+describe("Libreria dei contenuti", () => {
+  const nuovo = (extra = {}) => ({
+    titolo: "Taverna", descrizione: null, categoria: "luogo", larghezza: 1920, altezza: 1080, caricataIl: serverTimestamp(),
+    mostrataA: [], vistaDa: [], archiviataPer: [], visibileA: [], sessioniMostrata: [], ...extra,
   });
-  test("il DM descrive una nuova immagine", () =>
-    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuova())));
-  test("un giocatore NON crea immagini", () =>
-    assertFails(setDoc(doc(come("p1"), "campagne/c1/immagini/nuova"), nuova())));
-  test("NON si salva una categoria o visibilità inventata", () =>
-    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuova({ visibilita: "tutto il mondo" }))));
+  const riservati = (extra = {}) => ({ note: null, tag: [], archivio: false, sessioniCollegate: [], ...extra });
+  test("il DM carica un nuovo contenuto", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuovo())));
+  test("la categoria Nemico è ammessa", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuovo({ categoria: "nemico" }))));
+  test("un giocatore NON crea contenuti", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/immagini/nuova"), nuovo())));
+  test("NON si salva una categoria inventata", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuovo({ categoria: "tesoro" }))));
   test("NON si salvano campi extra", () =>
-    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuova({ url: "https://x" }))));
-  test("il DM rivela un'immagine a un giocatore", () =>
-    assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"), { visibilita: "selezionati", lettori: ["p2"] })));
-  test("il DM vede anche le immagini nascoste", () => assertSucceeds(getDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"))));
-  test("un membro NON vede un'immagine nascosta", () => assertFails(getDoc(doc(come("p1"), "campagne/c1/immagini/nascosta"))));
-  test("un membro vede un'immagine visibile a tutti", () => assertSucceeds(getDoc(doc(come("p2"), "campagne/c1/immagini/pubblica"))));
-  test("il giocatore scelto vede la sua immagine", () => assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/immagini/soloP1"))));
-  test("un altro giocatore NON la vede", () => assertFails(getDoc(doc(come("p2"), "campagne/c1/immagini/soloP1"))));
-  test("chi non è membro NON vede nemmeno quelle per tutti", () =>
-    assertFails(getDoc(doc(come("vecchio"), "campagne/c1/immagini/pubblica"))));
-  test("un membro elenca le immagini per tutti", () =>
-    assertSucceeds(getDocs(query(collection(come("p2"), "campagne/c1/immagini"), where("visibilita", "==", "tutti")))));
-  test("un membro elenca quelle rivelate a lui", () =>
-    assertSucceeds(getDocs(query(collection(come("p1"), "campagne/c1/immagini"),
-      where("visibilita", "==", "selezionati"), where("lettori", "array-contains", "p1")))));
-  test("un membro NON elenca tutte le immagini", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuovo({ url: "https://x" }))));
+  test("NON si salvano note o tag nel documento leggibile dai giocatori", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuovo({ note: "segreto" }))));
+  test("'visibileA' deve essere l'unione di mostrati e archivio", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuovo({ mostrataA: ["p1"], vistaDa: ["p1"], visibileA: [] }))));
+  test("NON si rende visibile a qualcuno di nascosto (fuori da mostrati e archivio)", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immagini/nuova"), nuovo({ visibileA: ["p2"] }))));
+  test("il DM mostra un contenuto a un giocatore", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"), { mostrataA: ["p2"], vistaDa: ["p2"], visibileA: ["p2"] })));
+  test("il DM lo mette nell'archivio di un giocatore", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"), { archiviataPer: ["p1"], visibileA: ["p1"] })));
+  test("il DM vede anche i contenuti nascosti", () => assertSucceeds(getDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"))));
+  test("un membro NON vede un contenuto nascosto", () => assertFails(getDoc(doc(come("p1"), "campagne/c1/immagini/nascosta"))));
+  test("un membro vede un contenuto mostrato a lui", () => assertSucceeds(getDoc(doc(come("p2"), "campagne/c1/immagini/pubblica"))));
+  test("il giocatore vede un contenuto del suo archivio", () => assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/immagini/soloP1"))));
+  test("un altro giocatore NON vede l'archivio altrui", () => assertFails(getDoc(doc(come("p2"), "campagne/c1/immagini/soloP1"))));
+  test("chi non è membro NON vede nulla, anche se elencato", async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      updateDoc(doc(ctx.firestore(), "campagne/c1/immagini/pubblica"), { mostrataA: ["vecchio"], vistaDa: [], visibileA: ["vecchio"] }));
+    await assertFails(getDoc(doc(come("vecchio"), "campagne/c1/immagini/pubblica")));
+  });
+  test("un membro elenca i contenuti visibili a lui", () =>
+    assertSucceeds(getDocs(query(collection(come("p1"), "campagne/c1/immagini"), where("visibileA", "array-contains", "p1")))));
+  test("un membro NON elenca i contenuti visibili a un altro", () =>
+    assertFails(getDocs(query(collection(come("p1"), "campagne/c1/immagini"), where("visibileA", "array-contains", "p2")))));
+  test("un membro NON elenca tutta la libreria", () =>
     assertFails(getDocs(collection(come("p1"), "campagne/c1/immagini"))));
-  test("un giocatore NON si rivela un'immagine da solo", () =>
-    assertFails(updateDoc(doc(come("p1"), "campagne/c1/immagini/nascosta"), { visibilita: "tutti" })));
-  test("il DM elimina un'immagine", () => assertSucceeds(deleteDoc(doc(come("dm"), "campagne/c1/immagini/pubblica"))));
+  test("un giocatore NON si mostra un contenuto da solo", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1/immagini/nascosta"), { mostrataA: ["p1"], visibileA: ["p1"] })));
+  test("il DM elimina un contenuto", () => assertSucceeds(deleteDoc(doc(come("dm"), "campagne/c1/immagini/pubblica"))));
+
+  test("il DM salva note, tag e sessioni collegate", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/immaginiDM/nuova"), riservati({ note: "x", tag: ["a"], archivio: true, sessioniCollegate: ["r1"] }))));
+  test("NON si salvano campi extra nei dati riservati", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immaginiDM/nuova"), riservati({ titolo: "x" }))));
+  test("note troppo lunghe rifiutate", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/immaginiDM/nuova"), riservati({ note: "x".repeat(2001) }))));
+  test("il DM legge i dati riservati", () => assertSucceeds(getDoc(doc(come("dm"), "campagne/c1/immaginiDM/nascosta"))));
+  test("un giocatore NON legge note e tag", () => assertFails(getDoc(doc(come("p1"), "campagne/c1/immaginiDM/nascosta"))));
+  test("un giocatore NON elenca i dati riservati", () =>
+    assertFails(getDocs(collection(come("p1"), "campagne/c1/immaginiDM"))));
+  test("un giocatore NON scrive i dati riservati", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/immaginiDM/nuova"), riservati())));
 });
 
 describe("Riepilogo del party", () => {
