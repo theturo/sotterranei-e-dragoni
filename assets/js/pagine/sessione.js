@@ -25,7 +25,7 @@ import {
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
-import { CLASSI } from "../dati-srd.js";
+import { CLASSI, ICONA_CLASSE_FALLBACK } from "../dati-srd.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
 import {
   CATEGORIE,
@@ -106,7 +106,7 @@ function creaRigaParty(riepilogo) {
   }
   const classe = CLASSI[riepilogo.classe];
   li.innerHTML = `
-    <span class="party-avatar"><span class="icona-classe" aria-hidden="true">${classe?.icona || "🎲"}</span></span>
+    <span class="party-avatar"><span class="icona-classe" aria-hidden="true">${classe?.iconaSvg || ICONA_CLASSE_FALLBACK}</span></span>
     <div class="party-sessione-info">
       <div class="party-sessione-nome">${esc(riepilogo.nomePersonaggio) || "—"}</div>
       <div class="party-sessione-sub">${esc(riepilogo.nomeGiocatore) || "—"} · ${esc(classe?.nome) || "—"} ${esc(riepilogo.livello || 1)}</div>
@@ -338,7 +338,7 @@ function renderContenuti() {
     // sessione precedente non chiusa).
     elenco = contenuti.filter((c) =>
       (sessioneAttivaId && c.riservati.sessioniCollegate.includes(sessioneAttivaId)) || (c.mostrataA || []).length > 0);
-    vuoto.textContent = sessioneAttivaId
+    vuoto.querySelector("p").textContent = sessioneAttivaId
       ? "Nessun contenuto collegato a questa sessione: collegane dalla libreria."
       : "Nessuna sessione in corso. Prepara i contenuti dalla Libreria o da Gestione campagna, poi mostrali qui durante la sessione.";
     lista.replaceChildren(...elenco.map(rigaContenutoDM));
@@ -347,7 +347,7 @@ function renderContenuti() {
     link.href = "archivio.html";
     link.textContent = "Archivio";
     elenco = contenuti.filter((c) => (c.mostrataA || []).includes(uidCorrente));
-    vuoto.textContent = "Nulla da mostrare al momento.";
+    vuoto.querySelector("p").textContent = "Nulla da mostrare al momento.";
     lista.replaceChildren(...elenco.map(rigaContenutoGiocatore));
     // Avviso quando il DM mostra qualcosa di nuovo.
     const idOra = new Set(elenco.map((c) => c.id));
