@@ -114,9 +114,11 @@ appena creati) e rilanciare lo stesso comando.
 
 Avvisi innocui durante `npm ci` in Cloud Shell: `EBADENGINE` (Cloud Shell ha una
 versione di Node più recente; in produzione le funzioni girano con Node 22),
-pacchetti `deprecated`, `install scripts blocked` e le vulnerabilità "moderate"
-segnalate da `npm audit` (dipendenze interne dei pacchetti Google). Non lanciare
-`npm audit fix` in Cloud Shell.
+pacchetti `deprecated` e `install scripts blocked`. Non lanciare `npm audit fix`
+in Cloud Shell: le dipendenze si aggiornano nel repository (con una pull
+request) e poi si ripubblica. Per esempio `package.json` impone a `uuid`
+(usato internamente dalle librerie Google) una versione senza l'avviso di
+sicurezza GHSA-w5hq-g745-h8pq, tramite la sezione `overrides`.
 
 ### 4b. Permesso di invocazione per gli attivatori (una volta, dopo il primo deploy)
 

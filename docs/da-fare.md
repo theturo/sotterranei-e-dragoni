@@ -8,10 +8,6 @@ indicativo. Si aggiorna man mano che si completano.
 - **Eliminazione di un utente dall'area admin**: pulsante "Elimina" in
   Gestione utenti. Richiede una Cloud Function (l'account di Authentication non
   si può cancellare dal browser), che elimini anche profilo e personaggi.
-- **Dipendenza `uuid` delle Cloud Functions**: avviso di sicurezza moderato
-  ([GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq)),
-  arriva tramite `gaxios`. Aggiornare con `npm audit fix` in `functions/` e
-  ripubblicare le funzioni.
 - **Selettore della campagna** per il DM (oggi si lavora sempre su quella
   "attiva").
 - **Pulizia del codice** e piccole rifiniture dell'interfaccia.
@@ -45,3 +41,5 @@ indicativo. Si aggiorna man mano che si completano.
   contenuti mostrati in sessione e Archivio dei giocatori (su Firebase Storage,
   piano Blaze).
 - Numerazione delle sessioni senza doppioni (transazione con contatore).
+- Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
+  `functions/package.json`).
