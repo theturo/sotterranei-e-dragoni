@@ -2993,6 +2993,7 @@ table.tabella-punteggi select {
   .sessione-layout > .sessione-colonna {
     display: contents;
   }
+  .sessione-pannello-combattimento { order: 0; }
   .sessione-pannello-appunti { order: 1; }
   .sessione-pannello-party { order: 2; }
   .sessione-pannello-contenuti { order: 3; }
@@ -3281,5 +3282,255 @@ table.tabella-punteggi select {
   }
   .scelta-giocatori {
     grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Tracker di combattimento ---------- */
+.sessione-pannello-combattimento[hidden] {
+  display: none;
+}
+
+.comandi-combattimento {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.comandi-combattimento [hidden] {
+  display: none;
+}
+
+.combattimento-sottotitolo {
+  margin: -6px 0 10px;
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+}
+
+.combattimento-sottotitolo:empty {
+  display: none;
+}
+
+.banner-turno {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+  font-family: var(--font-heading);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.banner-turno[hidden] {
+  display: none;
+}
+
+.lista-combattimento {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lista-combattimento[hidden] {
+  display: none;
+}
+
+.riga-combattente {
+  display: grid;
+  grid-template-columns: 26px 48px minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(122, 31, 43, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.riga-combattente.di-turno {
+  border: 2px solid var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.1);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.35);
+}
+
+.riga-combattente.mio .combattente-nome::after {
+  content: " (tu)";
+  font-weight: normal;
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+}
+
+.riga-combattente.a-terra {
+  opacity: 0.55;
+}
+
+.combattente-posizione {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  text-align: center;
+}
+
+.combattente-avatar img[hidden],
+.combattente-icona[hidden] {
+  display: none;
+}
+
+.combattente-icona {
+  font-size: 1.3rem;
+}
+
+.combattente-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.combattente-nome {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.combattente-sub[data-salute="ferito"] {
+  color: #8a5a00;
+}
+
+.combattente-sub[data-salute="grave"],
+.combattente-sub[data-salute="a terra"] {
+  color: var(--color-burgundy-bright);
+}
+
+.combattente-iniziativa {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.valore-iniziativa {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  color: var(--color-burgundy);
+  min-width: 2ch;
+  text-align: right;
+}
+
+.input-iniziativa,
+.input-pf-nemico {
+  width: 58px;
+  padding: 4px 6px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--color-ink);
+  text-align: center;
+}
+
+.btn-tira {
+  padding: 4px 8px;
+}
+
+.combattente-azioni {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-spareggio {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+}
+
+.btn-spareggio[hidden] {
+  visibility: hidden;
+  display: inline-block;
+}
+
+.editor-pf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.editor-pf .btn-tabella {
+  padding: 2px 8px;
+}
+
+.etichetta-pf {
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+}
+
+.form-nemici {
+  margin-top: 14px;
+  border-top: 1px solid rgba(122, 31, 43, 0.15);
+  padding-top: 10px;
+}
+
+.form-nemici[hidden] {
+  display: none;
+}
+
+.form-nemici summary {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.form-nemici form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: flex-start;
+}
+
+.griglia-form-nemici {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px 12px;
+  width: 100%;
+}
+
+.griglia-form-nemici label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+}
+
+.griglia-form-nemici .campo-largo {
+  grid-column: span 2;
+}
+
+.griglia-form-nemici input,
+.griglia-form-nemici select {
+  padding: 6px 8px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--color-ink);
+}
+
+@media (max-width: 600px) {
+  .riga-combattente {
+    grid-template-columns: 22px 40px minmax(0, 1fr) auto;
+  }
+  .riga-combattente .party-avatar {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+  .combattente-azioni {
+    grid-column: 3 / -1;
+    justify-content: flex-end;
   }
 }

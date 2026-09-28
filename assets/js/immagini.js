@@ -84,12 +84,14 @@ export function urlImmagine(percorso) {
 
 // Mostra l'immagine in un <img> esistente; se non si può leggere (permessi,
 // file rimosso) nasconde l'elemento invece di mostrare un'icona rotta.
-export async function mostraImmagine(img, percorso) {
+// "silenzioso": quando il divieto è previsto (es. immagine non ancora mostrata
+// al giocatore), non lo segnala in console.
+export async function mostraImmagine(img, percorso, { silenzioso = false } = {}) {
   try {
     img.src = await urlImmagine(percorso);
     img.hidden = false;
   } catch (errore) {
-    console.error(errore);
+    if (!silenzioso) console.error(errore);
     img.hidden = true;
   }
 }

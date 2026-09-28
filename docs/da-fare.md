@@ -14,8 +14,6 @@ indicativo. Si aggiorna man mano che si completano.
 
 ## Funzioni per il tavolo
 
-- **Tracker di iniziativa e combattimento** nella pagina Sessione: il DM
-  ordina i turni, tutti vedono di chi è il turno.
 - **PF e condizioni in tempo reale per il DM** (avvelenato, prono…), con
   aggiornamento istantaneo invece che al caricamento della pagina.
 - **Riposo breve e lungo con un clic**, che ripristina slot incantesimo e dadi
@@ -41,5 +39,7 @@ indicativo. Si aggiorna man mano che si completano.
   contenuti mostrati in sessione e Archivio dei giocatori (su Firebase Storage,
   piano Blaze).
 - Numerazione delle sessioni senza doppioni (transazione con contatore).
+- Tracker di iniziativa e combattimento nella pagina Sessione (turni, round,
+  nemici con PF riservati al DM e salute vaga per i giocatori).
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).

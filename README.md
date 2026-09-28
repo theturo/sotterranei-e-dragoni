@@ -21,6 +21,10 @@ it isn't set up to onboard outside users or accept contributions at this time.
   enemies, items, handouts) with private notes and tags, links items to sessions, shows them
   live during play to the whole party or to chosen players, and decides which ones end up in
   each player's campaign archive when the session closes.
+- **Combat tracker** — the Dungeon Master starts a fight from the session page; players
+  roll or type their own initiative, the DM adds enemies (optionally with a library image),
+  tracks their hit points privately and advances turns and rounds, while everyone sees the
+  order, whose turn it is and a vague health status for each enemy, live.
 - **Notifications** — players get notified in-app when their character levels up, with a
   persistent notification history.
 - **Fantasy-themed UI** — designed to feel in-keeping with the tabletop experience, and to

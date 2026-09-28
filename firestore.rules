@@ -49,6 +49,10 @@ rules_version = '2';
 //     vede solo quelli in cui compare in "visibileA".
 //   - "immaginiDM/{id}": note, tag, destinazione all'archivio e sessioni
 //     collegate di ogni contenuto: solo DM e admin.
+//   - "combattimento/stato", "combattenti/{id}": tracker di iniziativa
+//     (round, turno, ordine), letti dai membri e gestiti dal DM; un giocatore
+//     scrive solo l'iniziativa del proprio personaggio.
+//   - "combattentiDM/{id}": PF dei nemici, solo DM e admin.
 // - "campagna/{docId}" (vecchio, pre-campagne): solo lettura per admin/DM, per
 //   la migrazione una tantum. Rimovibile a migrazione confermata.
 // - "registroSessioni/{sessioneId}": sessioni (programmata/in-corso/chiusa),
@@ -340,6 +344,34 @@ service cloud.firestore {
         allow create, update: if isDMdellaCampagna(campagnaId) && contenutoDMValido();
       }
 
+      // Combattimento: stato condiviso (round e turno) e combattenti, letti da
+      // tutti i membri e gestiti dal DM. Un giocatore può solo scrivere
+      // l'iniziativa (e il bonus per gli spareggi) del proprio personaggio.
+      match /combattimento/{docId} {
+        allow get: if isNellaCampagna(campagnaId);
+        allow write: if isDMdellaCampagna(campagnaId) && docId == "stato" && statoCombattimentoValido();
+      }
+
+      match /combattenti/{combattenteId} {
+        allow get, list: if isNellaCampagna(campagnaId);
+        allow create: if isDMdellaCampagna(campagnaId) && combattenteValido();
+        allow update: if (isDMdellaCampagna(campagnaId) && combattenteValido()) || (
+          isApprovato()
+          && resource.data.tipo == "pg"
+          && resource.data.uid == request.auth.uid
+          && request.auth.uid in datiCampagna(campagnaId).membriUid
+          && campiModificati().hasOnly(['iniziativa', 'bonus'])
+          && combattenteValido()
+        );
+        allow delete: if isDMdellaCampagna(campagnaId);
+      }
+
+      // PF dei nemici e note: solo il DM (i giocatori vedono solo "salute").
+      match /combattentiDM/{combattenteId} {
+        allow get, list, delete: if isDMdellaCampagna(campagnaId);
+        allow create, update: if isDMdellaCampagna(campagnaId) && combattenteDMValido();
+      }
+
       // Riepilogo pubblico della scheda attiva di un membro.
       match /party/{uid} {
         allow get, list: if isNellaCampagna(campagnaId);
@@ -378,6 +410,39 @@ service cloud.firestore {
         && d.tag is list && d.tag.size() <= 20
         && d.archivio is bool
         && d.sessioniCollegate is list && d.sessioniCollegate.size() <= 200;
+    }
+
+    function statoCombattimentoValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['attivo', 'round', 'turno', 'avviatoIl'])
+        && d.attivo is bool
+        && d.round is int && d.round >= 0 && d.round <= 1000
+        && (d.turno == null || (d.turno is string && d.turno.size() <= 40));
+    }
+
+    function interoTra(valore, minimo, massimo) {
+      return valore is int && valore >= minimo && valore <= massimo;
+    }
+
+    function combattenteValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['tipo', 'nome', 'uid', 'iniziativa', 'bonus', 'spareggio', 'salute', 'immagineId', 'creatoIl'])
+        && d.tipo in ['pg', 'nemico']
+        && testoValido(d.nome, 1, 60)
+        && (d.tipo == 'nemico' || d.uid is string)
+        && (d.get('iniziativa', null) == null || interoTra(d.iniziativa, -20, 99))
+        && interoTra(d.get('bonus', 0), -20, 30)
+        && interoTra(d.get('spareggio', 0), -1000, 1000)
+        && d.get('salute', null) in [null, 'illeso', 'ferito', 'grave', 'a terra']
+        && (d.get('immagineId', null) == null || (d.immagineId is string && d.immagineId.size() <= 40));
+    }
+
+    function combattenteDMValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['pfAttuali', 'pfMassimi', 'note'])
+        && interoTra(d.pfAttuali, -999, 9999)
+        && interoTra(d.pfMassimi, 0, 9999)
+        && testoOpzionale(d.get('note', null), 500);
     }
 
     // Il riepilogo deve coincidere con il profilo e con la scheda attiva vera.
