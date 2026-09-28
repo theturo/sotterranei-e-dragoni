@@ -347,7 +347,17 @@
     <div class="modal-card-livello">
       <div id="livello-rivelazione" class="livello-rivelazione">
         <div class="livello-rivelazione-etichetta">Sei salito di livello!</div>
-        <div class="livello-rivelazione-numero" id="livello-rivelazione-numero">2</div>
+        <div class="palco-numero" aria-hidden="true">
+          <div class="pulviscolo pulviscolo-1"></div>
+          <div class="pulviscolo pulviscolo-2"></div>
+          <div class="pulviscolo pulviscolo-3"></div>
+          <div class="filigrana-stage" id="filigrana-classe"></div>
+          <div class="raggiera-rotante"><div class="raggiera"></div></div>
+          <div class="colonna-numero">
+            <div class="livello-rivelazione-numero" id="livello-rivelazione-numero">2</div>
+            <div class="fregio-livello"><span class="fregio-gemma"></span></div>
+          </div>
+        </div>
         <p class="livello-rivelazione-suggerimento">Clicca per continuare</p>
       </div>
 
@@ -356,10 +366,23 @@
           <h2>Punti Ferita</h2>
           <p class="card-tagline">Come vuoi calcolare l'aumento dei tuoi PF massimi?</p>
           <div class="scelta-pf">
-            <button type="button" class="btn-tabella btn-tabella-evidenza" data-metodo="media">Usa il valore medio</button>
+            <button type="button" class="btn-tabella btn-tabella-evidenza secondaria" data-metodo="media">Usa il valore medio</button>
             <button type="button" class="btn-tabella btn-tabella-evidenza" data-metodo="tiro">Tira il dado</button>
           </div>
-          <div id="risultato-pf" class="risultato-pf" hidden></div>
+          <div id="vassoio-tiro" class="vassoio-tiro" hidden>
+            <div class="vassoio-etichetta" id="vassoio-etichetta">Dado vita</div>
+            <div class="vassoio-stage">
+              <div class="vassoio-ombra"></div>
+              <div class="vassoio-dado">
+                <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                  <path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="3" stroke-linejoin="round"/>
+                  <path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.3" opacity="0.5"/>
+                </svg>
+              </div>
+              <div class="esito-numero" id="esito-numero" hidden></div>
+            </div>
+          </div>
+          <div id="risultato-pf" class="risultato-pf" role="status" hidden></div>
           <div class="wizard-nav">
             <span></span>
             <button type="button" id="btn-avanti-pf" class="btn btn-secondary" style="width:auto; padding:10px 22px;" disabled>Avanti</button>

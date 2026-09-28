@@ -1765,7 +1765,7 @@ table.tabella-utenti td.cella-email {
 .risultato-pf {
   text-align: center;
   font-family: var(--font-heading);
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   color: var(--color-burgundy);
   margin-bottom: 16px;
 }
@@ -3860,4 +3860,309 @@ table.tabella-punteggi select {
 
 @keyframes scheletro-scorrimento {
   100% { transform: translateX(100%); }
+}
+
+/* =====================================================================
+   Grafica, lotto 3 — passaggio di livello (tavole "Annuncio di passaggio
+   di livello" e "Tiro dei Punti Ferita" della tela di design).
+   ===================================================================== */
+
+/* ---------- Annuncio: raggiera, filigrana di classe, fregio, pulviscolo ---------- */
+.livello-rivelazione {
+  position: relative;
+  padding: 6px 0 22px;
+}
+
+.livello-rivelazione-etichetta,
+.livello-rivelazione-suggerimento {
+  position: relative;
+  z-index: 2;
+}
+
+.palco-numero {
+  position: relative;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filigrana-stage {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  color: var(--color-gold-bright);
+  opacity: 0;
+  pointer-events: none;
+  animation: livello-filigrana 1.8s ease-out forwards;
+}
+
+.filigrana-stage svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes livello-filigrana {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 0.08; transform: scale(1); }
+}
+
+/* La rotazione lenta vive sul contenitore, la comparsa sull'elemento interno:
+   il bagliore continua a "respirare" dopo essersi assestato. */
+.raggiera-rotante {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  pointer-events: none;
+  animation: livello-raggiera-rotazione 90s linear infinite;
+}
+
+.raggiera {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(232, 198, 90, 0.55) 0deg 4deg, transparent 4deg 30deg);
+  -webkit-mask-image: radial-gradient(circle, black 8%, black 52%, transparent 86%);
+  mask-image: radial-gradient(circle, black 8%, black 52%, transparent 86%);
+  opacity: 0;
+  animation: livello-raggiera-comparsa 1.8s ease-out 0.05s forwards;
+}
+
+@keyframes livello-raggiera-comparsa {
+  0% { opacity: 0; transform: scale(0.4) rotate(-10deg); }
+  55% { opacity: 0.85; transform: scale(1.08) rotate(4deg); }
+  100% { opacity: 0.5; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes livello-raggiera-rotazione {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.colonna-numero {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.livello-rivelazione-numero {
+  position: relative;
+  line-height: 1;
+}
+
+/* Riflesso che attraversa il numero appena compare. */
+.livello-rivelazione-numero::after {
+  content: attr(data-numero);
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.95) 48%, transparent 66%);
+  background-size: 250% 100%;
+  background-position: 150% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  animation: livello-brillio 1s ease-out 0.4s backwards;
+}
+
+@keyframes livello-brillio {
+  0% { background-position: 150% 0; opacity: 0; }
+  15% { opacity: 1; }
+  100% { background-position: -50% 0; opacity: 0; }
+}
+
+.fregio-livello {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+  opacity: 0;
+  animation: livello-fregio 0.5s ease-out 0.55s forwards;
+}
+
+.fregio-livello::before,
+.fregio-livello::after {
+  content: "";
+  width: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold));
+}
+
+.fregio-livello::after {
+  background: linear-gradient(90deg, var(--color-gold), transparent);
+}
+
+.fregio-gemma {
+  width: 6px;
+  height: 6px;
+  background: var(--color-gold);
+  transform: rotate(45deg);
+  box-shadow: 0 0 6px rgba(201, 162, 39, 0.5);
+}
+
+@keyframes livello-fregio {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pulviscolo {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-gold-bright);
+  box-shadow: 0 0 5px rgba(232, 198, 90, 0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pulviscolo-1 { left: 34%; bottom: 12%; animation: livello-pulviscolo 4.6s ease-in 0.3s infinite; }
+.pulviscolo-2 { left: 60%; bottom: 16%; animation: livello-pulviscolo 5.3s ease-in 1.8s infinite; }
+.pulviscolo-3 { left: 47%; bottom: 8%; animation: livello-pulviscolo 4.9s ease-in 3.1s infinite; }
+
+@keyframes livello-pulviscolo {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.15; }
+  100% { opacity: 0; transform: translateY(-90px) scale(1); }
+}
+
+/* ---------- Tiro dei PF: vassoio con il dado ---------- */
+.scelta-pf .btn-tabella-evidenza {
+  flex: 1;
+  padding: 10px 14px;
+}
+
+.scelta-pf .btn-tabella-evidenza.secondaria {
+  background: transparent;
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.scelta-pf .btn-tabella:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.vassoio-tiro {
+  position: relative;
+  background: linear-gradient(160deg, var(--color-ink) 0%, #1a1109 100%);
+  border-radius: 14px;
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.6), 0 3px 0 rgba(0, 0, 0, 0.15);
+  padding: 18px 0 14px;
+  margin-bottom: 16px;
+}
+
+.vassoio-tiro[hidden] {
+  display: none;
+}
+
+.vassoio-etichetta {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(230, 211, 163, 0.55);
+}
+
+.vassoio-stage {
+  position: relative;
+  width: 140px;
+  height: 120px;
+  margin: 0 auto;
+  perspective: 400px;
+}
+
+.vassoio-ombra {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 46px;
+  height: 10px;
+  margin-left: -23px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.7), transparent 72%);
+  opacity: 0.5;
+}
+
+.vassoio-dado {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  width: 62px;
+  height: 62px;
+  margin-left: -31px;
+  transform-style: preserve-3d;
+  transform: rotateZ(-4deg);
+}
+
+.vassoio-dado svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vassoio-tiro.in-lancio .vassoio-dado {
+  animation: vassoio-lancio 3.4s cubic-bezier(.45, .05, .55, .95) 1 forwards;
+}
+
+.vassoio-tiro.in-lancio .vassoio-ombra {
+  animation: vassoio-ombra 3.4s cubic-bezier(.45, .05, .55, .95) 1 forwards;
+}
+
+.esito-numero {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--color-gold-bright);
+  text-shadow: 0 0 14px rgba(201, 162, 39, 0.6);
+  animation: vassoio-esito 0.5s ease-out;
+}
+
+.esito-numero[hidden] {
+  display: none;
+}
+
+@keyframes vassoio-lancio {
+  0% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(-4deg) scale(1, 1); filter: blur(0); }
+  6% { transform: translateY(1px) rotateX(-8deg) rotateY(-6deg) rotateZ(-8deg) scale(1.06, 0.9); filter: blur(0); }
+  22% { transform: translateY(-24px) rotateX(180deg) rotateY(95deg) rotateZ(60deg) scale(0.97, 1.04); filter: blur(0.6px); }
+  40% { transform: translateY(-32px) rotateX(320deg) rotateY(190deg) rotateZ(140deg) scale(1, 1); filter: blur(0); }
+  58% { transform: translateY(-10px) rotateX(500deg) rotateY(280deg) rotateZ(250deg) scale(1.02, 0.97); filter: blur(0.7px); }
+  70% { transform: translateY(3px) rotateX(640deg) rotateY(345deg) rotateZ(340deg) scale(1.06, 0.88); filter: blur(0); }
+  78% { transform: translateY(-4px) rotateX(700deg) rotateY(355deg) rotateZ(358deg) scale(0.98, 1.03); filter: blur(0); }
+  100% { transform: translateY(0) rotateX(720deg) rotateY(360deg) rotateZ(356deg) scale(1, 1); filter: blur(0); }
+}
+
+@keyframes vassoio-ombra {
+  0% { opacity: 0.5; transform: scale(1, 1); }
+  6% { opacity: 0.55; transform: scale(1.05, 1); }
+  22% { opacity: 0.24; transform: scale(0.6, 0.6); }
+  40% { opacity: 0.16; transform: scale(0.48, 0.48); }
+  58% { opacity: 0.34; transform: scale(0.72, 0.72); }
+  70% { opacity: 0.55; transform: scale(1.08, 1); }
+  78% { opacity: 0.42; transform: scale(0.92, 1); }
+  100% { opacity: 0.5; transform: scale(1, 1); }
+}
+
+@keyframes vassoio-esito {
+  0% { opacity: 0; transform: scale(0.4); }
+  65% { opacity: 1; transform: scale(1.18); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .raggiera-rotante,
+  .pulviscolo,
+  .vassoio-tiro.in-lancio .vassoio-dado,
+  .vassoio-tiro.in-lancio .vassoio-ombra {
+    animation: none;
+  }
 }

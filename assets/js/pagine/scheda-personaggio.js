@@ -191,7 +191,13 @@ function apriModalLivello() {
   statoLivello.incantesimiScelti = [];
   document.getElementById("risultato-pf").hidden = true;
   document.getElementById("btn-avanti-pf").disabled = true;
-  document.getElementById("livello-rivelazione-numero").textContent = String((scheda.livello || 1) + 1);
+  document.getElementById("vassoio-tiro").hidden = true;
+  document.querySelectorAll(".scelta-pf [data-metodo]").forEach((b) => (b.disabled = false));
+  const numero = document.getElementById("livello-rivelazione-numero");
+  numero.textContent = String((scheda.livello || 1) + 1);
+  numero.dataset.numero = numero.textContent;
+  // Filigrana: l'icona della classe, grande e tenue dietro al numero (SVG fisso).
+  document.getElementById("filigrana-classe").innerHTML = CLASSI[scheda.classe]?.iconaSvg || ICONA_CLASSE_FALLBACK;
   document.getElementById("livello-rivelazione").hidden = false;
   document.getElementById("wizard-livello").hidden = true;
   document.getElementById("modal-livello").style.display = "flex";
@@ -218,22 +224,34 @@ document.querySelectorAll(".scelta-pf [data-metodo]").forEach((bottone) => {
       risultato.hidden = false;
       btnAvanti.disabled = false;
     } else {
+      // Il dado si tira una sola volta: il risultato resta fisso (niente
+      // ritiri finché non esce un numero alto).
       statoLivello.metodoPF = "tiro";
-      risultato.hidden = false;
+      document.querySelectorAll(".scelta-pf [data-metodo]").forEach((b) => (b.disabled = true));
+      risultato.hidden = true;
       btnAvanti.disabled = true;
-      let tick = 0;
       const dadoVita = CLASSI[scheda.classe]?.dadoVita || 8;
-      const intervallo = setInterval(() => {
-        risultato.textContent = `🎲 ${1 + Math.floor(Math.random() * dadoVita)}`;
-        tick += 1;
-        if (tick > 10) {
-          clearInterval(intervallo);
-          const { tiro, totale } = tiraPuntiVitaLivello(scheda.classe, modCostituzione);
-          statoLivello.guadagnoPF = totale;
-          risultato.textContent = `Tiro: ${tiro} → +${totale} PF`;
-          btnAvanti.disabled = false;
-        }
-      }, 80);
+      const { tiro, totale } = tiraPuntiVitaLivello(scheda.classe, modCostituzione);
+      statoLivello.guadagnoPF = totale;
+
+      const vassoio = document.getElementById("vassoio-tiro");
+      const esito = document.getElementById("esito-numero");
+      document.getElementById("vassoio-etichetta").textContent = `Dado vita — d${dadoVita}`;
+      esito.hidden = true;
+      vassoio.hidden = false;
+      // Riavvia l'animazione del lancio.
+      vassoio.classList.remove("in-lancio");
+      void vassoio.offsetWidth;
+      vassoio.classList.add("in-lancio");
+      const durata = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 300 : 3400;
+      setTimeout(() => {
+        esito.textContent = String(tiro);
+        esito.hidden = false;
+        const bonus = totale - tiro;
+        risultato.textContent = `Tiro: ${tiro}${bonus ? ` ${bonus > 0 ? "+" : "−"} ${Math.abs(bonus)} (Costituzione)` : ""} → +${totale} PF`;
+        risultato.hidden = false;
+        btnAvanti.disabled = false;
+      }, durata);
     }
   });
 });
