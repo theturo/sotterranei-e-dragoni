@@ -14,9 +14,12 @@ import {
   creaSessioneProgrammata,
   eliminaSessioneProgrammata,
   migraDatiEsistenti,
+  ascoltaLibreriaDM,
+  collegaContenutiSessione,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
+import { scegliContenuti } from "../contenuti.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -25,6 +28,29 @@ const toast = document.getElementById("toast");
 let uidCorrente = null;
 let campagne = [];
 let campagnaAttiva = null;
+// Libreria dei contenuti della campagna attiva (per collegarli alle sessioni).
+let libreria = [];
+let smettiLibreria = null;
+
+const collegatiA = (sessioneId) => libreria.filter((c) => c.riservati.sessioniCollegate.includes(sessioneId));
+
+function ascoltaLibreria() {
+  if (smettiLibreria) smettiLibreria();
+  smettiLibreria = null;
+  libreria = [];
+  if (!campagnaAttiva) return;
+  smettiLibreria = ascoltaLibreriaDM(campagnaAttiva.id, (elenco) => {
+    libreria = elenco;
+    aggiornaConteggiContenuti();
+  });
+}
+
+function aggiornaConteggiContenuti() {
+  document.querySelectorAll("[data-contenuti-sessione]").forEach((bottone) => {
+    const n = collegatiA(bottone.dataset.contenutiSessione).length;
+    bottone.textContent = n ? `Contenuti (${n})` : "Contenuti";
+  });
+}
 
 let toastTimer = null;
 function mostraToast(testo, errore = false) {
@@ -43,7 +69,9 @@ function formattaData(dataIso) {
 async function ricaricaTutto() {
   // Con il titolo vero (anche se provvisorio), letto dal documento privato.
   campagne = await elencaCampagneDMConTitolo(uidCorrente);
+  const idPrecedente = campagnaAttiva?.id;
   campagnaAttiva = campagne.find((c) => c.stato === "attiva") || null;
+  if (campagnaAttiva?.id !== idPrecedente || !smettiLibreria) ascoltaLibreria();
 
   const nessunaCampagna = campagne.length === 0;
   document.getElementById("pannello-benvenuto").hidden = !nessunaCampagna;
@@ -191,10 +219,14 @@ async function renderProgrammate() {
           <strong>Sessione ${esc(sessione.numero)}</strong>${sessione.titolo ? ` — ${esc(sessione.titolo)}` : ""}
           <div class="party-sessione-sub">${esc(formattaData(sessione.dataProgrammata))}</div>
         </div>
-        <button type="button" class="btn-tabella btn-tabella-pericolo" data-elimina-programmata="${esc(sessione.id)}">Annulla</button>
+        <div class="azioni-riga">
+          <button type="button" class="btn-tabella" data-contenuti-sessione="${esc(sessione.id)}" data-etichetta="${esc(`Sessione ${sessione.numero}`)}">Contenuti</button>
+          <button type="button" class="btn-tabella btn-tabella-pericolo" data-elimina-programmata="${esc(sessione.id)}">Annulla</button>
+        </div>
       `;
       lista.appendChild(riga);
     });
+    aggiornaConteggiContenuti();
   } catch (errore) {
     console.error(errore);
     mostraToast("Impossibile caricare le sessioni pianificate.", true);
@@ -298,12 +330,21 @@ document.getElementById("form-programma-sessione").addEventListener("submit", as
 });
 
 document.getElementById("lista-programmate").addEventListener("click", async (evento) => {
+  const bottoneContenuti = evento.target.closest("[data-contenuti-sessione]");
+  if (bottoneContenuti) {
+    await scegliContenutiSessione(bottoneContenuti.dataset.contenutiSessione, bottoneContenuti.dataset.etichetta);
+    return;
+  }
   const bottone = evento.target.closest("[data-elimina-programmata]");
   if (!bottone) return;
   if (!confirm("Annullare questa sessione pianificata?")) return;
   bottone.disabled = true;
   try {
-    await eliminaSessioneProgrammata(bottone.dataset.eliminaProgrammata);
+    const sessioneId = bottone.dataset.eliminaProgrammata;
+    // I contenuti restano in libreria: si toglie solo il collegamento.
+    const collegati = collegatiA(sessioneId).map((c) => c.id);
+    if (collegati.length) await collegaContenutiSessione(campagnaAttiva.id, sessioneId, [], collegati);
+    await eliminaSessioneProgrammata(sessioneId);
     mostraToast("Sessione pianificata annullata.");
     await renderProgrammate();
   } catch (errore) {
@@ -312,6 +353,36 @@ document.getElementById("lista-programmate").addEventListener("click", async (ev
     bottone.disabled = false;
   }
 });
+
+// Il DM sceglie dalla libreria i contenuti da collegare a una sessione
+// pianificata (i contenuti si caricano prima, nella Libreria).
+async function scegliContenutiSessione(sessioneId, etichetta) {
+  if (!campagnaAttiva) return;
+  if (libreria.length === 0) {
+    mostraToast("La libreria è vuota: carica prima i contenuti dalla pagina Libreria.");
+    return;
+  }
+  const collegati = new Set(collegatiA(sessioneId).map((c) => c.id));
+  const scelti = await scegliContenuti({
+    campagnaId: campagnaAttiva.id,
+    titolo: `Contenuti — ${etichetta}`,
+    contenuti: libreria,
+    selezionati: collegati,
+  });
+  if (!scelti) return;
+  try {
+    await collegaContenutiSessione(
+      campagnaAttiva.id,
+      sessioneId,
+      [...scelti].filter((id) => !collegati.has(id)),
+      [...collegati].filter((id) => !scelti.has(id))
+    );
+    mostraToast("Contenuti della sessione aggiornati.");
+  } catch (errore) {
+    console.error(errore);
+    mostraToast("Impossibile collegare i contenuti.", true);
+  }
+}
 
 document.getElementById("form-nuova-campagna").addEventListener("submit", async (evento) => {
   evento.preventDefault();

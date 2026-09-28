@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Content Security Policy: vedi il commento in testa a test/pagine/pagine.test.mjs -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotterranei e Dragoni — Libreria</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="veil" class="loading-veil">
+    <div class="die-stage">
+      <div class="die-shadow"></div>
+      <div class="die-svg-wrap">
+        <svg class="die-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.1" opacity="0.5"/>
+          <text class="num num-20" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">20</text>
+          <text class="num num-7" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">7</text>
+          <text class="num num-3" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">3</text>
+          <text class="num num-14" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">14</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="loading-text">Consultando gli antichi registri…</div>
+      <div class="loading-sub">un istante: il destino si sta scrivendo</div>
+    </div>
+  </div>
+
+  <div id="contenuto" style="display:none;">
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div>
+          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
+          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
+            Libreria dei contenuti
+          </h1>
+        </div>
+        <div id="slot-utente" class="slot-utente"></div>
+      </div>
+
+      <div id="nessuna-campagna" class="panel-wide" hidden>
+        <p class="scheda-testo-libero">
+          Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>.
+        </p>
+      </div>
+
+      <details id="pannello-carica" class="panel-wide pannello-carica" hidden>
+        <summary><h3>Carica un contenuto</h3></summary>
+        <p class="card-tagline" style="text-align:left;">
+          I giocatori non vedono nulla finché non lo mostri durante una sessione. Collegalo alle
+          sessioni da qui o da <a href="campagna.html">Gestione campagna</a>; se lo destini all'archivio,
+          alla chiusura della sessione in cui lo mostri entra nell'archivio di chi l'ha visto.
+        </p>
+        <form id="form-carica">
+          <div class="field">
+            <label for="carica-file">Immagine</label>
+            <input type="file" id="carica-file" required />
+          </div>
+          <div class="field-riga">
+            <div class="field">
+              <label for="carica-titolo">Titolo (lo vedono i giocatori)</label>
+              <input type="text" id="carica-titolo" maxlength="80" placeholder="Es. Mappa della palude di Kalkash" required />
+            </div>
+            <div class="field">
+              <label for="carica-categoria">Categoria</label>
+              <select id="carica-categoria" class="select-galleria"></select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="carica-descrizione">Descrizione per i giocatori (opzionale)</label>
+            <textarea id="carica-descrizione" maxlength="500" rows="2" class="textarea-galleria"></textarea>
+          </div>
+          <div class="field-riga">
+            <div class="field">
+              <label for="carica-tag">Tag privati (separati da virgola)</label>
+              <input type="text" id="carica-tag" placeholder="Es. palude, atto 2, traditore" />
+            </div>
+            <div class="field">
+              <label for="carica-note">Note private</label>
+              <textarea id="carica-note" maxlength="2000" rows="2" class="textarea-galleria"></textarea>
+            </div>
+          </div>
+          <label class="checkbox-scudo" style="margin-bottom:16px;">
+            <input type="checkbox" id="carica-archivio" />
+            Destinato all'archivio dei giocatori
+          </label>
+          <button type="submit" id="btn-carica" class="btn" style="width:auto; padding:10px 22px;">Carica</button>
+        </form>
+      </details>
+
+      <div id="pannello-libreria" class="panel-wide" hidden>
+        <div class="galleria-barra galleria-filtri">
+          <input type="search" id="filtro-testo" class="select-galleria" placeholder="Cerca per titolo, tag o note" aria-label="Cerca" />
+          <select id="filtro-categoria" class="select-galleria" aria-label="Categoria">
+            <option value="">Tutte le categorie</option>
+          </select>
+          <select id="filtro-tag" class="select-galleria" aria-label="Tag">
+            <option value="">Tutti i tag</option>
+          </select>
+          <select id="filtro-stato" class="select-galleria" aria-label="Stato">
+            <option value="">Qualsiasi stato</option>
+            <option value="mai">Mai mostrati</option>
+            <option value="ora">Mostrati ora</option>
+            <option value="archivio">Nell'archivio di qualcuno</option>
+            <option value="attesa">Destinati all'archivio, non ancora sbloccati</option>
+            <option value="riservati">Non destinati all'archivio</option>
+          </select>
+          <select id="filtro-sessione" class="select-galleria" aria-label="Sessione">
+            <option value="">Tutte le sessioni</option>
+            <option value="nessuna">Non collegati a sessioni</option>
+          </select>
+          <select id="filtro-ordine" class="select-galleria" aria-label="Ordine">
+            <option value="recenti">Più recenti</option>
+            <option value="vecchi">Meno recenti</option>
+            <option value="titolo">Per titolo</option>
+          </select>
+        </div>
+        <p id="conteggio" class="party-sessione-sub"></p>
+        <ul id="griglia-contenuti" class="griglia-immagini"></ul>
+        <p id="libreria-vuota" class="scheda-testo-libero" hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dettagli di un contenuto -->
+  <div id="modal-dettagli" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="dettagli-intestazione">
+    <div class="modal-card modal-dettagli">
+      <button id="btn-chiudi-dettagli" class="btn-chiudi-modal" type="button" aria-label="Chiudi">×</button>
+      <h2 id="dettagli-intestazione">Dettagli</h2>
+      <div class="dettagli-layout">
+        <div class="dettagli-anteprima">
+          <button type="button" id="dettagli-apri" class="scheda-immagine-anteprima" aria-label="Apri a tutto schermo">
+            <img id="dettagli-img" alt="" hidden />
+          </button>
+          <dl id="dettagli-info" class="dettagli-info"></dl>
+        </div>
+        <form id="form-dettagli" class="dettagli-form">
+          <div class="field">
+            <label for="dettagli-titolo">Titolo (lo vedono i giocatori)</label>
+            <input type="text" id="dettagli-titolo" maxlength="80" required />
+          </div>
+          <div class="field">
+            <label for="dettagli-categoria">Categoria</label>
+            <select id="dettagli-categoria" class="select-galleria"></select>
+          </div>
+          <div class="field">
+            <label for="dettagli-descrizione">Descrizione per i giocatori</label>
+            <textarea id="dettagli-descrizione" maxlength="500" rows="2" class="textarea-galleria"></textarea>
+          </div>
+          <div class="field">
+            <label for="dettagli-tag">Tag privati (separati da virgola)</label>
+            <input type="text" id="dettagli-tag" />
+          </div>
+          <div class="field">
+            <label for="dettagli-note">Note private</label>
+            <textarea id="dettagli-note" maxlength="2000" rows="3" class="textarea-galleria"></textarea>
+          </div>
+          <label class="checkbox-scudo" style="margin-bottom:14px;">
+            <input type="checkbox" id="dettagli-archivio" />
+            Destinato all'archivio dei giocatori
+          </label>
+          <fieldset class="lettori-immagine">
+            <legend>Collegato alle sessioni</legend>
+            <div id="dettagli-sessioni" class="elenco-caselle"></div>
+          </fieldset>
+          <fieldset class="lettori-immagine">
+            <legend>Nell'archivio di</legend>
+            <div id="dettagli-archiviata" class="elenco-caselle"></div>
+          </fieldset>
+          <div class="azioni-selettore">
+            <button type="button" id="btn-elimina-contenuto" class="btn-tabella btn-tabella-pericolo">Elimina</button>
+            <span class="spaziatore"></span>
+            <button type="button" id="btn-annulla-dettagli" class="btn-tabella">Annulla</button>
+            <button type="submit" id="btn-salva-dettagli" class="btn-tabella btn-tabella-evidenza">Salva</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <footer class="site-footer">Sotterranei e Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module" src="assets/js/pagine/libreria.js"></script>
+</body>
+</html>

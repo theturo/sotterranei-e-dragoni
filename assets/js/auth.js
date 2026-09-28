@@ -566,7 +566,7 @@ export async function ottieniStatoSessione(campagnaId) {
 // campagna. Il filtro è fatto solo su campagnaId (un'unica clausola "where",
 // nessun indice composito necessario); l'ordinamento per numero è fatto lato
 // client, come già altrove nel file.
-async function elencaSessioniCampagna(campagnaId) {
+export async function elencaSessioniCampagna(campagnaId) {
   const riferimento = query(collection(db, "registroSessioni"), where("campagnaId", "==", campagnaId));
   const snapshot = await getDocs(riferimento);
   return snapshot.docs.map((documento) => ({ id: documento.id, ...documento.data() }));
@@ -639,9 +639,11 @@ export async function apriSessione(campagnaId) {
   return { id: sessioneId, numero };
 }
 
-// Il DM chiude la sessione in corso: la voce di registro resta nello storico
+// Il DM chiude la sessione in corso: i contenuti mostrati vanno in archivio
+// (vedi archiviaContenutiMostrati), la voce di registro resta nello storico
 // (sola lettura), l'interruttore torna spento.
 export async function chiudiSessione(campagnaId, sessioneAttivaId) {
+  await archiviaContenutiMostrati(campagnaId, sessioneAttivaId);
   if (sessioneAttivaId) {
     await updateDoc(doc(db, "registroSessioni", sessioneAttivaId), { stato: "chiusa", chiusaIl: serverTimestamp() });
   }
@@ -817,75 +819,165 @@ export async function elencaRiepiloghiParty(campagnaId) {
     .sort((a, b) => (a.nomeGiocatore || "").localeCompare(b.nomeGiocatore || ""));
 }
 
-// ---------- Immagini della campagna ----------
-// Documento campagne/{campagnaId}/immagini/{id}: titolo, categoria e
-// visibilità ("dm" = nascosta, "tutti" = tutti i membri, "selezionati" = solo
-// i giocatori in "lettori"). Il file sta in Storage con lo stesso ID.
+// ---------- Libreria dei contenuti della campagna ----------
+// Ogni contenuto (mappa, luogo, PNG, nemico, oggetto, dispensa…) ha:
+// - campagne/{c}/immagini/{id}: ciò che un giocatore può vedere (titolo,
+//   descrizione, categoria) più chi lo vede: "mostrataA" (ora, in sessione),
+//   "vistaDa" (chi l'ha visto nella sessione in corso), "archiviataPer" (nel
+//   cui archivio si trova), "visibileA" (unione di mostrataA e archiviataPer,
+//   su cui le regole decidono chi legge), "sessioniMostrata" (dove è comparso);
+// - campagne/{c}/immaginiDM/{id}: solo per il DM (note, tag, "archivio" =
+//   destinato all'archivio dei giocatori, sessioni a cui è collegato).
+// Il file sta in Storage con lo stesso ID.
 
-// ID per una nuova immagine, da usare anche come nome del file.
+const unione = (...liste) => [...new Set(liste.flat())];
+
+function campiVisibilita(mostrataA, archiviataPer) {
+  return { mostrataA, archiviataPer, visibileA: unione(mostrataA, archiviataPer) };
+}
+
+// ID per un nuovo contenuto, da usare anche come nome del file.
 export function nuovoIdImmagine(campagnaId) {
   return doc(collection(db, "campagne", campagnaId, "immagini")).id;
 }
 
-export async function salvaImmagineCampagna(campagnaId, immagineId, { titolo, descrizione, categoria, larghezza, altezza }) {
-  await setDoc(doc(db, "campagne", campagnaId, "immagini", immagineId), {
+export async function creaContenuto(campagnaId, immagineId, { titolo, descrizione, categoria, larghezza, altezza, note, tag, archivio }) {
+  const batch = writeBatch(db);
+  batch.set(doc(db, "campagne", campagnaId, "immagini", immagineId), {
     titolo,
     descrizione: descrizione || null,
     categoria,
-    visibilita: "dm",
-    lettori: [],
     larghezza,
     altezza,
     caricataIl: serverTimestamp(),
+    vistaDa: [],
+    sessioniMostrata: [],
+    ...campiVisibilita([], []),
   });
-}
-
-export async function impostaVisibilitaImmagine(campagnaId, immagineId, visibilita, lettori = []) {
-  await updateDoc(doc(db, "campagne", campagnaId, "immagini", immagineId), {
-    visibilita,
-    lettori: visibilita === "selezionati" ? lettori : [],
+  batch.set(doc(db, "campagne", campagnaId, "immaginiDM", immagineId), {
+    note: note || null,
+    tag: tag || [],
+    archivio: Boolean(archivio),
+    sessioniCollegate: [],
   });
+  await batch.commit();
 }
 
-export async function eliminaDocumentoImmagine(campagnaId, immagineId) {
-  await deleteDoc(doc(db, "campagne", campagnaId, "immagini", immagineId));
+// Aggiorna i dettagli (dalla libreria del DM). "contenuto" è quello attuale,
+// serve per ricalcolare chi lo vede se cambia l'archivio.
+export async function aggiornaContenuto(campagnaId, contenuto, { titolo, descrizione, categoria, archiviataPer, note, tag, archivio, sessioniCollegate }) {
+  const batch = writeBatch(db);
+  batch.update(doc(db, "campagne", campagnaId, "immagini", contenuto.id), {
+    titolo,
+    descrizione: descrizione || null,
+    categoria,
+    ...campiVisibilita(contenuto.mostrataA || [], archiviataPer),
+  });
+  batch.update(doc(db, "campagne", campagnaId, "immaginiDM", contenuto.id), {
+    note: note || null,
+    tag,
+    archivio: Boolean(archivio),
+    sessioniCollegate,
+  });
+  await batch.commit();
 }
 
-function ordinaImmagini(elenco) {
-  return elenco.sort((a, b) => (b.caricataIl?.toMillis?.() ?? Infinity) - (a.caricataIl?.toMillis?.() ?? Infinity));
-}
-
-// Ascolta in tempo reale le immagini visibili all'utente: tutte per il DM,
-// per un giocatore quelle "tutti" più quelle "selezionati" che lo includono
-// (due query, perché le regole di sicurezza devono poter verificare ciascuna).
-export function ascoltaImmaginiCampagna(campagnaId, { dm, uid }, callback, alErrore = (e) => console.error(e)) {
-  const raccolta = collection(db, "campagne", campagnaId, "immagini");
-  const converti = (snapshot) => snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-  if (dm) {
-    return onSnapshot(raccolta, (snapshot) => callback(ordinaImmagini(converti(snapshot))), alErrore);
+// Mostra ora un contenuto ai giocatori indicati (lista vuota = nasconde).
+// Chi lo vede viene ricordato in "vistaDa": alla chiusura della sessione, se
+// il contenuto è destinato all'archivio, entra nell'archivio di queste persone.
+// Il contenuto viene anche collegato alla sessione in corso, se non lo era.
+export async function mostraContenuto(campagnaId, contenuto, uids, sessioneId) {
+  const batch = writeBatch(db);
+  batch.update(doc(db, "campagne", campagnaId, "immagini", contenuto.id), {
+    vistaDa: unione(contenuto.vistaDa || [], uids),
+    ...campiVisibilita(uids, contenuto.archiviataPer || []),
+  });
+  if (sessioneId && uids.length > 0) {
+    batch.update(doc(db, "campagne", campagnaId, "immaginiDM", contenuto.id), { sessioniCollegate: arrayUnion(sessioneId) });
   }
-  let pubbliche = [];
-  let personali = [];
+  await batch.commit();
+}
+
+// Collega e scollega contenuti da una sessione (anche solo pianificata).
+export async function collegaContenutiSessione(campagnaId, sessioneId, daCollegare, daScollegare) {
+  const batch = writeBatch(db);
+  daCollegare.forEach((id) =>
+    batch.update(doc(db, "campagne", campagnaId, "immaginiDM", id), { sessioniCollegate: arrayUnion(sessioneId) })
+  );
+  daScollegare.forEach((id) =>
+    batch.update(doc(db, "campagne", campagnaId, "immaginiDM", id), { sessioniCollegate: arrayRemove(sessioneId) })
+  );
+  await batch.commit();
+}
+
+export async function eliminaContenuto(campagnaId, immagineId) {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "campagne", campagnaId, "immagini", immagineId));
+  batch.delete(doc(db, "campagne", campagnaId, "immaginiDM", immagineId));
+  await batch.commit();
+}
+
+// Fine sessione: ciò che è stato mostrato smette di essere visibile "dal vivo";
+// quello destinato all'archivio entra nell'archivio di chi l'ha visto; la
+// sessione viene annotata tra quelle in cui il contenuto è comparso.
+async function archiviaContenutiMostrati(campagnaId, sessioneId) {
+  const [pubblici, riservati] = await Promise.all([
+    getDocs(collection(db, "campagne", campagnaId, "immagini")),
+    getDocs(collection(db, "campagne", campagnaId, "immaginiDM")),
+  ]);
+  const archivio = new Map(riservati.docs.map((d) => [d.id, d.data().archivio === true]));
+  const batch = writeBatch(db);
+  let modifiche = 0;
+  pubblici.docs.forEach((documento) => {
+    const dati = documento.data();
+    const vistaDa = unione(dati.vistaDa || [], dati.mostrataA || []);
+    if (vistaDa.length === 0) return;
+    const archiviataPer = archivio.get(documento.id) ? unione(dati.archiviataPer || [], vistaDa) : dati.archiviataPer || [];
+    batch.update(documento.ref, {
+      vistaDa: [],
+      sessioniMostrata: sessioneId ? unione(dati.sessioniMostrata || [], [sessioneId]) : dati.sessioniMostrata || [],
+      ...campiVisibilita([], archiviataPer),
+    });
+    modifiche += 1;
+  });
+  if (modifiche > 0) await batch.commit();
+}
+
+function unisciContenuti(pubblici, riservati) {
+  return pubblici
+    .map((p) => ({ ...p, riservati: riservati.get(p.id) || { note: null, tag: [], archivio: false, sessioniCollegate: [] } }))
+    .sort((a, b) => (b.caricataIl?.toMillis?.() ?? Infinity) - (a.caricataIl?.toMillis?.() ?? Infinity));
+}
+
+// DM: tutta la libreria, con i dati riservati, in tempo reale.
+export function ascoltaLibreriaDM(campagnaId, callback, alErrore = (e) => console.error(e)) {
+  let pubblici = null;
+  let riservati = null;
   const aggiorna = () => {
-    const uniche = new Map([...pubbliche, ...personali].map((immagine) => [immagine.id, immagine]));
-    callback(ordinaImmagini([...uniche.values()]));
+    if (pubblici && riservati) callback(unisciContenuti(pubblici, riservati));
   };
-  const stop1 = onSnapshot(query(raccolta, where("visibilita", "==", "tutti")), (s) => {
-    pubbliche = converti(s);
+  const stop1 = onSnapshot(collection(db, "campagne", campagnaId, "immagini"), (s) => {
+    pubblici = s.docs.map((d) => ({ id: d.id, ...d.data() }));
     aggiorna();
   }, alErrore);
-  const stop2 = onSnapshot(
-    query(raccolta, where("visibilita", "==", "selezionati"), where("lettori", "array-contains", uid)),
-    (s) => {
-      personali = converti(s);
-      aggiorna();
-    },
-    alErrore
-  );
+  const stop2 = onSnapshot(collection(db, "campagne", campagnaId, "immaginiDM"), (s) => {
+    riservati = new Map(s.docs.map((d) => [d.id, d.data()]));
+    aggiorna();
+  }, alErrore);
   return () => {
     stop1();
     stop2();
   };
+}
+
+// Giocatore: i contenuti che può vedere (mostrati ora o nel suo archivio).
+export function ascoltaContenutiVisibili(campagnaId, uid, callback, alErrore = (e) => console.error(e)) {
+  const riferimento = query(collection(db, "campagne", campagnaId, "immagini"), where("visibileA", "array-contains", uid));
+  return onSnapshot(
+    riferimento,
+    (s) => callback(unisciContenuti(s.docs.map((d) => ({ id: d.id, ...d.data() })), new Map())),
+    alErrore
+  );
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,

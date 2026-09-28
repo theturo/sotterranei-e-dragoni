@@ -32,10 +32,10 @@ beforeEach(async () => {
     await setDoc(doc(d, "users/attesa"), { nome: "Nuovo", ruolo: "player", approvato: false });
     await setDoc(doc(d, "campagne/c1"), { dmUid: "dm", membriUid: ["p1", "p2"], titolo: "x" });
     await setDoc(doc(d, "users/p2"), { nome: "Leo", ruolo: "player", approvato: true });
-    const descrizione = (visibilita, lettori = []) => ({ titolo: "x", categoria: "mappa", visibilita, lettori, larghezza: 1, altezza: 1 });
-    await setDoc(doc(d, "campagne/c1/immagini/nascosta"), descrizione("dm"));
-    await setDoc(doc(d, "campagne/c1/immagini/pubblica"), descrizione("tutti"));
-    await setDoc(doc(d, "campagne/c1/immagini/soloP1"), descrizione("selezionati", ["p1"]));
+    const descrizione = (visibileA) => ({ titolo: "x", categoria: "mappa", larghezza: 1, altezza: 1, visibileA });
+    await setDoc(doc(d, "campagne/c1/immagini/nascosta"), descrizione([]));
+    await setDoc(doc(d, "campagne/c1/immagini/pubblica"), descrizione(["p1", "p2", "esterno"]));
+    await setDoc(doc(d, "campagne/c1/immagini/soloP1"), descrizione(["p1"]));
     const s = ctx.storage();
     await uploadBytes(ref(s, "ritratti/p1/volto.png"), new Uint8Array([1, 2, 3]), { contentType: "image/png" });
     for (const nome of ["nascosta", "pubblica", "pubblica-mini", "soloP1"]) {
@@ -85,11 +85,11 @@ describe("Immagini della campagna", () => {
     await assertSucceeds(getBytes(ref(come("dm"), "campagne/c1/appena")));
   });
   test("un membro NON scarica un'immagine nascosta", () => assertFails(getBytes(ref(come("p1"), "campagne/c1/nascosta"))));
-  test("un membro scarica un'immagine visibile a tutti", () => assertSucceeds(getBytes(ref(come("p2"), "campagne/c1/pubblica"))));
+  test("un membro scarica un'immagine mostrata a lui", () => assertSucceeds(getBytes(ref(come("p2"), "campagne/c1/pubblica"))));
   test("un membro scarica anche la miniatura", () => assertSucceeds(getBytes(ref(come("p2"), "campagne/c1/pubblica-mini"))));
   test("il giocatore scelto scarica la sua immagine", () => assertSucceeds(getBytes(ref(come("p1"), "campagne/c1/soloP1"))));
   test("un altro giocatore NON la scarica", () => assertFails(getBytes(ref(come("p2"), "campagne/c1/soloP1"))));
-  test("chi non è membro NON scarica nemmeno quelle per tutti", () =>
+  test("chi non è membro NON scarica, anche se elencato", () =>
     assertFails(getBytes(ref(come("esterno"), "campagne/c1/pubblica"))));
   test("un giocatore NON cancella le immagini della campagna", () =>
     assertFails(deleteObject(ref(come("p1"), "campagne/c1/pubblica"))));

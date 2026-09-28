@@ -17,8 +17,10 @@ it isn't set up to onboard outside users or accept contributions at this time.
 - **Dungeon Master tools** — a party roster view and level-up controls, for a single player
   or the whole party at once.
 - **Images** — each player uploads a portrait for their character, shown on the sheet and
-  as an icon in the party; the Dungeon Master keeps a campaign gallery (maps, places,
-  NPCs, handouts) and decides, image by image, when to reveal it and to whom.
+  as an icon in the party. The Dungeon Master keeps a content library (maps, places, NPCs,
+  enemies, items, handouts) with private notes and tags, links items to sessions, shows them
+  live during play to the whole party or to chosen players, and decides which ones end up in
+  each player's campaign archive when the session closes.
 - **Notifications** — players get notified in-app when their character levels up, with a
   persistent notification history.
 - **Fantasy-themed UI** — designed to feel in-keeping with the tabletop experience, and to
