@@ -30,6 +30,7 @@ import {
   serverTimestamp,
   increment,
   writeBatch,
+  runTransaction,
   onSnapshot,
   arrayUnion,
   arrayRemove,
@@ -572,23 +573,49 @@ export async function elencaSessioniCampagna(campagnaId) {
   return snapshot.docs.map((documento) => ({ id: documento.id, ...documento.data() }));
 }
 
+// ---------- Numerazione delle sessioni ----------
+// Il numero progressivo si assegna in una transazione che legge e aggiorna il
+// contatore "ultimoNumero" in campagne/{id}/stato/sessione: se due richieste
+// arrivano insieme (doppio clic, due schede aperte), Firestore ripete la
+// seconda con il contatore già aggiornato, quindi i numeri non si ripetono.
+// Per le campagne nate prima del contatore si parte dal numero più alto già
+// presente nel registro.
+
+const riferimentoStatoSessione = (campagnaId) => doc(db, "campagne", campagnaId, "stato", "sessione");
+
+function numeroPiuAlto(sessioni) {
+  return sessioni.reduce((massimo, s) => Math.max(massimo, s.numero || 0), 0);
+}
+
+// Da chiamare dentro una transazione: prenota il prossimo numero.
+async function prenotaNumero(transazione, campagnaId, sessioni) {
+  const stato = await transazione.get(riferimentoStatoSessione(campagnaId));
+  const numero = Math.max(stato.data()?.ultimoNumero ?? 0, numeroPiuAlto(sessioni)) + 1;
+  return { numero, stato: stato.data() || {} };
+}
+
 // Il DM programma una sessione futura: nasce come voce di registro con stato
 // "programmata" e una data, ma senza appunti — diventerà quella "in corso"
 // quando arriverà il momento (vedi apriSessione). Solo admin/DM (vedi
 // firestore.rules).
 export async function creaSessioneProgrammata(campagnaId, { titolo, dataProgrammata }) {
   const sessioni = await elencaSessioniCampagna(campagnaId);
-  const prossimoNumero = sessioni.reduce((massimo, s) => Math.max(massimo, s.numero || 0), 0) + 1;
-  const riferimento = await addDoc(collection(db, "registroSessioni"), {
-    campagnaId,
-    numero: prossimoNumero,
-    titolo: titolo || null,
-    stato: "programmata",
-    dataProgrammata,
-    apertaIl: null,
-    chiusaIl: null,
+  const nuova = doc(collection(db, "registroSessioni"));
+  const numero = await runTransaction(db, async (transazione) => {
+    const { numero } = await prenotaNumero(transazione, campagnaId, sessioni);
+    transazione.set(riferimentoStatoSessione(campagnaId), { ultimoNumero: numero }, { merge: true });
+    transazione.set(nuova, {
+      campagnaId,
+      numero,
+      titolo: titolo || null,
+      stato: "programmata",
+      dataProgrammata,
+      apertaIl: null,
+      chiusaIl: null,
+    });
+    return numero;
   });
-  return { id: riferimento.id, numero: prossimoNumero };
+  return { id: nuova.id, numero };
 }
 
 // Elenca le sole sessioni "programmata" di una campagna, più prossima prima.
@@ -599,44 +626,78 @@ export async function elencaSessioniProgrammate(campagnaId) {
     .sort((a, b) => (a.dataProgrammata || "").localeCompare(b.dataProgrammata || ""));
 }
 
-export async function eliminaSessioneProgrammata(sessioneId) {
-  await deleteDoc(doc(db, "registroSessioni", sessioneId));
+// Annulla una sessione pianificata. Se era l'ultima numerata, il contatore
+// riparte dal numero più alto rimasto, così la prossima non lascia buchi.
+export async function eliminaSessioneProgrammata(campagnaId, sessioneId) {
+  const riferimento = doc(db, "registroSessioni", sessioneId);
+  const altre = (await elencaSessioniCampagna(campagnaId)).filter((s) => s.id !== sessioneId);
+  await runTransaction(db, async (transazione) => {
+    const [sessione, stato] = await Promise.all([
+      transazione.get(riferimento),
+      transazione.get(riferimentoStatoSessione(campagnaId)),
+    ]);
+    if (!sessione.exists()) return;
+    const numero = sessione.data().numero;
+    if (numero && stato.data()?.ultimoNumero === numero) {
+      transazione.set(riferimentoStatoSessione(campagnaId), { ultimoNumero: numeroPiuAlto(altre) }, { merge: true });
+    }
+    transazione.delete(riferimento);
+  });
 }
 
 // Il DM apre una nuova sessione per una campagna: se esiste già una sessione
 // "programmata" in attesa, la promuove a "in-corso" (riusa numero e titolo
 // già assegnati); altrimenti ne crea una nuova ad-hoc con numero progressivo.
-// Da qui in poi gli appunti scritti da chiunque finiscono in questa voce.
-// Solo admin/DM (vedi firestore.rules).
+// Se una sessione è già in corso (doppio clic, altra scheda) non ne apre
+// un'altra: restituisce quella. Da qui in poi gli appunti scritti da chiunque
+// finiscono in questa voce. Solo admin/DM (vedi firestore.rules).
 export async function apriSessione(campagnaId) {
   const sessioni = await elencaSessioniCampagna(campagnaId);
   const programmate = sessioni
     .filter((s) => s.stato === "programmata")
     .sort((a, b) => (a.dataProgrammata || "").localeCompare(b.dataProgrammata || ""));
 
-  let sessioneId, numero;
-  if (programmate.length > 0) {
-    sessioneId = programmate[0].id;
-    numero = programmate[0].numero;
-    await updateDoc(doc(db, "registroSessioni", sessioneId), { stato: "in-corso", apertaIl: serverTimestamp() });
-  } else {
-    numero = sessioni.reduce((massimo, s) => Math.max(massimo, s.numero || 0), 0) + 1;
-    const nuovaSessione = await addDoc(collection(db, "registroSessioni"), {
-      campagnaId,
-      numero,
-      stato: "in-corso",
-      apertaIl: serverTimestamp(),
-      chiusaIl: null,
-    });
-    sessioneId = nuovaSessione.id;
-  }
+  return runTransaction(db, async (transazione) => {
+    const { numero: prossimo, stato } = await prenotaNumero(transazione, campagnaId, sessioni);
+    if (stato.inCorso && stato.sessioneAttivaId) {
+      const giaAperta = sessioni.find((s) => s.id === stato.sessioneAttivaId);
+      return { id: stato.sessioneAttivaId, numero: giaAperta?.numero ?? null };
+    }
 
-  await setDoc(
-    doc(db, "campagne", campagnaId, "stato", "sessione"),
-    { inCorso: true, sessioneAttivaId: sessioneId },
-    { merge: true }
-  );
-  return { id: sessioneId, numero };
+    // La prima pianificata ancora tale (riletta nella transazione).
+    let scelta = null;
+    for (const candidata of programmate) {
+      const attuale = await transazione.get(doc(db, "registroSessioni", candidata.id));
+      if (attuale.exists() && attuale.data().stato === "programmata") {
+        scelta = { id: candidata.id, numero: attuale.data().numero };
+        break;
+      }
+    }
+
+    let sessioneId, numero;
+    if (scelta) {
+      ({ id: sessioneId, numero } = scelta);
+      transazione.update(doc(db, "registroSessioni", sessioneId), { stato: "in-corso", apertaIl: serverTimestamp() });
+    } else {
+      numero = prossimo;
+      const nuova = doc(collection(db, "registroSessioni"));
+      sessioneId = nuova.id;
+      transazione.set(nuova, {
+        campagnaId,
+        numero,
+        stato: "in-corso",
+        apertaIl: serverTimestamp(),
+        chiusaIl: null,
+      });
+    }
+
+    transazione.set(
+      riferimentoStatoSessione(campagnaId),
+      { inCorso: true, sessioneAttivaId: sessioneId, ...(scelta ? {} : { ultimoNumero: numero }) },
+      { merge: true }
+    );
+    return { id: sessioneId, numero };
+  });
 }
 
 // Il DM chiude la sessione in corso: i contenuti mostrati vanno in archivio
