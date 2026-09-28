@@ -344,7 +344,7 @@ document.getElementById("lista-programmate").addEventListener("click", async (ev
     // I contenuti restano in libreria: si toglie solo il collegamento.
     const collegati = collegatiA(sessioneId).map((c) => c.id);
     if (collegati.length) await collegaContenutiSessione(campagnaAttiva.id, sessioneId, [], collegati);
-    await eliminaSessioneProgrammata(sessioneId);
+    await eliminaSessioneProgrammata(campagnaAttiva.id, sessioneId);
     mostraToast("Sessione pianificata annullata.");
     await renderProgrammate();
   } catch (errore) {
