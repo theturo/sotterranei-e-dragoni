@@ -12,6 +12,20 @@ indicativo. Si aggiorna man mano che si completano.
   "attiva").
 - **Pulizia del codice** e piccole rifiniture dell'interfaccia.
 
+## Grafica
+
+La tela di design "Grafica di Base e Caricamento" è la fonte di verità: si
+integra solo ciò che è segnato ✅, con una pull request per lotto.
+
+- **Icone per il controllo musica** (⏳ in revisione nella tela): al posto di
+  🎵 ⏮ ⏸ ▶ ⏭ nel controllo musica e nel widget della dashboard.
+- **Tooltip danno/cura degli incantesimi** in stile pergamena (⏳ in revisione).
+- **Icone dell'header ancora in emoji** (🏠 Home, ✏️ Modifica ordinamento,
+  📜 Sessione) e il pulsante 🎲 del tracker: da disegnare nella tela.
+- **Stemma per l'intestazione** (❌ scartato, drago da rifare).
+- **Bussola per la mappa** (tavola degli stati vuoti della Sessione): da usare
+  quando arriverà la mappa.
+
 ## Funzioni per il tavolo
 
 - **PF e condizioni in tempo reale per il DM** (avvelenato, prono…), con
@@ -43,3 +57,9 @@ indicativo. Si aggiorna man mano che si completano.
   nemici con PF riservati al DM e salute vaga per i giocatori).
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
+- Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:
+  velo di caricamento con il d20 su ogni pagina, icone SVG di classe, stati
+  vuoti con icona; fregi d'angolo, divisori tematici, segnalini a dado, spinner
+  nei pulsanti, icone delle azioni, scrollbar dorata, righe segnaposto nel
+  registro; annuncio di livello con raggiera e tiro dei PF nel vassoio (un solo
+  lancio per finestra: riaprendola si può ritirare, limite accettato).
