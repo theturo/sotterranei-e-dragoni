@@ -36,6 +36,7 @@ import {
   creaMiniatura,
   apriLightbox,
 } from "../contenuti.js";
+import { mostraAttesa } from "../utils.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -346,7 +347,7 @@ formCarica.addEventListener("submit", async (evento) => {
 
   const bottone = document.getElementById("btn-carica");
   bottone.disabled = true;
-  bottone.textContent = "Caricamento…";
+  mostraAttesa(bottone, "Caricamento…");
   const immagineId = nuovoIdImmagine(campagnaIdCorrente);
   const percorsi = percorsiImmagineCampagna(campagnaIdCorrente, immagineId);
   let fileCaricati = false;

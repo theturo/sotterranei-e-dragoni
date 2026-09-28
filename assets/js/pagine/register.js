@@ -1,6 +1,7 @@
 // Script della pagina register.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 import { registraUtente, traduciErrore } from "../auth.js";
+import { mostraAttesa } from "../utils.js";
 
 const form = document.getElementById("form-registrazione");
 const messaggio = document.getElementById("messaggio");
@@ -26,7 +27,7 @@ form.addEventListener("submit", async (evento) => {
   }
 
   bottone.disabled = true;
-  bottone.textContent = "Creazione in corso…";
+  mostraAttesa(bottone, "Creazione in corso…");
 
   try {
     const { uid } = await registraUtente({ nome, email, password });

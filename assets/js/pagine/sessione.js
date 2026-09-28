@@ -23,7 +23,7 @@ import {
   collegaContenutiSessione,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc } from "../utils.js";
+import { esc, creaScheletro } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK } from "../dati-srd.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
@@ -538,7 +538,7 @@ document.getElementById("btn-apri-registro").addEventListener("click", async () 
   modaleRegistro.style.display = "flex";
   const lista = document.getElementById("lista-registro");
   const vuoto = document.getElementById("registro-vuoto");
-  lista.innerHTML = "";
+  lista.replaceChildren(creaScheletro(3));
   vuoto.hidden = true;
 
   try {
@@ -546,6 +546,7 @@ document.getElementById("btn-apri-registro").addEventListener("click", async () 
       elencaSessioniProgrammate(campagnaIdCorrente),
       elencaRegistroSessioni(campagnaIdCorrente),
     ]);
+    lista.replaceChildren();
     programmate.forEach((sessione) => lista.appendChild(rigaSessioneProgrammata(sessione)));
 
     if (sessioni.length === 0) {
@@ -580,6 +581,8 @@ document.getElementById("btn-apri-registro").addEventListener("click", async () 
     });
   } catch (errore) {
     console.error(errore);
+    lista.replaceChildren();
+    mostraAvvisoContenuto("Impossibile caricare il registro.", true);
   }
 });
 

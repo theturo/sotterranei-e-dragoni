@@ -145,7 +145,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
         <label class="campo-largo">Immagine dalla Libreria<select name="immagine"><option value="">Nessuna</option></select></label>
       </div>
       <label class="checkbox-scudo"><input type="checkbox" name="comune" checked /> Stessa iniziativa per tutti</label>
-      <button type="submit" class="btn-tabella btn-tabella-evidenza">Aggiungi</button>
+      <button type="submit" class="btn-tabella azione-aggiungi">Aggiungi</button>
     `;
     const selectImmagine = form.querySelector('select[name="immagine"]');
     // Elenco delle immagini aggiornato a ogni apertura (nemici e PNG prima).

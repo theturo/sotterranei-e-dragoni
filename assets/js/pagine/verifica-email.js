@@ -6,6 +6,7 @@ import {
   inviaEmailVerifica,
   esciUtente,
 } from "../auth.js";
+import { mostraAttesa } from "../utils.js";
 
 const messaggio = document.getElementById("messaggio");
 const btnControlla = document.getElementById("btn-controlla");
@@ -52,7 +53,7 @@ proteggiPaginaSenzaVerifica(async (user) => {
 btnControlla.addEventListener("click", async () => {
   if (!utenteCorrente) return;
   btnControlla.disabled = true;
-  btnControlla.textContent = "Controllo…";
+  mostraAttesa(btnControlla, "Controllo…");
   try {
     await ricaricaUtente(utenteCorrente);
     if (utenteCorrente.emailVerified) {
@@ -72,7 +73,7 @@ btnControlla.addEventListener("click", async () => {
 btnReinvia.addEventListener("click", async () => {
   if (!utenteCorrente) return;
   btnReinvia.disabled = true;
-  btnReinvia.textContent = "Invio…";
+  mostraAttesa(btnReinvia, "Invio…");
   try {
     await inviaEmailVerifica(utenteCorrente);
     mostraMessaggio("Email inviata di nuovo. Controlla la posta (anche lo spam).", "success");

@@ -72,7 +72,7 @@ const HTML_MODALE = `
         <div id="mu-messaggio-password" class="message"></div>
         <div class="impostazioni-azioni">
           <button type="button" class="btn btn-ghost" data-indietro>Indietro</button>
-          <button type="submit" class="btn" id="mu-btn-salva-password">Salva</button>
+          <button type="submit" class="btn azione-salva" id="mu-btn-salva-password">Salva</button>
         </div>
       </form>
 

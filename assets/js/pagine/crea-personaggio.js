@@ -1,7 +1,7 @@
 // Script della pagina crea-personaggio.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 import { proteggiPagina, ottieniCampagnaCorrente, creaScheda } from "../auth.js";
-import { esc } from "../utils.js";
+import { esc, mostraAttesa } from "../utils.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import {
   RAZZE,
@@ -281,7 +281,7 @@ btnIndietro.addEventListener("click", () => {
 
 btnCrea.addEventListener("click", async () => {
   btnCrea.disabled = true;
-  btnCrea.textContent = "Creazione in corso…";
+  mostraAttesa(btnCrea, "Creazione in corso…");
   try {
     const modCostituzione = modificatore(stato.punteggi.costituzione + bonusRazzaCaratteristica("costituzione"));
     const massimi = puntiVitaIniziali(stato.classe, modCostituzione);
