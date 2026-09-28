@@ -418,7 +418,7 @@ document.getElementById("ricerca-incantesimi-livello").addEventListener("input",
       const etichettaLivello = voce.livello === 0 ? "Trucchetto" : `Livello ${voce.livello}`;
       return `<div class="risultato-riga">
         <span>${esc(voce.nome)} <small>(${esc(etichettaLivello)} · ${esc(voce.scuola)})</small></span>
-        <button class="btn-tabella" data-scegli-incantesimo="${esc(voce.chiave)}" type="button">Aggiungi</button>
+        <button class="btn-tabella azione-aggiungi" data-scegli-incantesimo="${esc(voce.chiave)}" type="button">Aggiungi</button>
       </div>`;
     })
     .join("");
@@ -952,7 +952,7 @@ function renderRisultatiRicercaIncantesimi(idContenitore, risultati, attributoDa
     .map(
       (voce) => `<div class="risultato-riga">
     <span>${esc(voce.nome)} <small>(${esc(etichettaIncantesimo(voce))} · ${esc(voce.scuola)})</small></span>
-    <button class="btn-tabella" data-${attributoDati}="${esc(voce.chiave)}" type="button">Aggiungi</button>
+    <button class="btn-tabella azione-aggiungi" data-${attributoDati}="${esc(voce.chiave)}" type="button">Aggiungi</button>
   </div>`
     )
     .join("");
@@ -1397,7 +1397,7 @@ function renderRisultatiRicerca(testo) {
       (voce) => `
     <div class="risultato-riga">
       <span>${esc(voce.nome)} <small>(${esc(ETICHETTE_CATEGORIA[voce.categoria])}${voce.costo ? " · " + esc(voce.costo) : ""})</small></span>
-      <button class="btn-tabella" data-aggiungi="${esc(voce.chiave)}" data-nome="${esc(voce.nome)}" data-categoria="${esc(voce.categoria)}" type="button">Aggiungi</button>
+      <button class="btn-tabella azione-aggiungi" data-aggiungi="${esc(voce.chiave)}" data-nome="${esc(voce.nome)}" data-categoria="${esc(voce.categoria)}" type="button">Aggiungi</button>
     </div>`
     )
     .join("");

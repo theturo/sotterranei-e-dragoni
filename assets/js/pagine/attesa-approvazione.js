@@ -6,6 +6,7 @@ import {
   profiloApprovato,
   esciUtente,
 } from "../auth.js";
+import { mostraAttesa } from "../utils.js";
 
 const messaggio = document.getElementById("messaggio");
 const btnControlla = document.getElementById("btn-controlla");
@@ -40,7 +41,7 @@ proteggiPaginaSenzaVerifica(async (user) => {
 btnControlla.addEventListener("click", async () => {
   if (!utenteCorrente) return;
   btnControlla.disabled = true;
-  btnControlla.textContent = "Controllo…";
+  mostraAttesa(btnControlla, "Controllo…");
   try {
     if (!(await verificaStato())) {
       messaggio.textContent = "Non ancora approvato: riprova più tardi.";

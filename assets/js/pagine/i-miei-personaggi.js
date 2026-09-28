@@ -58,7 +58,7 @@ function creaCard(scheda) {
     <div class="scheda-card-azioni">
       <a class="btn-tabella" href="scheda-personaggio.html?id=${esc(encodeURIComponent(scheda.id))}">Apri scheda</a>
       ${scheda.attiva ? "" : `<button class="btn-tabella btn-tabella-evidenza" data-attiva="${esc(scheda.id)}">Rendi attiva</button>`}
-      <button class="btn-tabella btn-tabella-pericolo" data-elimina="${esc(scheda.id)}" data-nome="${esc(scheda.nome || "questo personaggio")}">Elimina</button>
+      <button class="btn-tabella azione-elimina" data-elimina="${esc(scheda.id)}" data-nome="${esc(scheda.nome || "questo personaggio")}">Elimina</button>
     </div>
   `;
   return div;

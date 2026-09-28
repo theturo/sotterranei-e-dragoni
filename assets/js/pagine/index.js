@@ -1,6 +1,7 @@
 // Script della pagina index.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 import { accediUtente, inviaResetPassword, traduciErrore } from "../auth.js";
+import { mostraAttesa } from "../utils.js";
 
 const form = document.getElementById("form-login");
 const messaggio = document.getElementById("messaggio");
@@ -15,7 +16,7 @@ form.addEventListener("submit", async (evento) => {
   evento.preventDefault();
   messaggio.className = "message";
   bottone.disabled = true;
-  bottone.textContent = "Accesso in corso…";
+  mostraAttesa(bottone, "Accesso in corso…");
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -58,7 +59,7 @@ formReset.addEventListener("submit", async (evento) => {
   evento.preventDefault();
   messaggio.className = "message";
   bottoneReset.disabled = true;
-  bottoneReset.textContent = "Invio in corso…";
+  mostraAttesa(bottoneReset, "Invio in corso…");
 
   const email = document.getElementById("email-reset").value.trim();
 

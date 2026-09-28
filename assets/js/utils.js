@@ -22,3 +22,27 @@ export function escUrl(valore) {
     return "";
   }
 }
+
+// Spinner a forma di dado nei pulsanti in attesa (tela di design, "Elementi
+// decorativi di base"). Si toglie da solo quando il testo del pulsante viene
+// ripristinato con textContent.
+const SPINNER_DADO =
+  '<svg class="spinner-dado" viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="currentColor" stroke-width="8" stroke-linejoin="round"/></svg>';
+
+export function mostraAttesa(bottone, testo) {
+  bottone.innerHTML = `${SPINNER_DADO}${esc(testo)}`;
+}
+
+// Righe segnaposto animate per i caricamenti piccoli ("Caricamento leggero").
+export function creaScheletro(righe = 3) {
+  const griglia = document.createElement("div");
+  griglia.className = "griglia-risultati-scheletro";
+  griglia.setAttribute("aria-label", "Caricamento in corso");
+  griglia.setAttribute("role", "status");
+  griglia.innerHTML = Array.from({ length: righe }, () => `
+    <div class="riga-scheletro">
+      <div class="scheletro-icona"></div>
+      <div class="scheletro-linee"><div class="scheletro-linea"></div><div class="scheletro-linea corta"></div></div>
+    </div>`).join("");
+  return griglia;
+}

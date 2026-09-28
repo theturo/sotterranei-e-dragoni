@@ -10,7 +10,7 @@ import {
   ETICHETTE_RUOLO,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc } from "../utils.js";
+import { esc, mostraAttesa } from "../utils.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -141,7 +141,7 @@ corpoTabella.addEventListener("click", async (evento) => {
 
   bottone.disabled = true;
   const testoOriginale = bottone.textContent;
-  bottone.textContent = "Invio…";
+  mostraAttesa(bottone, "Invio…");
 
   try {
     await inviaResetPassword(email);
