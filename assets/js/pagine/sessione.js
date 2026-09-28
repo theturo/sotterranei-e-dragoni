@@ -35,6 +35,7 @@ import {
   chiudiLightboxSeSparito,
   scegliContenuti,
 } from "../contenuti.js";
+import { montaCombattimento } from "../combattimento.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -148,6 +149,7 @@ async function caricaParty() {
       await sincronizzaMioRiepilogo(uidCorrente, campagnaIdCorrente);
     }
     const party = await elencaRiepiloghiParty(campagnaIdCorrente);
+    ultimoParty = party;
     if (party.length === 0) {
       vuoto.hidden = false;
       return;
@@ -200,6 +202,8 @@ function mostraStatoInattivo() {
 // vivo" e quelli destinati all'archivio passano nell'archivio di chi li ha visti.
 
 let isDmContenuti = false;
+// Ultimo party caricato (usato anche dal tracker di combattimento).
+let ultimoParty = [];
 let contenuti = [];
 let membriCampagna = [];
 let contenutiGiaVisti = null;
@@ -358,11 +362,11 @@ function renderContenuti() {
 }
 
 let timerAvviso = null;
-function mostraAvvisoContenuto(testo) {
+function mostraAvvisoContenuto(testo, errore = false) {
   const toast = document.getElementById("toast");
   if (!toast) return;
   toast.textContent = testo;
-  toast.className = "toast visibile";
+  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
   clearTimeout(timerAvviso);
   timerAvviso = setTimeout(() => (toast.className = "toast"), 4000);
 }
@@ -453,6 +457,15 @@ proteggiPagina(async (user, profilo) => {
   }
 
   await Promise.all([caricaParty(), avviaContenuti(isDmOAdmin)]);
+  montaCombattimento({
+    pannello: document.getElementById("pannello-combattimento"),
+    campagnaId: campagnaIdCorrente,
+    uid: uidCorrente,
+    isDM: isDmOAdmin,
+    party: () => ultimoParty,
+    libreria: () => contenuti,
+    avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
+  });
 
   veil.style.display = "none";
   contenuto.style.display = "block";

@@ -37,10 +37,13 @@
 
       <!-- Due colonne sul computer (appunti e contenuti a sinistra, party e
            musica a destra); una sola colonna sul telefono, nell'ordine
-           appunti, party, contenuti, musica (vedi .sessione-colonna in
-           style.css). La mappa, quando arriverà, andrà sopra gli appunti. -->
+           combattimento (se in corso), appunti, party, contenuti, musica (vedi
+           .sessione-colonna in style.css). La mappa, quando arriverà, andrà
+           sopra gli appunti. -->
       <div id="hub-sessione" class="sessione-layout">
         <div class="sessione-colonna">
+          <div class="panel sessione-pannello-combattimento" id="pannello-combattimento" hidden></div>
+
           <div class="panel sessione-pannello-appunti">
             <div class="sessione-appunti-intestazione">
               <h3>Appunti della sessione</h3>

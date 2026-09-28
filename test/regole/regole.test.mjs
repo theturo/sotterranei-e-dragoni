@@ -47,6 +47,11 @@ beforeEach(async () => {
     await set("campagne/c1/immagini/soloP1", contenuto([], ["p1"]));
     await set("campagne/c1/immaginiDM/nascosta", { note: "È il traditore", tag: ["spoiler"], archivio: true, sessioniCollegate: ["r1"] });
     await set("campagne/c1/stato/sessione", { inCorso: true, sessioneAttivaId: "r1" });
+    await set("campagne/c1/combattimento/stato", { attivo: true, round: 1, turno: "pgP1" });
+    await set("campagne/c1/combattenti/pgP1", { tipo: "pg", nome: "Eroe", uid: "p1", iniziativa: null, bonus: 0, spareggio: 0 });
+    await set("campagne/c1/combattenti/pgP2", { tipo: "pg", nome: "Lyra", uid: "p2", iniziativa: 12, bonus: 2, spareggio: 0 });
+    await set("campagne/c1/combattenti/goblin1", { tipo: "nemico", nome: "Goblin 1", uid: null, iniziativa: 14, bonus: 2, spareggio: 0, salute: "illeso", immagineId: null });
+    await set("campagne/c1/combattentiDM/goblin1", { pfAttuali: 7, pfMassimi: 7, note: null });
     await set("personaggi/s1", {
       proprietarioUid: "p1", campagnaId: "c1", attiva: true, nome: "Eroe", classe: "guerriero", livello: 1,
       hp: { massimi: 12, attuali: 12, temporanei: 0 },
@@ -298,6 +303,54 @@ describe("Libreria dei contenuti", () => {
     assertFails(getDocs(collection(come("p1"), "campagne/c1/immaginiDM"))));
   test("un giocatore NON scrive i dati riservati", () =>
     assertFails(setDoc(doc(come("p1"), "campagne/c1/immaginiDM/nuova"), riservati())));
+});
+
+describe("Tracker di combattimento", () => {
+  const nemico = (extra = {}) => ({ tipo: "nemico", nome: "Orco", uid: null, iniziativa: 9, bonus: 0, spareggio: 0, salute: "illeso", immagineId: null, ...extra });
+  test("un membro legge stato e combattenti", async () => {
+    await assertSucceeds(getDoc(doc(come("p2"), "campagne/c1/combattimento/stato")));
+    await assertSucceeds(getDocs(collection(come("p2"), "campagne/c1/combattenti")));
+  });
+  test("chi non è membro NON legge il combattimento", () =>
+    assertFails(getDocs(collection(come("vecchio"), "campagne/c1/combattenti"))));
+  test("il DM avanza il turno", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/combattimento/stato"), { attivo: true, round: 2, turno: "goblin1" })));
+  test("un giocatore NON avanza il turno", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/combattimento/stato"), { attivo: true, round: 2, turno: "pgP1" })));
+  test("NON si scrivono altri documenti in combattimento/", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/combattimento/altro"), { attivo: true, round: 1, turno: null })));
+  test("il DM aggiunge un nemico", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/combattenti/orco"), nemico())));
+  test("NON si aggiunge un nemico con campi extra (es. PF)", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/combattenti/orco"), nemico({ pf: 15 }))));
+  test("NON si usa una salute inventata", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/combattenti/orco"), nemico({ salute: "quasi morto" }))));
+  test("un giocatore NON aggiunge combattenti", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/combattenti/orco"), nemico())));
+  test("il giocatore scrive la propria iniziativa", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "campagne/c1/combattenti/pgP1"), { iniziativa: 17, bonus: 3 })));
+  test("il giocatore NON scrive l'iniziativa di un altro", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1/combattenti/pgP2"), { iniziativa: 1 })));
+  test("il giocatore NON cambia l'iniziativa dei nemici", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1/combattenti/goblin1"), { iniziativa: 1 })));
+  test("il giocatore NON cambia altro della propria riga (es. spareggio)", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1/combattenti/pgP1"), { spareggio: 99 })));
+  test("iniziativa fuori scala rifiutata", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1/combattenti/pgP1"), { iniziativa: 1000 })));
+  test("il DM corregge l'iniziativa di un giocatore", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/combattenti/pgP1"), { iniziativa: 5 })));
+  test("il DM toglie un combattente", () => assertSucceeds(deleteDoc(doc(come("dm"), "campagne/c1/combattenti/goblin1"))));
+  test("un giocatore NON toglie combattenti", () => assertFails(deleteDoc(doc(come("p1"), "campagne/c1/combattenti/goblin1"))));
+  test("il DM legge e scrive i PF dei nemici", async () => {
+    await assertSucceeds(getDoc(doc(come("dm"), "campagne/c1/combattentiDM/goblin1")));
+    await assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/combattentiDM/goblin1"), { pfAttuali: 3 }));
+  });
+  test("un giocatore NON legge i PF dei nemici", async () => {
+    await assertFails(getDoc(doc(come("p1"), "campagne/c1/combattentiDM/goblin1")));
+    await assertFails(getDocs(collection(come("p1"), "campagne/c1/combattentiDM")));
+  });
+  test("PF dei nemici: campi extra rifiutati", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/combattentiDM/orco"), { pfAttuali: 1, pfMassimi: 1, segreto: "x" })));
 });
 
 describe("Riepilogo del party", () => {

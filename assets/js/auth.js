@@ -1041,6 +1041,148 @@ export function ascoltaContenutiVisibili(campagnaId, uid, callback, alErrore = (
   );
 }
 
+// ---------- Tracker di combattimento ----------
+// campagne/{c}/combattimento/stato: { attivo, round, turno (ID combattente) }
+// campagne/{c}/combattenti/{id}: riga del tracker, letta da tutti i membri
+//   (tipo "pg" o "nemico", nome, iniziativa, bonus e spareggio per l'ordine,
+//   "salute" vaga dei nemici, immagine facoltativa della Libreria).
+// campagne/{c}/combattentiDM/{id}: PF dei nemici, solo per il DM.
+
+const riferimentoStatoCombattimento = (campagnaId) => doc(db, "campagne", campagnaId, "combattimento", "stato");
+const riferimentoCombattente = (campagnaId, id) => doc(db, "campagne", campagnaId, "combattenti", id);
+const riferimentoCombattenteDM = (campagnaId, id) => doc(db, "campagne", campagnaId, "combattentiDM", id);
+
+export const tiraD20 = () => 1 + Math.floor(Math.random() * 20);
+
+// Salute vaga mostrata ai giocatori, calcolata dai PF che vede solo il DM.
+export function saluteDaPf(attuali, massimi) {
+  if (attuali <= 0) return "a terra";
+  if (!massimi || attuali >= massimi) return "illeso";
+  return attuali <= massimi / 2 ? "grave" : "ferito";
+}
+
+// Avvia un combattimento con i personaggi indicati ([{ uid, nome }]).
+export async function avviaCombattimento(campagnaId, personaggi) {
+  const esistenti = await getDocs(collection(db, "campagne", campagnaId, "combattenti"));
+  const batch = writeBatch(db);
+  esistenti.docs.forEach((d) => {
+    batch.delete(d.ref);
+    batch.delete(riferimentoCombattenteDM(campagnaId, d.id));
+  });
+  personaggi.forEach(({ uid, nome }) => {
+    batch.set(riferimentoCombattente(campagnaId, `pg-${uid}`), {
+      tipo: "pg",
+      nome: (nome || "Personaggio").slice(0, 60),
+      uid,
+      iniziativa: null,
+      bonus: 0,
+      spareggio: 0,
+      creatoIl: serverTimestamp(),
+    });
+  });
+  batch.set(riferimentoStatoCombattimento(campagnaId), { attivo: true, round: 0, turno: null, avviatoIl: serverTimestamp() });
+  await batch.commit();
+}
+
+// Aggiunge uno o più nemici uguali ("Goblin" ×4 → Goblin 1…4, PF propri).
+// Iniziativa: quella indicata, altrimenti d20 + bonus (un tiro per tutti se
+// "comune", altrimenti uno a testa).
+export async function aggiungiNemici(campagnaId, { nome, quantita = 1, bonus = 0, pfMassimi = 0, iniziativa = null, iniziativaComune = true, immagineId = null }) {
+  const batch = writeBatch(db);
+  const tiroComune = iniziativa ?? tiraD20() + bonus;
+  for (let i = 1; i <= quantita; i += 1) {
+    const riferimento = doc(collection(db, "campagne", campagnaId, "combattenti"));
+    const nomeNemico = quantita > 1 ? `${nome} ${i}` : nome;
+    batch.set(riferimento, {
+      tipo: "nemico",
+      nome: nomeNemico.slice(0, 60),
+      uid: null,
+      iniziativa: iniziativaComune || iniziativa != null ? tiroComune : tiraD20() + bonus,
+      bonus,
+      spareggio: 0,
+      salute: "illeso",
+      immagineId: immagineId || null,
+      creatoIl: serverTimestamp(),
+    });
+    batch.set(riferimentoCombattenteDM(campagnaId, riferimento.id), { pfAttuali: pfMassimi, pfMassimi, note: null });
+  }
+  await batch.commit();
+}
+
+// Iniziativa di un combattente (il giocatore per il proprio, il DM per tutti).
+export async function impostaIniziativa(campagnaId, combattenteId, iniziativa, bonus) {
+  const campi = { iniziativa };
+  if (bonus != null) campi.bonus = bonus;
+  await updateDoc(riferimentoCombattente(campagnaId, combattenteId), campi);
+}
+
+// Riordina un gruppo di combattenti a pari iniziativa (ID nell'ordine voluto).
+export async function impostaSpareggi(campagnaId, idInOrdine) {
+  const batch = writeBatch(db);
+  idInOrdine.forEach((id, indice) => batch.update(riferimentoCombattente(campagnaId, id), { spareggio: idInOrdine.length - indice }));
+  await batch.commit();
+}
+
+export async function aggiornaPfNemico(campagnaId, combattenteId, pfAttuali, pfMassimi) {
+  const batch = writeBatch(db);
+  batch.update(riferimentoCombattenteDM(campagnaId, combattenteId), { pfAttuali, pfMassimi });
+  batch.update(riferimentoCombattente(campagnaId, combattenteId), { salute: saluteDaPf(pfAttuali, pfMassimi) });
+  await batch.commit();
+}
+
+export async function impostaTurno(campagnaId, round, turno) {
+  await updateDoc(riferimentoStatoCombattimento(campagnaId), { round, turno });
+}
+
+// Toglie un combattente; se era il suo turno, il turno passa a "turnoDopo".
+export async function rimuoviCombattente(campagnaId, combattenteId, turnoDopo) {
+  const batch = writeBatch(db);
+  batch.delete(riferimentoCombattente(campagnaId, combattenteId));
+  batch.delete(riferimentoCombattenteDM(campagnaId, combattenteId));
+  if (turnoDopo !== undefined) batch.update(riferimentoStatoCombattimento(campagnaId), { turno: turnoDopo });
+  await batch.commit();
+}
+
+export async function terminaCombattimento(campagnaId) {
+  const esistenti = await getDocs(collection(db, "campagne", campagnaId, "combattenti"));
+  const batch = writeBatch(db);
+  esistenti.docs.forEach((d) => {
+    batch.delete(d.ref);
+    batch.delete(riferimentoCombattenteDM(campagnaId, d.id));
+  });
+  batch.set(riferimentoStatoCombattimento(campagnaId), { attivo: false, round: 0, turno: null });
+  await batch.commit();
+}
+
+// Ascolta il combattimento in tempo reale: callback({ stato, combattenti }),
+// con i PF dei nemici (campo "dm") solo per il DM.
+export function ascoltaCombattimento(campagnaId, isDM, callback, alErrore = (e) => console.error(e)) {
+  let stato = null;
+  let combattenti = null;
+  let datiDM = isDM ? null : new Map();
+  const aggiorna = () => {
+    if (!stato || !combattenti || !datiDM) return;
+    callback({ stato, combattenti: combattenti.map((c) => ({ ...c, dm: datiDM.get(c.id) || null })) });
+  };
+  const stop = [
+    onSnapshot(riferimentoStatoCombattimento(campagnaId), (s) => {
+      stato = s.exists() ? s.data() : { attivo: false, round: 0, turno: null };
+      aggiorna();
+    }, alErrore),
+    onSnapshot(collection(db, "campagne", campagnaId, "combattenti"), (s) => {
+      combattenti = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+      aggiorna();
+    }, alErrore),
+  ];
+  if (isDM) {
+    stop.push(onSnapshot(collection(db, "campagne", campagnaId, "combattentiDM"), (s) => {
+      datiDM = new Map(s.docs.map((d) => [d.id, d.data()]));
+      aggiorna();
+    }, alErrore));
+  }
+  return () => stop.forEach((f) => f());
+}
+
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,
 // poi esegue la callback con (user, profilo). Se non autenticato, reindirizza al
 // login; se autenticato ma con email non verificata, reindirizza alla pagina di
