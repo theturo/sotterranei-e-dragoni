@@ -10,7 +10,25 @@
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
-  <div id="veil" class="loading-veil">Consultando gli antichi registri…</div>
+  <div id="veil" class="loading-veil">
+    <div class="die-stage">
+      <div class="die-shadow"></div>
+      <div class="die-svg-wrap">
+        <svg class="die-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.1" opacity="0.5"/>
+          <text class="num num-20" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">20</text>
+          <text class="num num-7" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">7</text>
+          <text class="num num-3" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">3</text>
+          <text class="num num-14" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">14</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="loading-text">Consultando gli antichi registri…</div>
+      <div class="loading-sub">un istante: il destino si sta scrivendo</div>
+    </div>
+  </div>
 
   <div id="contenuto" style="display:none;">
     <div class="dashboard-wrap">
@@ -50,10 +68,8 @@
               <button id="btn-apri-registro" class="btn-tabella" type="button">Registro</button>
             </div>
             <div id="lista-appunti" class="sessione-appunti-lista"></div>
-            <p id="appunti-vuoto" class="scheda-testo-libero" hidden>Nessun appunto ancora per questa sessione.</p>
-            <p id="nessuna-sessione-msg" class="scheda-testo-libero" hidden>
-              Nessuna sessione in corso: gli appunti si potranno scrivere quando il Dungeon Master ne aprirà una.
-            </p>
+            <div id="appunti-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4 C13 4 6 10 4 20 C10 19 15 16 18 11"/><line x1="4" y1="20" x2="9" y2="15"/><path d="M13 9 C14.5 9.5 15.5 10.5 16 12" opacity="0.5"/></svg><p>Nessun appunto ancora per questa sessione.</p></div>
+            <div id="nessuna-sessione-msg" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9.5" y="10" width="5" height="11" rx="1"/><line x1="12" y1="10" x2="12" y2="7"/><path d="M12 7 C12 7 13.2 5.6 12.4 4.2" opacity="0.45"/><line x1="6" y1="21" x2="18" y2="21"/></svg><p>Nessuna sessione in corso: gli appunti si potranno scrivere quando il Dungeon Master ne aprirà una.</p></div>
             <form id="form-appunto" class="sessione-appunti-form" hidden>
               <textarea id="campo-appunto" class="textarea-libero" rows="2" placeholder="Scrivi un appunto..." maxlength="2000" required></textarea>
               <button type="submit" class="btn" style="width:auto; padding:10px 22px;">Aggiungi</button>
@@ -69,7 +85,7 @@
               </div>
             </div>
             <ul id="lista-contenuti-sessione" class="lista-contenuti-sessione"></ul>
-            <p id="contenuti-vuoto" class="scheda-testo-libero" hidden></p>
+            <div id="contenuti-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 26 C14 14 22 8 32 8 C42 8 50 14 50 26 L50 34 C50 46 42 54 32 54 C22 54 14 46 14 34 Z"/><path d="M20 28 C22 25 26 25 28 28"/><path d="M36 28 C38 25 42 25 44 28"/><path d="M26 40 C29 43 35 43 38 40"/></svg><p></p></div>
           </div>
         </div>
 
@@ -77,7 +93,7 @@
           <div class="panel sessione-pannello-party">
             <h3>Party</h3>
             <ul id="lista-party" class="lista-party-sessione"></ul>
-            <p id="party-vuoto" class="scheda-testo-libero" hidden>Nessun giocatore registrato ancora.</p>
+            <div id="party-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20 C3 15.5 5.5 13 8 13 C10.5 13 13 15.5 13 20"/><path d="M12 20 C12 15.8 14.2 13.4 16 13.4 C18.5 13.4 21 15.8 21 20" opacity="0.6"/></svg><p>Nessun giocatore registrato ancora.</p></div>
           </div>
 
           <div class="panel sessione-pannello-musica">
@@ -97,7 +113,7 @@
       <button id="chiudi-registro" class="btn-chiudi-modal" aria-label="Chiudi" type="button">×</button>
       <h2>Registro delle sessioni</h2>
       <div id="lista-registro"></div>
-      <p id="registro-vuoto" class="scheda-testo-libero" hidden>Nessuna sessione registrata ancora.</p>
+      <div id="registro-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4 C4.5 4 3.5 5 3.5 6.5 C3.5 8 4.5 9 6 9 L6 19 C6 20.5 7 21.5 8.5 21.5 L18 21.5 C19.5 21.5 20.5 20.5 20.5 19 L20.5 17"/><path d="M18 4 C19.5 4 20.5 5 20.5 6.5 L20.5 17 L15.5 17 L15.5 21.5"/><line x1="6" y1="4" x2="18" y2="4"/><line x1="9" y1="12" x2="17" y2="12" opacity="0.5"/><line x1="9" y1="15.5" x2="14" y2="15.5" opacity="0.5"/></svg><p>Nessuna sessione registrata ancora.</p></div>
     </div>
   </div>
 

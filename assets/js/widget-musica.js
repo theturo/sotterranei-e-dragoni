@@ -7,6 +7,7 @@
 //   lo attiva con il pulsante.
 import { ascoltaStatoMusica } from "./auth.js";
 import { esc, escUrl } from "./utils.js";
+import { ICONA_NOTA } from "./icone.js";
 import { caricaApiYouTube, sorgenteDaStato, messaggioErroreYouTube } from "./youtube.js";
 
 // Monta il widget nel contenitore indicato e resta in ascolto dello stato
@@ -100,7 +101,7 @@ export function montaWidgetMusica(contenitore, campagnaId) {
 
     if (!stato.sorgente) {
       modalita = null;
-      mostraSegnaposto("Nessuna musica in riproduzione.");
+      contenitore.innerHTML = `<div class="stato-vuoto-riga">${ICONA_NOTA}<p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>`;
       return;
     }
 

@@ -19,7 +19,8 @@ import {
 } from "./auth.js";
 import { mostraImmagine, percorsiRitratto, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
-import { CLASSI } from "./dati-srd.js";
+import { CLASSI, ICONA_CLASSE_FALLBACK } from "./dati-srd.js";
+import { ICONA_MASCHERA } from "./icone.js";
 
 const SALUTE = {
   illeso: "Illeso",
@@ -197,7 +198,10 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     img.alt = "";
     img.hidden = true;
     const classe = c.tipo === "pg" ? CLASSI[party().find((x) => x.uid === c.uid)?.classe] : null;
-    const icona = creaElemento("span", "combattente-icona", c.tipo === "pg" ? classe?.icona || "🛡️" : "💀");
+    const icona = creaElemento("span", "combattente-icona icona-classe");
+    icona.setAttribute("aria-hidden", "true");
+    // SVG fissi (dati-srd.js, icone.js), nessun dato inserito dagli utenti.
+    icona.innerHTML = c.tipo === "pg" ? classe?.iconaSvg || ICONA_CLASSE_FALLBACK : ICONA_MASCHERA;
     avatar.append(img, icona);
     caricaAvatar(c, img, icona);
 
