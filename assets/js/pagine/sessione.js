@@ -95,6 +95,7 @@ function creaRigaParty(riepilogo) {
   li.className = "party-sessione-riga";
   if (!riepilogo.schedaId) {
     li.innerHTML = `
+      <span class="party-avatar party-avatar-vuoto" aria-hidden="true">?</span>
       <div class="party-sessione-info">
         <div class="party-sessione-nome">${esc(riepilogo.nomeGiocatore) || "—"}</div>
         <div class="party-sessione-sub">Nessun personaggio attivo</div>
@@ -104,19 +105,27 @@ function creaRigaParty(riepilogo) {
   }
   const classe = CLASSI[riepilogo.classe];
   li.innerHTML = `
-    <span class="icona-classe" aria-hidden="true">${classe?.icona || "🎲"}</span>
+    <span class="party-avatar"><span class="icona-classe" aria-hidden="true">${classe?.icona || "🎲"}</span></span>
     <div class="party-sessione-info">
       <div class="party-sessione-nome">${esc(riepilogo.nomePersonaggio) || "—"}</div>
       <div class="party-sessione-sub">${esc(riepilogo.nomeGiocatore) || "—"} · ${esc(classe?.nome) || "—"} ${esc(riepilogo.livello || 1)}</div>
+      <div class="barra-pf" aria-hidden="true"><span></span></div>
     </div>
     <div class="party-sessione-pf">${esc(testoPf(riepilogo))}</div>
   `;
+  // Barra dei PF: verde, gialla sotto il 60%, rossa sotto il 35%.
+  const { massimi = 0, attuali = 0 } = riepilogo.hp || {};
+  const quota = massimi > 0 ? Math.max(0, Math.min(1, attuali / massimi)) : 0;
+  const barra = li.querySelector(".barra-pf span");
+  barra.style.width = `${Math.round(quota * 100)}%`;
+  barra.dataset.livello = quota < 0.35 ? "basso" : quota < 0.6 ? "medio" : "alto";
+  if (!riepilogo.hp) li.querySelector(".barra-pf").hidden = true;
   // Con un ritratto, l'icona della classe lascia il posto alla sua miniatura
   // (e ricompare se l'immagine non si può caricare).
   if (riepilogo.ritratto) {
     const icona = li.querySelector(".icona-classe");
     const img = document.createElement("img");
-    img.className = "icona-ritratto";
+    img.className = "party-ritratto";
     img.alt = "";
     img.hidden = true;
     icona.before(img);
@@ -197,17 +206,26 @@ let contenutiGiaVisti = null;
 
 const nomeMembro = (uid) => membriCampagna.find((m) => m.uid === uid)?.nome || "Giocatore";
 
-function testoVisibilita(c) {
+// Stato di visibilità: testo ed etichetta colorata (tutti / alcuni / nascosto).
+function statoVisibilita(c) {
   const a = c.mostrataA || [];
-  if (a.length === 0) return "Nascosto ai giocatori";
-  if (membriCampagna.length > 0 && membriCampagna.every((m) => a.includes(m.uid))) return "Visibile a tutto il party";
-  return `Visibile a: ${a.map(nomeMembro).join(", ")}`;
+  if (a.length === 0) return { tipo: "nascosto", testo: "Nascosto ai giocatori" };
+  if (membriCampagna.length > 0 && membriCampagna.every((m) => a.includes(m.uid))) {
+    return { tipo: "tutti", testo: "Visibile a tutto il party" };
+  }
+  return { tipo: "alcuni", testo: `Visibile a: ${a.map(nomeMembro).join(", ")}` };
 }
+
+// Righe con la scelta "Solo ad alcuni" aperta: restano aperte anche quando
+// la lista si aggiorna in tempo reale.
+const sceltaAperta = new Set();
 
 async function cambiaVisibilita(c, uids, bottoni) {
   bottoni.forEach((b) => (b.disabled = true));
   try {
     await mostraContenuto(campagnaIdCorrente, c, uids, sessioneAttivaId);
+    sceltaAperta.delete(c.id);
+    renderContenuti();
   } catch (errore) {
     console.error(errore);
     alert("Impossibile cambiare la visibilità del contenuto.");
@@ -216,31 +234,47 @@ async function cambiaVisibilita(c, uids, bottoni) {
   }
 }
 
-function rigaContenutoDM(c) {
-  const li = creaElemento("li", "riga-contenuto-sessione");
+function anteprimaContenuto(c) {
   const anteprima = creaElemento("button", "miniatura-contenuto");
   anteprima.type = "button";
   anteprima.setAttribute("aria-label", `Apri: ${c.titolo}`);
   anteprima.append(creaMiniatura(campagnaIdCorrente, c.id));
   anteprima.addEventListener("click", () => apriLightbox(campagnaIdCorrente, c));
+  return anteprima;
+}
 
+function bottone(testo, classe = "") {
+  const b = creaElemento("button", `btn-azione ${classe}`.trim(), testo);
+  b.type = "button";
+  return b;
+}
+
+// Riga del DM: miniatura | titolo, categoria e stato | bottoni (in colonna).
+// I bottoni dipendono dallo stato: nascosto → Mostra a tutti, Solo ad alcuni;
+// visibile a tutti → Solo ad alcuni, Nascondi; visibile ad alcuni → tutti e tre.
+function rigaContenutoDM(c) {
+  const li = creaElemento("li", "riga-contenuto-sessione");
   const info = creaElemento("div", "riga-contenuto-info");
-  const titolo = creaElemento("div", "party-sessione-nome", c.titolo);
-  const sotto = creaElemento("div", "party-sessione-sub",
-    `${CATEGORIE[c.categoria] || "Altro"} · ${c.riservati.archivio ? "per l'archivio" : "solo in sessione"}`);
-  const stato = creaElemento("div", "riga-contenuto-stato", testoVisibilita(c));
-  stato.dataset.visibile = (c.mostrataA || []).length > 0 ? "si" : "no";
+  const stato = statoVisibilita(c);
+  info.append(
+    creaElemento("div", "riga-contenuto-titolo", c.titolo),
+    creaElemento("div", "party-sessione-sub",
+      `${CATEGORIE[c.categoria] || "Altro"} · ${c.riservati.archivio ? "per l'archivio" : "solo in sessione"}`),
+    creaElemento("span", `pill-stato pill-${stato.tipo}`, stato.testo)
+  );
 
   const azioni = creaElemento("div", "riga-contenuto-azioni");
-  const aTutti = creaElemento("button", "btn-tabella btn-tabella-evidenza", "Mostra a tutti");
-  const scegli = creaElemento("button", "btn-tabella", "Solo ad alcuni…");
-  const nascondi = creaElemento("button", "btn-tabella", "Nascondi");
-  [aTutti, scegli, nascondi].forEach((b) => (b.type = "button"));
-  nascondi.hidden = (c.mostrataA || []).length === 0;
+  const aTutti = bottone("Mostra a tutti", "pieno");
+  const scegli = bottone("Solo ad alcuni…");
+  const nascondi = bottone("Nascondi");
+  if (stato.tipo !== "tutti") azioni.append(aTutti);
+  azioni.append(scegli);
+  if (stato.tipo !== "nascosto") azioni.append(nascondi);
   const bottoni = [aTutti, scegli, nascondi];
 
   const scelta = creaElemento("div", "scelta-giocatori");
-  scelta.hidden = true;
+  scelta.hidden = !sceltaAperta.has(c.id);
+  scegli.classList.toggle("attivo", !scelta.hidden);
   membriCampagna.forEach((m) => {
     const etichetta = creaElemento("label", "checkbox-scudo");
     const casella = document.createElement("input");
@@ -250,39 +284,35 @@ function rigaContenutoDM(c) {
     etichetta.append(casella, ` ${m.nome || "Giocatore"}`);
     scelta.append(etichetta);
   });
-  const applica = creaElemento("button", "btn-tabella btn-tabella-evidenza", "Mostra");
-  applica.type = "button";
+  const applica = bottone("Applica", "pieno");
   scelta.append(applica);
 
   aTutti.addEventListener("click", () => cambiaVisibilita(c, membriCampagna.map((m) => m.uid), bottoni));
   nascondi.addEventListener("click", () => cambiaVisibilita(c, [], bottoni));
   scegli.addEventListener("click", () => {
     scelta.hidden = !scelta.hidden;
+    scegli.classList.toggle("attivo", !scelta.hidden);
+    if (scelta.hidden) sceltaAperta.delete(c.id);
+    else sceltaAperta.add(c.id);
   });
   applica.addEventListener("click", () => {
     const uids = [...scelta.querySelectorAll("input:checked")].map((x) => x.value);
     cambiaVisibilita(c, uids, [...bottoni, applica]);
   });
 
-  azioni.append(aTutti, scegli, nascondi);
-  info.append(titolo, sotto, stato, azioni, scelta);
-  li.append(anteprima, info);
+  li.append(anteprimaContenuto(c), info, azioni, scelta);
   return li;
 }
 
 function rigaContenutoGiocatore(c) {
-  const li = creaElemento("li", "riga-contenuto-sessione");
-  const anteprima = creaElemento("button", "miniatura-contenuto");
-  anteprima.type = "button";
-  anteprima.setAttribute("aria-label", `Apri: ${c.titolo}`);
-  anteprima.append(creaMiniatura(campagnaIdCorrente, c.id));
-  anteprima.addEventListener("click", () => apriLightbox(campagnaIdCorrente, c));
+  const li = creaElemento("li", "riga-contenuto-sessione riga-contenuto-giocatore");
   const info = creaElemento("div", "riga-contenuto-info");
   info.append(
-    creaElemento("div", "party-sessione-nome", c.titolo),
+    creaElemento("div", "riga-contenuto-titolo", c.titolo),
     creaElemento("div", "party-sessione-sub", CATEGORIE[c.categoria] || "Altro")
   );
-  li.append(anteprima, info);
+  if (c.descrizione) info.append(creaElemento("div", "riga-contenuto-descrizione", c.descrizione));
+  li.append(anteprimaContenuto(c), info);
   return li;
 }
 
@@ -295,7 +325,7 @@ function renderContenuti() {
   let elenco;
 
   if (isDmContenuti) {
-    document.getElementById("titolo-contenuti").textContent = "Contenuti della sessione";
+    document.getElementById("titolo-contenuti").textContent = "Contenuti";
     link.hidden = false;
     link.href = "libreria.html";
     link.textContent = "Libreria";

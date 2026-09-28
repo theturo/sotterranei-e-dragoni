@@ -2986,26 +2986,162 @@ table.tabella-punteggi select {
   outline: 3px solid var(--color-burgundy);
 }
 
-/* Contenuti nella pagina Sessione */
+/* ---------- Pagina Sessione ---------- */
+/* Sul telefono le due colonne si sciolgono in una sola, in quest'ordine:
+   (mappa, quando ci sarà), appunti, party, contenuti, musica. */
+@media (max-width: 899px) {
+  .sessione-layout > .sessione-colonna {
+    display: contents;
+  }
+  .sessione-pannello-appunti { order: 1; }
+  .sessione-pannello-party { order: 2; }
+  .sessione-pannello-contenuti { order: 3; }
+  .sessione-pannello-musica { order: 4; }
+}
+
+/* La Sessione resta aperta al tavolo: sui computer usa più spazio. */
+@media (min-width: 1000px) {
+  .dashboard-wrap:has(#hub-sessione) {
+    max-width: 1200px;
+  }
+}
+
+.btn-ghost-chiaro {
+  color: var(--color-gold-bright);
+  border-color: var(--color-gold);
+}
+
+.btn-ghost-chiaro:hover {
+  background: rgba(201, 162, 39, 0.12);
+}
+
+.azioni-intestazione {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.link-intestazione {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.link-intestazione[hidden] {
+  display: none;
+}
+
+/* Party */
+.lista-party-sessione .party-sessione-riga {
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+}
+
+.lista-party-sessione .party-sessione-riga:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.party-avatar {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--color-gold);
+  background: rgba(122, 31, 43, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 1.4rem;
+}
+
+.party-avatar-vuoto {
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+  border-style: dashed;
+}
+
+.party-avatar .icona-classe {
+  margin: 0;
+}
+
+.party-avatar .icona-classe[hidden],
+.party-ritratto[hidden] {
+  display: none;
+}
+
+.party-ritratto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.barra-pf {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(122, 31, 43, 0.15);
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.barra-pf[hidden] {
+  display: none;
+}
+
+.barra-pf span {
+  display: block;
+  height: 100%;
+  background: #2f6b3a;
+  transition: width 0.3s;
+}
+
+.barra-pf span[data-livello="medio"] {
+  background: #b8860b;
+}
+
+.barra-pf span[data-livello="basso"] {
+  background: var(--color-burgundy-bright);
+}
+
+/* Contenuti: miniatura | dati | bottoni in colonna */
 .lista-contenuti-sessione {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .riga-contenuto-sessione {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 170px;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+}
+
+.riga-contenuto-sessione:first-child {
+  padding-top: 0;
+}
+
+.riga-contenuto-sessione:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.riga-contenuto-giocatore {
+  grid-template-columns: 150px minmax(0, 1fr);
 }
 
 .miniatura-contenuto {
-  flex: 0 0 88px;
-  width: 88px;
-  height: 66px;
+  width: 150px;
+  height: 112px;
   padding: 0;
   border: 1px solid var(--color-gold);
   border-radius: 6px;
@@ -3026,30 +3162,124 @@ table.tabella-punteggi select {
 }
 
 .riga-contenuto-info {
-  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: flex-start;
+  gap: 5px;
 }
 
-.riga-contenuto-stato {
-  font-size: 0.82rem;
+.riga-contenuto-titolo {
+  font-family: var(--font-heading);
   color: var(--color-burgundy);
+  overflow-wrap: anywhere;
 }
 
-.riga-contenuto-stato[data-visibile="si"] {
+.riga-contenuto-descrizione {
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+}
+
+.pill-stato {
+  font-size: 0.78rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.pill-tutti {
   color: #2f6b3a;
+  background: rgba(47, 107, 58, 0.08);
 }
 
-.riga-contenuto-azioni,
+.pill-alcuni {
+  color: #8a5a00;
+  background: rgba(138, 90, 0, 0.08);
+}
+
+.pill-nascosto {
+  color: var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.06);
+}
+
+.riga-contenuto-azioni {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-azione {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-burgundy);
+  background: transparent;
+  color: var(--color-burgundy);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.btn-azione:hover {
+  background: rgba(122, 31, 43, 0.08);
+}
+
+.btn-azione.pieno {
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.btn-azione.pieno:hover {
+  background: var(--color-burgundy-bright);
+}
+
+.btn-azione.attivo {
+  background: rgba(122, 31, 43, 0.14);
+}
+
+.btn-azione:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 .scelta-giocatori {
+  grid-column: 2 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 10px;
+  gap: 4px 14px;
   align-items: center;
+  padding: 8px 10px;
+  border: 1px dashed var(--color-ink-soft);
+  border-radius: 6px;
+  font-size: 0.88rem;
+}
+
+.scelta-giocatori .btn-azione {
+  margin-left: auto;
 }
 
 .scelta-giocatori[hidden] {
   display: none;
+}
+
+@media (max-width: 700px) {
+  .riga-contenuto-sessione,
+  .riga-contenuto-giocatore {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .miniatura-contenuto {
+    width: 96px;
+    height: 72px;
+  }
+  .riga-contenuto-azioni {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+  .riga-contenuto-azioni .btn-azione {
+    flex: 1;
+  }
+  .scelta-giocatori {
+    grid-column: 1 / -1;
+  }
 }
