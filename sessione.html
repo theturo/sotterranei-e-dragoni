@@ -28,20 +28,20 @@
 
       <div id="controlli-dm" style="display:flex; gap:12px; margin-bottom:24px;" hidden>
         <button id="btn-apri-sessione" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Apri nuova sessione</button>
-        <button id="btn-chiudi-sessione" class="btn btn-ghost" hidden>Chiudi sessione</button>
+        <button id="btn-chiudi-sessione" class="btn btn-ghost btn-ghost-chiaro" hidden>Chiudi sessione</button>
       </div>
 
       <div id="nessuna-campagna" class="panel-wide" hidden>
         <p class="scheda-testo-libero" id="testo-nessuna-campagna"></p>
       </div>
 
+      <!-- Due colonne sul computer (appunti e contenuti a sinistra, party e
+           musica a destra); una sola colonna sul telefono, nell'ordine
+           appunti, party, contenuti, musica (vedi .sessione-colonna in
+           style.css). La mappa, quando arriverà, andrà sopra gli appunti. -->
       <div id="hub-sessione" class="sessione-layout">
         <div class="sessione-colonna">
-          <div class="panel sessione-box-mappa">
-            <p class="sessione-placeholder">Mappa (in arrivo)</p>
-          </div>
-
-          <div class="panel">
+          <div class="panel sessione-pannello-appunti">
             <div class="sessione-appunti-intestazione">
               <h3>Appunti della sessione</h3>
               <button id="btn-apri-registro" class="btn-tabella" type="button">Registro</button>
@@ -56,29 +56,33 @@
               <button type="submit" class="btn" style="width:auto; padding:10px 22px;">Aggiungi</button>
             </form>
           </div>
+
+          <div class="panel sessione-pannello-contenuti" id="pannello-contenuti">
+            <div class="sessione-appunti-intestazione">
+              <h3 id="titolo-contenuti">Mostrati dal DM</h3>
+              <div class="azioni-intestazione">
+                <button id="btn-collega-contenuti" class="btn-tabella" type="button" hidden>+ Collega</button>
+                <a id="link-contenuti" class="link-intestazione" hidden></a>
+              </div>
+            </div>
+            <ul id="lista-contenuti-sessione" class="lista-contenuti-sessione"></ul>
+            <p id="contenuti-vuoto" class="scheda-testo-libero" hidden></p>
+          </div>
         </div>
 
         <div class="sessione-colonna">
-          <div class="panel">
-            <h3>Musica</h3>
-            <div id="corpo-musica-sessione"><p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>
-            <a id="link-controllo-musica" href="controllo-musica.html" class="btn-tabella" style="display:inline-block; margin-top:10px;" hidden>Controllo musica</a>
-          </div>
-
-          <div class="panel">
-            <h3>Personaggi del party</h3>
+          <div class="panel sessione-pannello-party">
+            <h3>Party</h3>
             <ul id="lista-party" class="lista-party-sessione"></ul>
             <p id="party-vuoto" class="scheda-testo-libero" hidden>Nessun giocatore registrato ancora.</p>
           </div>
 
-          <div class="panel" id="pannello-contenuti">
+          <div class="panel sessione-pannello-musica">
             <div class="sessione-appunti-intestazione">
-              <h3 id="titolo-contenuti">Mostrati dal Dungeon Master</h3>
-              <button id="btn-collega-contenuti" class="btn-tabella" type="button" hidden>Collega dalla libreria</button>
+              <h3>Musica</h3>
+              <a id="link-controllo-musica" href="controllo-musica.html" class="link-intestazione" hidden>Controllo musica</a>
             </div>
-            <ul id="lista-contenuti-sessione" class="lista-contenuti-sessione"></ul>
-            <p id="contenuti-vuoto" class="scheda-testo-libero" hidden></p>
-            <a id="link-contenuti" class="btn-tabella" style="display:inline-block; margin-top:10px;" hidden></a>
+            <div id="corpo-musica-sessione"><p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>
           </div>
         </div>
       </div>
