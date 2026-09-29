@@ -33,7 +33,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Lancio dadi condiviso** nel registro della sessione.
 - **Calendario delle sessioni con le disponibilità**, collegato
   all'interruttore della sessione.
 - **Notifiche push** ("la sessione è iniziata", "sei salito di livello"),
@@ -67,6 +66,10 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - Contatori dei privilegi di classe (Ira, Azione Impetuosa, Incanalare
   Divinità, Punti Ki, Imposizione delle Mani…): usi e ricarica automatici per
   classe e livello, ripristinati dai riposi, visibili a tutto il party.
+- Lancio dei dadi condiviso: lanciatore libero in Sessione e tiri con un clic
+  dalla scheda (caratteristiche, salvezze, abilità, iniziativa, attacchi e
+  danni), vantaggio/svantaggio, critici, tiri nascosti del DM; tutto negli
+  appunti della sessione e l'iniziativa anche nel tracker.
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:

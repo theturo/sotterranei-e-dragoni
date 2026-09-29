@@ -30,7 +30,10 @@ import {
   segnaRiposoConcluso,
   ascoltaRiposo,
   annotaRiposo,
+  aggiungiTiro,
+  ascoltaTiriNascosti,
 } from "../auth.js";
+import { tira, testoTiro } from "../dadi.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, creaScheletro } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
@@ -79,18 +82,46 @@ function formattaOrario(timestamp) {
 }
 
 function rigaAppunto(appunto, sessioneId) {
+  const collezione = appunto.nascosto ? "tiriNascosti" : "appunti";
   const bottoneElimina = puoModerare
-    ? `<button type="button" class="btn-rimuovi-talento" data-elimina-appunto="${esc(appunto.id)}" data-sessione="${esc(sessioneId)}" aria-label="Elimina appunto" title="Elimina appunto">×</button>`
+    ? `<button type="button" class="btn-rimuovi-talento" data-elimina-appunto="${esc(appunto.id)}" data-sessione="${esc(sessioneId)}" data-collezione="${collezione}" aria-label="Elimina appunto" title="Elimina appunto">×</button>`
     : "";
+  const classi = ["sessione-appunto"];
+  if (appunto.tipo === "riposo") classi.push("sessione-appunto-riposo");
+  if (appunto.tipo === "tiro") classi.push("sessione-appunto-tiro");
+  if (appunto.tiro?.critico) classi.push(`tiro-${appunto.tiro.critico}`);
+  if (appunto.nascosto) classi.push("sessione-appunto-nascosto");
+  const etichettaNascosto = appunto.nascosto ? '<span class="chip-riposo">Nascosto</span> ' : "";
   return `
-    <div class="sessione-appunto${appunto.tipo === "riposo" ? " sessione-appunto-riposo" : ""}">
-      <div class="sessione-appunto-meta"><span>${esc(appunto.autoreNome) || "—"}</span><span>${formattaOrario(appunto.creatoIl)}${bottoneElimina}</span></div>
+    <div class="${classi.join(" ")}">
+      <div class="sessione-appunto-meta"><span>${etichettaNascosto}${esc(appunto.autoreNome) || "—"}</span><span>${formattaOrario(appunto.creatoIl)}${bottoneElimina}</span></div>
       <div class="sessione-appunto-testo">${esc(appunto.testo)}</div>
     </div>
   `;
 }
 
-function renderAppunti(appunti) {
+// Appunti (con riposi e tiri) più, per il DM, i suoi tiri nascosti, in ordine
+// di tempo. Ai presenti arriva un avviso per i tiri degli altri.
+let appuntiPubblici = [];
+let tiriNascosti = [];
+let appuntiGiaVisti = null;
+let smettiNascosti = null;
+
+const istante = (a) => a.creatoIl?.toMillis?.() ?? Number.MAX_SAFE_INTEGER;
+
+function riceviAppunti(appunti) {
+  if (appuntiGiaVisti) {
+    appunti
+      .filter((a) => !appuntiGiaVisti.has(a.id) && a.tipo === "tiro" && a.autoreUid !== uidCorrente)
+      .forEach((a) => mostraAvvisoContenuto(a.testo));
+  }
+  appuntiGiaVisti = new Set(appunti.map((a) => a.id));
+  appuntiPubblici = appunti;
+  renderAppunti();
+}
+
+function renderAppunti() {
+  const appunti = [...appuntiPubblici, ...tiriNascosti].sort((a, b) => istante(a) - istante(b));
   const lista = document.getElementById("lista-appunti");
   const vuoto = document.getElementById("appunti-vuoto");
   if (appunti.length === 0) {
@@ -501,9 +532,24 @@ function aggiornaBadgeStato(inCorso) {
   badge.textContent = inCorso ? "Sessione in corso" : "Nessuna sessione in corso";
 }
 
+function fermaAscolto() {
+  smettiAscolto?.();
+  smettiNascosti?.();
+  smettiAscolto = smettiNascosti = null;
+  appuntiPubblici = [];
+  tiriNascosti = [];
+  appuntiGiaVisti = null;
+}
+
 function attivaAscolto(id) {
-  if (smettiAscolto) smettiAscolto();
-  smettiAscolto = ascoltaAppunti(id, renderAppunti);
+  fermaAscolto();
+  smettiAscolto = ascoltaAppunti(id, riceviAppunti);
+  if (puoModerare) {
+    smettiNascosti = ascoltaTiriNascosti(id, (elenco) => {
+      tiriNascosti = elenco;
+      renderAppunti();
+    });
+  }
 }
 
 function mostraStatoAttivo(id) {
@@ -774,6 +820,7 @@ proteggiPagina(async (user, profilo) => {
 
   document.getElementById("controlli-dm").hidden = !isDmOAdmin;
   document.getElementById("azioni-riposo-party").hidden = !isDmOAdmin;
+  document.getElementById("dadi-nascosto-wrap").hidden = !isDmOAdmin;
   document.getElementById("link-controllo-musica").hidden = !isDmOAdmin;
   montaWidgetMusica(document.getElementById("corpo-musica-sessione"), campagnaIdCorrente);
 
@@ -801,6 +848,8 @@ proteggiPagina(async (user, profilo) => {
     party: () => ultimoParty,
     libreria: () => contenuti,
     avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
+    // I tiri di iniziativa del DM (per i nemici) restano nascosti.
+    registraTiro: (chi, tiro) => registraTiro(chi, tiro, isDmOAdmin),
   });
 
   veil.style.display = "none";
@@ -825,10 +874,7 @@ document.getElementById("btn-chiudi-sessione").addEventListener("click", async (
   bottone.disabled = true;
   try {
     await chiudiSessione(campagnaIdCorrente, sessioneAttivaId);
-    if (smettiAscolto) {
-      smettiAscolto();
-      smettiAscolto = null;
-    }
+    fermaAscolto();
     mostraStatoInattivo();
   } catch (errore) {
     console.error(errore);
@@ -853,6 +899,45 @@ document.getElementById("form-appunto").addEventListener("submit", async (evento
   } finally {
     bottone.disabled = false;
   }
+});
+
+// ---------- Lancio dei dadi ----------
+// Con una sessione in corso il tiro va nel registro (per il DM, a scelta,
+// nascosto); senza, resta solo a chi lo tira.
+async function registraTiro(chi, tiro, nascosto = false) {
+  if (!sessioneAttivaId) return false;
+  try {
+    await aggiungiTiro(sessioneAttivaId, uidCorrente, nomeCorrente, testoTiro(chi, tiro), tiro, nascosto);
+    return true;
+  } catch (errore) {
+    console.error(errore);
+    mostraAvvisoContenuto("Impossibile registrare il tiro.", true);
+    return false;
+  }
+}
+
+document.getElementById("dadi-facce").addEventListener("change", (evento) => {
+  const modo = document.getElementById("dadi-modo");
+  modo.disabled = evento.target.value !== "20";
+  if (modo.disabled) modo.value = "normale";
+});
+
+document.getElementById("lanciatore-dadi").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const valore = (id) => Math.trunc(Number(document.getElementById(id).value)) || 0;
+  const tiro = tira({
+    etichetta: document.getElementById("dadi-etichetta").value.trim() || "Tiro",
+    quanti: Math.max(1, valore("dadi-quanti")),
+    facce: valore("dadi-facce"),
+    modificatore: valore("dadi-modificatore"),
+    modo: document.getElementById("dadi-modo").value,
+  });
+  const mio = ultimoParty.find((r) => r.uid === uidCorrente);
+  const chi = puoModerare ? null : mio?.nomePersonaggio || nomeCorrente;
+  const nascosto = puoModerare && document.getElementById("dadi-nascosto").checked;
+  const registrato = await registraTiro(chi, tiro, nascosto);
+  mostraAvvisoContenuto(`${registrato ? "" : "Solo per te — "}${testoTiro(null, tiro)}`);
+  document.getElementById("dadi-etichetta").value = "";
 });
 
 // Registro storico: elenco delle sessioni passate, con gli appunti di ognuna
@@ -934,7 +1019,7 @@ document.addEventListener("click", async (evento) => {
   if (!confirm("Eliminare questo appunto? Non si potrà recuperare.")) return;
   bottone.disabled = true;
   try {
-    await eliminaAppunto(bottone.dataset.sessione, bottone.dataset.eliminaAppunto);
+    await eliminaAppunto(bottone.dataset.sessione, bottone.dataset.eliminaAppunto, bottone.dataset.collezione || "appunti");
     bottone.closest(".sessione-appunto")?.remove();
   } catch (errore) {
     console.error(errore);

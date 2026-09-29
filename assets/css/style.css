@@ -4546,3 +4546,119 @@ table.tabella-punteggi select {
   text-decoration: line-through;
   opacity: 0.7;
 }
+
+/* ---------- Lancio dei dadi (scheda e Sessione) ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.vassoio-tiro.in-lancio.lancio-rapido .vassoio-dado,
+.vassoio-tiro.in-lancio.lancio-rapido .vassoio-ombra {
+  animation-duration: 1.3s;
+}
+
+.modal-tiro .tiro-formula {
+  text-align: center;
+  font-family: var(--font-heading);
+}
+
+.risultato-pf.tiro-critico {
+  color: #2f6b2c;
+}
+
+.risultato-pf.tiro-fallimento {
+  color: var(--color-danger);
+}
+
+/* Elementi della scheda che si possono tirare con un clic */
+.caratteristica,
+#lista-salvezze li,
+#lista-abilita li,
+.scheda-box:has(#valore-iniziativa) {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.caratteristica:hover,
+#lista-salvezze li:hover,
+#lista-abilita li:hover,
+.scheda-box:has(#valore-iniziativa):hover {
+  background-color: rgba(201, 162, 39, 0.14);
+}
+
+.colonna-tiri {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.btn-tiro {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  margin-left: 4px;
+}
+
+/* Lanciatore della pagina Sessione */
+.lanciatore-dadi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(122, 31, 43, 0.3);
+}
+
+.lanciatore-titolo {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin-right: 4px;
+}
+
+.input-dadi,
+.select-dadi {
+  padding: 5px 8px;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.input-dadi[type="number"] {
+  width: 64px;
+}
+
+.input-dadi-etichetta {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.sessione-appunto-tiro {
+  background: rgba(47, 58, 80, 0.07);
+  border-color: rgba(47, 58, 80, 0.3);
+}
+
+.sessione-appunto-tiro .sessione-appunto-testo {
+  font-family: var(--font-heading);
+}
+
+.sessione-appunto-tiro.tiro-successo {
+  border-color: #3d6b3a;
+  box-shadow: inset 3px 0 0 #3d6b3a;
+}
+
+.sessione-appunto-tiro.tiro-fallimento {
+  border-color: var(--color-danger);
+  box-shadow: inset 3px 0 0 var(--color-danger);
+}
+
+.sessione-appunto-nascosto {
+  border-style: dashed;
+  opacity: 0.85;
+}

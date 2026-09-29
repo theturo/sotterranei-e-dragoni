@@ -549,3 +549,29 @@ describe("Privilegi di classe", () => {
   test("NON si pubblica un Carisma falso nel riepilogo", () =>
     assertFails(setDoc(doc(come("p1"), "campagne/c1/party/p1"), riepilogoS1({ carisma: 20 }))));
 });
+
+describe("Lancio dei dadi condiviso", () => {
+  const tiroP2 = (extra = {}) => ({
+    autoreUid: "p2", autoreNome: "Leo", testo: "Lyra — Atletica: 17 (1d20+3: 14)", tipo: "tiro",
+    tiro: { etichetta: "Atletica", formula: "1d20+3", dadi: [14], modificatore: 3, modo: "normale", totale: 17 },
+    creatoIl: serverTimestamp(), ...extra,
+  });
+  const tiroDM = (extra = {}) => ({ ...tiroP2({ autoreUid: "dm", autoreNome: "Master", testo: "Percezione del drago: 22" }), ...extra });
+
+  test("un giocatore annota un tiro negli appunti", () =>
+    assertSucceeds(addDoc(collection(come("p2"), "registroSessioni/r1/appunti"), tiroP2())));
+  test("NON si allega un tiro a un appunto normale", () =>
+    assertFails(addDoc(collection(come("p2"), "registroSessioni/r1/appunti"), tiroP2({ tipo: null }))));
+  test("NON si annota un tiro in una sessione chiusa", () =>
+    assertFails(addDoc(collection(come("p2"), "registroSessioni/r0/appunti"), tiroP2())));
+  test("il DM fa un tiro nascosto", () =>
+    assertSucceeds(addDoc(collection(come("dm"), "registroSessioni/r1/tiriNascosti"), tiroDM())));
+  test("un giocatore NON fa tiri nascosti", () =>
+    assertFails(addDoc(collection(come("p2"), "registroSessioni/r1/tiriNascosti"), tiroP2())));
+  test("un giocatore NON legge i tiri nascosti del DM", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "registroSessioni/r1/tiriNascosti/t1"), tiroDM()));
+    await assertFails(getDocs(collection(come("p1"), "registroSessioni/r1/tiriNascosti")));
+  });
+  test("il DM legge i propri tiri nascosti", () =>
+    assertSucceeds(getDocs(collection(come("dm"), "registroSessioni/r1/tiriNascosti"))));
+});
