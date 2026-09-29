@@ -63,8 +63,10 @@ rules_version = '2';
 //   - "appunti": log scritto da tutti gli utenti approvati, sempre a proprio
 //     nome (nome verificato contro il profilo), max 2000 caratteri, solo
 //     mentre la sessione è in corso ("tipo": "riposo" per le righe scritte
-//     dai riposi). Non modificabili; eliminabili solo da
-//     DM/admin (moderazione).
+//     dai riposi, "tiro" per i lanci di dadi condivisi). Non modificabili;
+//     eliminabili solo da DM/admin (moderazione).
+//   - "tiriNascosti": i tiri che il DM tiene per sé, leggibili solo da DM e
+//     admin.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -538,8 +540,9 @@ service cloud.firestore {
         allow get, list: if isApprovato();
 
         allow create: if isApprovato()
-          && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'tipo', 'creatoIl'])
-          && request.resource.data.get('tipo', null) in [null, 'riposo']
+          && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'tipo', 'tiro', 'creatoIl'])
+          && request.resource.data.get('tipo', null) in [null, 'riposo', 'tiro']
+          && tiroValido(request.resource.data)
           && request.resource.data.autoreUid == request.auth.uid
           && request.resource.data.autoreNome == profiloCorrente().get('nome', null)
           && testoValido(request.resource.data.testo, 1, 2000)
@@ -549,6 +552,23 @@ service cloud.firestore {
         // Nessuna modifica; eliminazione solo per moderazione.
         allow delete: if isDMoAdmin();
       }
+
+      // Tiri nascosti del DM: visibili solo a DM e admin.
+      match /tiriNascosti/{tiroId} {
+        allow get, list, delete: if isDMoAdmin();
+        allow create: if isDMoAdmin()
+          && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'tipo', 'tiro', 'creatoIl'])
+          && request.resource.data.autoreUid == request.auth.uid
+          && testoValido(request.resource.data.testo, 1, 2000)
+          && request.resource.data.tipo == 'tiro'
+          && tiroValido(request.resource.data)
+          && request.resource.data.creatoIl == request.time;
+      }
+    }
+
+    // Dettagli di un tiro di dadi negli appunti (solo per tipo "tiro").
+    function tiroValido(d) {
+      return !('tiro' in d) || (d.get('tipo', null) == 'tiro' && d.tiro is map && d.tiro.size() <= 10);
     }
   }
 }

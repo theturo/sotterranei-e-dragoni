@@ -18,7 +18,10 @@ import {
   ascoltaRiposo,
   segnaRiposoConcluso,
   aggiornaUsiPrivilegi,
+  annotaTiro,
+  iniziativaNelTracker,
 } from "../auth.js";
+import { apriTiro, testoTiro, leggiFormula } from "../dadi.js";
 import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   ridimensionaImmagine,
@@ -804,6 +807,8 @@ function renderAttacchi() {
             : `<input type="number" class="input-bonus-attacco" data-chiave="${esc(voce.chiave)}" value="${esc(bonus)}" />`
         }</td>
         <td>${dati ? `${esc(dati.danno)} ${esc(dati.tipoDanno)}` : "—"}</td>
+        <td class="colonna-tiri">${soloLettura ? "" : `<button type="button" class="btn-tabella btn-tiro" data-tiro-colpire="${esc(voce.chiave)}" title="Tiro per colpire">Colpire</button>${
+          dati && leggiFormula(dati.danno) ? `<button type="button" class="btn-tabella btn-tiro" data-tiro-danno="${esc(voce.chiave)}" title="Tiro per i danni">Danno</button>` : ""}`}</td>
       </tr>`;
     })
     .join("");
@@ -1882,6 +1887,98 @@ document.getElementById("corpo-attacchi").addEventListener("change", async (even
   const voce = (scheda.inventario || []).find((v) => v.chiave === input.dataset.chiave);
   if (voce) voce.bonusAttacco = Number(input.value) || 0;
   await salvaInventario();
+});
+
+// ---------- Tiri dalla scheda ----------
+// Clic su caratteristiche, tiri salvezza, abilità, iniziativa e attacchi: il
+// tiro si vede nel vassoio e, con una sessione in corso, va nel registro.
+function tiroDallaScheda(opzioni, dopo = null) {
+  if (soloLettura) return;
+  apriTiro({
+    ...opzioni,
+    onTiro: async (tiro) => {
+      const registrato = scheda.attiva && scheda.campagnaId
+        ? await annotaTiro(scheda.campagnaId, uidCorrente, profiloCorrente?.nome ?? null, testoTiro(scheda.nome || "Personaggio", tiro), tiro)
+        : false;
+      const extra = dopo ? await dopo(tiro) : null;
+      return [registrato ? null : "Solo per te: nessuna sessione in corso.", extra].filter(Boolean).join(" ") || null;
+    },
+  });
+}
+
+const modCaratteristica = (chiave) => modificatore(scheda.caratteristiche?.[chiave] ?? 10);
+const nomeCaratteristica = (chiave) => CARATTERISTICHE.find((c) => c.chiave === chiave)?.nome || chiave;
+
+document.getElementById("griglia-caratteristiche").addEventListener("click", (evento) => {
+  const box = evento.target.closest(".caratteristica[data-chiave]");
+  if (!box) return;
+  tiroDallaScheda({ etichetta: `Prova di ${nomeCaratteristica(box.dataset.chiave)}`, modificatore: modCaratteristica(box.dataset.chiave) });
+});
+
+document.getElementById("lista-salvezze").addEventListener("click", (evento) => {
+  const riga = evento.target.closest("li[data-chiave]");
+  if (!riga) return;
+  const chiave = riga.dataset.chiave;
+  const competente = Boolean(CLASSI[scheda.classe]?.salvezze?.includes(chiave));
+  tiroDallaScheda({
+    etichetta: `Tiro salvezza su ${nomeCaratteristica(chiave)}`,
+    modificatore: modCaratteristica(chiave) + (competente ? bonusCompetenza(scheda.livello) : 0),
+  });
+});
+
+// Sulle abilità il pallino segna la competenza; il resto della riga tira.
+document.getElementById("lista-abilita").addEventListener("click", (evento) => {
+  if (evento.target.closest("[data-abilita]")) return;
+  const riga = evento.target.closest("li[data-chiave]");
+  const abilita = riga && ABILITA.find((a) => a.chiave === riga.dataset.chiave);
+  if (!abilita) return;
+  const competente = (scheda.abilitaCompetenti || []).includes(abilita.chiave);
+  tiroDallaScheda({
+    etichetta: abilita.nome,
+    modificatore: modCaratteristica(abilita.caratteristica) + (competente ? bonusCompetenza(scheda.livello) : 0),
+  });
+});
+
+document.getElementById("valore-iniziativa").closest(".scheda-box").addEventListener("click", () => {
+  const bonus = modCaratteristica("destrezza");
+  tiroDallaScheda({ etichetta: "Iniziativa", modificatore: bonus }, async (tiro) => {
+    if (!scheda.attiva || !scheda.campagnaId) return null;
+    const scritta = await iniziativaNelTracker(scheda.campagnaId, uidCorrente, tiro.totale, bonus);
+    return scritta ? "Iniziativa scritta nel tracker del combattimento." : null;
+  });
+});
+
+// Danni: dado dell'arma + Forza (Destrezza per le armi a distanza, la
+// migliore delle due con Finezza).
+function modDannoArma(dati) {
+  const forza = modCaratteristica("forza");
+  const destrezza = modCaratteristica("destrezza");
+  if (dati.tipo === "a distanza") return destrezza;
+  if ((dati.proprieta || []).includes("Finezza")) return Math.max(forza, destrezza);
+  return forza;
+}
+
+document.getElementById("corpo-attacchi").addEventListener("click", (evento) => {
+  const colpire = evento.target.closest("[data-tiro-colpire]");
+  const danno = evento.target.closest("[data-tiro-danno]");
+  const chiave = colpire?.dataset.tiroColpire || danno?.dataset.tiroDanno;
+  if (!chiave) return;
+  const voce = (scheda.inventario || []).find((v) => v.chiave === chiave);
+  const dati = ARMI[chiave];
+  if (!voce) return;
+  if (colpire) {
+    tiroDallaScheda({ etichetta: `${voce.nome}: per colpire`, modificatore: voce.bonusAttacco || 0 });
+    return;
+  }
+  const formula = dati && leggiFormula(dati.danno);
+  if (!formula) return;
+  tiroDallaScheda({
+    etichetta: `${voce.nome}: danni${dati.tipoDanno ? ` (${dati.tipoDanno})` : ""}`,
+    quanti: formula.quanti,
+    facce: formula.facce,
+    modificatore: formula.modificatore + modDannoArma(dati),
+    tipo: "danno",
+  });
 });
 
 // Personalità e competenze/linguaggi: testo libero, salvato al cambio.

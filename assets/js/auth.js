@@ -729,9 +729,62 @@ export async function aggiungiAppunto(sessioneId, autoreUid, autoreNome, testo, 
   });
 }
 
+// ---------- Lancio dei dadi condiviso ----------
+
+// Un tiro di dadi nel registro della sessione: negli appunti (visibile a
+// tutti) o, per il DM, tra i tiri nascosti (visibili solo a lui).
+export async function aggiungiTiro(sessioneId, autoreUid, autoreNome, testo, tiro, nascosto = false) {
+  await addDoc(collection(db, "registroSessioni", sessioneId, nascosto ? "tiriNascosti" : "appunti"), {
+    autoreUid,
+    autoreNome,
+    testo: testo.slice(0, 2000),
+    tipo: "tiro",
+    tiro,
+    creatoIl: serverTimestamp(),
+  });
+}
+
+// Dalla scheda: annota il tiro se c'è una sessione in corso. Restituisce
+// true se è finito nel registro, false se è rimasto solo per chi l'ha tirato.
+export async function annotaTiro(campagnaId, autoreUid, autoreNome, testo, tiro) {
+  try {
+    const stato = await ottieniStatoSessione(campagnaId);
+    if (!stato.inCorso || !stato.sessioneAttivaId) return false;
+    await aggiungiTiro(stato.sessioneAttivaId, autoreUid, autoreNome, testo, tiro);
+    return true;
+  } catch (errore) {
+    console.error(errore);
+    return false;
+  }
+}
+
+export function ascoltaTiriNascosti(sessioneId, callback, alErrore = (e) => console.error(e)) {
+  const riferimento = query(collection(db, "registroSessioni", sessioneId, "tiriNascosti"), orderBy("creatoIl", "asc"));
+  return onSnapshot(riferimento, (snapshot) => {
+    callback(snapshot.docs.map((documento) => ({ id: documento.id, nascosto: true, ...documento.data() })));
+  }, alErrore);
+}
+
+// Iniziativa tirata dalla scheda: se c'è un combattimento con il personaggio
+// del giocatore, la scrive anche nel tracker. Restituisce true se l'ha scritta.
+export async function iniziativaNelTracker(campagnaId, uid, iniziativa, bonus) {
+  try {
+    const [stato, combattente] = await Promise.all([
+      getDoc(doc(db, "campagne", campagnaId, "combattimento", "stato")),
+      getDoc(doc(db, "campagne", campagnaId, "combattenti", `pg-${uid}`)),
+    ]);
+    if (!stato.exists() || !stato.data().attivo || !combattente.exists()) return false;
+    await impostaIniziativa(campagnaId, `pg-${uid}`, iniziativa, bonus);
+    return true;
+  } catch (errore) {
+    console.error(errore);
+    return false;
+  }
+}
+
 // Moderazione: il DM (o l'admin) elimina un appunto.
-export async function eliminaAppunto(sessioneId, appuntoId) {
-  await deleteDoc(doc(db, "registroSessioni", sessioneId, "appunti", appuntoId));
+export async function eliminaAppunto(sessioneId, appuntoId, collezione = "appunti") {
+  await deleteDoc(doc(db, "registroSessioni", sessioneId, collezione, appuntoId));
 }
 
 // Ascolta in tempo reale gli appunti della sessione indicata (usata dalla

@@ -74,6 +74,22 @@
               <textarea id="campo-appunto" class="textarea-libero" rows="2" placeholder="Scrivi un appunto..." maxlength="2000" required></textarea>
               <button type="submit" class="btn azione-aggiungi" style="width:auto; padding:10px 22px;">Aggiungi</button>
             </form>
+            <form id="lanciatore-dadi" class="lanciatore-dadi" aria-label="Lancio dei dadi">
+              <span class="lanciatore-titolo">Dadi</span>
+              <input type="number" id="dadi-quanti" class="input-dadi" min="1" max="20" value="1" aria-label="Numero di dadi" />
+              <select id="dadi-facce" class="select-dadi" aria-label="Tipo di dado">
+                <option value="4">d4</option><option value="6">d6</option><option value="8">d8</option>
+                <option value="10">d10</option><option value="12">d12</option><option value="20" selected>d20</option>
+                <option value="100">d100</option>
+              </select>
+              <input type="number" id="dadi-modificatore" class="input-dadi" min="-50" max="50" value="0" aria-label="Modificatore" title="Modificatore" />
+              <select id="dadi-modo" class="select-dadi" aria-label="Vantaggio o svantaggio">
+                <option value="normale">Normale</option><option value="vantaggio">Vantaggio</option><option value="svantaggio">Svantaggio</option>
+              </select>
+              <input type="text" id="dadi-etichetta" class="input-dadi input-dadi-etichetta" maxlength="40" placeholder="Per cosa? (facoltativo)" aria-label="Motivo del tiro" />
+              <label id="dadi-nascosto-wrap" class="checkbox-scudo" hidden><input type="checkbox" id="dadi-nascosto" /> Nascosto</label>
+              <button type="submit" class="btn-tabella btn-tabella-evidenza">Tira</button>
+            </form>
           </div>
 
           <div class="panel sessione-pannello-contenuti" id="pannello-contenuti">

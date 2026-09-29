@@ -16,8 +16,8 @@ import {
   terminaCombattimento,
   impostaCondizioniCombattente,
   ottieniSchedaAttiva,
-  tiraD20,
 } from "./auth.js";
+import { tira as tiraDadi } from "./dadi.js";
 import { mostraImmagine, percorsiRitratto, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK } from "./dati-srd.js";
@@ -46,7 +46,8 @@ export function ordinaCombattenti(elenco) {
 const modificatore = (punteggio) => Math.floor(((punteggio ?? 10) - 10) / 2);
 const conSegno = (n) => (n >= 0 ? `+${n}` : `${n}`);
 
-export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, libreria, avviso }) {
+// registraTiro(chi, tiro): facoltativo, annota i tiri di iniziativa nel registro.
+export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, libreria, avviso, registraTiro = null }) {
   const elenco = creaElemento("ol", "lista-combattimento");
   const intestazione = creaElemento("div", "sessione-appunti-intestazione");
   const titolo = creaElemento("h3", null, "Combattimento");
@@ -253,9 +254,10 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       tira.addEventListener("click", () => esegui([tira], async () => {
         const attuale = combattenti.find((x) => x.id === c.id);
         const bonus = c.tipo === "pg" && c.uid === uid ? await bonusPersonaggio() : attuale?.bonus || 0;
-        const tiro = tiraD20();
-        await impostaIniziativa(campagnaId, c.id, tiro + bonus, bonus);
-        avviso(`${c.nome}: ${tiro} ${conSegno(bonus)} = ${tiro + bonus}`);
+        const tiro = tiraDadi({ etichetta: "Iniziativa", modificatore: bonus });
+        await impostaIniziativa(campagnaId, c.id, tiro.totale, bonus);
+        avviso(`${c.nome}: ${tiro.dadi[0]} ${conSegno(bonus)} = ${tiro.totale}`);
+        registraTiro?.(c.nome, tiro);
       }));
       iniziativa.replaceChildren(input, tira);
     }
