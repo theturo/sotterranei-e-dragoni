@@ -43,7 +43,8 @@ rules_version = '2';
 //     avviato dal DM ogni giocatore invitato può solo segnare di aver finito.
 //   - "party/{uid}": riepilogo pubblico della scheda attiva di ogni membro
 //     (nome giocatore, personaggio, classe, livello, PF, condizioni,
-//     esaurimento, dadi vita spesi, versione del ritratto). Le regole verificano che coincida con la scheda vera, quindi
+//     esaurimento, dadi vita spesi, usi dei privilegi di classe, Carisma per
+//     calcolarne i massimi, versione del ritratto). Le regole verificano che coincida con la scheda vera, quindi
 //     non può essere falsificato.
 //   - "immagini/{id}": libreria dei contenuti caricati dal DM (titolo,
 //     descrizione, a chi è mostrato ora e nell'archivio di chi è); un membro
@@ -214,11 +215,12 @@ service cloud.firestore {
         || (isApprovato() && request.auth.uid == resource.data.proprietarioUid && aggiornamentoSchedaValido())
         // Il DM della campagna aggiorna dalla pagina Sessione PF, condizioni ed
         // esaurimento (danni, cure, "prono"…) e ciò che cambia con un riposo
-        // (dadi vita, slot, incantesimi di razza, tiri contro la morte):
+        // (dadi vita, slot, incantesimi di razza, tiri contro la morte, usi dei
+        // privilegi di classe):
         // nient'altro della scheda.
         || (isDMdellaCampagna(resource.data.get('campagnaId', 'nessuna'))
           && campiModificati().hasOnly(['hp', 'condizioni', 'esaurimento', 'dadiVitaSpesi', 'slotIncantesimoUsati',
-              'incantesimiRazzaUsati', 'tiriSalvezzaMorte', 'aggiornatoIl'])
+              'incantesimiRazzaUsati', 'tiriSalvezzaMorte', 'usiPrivilegi', 'aggiornatoIl'])
           && campiSchedaValidi(campiModificati()))
         // Migrazione dei dati pre-campagne: il DM può solo ASSEGNARE una
         // campagna a una scheda che non ne ha ancora una.
@@ -245,9 +247,10 @@ service cloud.firestore {
             'inventario', 'allineamento', 'background', 'incantesimiConosciuti', 'incantesimiPreparati',
             'slotIncantesimoUsati', 'incantesimiRazzaUsati', 'armaturaIndossata', 'scudoIndossato',
             'abilitaCompetenti', 'personalita', 'competenzeLinguaggi', 'talenti', 'monete', 'ritratto',
-            'condizioni', 'esaurimento', 'dadiVitaSpesi'])
+            'condizioni', 'esaurimento', 'dadiVitaSpesi', 'usiPrivilegi'])
           && (!campi.hasAny(['condizioni']) || condizioniValide(d.condizioni))
           && (!campi.hasAny(['dadiVitaSpesi']) || interoTra(d.dadiVitaSpesi, 0, d.get('livello', 1)))
+          && (!campi.hasAny(['usiPrivilegi']) || (d.usiPrivilegi is map && d.usiPrivilegi.size() <= 20))
           && (!campi.hasAny(['esaurimento']) || interoTra(d.esaurimento, 0, 6))
           && (!campi.hasAny(['nome']) || testoValido(d.nome, 1, 60))
           && (!campi.hasAny(['razza']) || testoOpzionale(d.razza, 40))
@@ -482,13 +485,14 @@ service cloud.firestore {
     function riepilogoValido(campagnaId, uid) {
       let d = request.resource.data;
       return d.keys().hasOnly(['nomeGiocatore', 'schedaId', 'nomePersonaggio', 'classe', 'livello', 'hp', 'ritratto',
-          'condizioni', 'esaurimento', 'dadiVitaSpesi', 'aggiornatoIl'])
+          'condizioni', 'esaurimento', 'dadiVitaSpesi', 'usiPrivilegi', 'carisma', 'aggiornatoIl'])
         && d.nomeGiocatore == get(percorsoUtente(uid)).data.get('nome', null)
         && d.aggiornatoIl == request.time
         && (d.schedaId == null
           ? (d.nomePersonaggio == null && d.classe == null && d.livello == null && d.hp == null
               && d.get('ritratto', null) == null
-              && d.get('condizioni', []) == [] && d.get('esaurimento', 0) == 0 && d.get('dadiVitaSpesi', 0) == 0)
+              && d.get('condizioni', []) == [] && d.get('esaurimento', 0) == 0 && d.get('dadiVitaSpesi', 0) == 0
+              && d.get('usiPrivilegi', {}) == {} && d.get('carisma', null) == null)
           : riepilogoCoincideConScheda(campagnaId, uid, d));
     }
 
@@ -504,7 +508,9 @@ service cloud.firestore {
         && d.get('ritratto', null) == scheda.get('ritratto', null)
         && d.get('condizioni', []) == scheda.get('condizioni', [])
         && d.get('esaurimento', 0) == scheda.get('esaurimento', 0)
-        && d.get('dadiVitaSpesi', 0) == scheda.get('dadiVitaSpesi', 0);
+        && d.get('dadiVitaSpesi', 0) == scheda.get('dadiVitaSpesi', 0)
+        && d.get('usiPrivilegi', {}) == scheda.get('usiPrivilegi', {})
+        && d.get('carisma', null) == scheda.get('caratteristiche', {}).get('carisma', null);
     }
 
     // Condizioni di 5a edizione (l'esaurimento ha un campo a parte, 0–6).

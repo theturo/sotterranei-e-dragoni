@@ -4475,3 +4475,74 @@ table.tabella-punteggi select {
 .sessione-appunto-riposo .sessione-appunto-testo {
   font-style: italic;
 }
+
+/* ---------- Privilegi di classe (scheda e party) ---------- */
+.lista-privilegi {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.riga-privilegio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.privilegio-nome {
+  flex: 1 1 140px;
+  cursor: help;
+}
+
+.privilegio-ricarica {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.pallini-privilegio {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.privilegio-conteggio {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  min-width: 56px;
+  text-align: right;
+}
+
+.input-privilegio {
+  width: 56px;
+  padding: 3px 6px;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-body);
+}
+
+.party-sessione-privilegi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 4px;
+  font-size: 0.74rem;
+  color: var(--color-ink-soft);
+}
+
+.privilegio-party {
+  cursor: help;
+  white-space: nowrap;
+}
+
+.privilegio-party.esaurito {
+  text-decoration: line-through;
+  opacity: 0.7;
+}

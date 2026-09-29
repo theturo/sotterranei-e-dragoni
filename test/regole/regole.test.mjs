@@ -521,3 +521,31 @@ describe("Riposi e dadi vita", () => {
       autoreUid: "p2", autoreNome: "Leo", testo: "x", tipo: "sistema", creatoIl: serverTimestamp(),
     })));
 });
+
+describe("Privilegi di classe", () => {
+  const riepilogoS1 = (extra = {}) => ({
+    nomeGiocatore: "Pia", schedaId: "s1", nomePersonaggio: "Eroe", classe: "guerriero", livello: 1,
+    hp: { massimi: 12, attuali: 12, temporanei: 0 }, condizioni: [], esaurimento: 0, dadiVitaSpesi: 0,
+    usiPrivilegi: {}, carisma: null, aggiornatoIl: serverTimestamp(), ...extra,
+  });
+
+  test("un giocatore segna l'uso di un privilegio", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), { usiPrivilegi: { "recupero-energie": 1 } })));
+  test("NON si salvano usi dei privilegi che non sono una mappa", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { usiPrivilegi: ["ira"] })));
+  test("il DM ripristina i privilegi con un riposo", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "personaggi/s1"), { usiPrivilegi: {} })));
+  test("un altro giocatore NON tocca i privilegi altrui", () =>
+    assertFails(updateDoc(doc(come("p2"), "personaggi/s1"), { usiPrivilegi: { ira: 3 } })));
+  test("il riepilogo pubblica usi dei privilegi e Carisma della scheda", async () => {
+    await env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore(), "personaggi/s1"), {
+      usiPrivilegi: { "azione-impetuosa": 1 }, caratteristiche: { carisma: 14 },
+    }));
+    await assertSucceeds(setDoc(doc(come("p1"), "campagne/c1/party/p1"),
+      riepilogoS1({ usiPrivilegi: { "azione-impetuosa": 1 }, carisma: 14 })));
+  });
+  test("NON si pubblica un riepilogo con privilegi diversi dalla scheda", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/party/p1"), riepilogoS1({ usiPrivilegi: { ira: 1 } }))));
+  test("NON si pubblica un Carisma falso nel riepilogo", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/party/p1"), riepilogoS1({ carisma: 20 }))));
+});

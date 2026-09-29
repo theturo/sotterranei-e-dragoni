@@ -33,9 +33,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Contatori dei privilegi di classe** (Ira, Recuperare Energie, Azione
-  Impetuosa, Incanalare Divinità, Ispirazione Bardica, Ki…): usi e ricarica
-  automatici per classe e livello, ripristinati dai riposi.
 - **Lancio dadi condiviso** nel registro della sessione.
 - **Calendario delle sessioni con le disponibilità**, collegato
   all'interruttore della sessione.
@@ -67,6 +64,9 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   invito ai giocatori, che spendono i dadi vita tirandoli nell'app o a mano);
   dadi vita, slot, incantesimi di razza, tiri contro la morte ed esaurimento,
   con annotazione negli appunti della sessione.
+- Contatori dei privilegi di classe (Ira, Azione Impetuosa, Incanalare
+  Divinità, Punti Ki, Imposizione delle Mani…): usi e ricarica automatici per
+  classe e livello, ripristinati dai riposi, visibili a tutto il party.
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:
