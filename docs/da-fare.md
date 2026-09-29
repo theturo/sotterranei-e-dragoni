@@ -33,8 +33,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Calendario delle sessioni con le disponibilità**, collegato
-  all'interruttore della sessione.
 - **Notifiche push** ("la sessione è iniziata", "sei salito di livello"),
   insieme alla PWA (sito installabile sul telefono).
 - **Esportazione e backup della scheda** (JSON o PDF).
@@ -73,6 +71,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - Tiri degli incantesimi dalla scheda (per colpire, danni e cure, con attacco
   e CD degli incantesimi) e bonus d'attacco delle armi calcolato in automatico
   (modificabile a mano).
+- Calendario delle sessioni: vista mensile, date proposte dal DM con le
+  disponibilità dei giocatori (sì/forse/no, visibili a tutti), conferma che
+  crea la sessione programmata con data e ora, avvisi nella campanella,
+  prossima sessione in dashboard, file .ics e apertura guidata della
+  sessione del giorno.
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:

@@ -4689,3 +4689,284 @@ table.tabella-punteggi select {
   background: rgba(255, 255, 255, 0.55);
   font-family: var(--font-body);
 }
+
+/* ---------- Calendario ---------- */
+.calendario-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.calendario-colonna {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.calendario-colonna .panel-wide,
+.calendario-layout > .panel-wide {
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .calendario-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.calendario-intestazione {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.calendario-intestazione h3 {
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.griglia-calendario {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.giorno-settimana {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  color: var(--color-ink-soft);
+  padding-bottom: 4px;
+}
+
+.giorno-cal {
+  min-height: 78px;
+  padding: 4px;
+  border: 1px solid rgba(122, 31, 43, 0.18);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.giorno-cal.vuoto {
+  border-color: transparent;
+}
+
+.giorno-cal.oggi {
+  border-color: var(--color-gold);
+  box-shadow: inset 0 0 0 1px var(--color-gold);
+  background: rgba(201, 162, 39, 0.1);
+}
+
+.numero-giorno {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+}
+
+.evento-cal {
+  display: inline-block;
+  font-size: 0.68rem;
+  line-height: 1.3;
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  cursor: default;
+}
+
+.evento-programmata {
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.evento-proposta {
+  border: 1px dashed var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.evento-giocata {
+  background: rgba(47, 58, 80, 0.14);
+  color: var(--color-ink-soft);
+}
+
+.legenda-calendario {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.lista-calendario,
+.lista-opzioni {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.riga-calendario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+}
+
+.riga-calendario-azioni {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.scheda-proposta {
+  border: 1px solid rgba(122, 31, 43, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.proposta-titolo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.opzione-proposta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+  border-top: 1px dashed rgba(122, 31, 43, 0.2);
+}
+
+.opzione-intestazione {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.conteggi-opzione {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--color-burgundy);
+}
+
+.scelta-disponibilita {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-disponibilita[aria-pressed="true"].disponibilita-si {
+  background: #3d6b3a;
+  border-color: #3d6b3a;
+  color: #fff;
+}
+
+.btn-disponibilita[aria-pressed="true"].disponibilita-forse {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-ink);
+}
+
+.btn-disponibilita[aria-pressed="true"].disponibilita-no {
+  background: var(--color-burgundy);
+  border-color: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.dettaglio-disponibilita {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+}
+
+.nomi-mancano {
+  font-style: italic;
+}
+
+.form-calendario .field {
+  margin-bottom: 10px;
+}
+
+.opzioni-proposta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.riga-opzione-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.riga-opzione-form input {
+  padding: 6px 8px;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-body);
+  min-width: 0;
+}
+
+.riga-opzione-form input[type="date"] {
+  flex: 1;
+}
+
+.banner-oggi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--color-gold);
+  background: rgba(201, 162, 39, 0.16);
+  color: var(--color-parchment);
+  font-family: var(--font-heading);
+}
+
+.banner-oggi[hidden] {
+  display: none;
+}
+
+.avviso-calendario {
+  margin: 8px 0 0;
+  font-style: italic;
+  color: var(--color-burgundy);
+}
+
+.notifica-testo a {
+  color: var(--color-burgundy);
+}
+
+.banner-oggi .btn-tabella {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.form-calendario .azioni-selettore {
+  flex-wrap: wrap;
+}

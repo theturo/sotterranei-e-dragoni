@@ -575,3 +575,53 @@ describe("Lancio dei dadi condiviso", () => {
   test("il DM legge i propri tiri nascosti", () =>
     assertSucceeds(getDocs(collection(come("dm"), "registroSessioni/r1/tiriNascosti"))));
 });
+
+describe("Calendario: proposte e disponibilità", () => {
+  const proposta = (extra = {}) => ({
+    titolo: "Sessione 3", note: null, opzioni: [{ id: "a", data: "2026-10-10", ora: "21:00" }, { id: "b", data: "2026-10-11", ora: "20:30" }],
+    stato: "aperta", creataIl: serverTimestamp(), ...extra,
+  });
+  const risposta = (extra = {}) => ({ nome: "Pia", risposte: { a: "si", b: "forse" }, aggiornatoIl: serverTimestamp(), ...extra });
+  const creaProposta = (stato = "aperta") => env.withSecurityRulesDisabled((ctx) =>
+    setDoc(doc(ctx.firestore(), "campagne/c1/proposte/p1"), { ...proposta({ stato }), creataIl: new Date() }));
+
+  test("il DM propone delle date", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/proposte/p1"), proposta())));
+  test("NON si propone senza date", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/proposte/p1"), proposta({ opzioni: [] }))));
+  test("un giocatore NON propone date", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/proposte/p1"), proposta())));
+  test("un membro legge le proposte", async () => {
+    await creaProposta();
+    await assertSucceeds(getDoc(doc(come("p2"), "campagne/c1/proposte/p1")));
+  });
+  test("chi non è membro NON legge le proposte", async () => {
+    await creaProposta();
+    await assertFails(getDoc(doc(come("vecchio"), "campagne/c1/proposte/p1")));
+  });
+  test("un membro risponde a proprio nome", async () => {
+    await creaProposta();
+    await assertSucceeds(setDoc(doc(come("p1"), "campagne/c1/proposte/p1/risposte/p1"), risposta()));
+  });
+  test("NON si risponde per un altro", async () => {
+    await creaProposta();
+    await assertFails(setDoc(doc(come("p2"), "campagne/c1/proposte/p1/risposte/p1"), risposta({ nome: "Leo" })));
+  });
+  test("NON si firma una risposta con un nome falso", async () => {
+    await creaProposta();
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/proposte/p1/risposte/p1"), risposta({ nome: "Master" })));
+  });
+  test("NON si risponde a una proposta già confermata", async () => {
+    await creaProposta("confermata");
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/proposte/p1/risposte/p1"), risposta()));
+  });
+  test("gli altri membri leggono le risposte", async () => {
+    await creaProposta();
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "campagne/c1/proposte/p1/risposte/p1"), { ...risposta(), aggiornatoIl: new Date() }));
+    await assertSucceeds(getDocs(collection(come("p2"), "campagne/c1/proposte/p1/risposte")));
+  });
+  test("il DM conferma una data", async () => {
+    await creaProposta();
+    await assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/proposte/p1"), { stato: "confermata", confermata: { opzioneId: "a", sessioneId: "r9" } }));
+  });
+});

@@ -55,6 +55,9 @@ rules_version = '2';
 //     (round, turno, ordine), letti dai membri e gestiti dal DM; un giocatore
 //     scrive solo l'iniziativa del proprio personaggio.
 //   - "combattentiDM/{id}": PF dei nemici, solo DM e admin.
+//   - "proposte/{id}": date proposte dal DM per la prossima sessione (calendario);
+//     "proposte/{id}/risposte/{uid}": sì/forse/no di ogni membro, scritti
+//     solo a proprio nome e solo finché la proposta è aperta.
 // - "campagna/{docId}" (vecchio, pre-campagne): solo lettura per admin/DM, per
 //   la migrazione una tantum. Rimovibile a migrazione confermata.
 // - "registroSessioni/{sessioneId}": sessioni (programmata/in-corso/chiusa),
@@ -399,6 +402,25 @@ service cloud.firestore {
         allow create, update: if isDMdellaCampagna(campagnaId) && combattenteDMValido();
       }
 
+      // Calendario: il DM propone date (proposte), i membri rispondono per sé
+      // (sì/forse/no per ogni data) finché la proposta è aperta; tutti i membri
+      // vedono proposte e risposte.
+      match /proposte/{propostaId} {
+        allow get, list: if isNellaCampagna(campagnaId);
+        allow create, update: if isDMdellaCampagna(campagnaId) && propostaValida();
+        allow delete: if isDMdellaCampagna(campagnaId);
+
+        match /risposte/{uid} {
+          allow get, list: if isNellaCampagna(campagnaId);
+          allow create, update: if isApprovato()
+            && request.auth.uid == uid
+            && uid in datiCampagna(campagnaId).membriUid
+            && rispostaValida()
+            && get(/databases/$(database)/documents/campagne/$(campagnaId)/proposte/$(propostaId)).data.stato == "aperta";
+          allow delete: if isDMdellaCampagna(campagnaId);
+        }
+      }
+
       // Riepilogo pubblico della scheda attiva di un membro.
       match /party/{uid} {
         allow get, list: if isNellaCampagna(campagnaId);
@@ -414,6 +436,24 @@ service cloud.firestore {
 
     function listaUid(valore) {
       return valore is list && valore.size() <= 30;
+    }
+
+    function propostaValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['titolo', 'note', 'opzioni', 'stato', 'creataIl', 'confermata'])
+        && testoOpzionale(d.get('titolo', null), 80)
+        && testoOpzionale(d.get('note', null), 500)
+        && d.opzioni is list && d.opzioni.size() >= 1 && d.opzioni.size() <= 10
+        && d.stato in ['aperta', 'confermata', 'annullata']
+        && (d.get('confermata', null) == null || d.confermata is map);
+    }
+
+    function rispostaValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['nome', 'risposte', 'aggiornatoIl'])
+        && d.nome == profiloCorrente().get('nome', null)
+        && d.risposte is map && d.risposte.size() <= 10
+        && d.aggiornatoIl == request.time;
     }
 
     function riposoValido() {

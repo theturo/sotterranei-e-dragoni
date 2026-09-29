@@ -11,7 +11,6 @@ import {
   rimuoviMembroCampagna,
   elencaGiocatori,
   elencaSessioniProgrammate,
-  creaSessioneProgrammata,
   eliminaSessioneProgrammata,
   migraDatiEsistenti,
   ascoltaLibreriaDM,
@@ -217,7 +216,7 @@ async function renderProgrammate() {
       riga.innerHTML = `
         <div>
           <strong>Sessione ${esc(sessione.numero)}</strong>${sessione.titolo ? ` — ${esc(sessione.titolo)}` : ""}
-          <div class="party-sessione-sub">${esc(formattaData(sessione.dataProgrammata))}</div>
+          <div class="party-sessione-sub">${esc(formattaData(sessione.dataProgrammata))}${sessione.oraProgrammata ? `, ${esc(sessione.oraProgrammata)}` : ""}</div>
         </div>
         <div class="azioni-riga">
           <button type="button" class="btn-tabella" data-contenuti-sessione="${esc(sessione.id)}" data-etichetta="${esc(`Sessione ${sessione.numero}`)}">Contenuti</button>
@@ -304,28 +303,6 @@ document.getElementById("lista-membri").addEventListener("change", async (evento
     checkbox.checked = !checkbox.checked;
   } finally {
     checkbox.disabled = false;
-  }
-});
-
-document.getElementById("form-programma-sessione").addEventListener("submit", async (evento) => {
-  evento.preventDefault();
-  if (!campagnaAttiva) return;
-  const titolo = document.getElementById("programma-titolo").value.trim();
-  const dataProgrammata = document.getElementById("programma-data").value;
-  if (!dataProgrammata) return;
-
-  const bottone = evento.target.querySelector("button[type=submit]");
-  bottone.disabled = true;
-  try {
-    await creaSessioneProgrammata(campagnaAttiva.id, { titolo, dataProgrammata });
-    evento.target.reset();
-    mostraToast("Sessione pianificata.");
-    await renderProgrammate();
-  } catch (errore) {
-    console.error(errore);
-    mostraToast("Impossibile pianificare la sessione.", true);
-  } finally {
-    bottone.disabled = false;
   }
 });
 
