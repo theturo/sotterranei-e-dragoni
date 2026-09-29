@@ -353,6 +353,42 @@ describe("Tracker di combattimento", () => {
     assertFails(setDoc(doc(come("dm"), "campagne/c1/combattentiDM/orco"), { pfAttuali: 1, pfMassimi: 1, segreto: "x" })));
 });
 
+describe("PF e condizioni", () => {
+  const hp = { massimi: 12, attuali: 5, temporanei: 0 };
+  test("il giocatore segna condizioni ed esaurimento sulla propria scheda", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), { condizioni: ["prono", "avvelenato"], esaurimento: 2 })));
+  test("NON si segna una condizione inventata", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { condizioni: ["maledetto"] })));
+  test("NON si va oltre il 6° livello di esaurimento", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { esaurimento: 7 })));
+  test("il DM della campagna aggiorna PF e condizioni di un personaggio", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "personaggi/s1"), { hp, condizioni: ["stordito"], esaurimento: 1 })));
+  test("il DM NON modifica altro della scheda (es. nome)", () =>
+    assertFails(updateDoc(doc(come("dm"), "personaggi/s1"), { hp, nome: "Altro" })));
+  test("il DM NON modifica il livello", () =>
+    assertFails(updateDoc(doc(come("dm"), "personaggi/s1"), { livello: 5 })));
+  test("un altro giocatore NON tocca PF o condizioni altrui", () =>
+    assertFails(updateDoc(doc(come("p2"), "personaggi/s1"), { hp, condizioni: ["prono"] })));
+  test("il riepilogo del party riporta condizioni ed esaurimento della scheda", async () => {
+    await env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore(), "personaggi/s1"), { condizioni: ["prono"], esaurimento: 1 }));
+    await assertSucceeds(setDoc(doc(come("p1"), "campagne/c1/party/p1"), {
+      nomeGiocatore: "Pia", schedaId: "s1", nomePersonaggio: "Eroe", classe: "guerriero", livello: 1,
+      hp: { massimi: 12, attuali: 12, temporanei: 0 }, condizioni: ["prono"], esaurimento: 1, aggiornatoIl: serverTimestamp(),
+    }));
+  });
+  test("NON si pubblicano condizioni diverse dalla scheda", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/party/p1"), {
+      nomeGiocatore: "Pia", schedaId: "s1", nomePersonaggio: "Eroe", classe: "guerriero", livello: 1,
+      hp: { massimi: 12, attuali: 12, temporanei: 0 }, condizioni: ["invisibile"], esaurimento: 0, aggiornatoIl: serverTimestamp(),
+    })));
+  test("il DM segna una condizione su un nemico", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/combattenti/goblin1"), { condizioni: ["prono", "trattenuto"] })));
+  test("NON si segna una condizione inventata su un nemico", () =>
+    assertFails(updateDoc(doc(come("dm"), "campagne/c1/combattenti/goblin1"), { condizioni: ["arrabbiato"] })));
+  test("un giocatore NON segna condizioni sui nemici", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1/combattenti/goblin1"), { condizioni: ["prono"] })));
+});
+
 describe("Riepilogo del party", () => {
   const riepilogoS1 = (extra = {}) => ({
     nomeGiocatore: "Pia", schedaId: "s1", nomePersonaggio: "Eroe", classe: "guerriero", livello: 1,

@@ -25,11 +25,14 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - **Stemma per l'intestazione** (❌ scartato, drago da rifare).
 - **Bussola per la mappa** (tavola degli stati vuoti della Sessione): da usare
   quando arriverà la mappa.
+- **Animazioni in JavaScript** (da valutare insieme): rivedere le animazioni
+  oggi fatte solo in CSS (d20 di caricamento, lancio del dado dei PF, annuncio
+  di livello, comparsa dei contenuti in sessione, turno nel tracker…) e capire
+  dove un'animazione in JavaScript, eventualmente con risorse aggiuntive
+  (sprite, suoni, particelle), renderebbe meglio.
 
 ## Funzioni per il tavolo
 
-- **PF e condizioni in tempo reale per il DM** (avvelenato, prono…), con
-  aggiornamento istantaneo invece che al caricamento della pagina.
 - **Riposo breve e lungo con un clic**, che ripristina slot incantesimo e dadi
   vita.
 - **Lancio dadi condiviso** nel registro della sessione.
@@ -55,6 +58,10 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - Numerazione delle sessioni senza doppioni (transazione con contatore).
 - Tracker di iniziativa e combattimento nella pagina Sessione (turni, round,
   nemici con PF riservati al DM e salute vaga per i giocatori).
+- PF e condizioni in tempo reale: party della Sessione, tracker e scheda si
+  aggiornano da soli; il DM applica danni/cure (prima sui PF temporanei), PF
+  temporanei, condizioni ed esaurimento dal pannello "Stato"; condizioni anche
+  sui nemici del tracker, visibili a tutti.
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:

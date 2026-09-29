@@ -12,7 +12,6 @@ import {
   elencaRegistroSessioni,
   elencaAppuntiSessione,
   elencaSessioniProgrammate,
-  elencaRiepiloghiParty,
   rigeneraRiepiloghiParty,
   sincronizzaMioRiepilogo,
   eliminaAppunto,
@@ -21,11 +20,14 @@ import {
   ascoltaContenutiVisibili,
   mostraContenuto,
   collegaContenutiSessione,
+  ascoltaRiepiloghiParty,
+  aggiornaStatoPersonaggio,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, creaScheletro } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
-import { CLASSI, ICONA_CLASSE_FALLBACK } from "../dati-srd.js";
+import { CLASSI, ICONA_CLASSE_FALLBACK, applicaVariazionePf } from "../dati-srd.js";
+import { creaChipCondizioni, creaEditorCondizioni } from "../condizioni.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
 import {
   CATEGORIE,
@@ -123,6 +125,8 @@ function creaRigaParty(riepilogo) {
   if (!riepilogo.hp) li.querySelector(".barra-pf").hidden = true;
   // Con un ritratto, l'icona della classe lascia il posto alla sua miniatura
   // (e ricompare se l'immagine non si può caricare).
+  li.querySelector(".party-sessione-info").append(creaChipCondizioni(riepilogo.condizioni, riepilogo.esaurimento));
+  if (puoModerare) aggiungiEditorStato(li, riepilogo);
   if (riepilogo.ritratto) {
     const icona = li.querySelector(".icona-classe");
     const img = document.createElement("img");
@@ -137,9 +141,116 @@ function creaRigaParty(riepilogo) {
   return li;
 }
 
-async function caricaParty() {
+// ---------- Party in tempo reale ----------
+// Le righe si ricreano solo se i dati cambiano, e mai mentre il DM sta
+// scrivendo al loro interno; il pannello "Stato" aperto resta aperto.
+const righeParty = new Map();
+const firmeParty = new Map();
+const statoAperto = new Set();
+let trackerCombattimento = null;
+
+function firma(riepilogo) {
+  const { aggiornatoIl, ...dati } = riepilogo;
+  return JSON.stringify(dati);
+}
+
+function renderParty(party) {
+  ultimoParty = party;
   const lista = document.getElementById("lista-party");
-  const vuoto = document.getElementById("party-vuoto");
+  document.getElementById("party-vuoto").hidden = party.length > 0;
+  const presenti = new Set(party.map((r) => r.uid));
+  righeParty.forEach((li, uid) => {
+    if (!presenti.has(uid)) {
+      li.remove();
+      righeParty.delete(uid);
+      firmeParty.delete(uid);
+    }
+  });
+  party.forEach((riepilogo) => {
+    const vecchia = righeParty.get(riepilogo.uid);
+    const nuovaFirma = firma(riepilogo);
+    const occupata = vecchia && vecchia.contains(document.activeElement) && document.activeElement.tagName === "INPUT";
+    if (!vecchia || (firmeParty.get(riepilogo.uid) !== nuovaFirma && !occupata)) {
+      const li = creaRigaParty(riepilogo);
+      if (vecchia) vecchia.replaceWith(li);
+      righeParty.set(riepilogo.uid, li);
+      firmeParty.set(riepilogo.uid, nuovaFirma);
+    }
+    lista.appendChild(righeParty.get(riepilogo.uid));
+  });
+  trackerCombattimento?.ridisegna();
+}
+
+// Pannello "Stato" del DM: danni e cure (i PF temporanei si consumano per
+// primi), PF temporanei, condizioni ed esaurimento. Scrive scheda e riepilogo.
+function aggiungiEditorStato(li, riepilogo) {
+  const uid = riepilogo.uid;
+  const attuale = () => ultimoParty.find((r) => r.uid === uid) || riepilogo;
+  const salva = async (campi) => {
+    try {
+      await aggiornaStatoPersonaggio(campagnaIdCorrente, attuale(), campi);
+    } catch (errore) {
+      console.error(errore);
+      mostraAvvisoContenuto("Impossibile aggiornare il personaggio.", true);
+    }
+  };
+
+  const apri = creaElemento("button", "btn-tabella btn-stato-pg", "Stato");
+  apri.type = "button";
+  apri.setAttribute("aria-expanded", String(statoAperto.has(uid)));
+  apri.setAttribute("aria-label", `Stato di ${riepilogo.nomePersonaggio || "personaggio"}`);
+  li.querySelector(".party-sessione-pf").append(apri);
+
+  const pannello = creaElemento("div", "editor-stato-pg");
+  pannello.hidden = !statoAperto.has(uid);
+  apri.addEventListener("click", () => {
+    pannello.hidden = !pannello.hidden;
+    apri.setAttribute("aria-expanded", String(!pannello.hidden));
+    if (pannello.hidden) statoAperto.delete(uid);
+    else statoAperto.add(uid);
+  });
+
+  if (riepilogo.hp) {
+    const riga = creaElemento("div", "editor-pf");
+    const quanto = document.createElement("input");
+    quanto.type = "number";
+    quanto.min = "0";
+    quanto.placeholder = "±";
+    quanto.className = "input-pf-nemico";
+    quanto.setAttribute("aria-label", `Danni o cure per ${riepilogo.nomePersonaggio}`);
+    const danno = creaElemento("button", "btn-tabella", "− Danno");
+    const cura = creaElemento("button", "btn-tabella", "+ Cura");
+    [danno, cura].forEach((b) => (b.type = "button"));
+    const applica = (segno) => {
+      const valore = Math.trunc(Number(quanto.value));
+      if (!valore || valore < 0) return;
+      quanto.value = "";
+      salva({ hp: applicaVariazionePf(attuale().hp, segno * valore) });
+    };
+    danno.addEventListener("click", () => applica(-1));
+    cura.addEventListener("click", () => applica(1));
+    const temporanei = document.createElement("input");
+    temporanei.type = "number";
+    temporanei.min = "0";
+    temporanei.className = "input-pf-nemico";
+    temporanei.value = riepilogo.hp.temporanei || 0;
+    temporanei.setAttribute("aria-label", `PF temporanei di ${riepilogo.nomePersonaggio}`);
+    temporanei.addEventListener("change", () => {
+      const valore = Math.max(0, Math.trunc(Number(temporanei.value)) || 0);
+      salva({ hp: { ...attuale().hp, temporanei: valore } });
+    });
+    riga.append(creaElemento("span", "etichetta-pf", "PF"), quanto, danno, cura, creaElemento("span", "etichetta-pf", "Temp."), temporanei);
+    pannello.append(riga);
+  }
+  pannello.append(creaEditorCondizioni({
+    condizioni: riepilogo.condizioni || [],
+    esaurimento: riepilogo.esaurimento || 0,
+    onCambia: ({ condizioni, esaurimento }) => salva({ condizioni, esaurimento }),
+  }));
+  li.append(pannello);
+}
+
+async function caricaParty() {
   try {
     // Il DM riallinea tutti i riepiloghi alle schede vere (e toglie chi
     // non è più membro); un giocatore riallinea solo il proprio.
@@ -148,18 +259,18 @@ async function caricaParty() {
     } else {
       await sincronizzaMioRiepilogo(uidCorrente, campagnaIdCorrente);
     }
-    const party = await elencaRiepiloghiParty(campagnaIdCorrente);
-    ultimoParty = party;
-    if (party.length === 0) {
-      vuoto.hidden = false;
-      return;
-    }
-    vuoto.hidden = true;
-    lista.innerHTML = "";
-    party.forEach((riepilogo) => lista.appendChild(creaRigaParty(riepilogo)));
   } catch (errore) {
     console.error(errore);
   }
+  await new Promise((pronto) => {
+    ascoltaRiepiloghiParty(campagnaIdCorrente, (party) => {
+      renderParty(party);
+      pronto();
+    }, (errore) => {
+      console.error(errore);
+      pronto();
+    });
+  });
 }
 
 function aggiornaBadgeStato(inCorso) {
@@ -457,7 +568,7 @@ proteggiPagina(async (user, profilo) => {
   }
 
   await Promise.all([caricaParty(), avviaContenuti(isDmOAdmin)]);
-  montaCombattimento({
+  trackerCombattimento = montaCombattimento({
     pannello: document.getElementById("pannello-combattimento"),
     campagnaId: campagnaIdCorrente,
     uid: uidCorrente,

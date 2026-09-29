@@ -14,6 +14,7 @@ import {
   impostaTurno,
   rimuoviCombattente,
   terminaCombattimento,
+  impostaCondizioniCombattente,
   ottieniSchedaAttiva,
   tiraD20,
 } from "./auth.js";
@@ -21,6 +22,7 @@ import { mostraImmagine, percorsiRitratto, percorsiImmagineCampagna } from "./im
 import { creaElemento } from "./contenuti.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK } from "./dati-srd.js";
 import { ICONA_MASCHERA } from "./icone.js";
+import { creaChipCondizioni, creaEditorCondizioni } from "./condizioni.js";
 
 const SALUTE = {
   illeso: "Illeso",
@@ -206,8 +208,28 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     caricaAvatar(c, img, icona);
 
     const info = creaElemento("div", "combattente-info");
-    info.append(creaElemento("div", "combattente-nome"), creaElemento("div", "party-sessione-sub combattente-sub"));
-    if (isDM && c.tipo === "nemico") info.append(creaEditorPf(c));
+    info.append(
+      creaElemento("div", "combattente-nome"),
+      creaElemento("div", "party-sessione-sub combattente-sub"),
+      creaElemento("div", "combattente-condizioni")
+    );
+    if (isDM && c.tipo === "nemico") {
+      info.append(creaEditorPf(c));
+      // Condizioni del nemico: le segna il DM, le vedono tutti.
+      const apri = bottone("Condizioni", "btn-tabella btn-condizioni-nemico");
+      apri.setAttribute("aria-expanded", "false");
+      const editor = creaEditorCondizioni({
+        condizioni: c.condizioni || [],
+        conEsaurimento: false,
+        onCambia: ({ condizioni }) => esegui([], () => impostaCondizioniCombattente(campagnaId, c.id, condizioni)),
+      });
+      editor.hidden = true;
+      apri.addEventListener("click", () => {
+        editor.hidden = !editor.hidden;
+        apri.setAttribute("aria-expanded", String(!editor.hidden));
+      });
+      info.append(apri, editor);
+    }
 
     const iniziativa = creaElemento("div", "combattente-iniziativa");
     const valore = creaElemento("span", "valore-iniziativa");
@@ -370,6 +392,14 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     sub.textContent = sotto;
     sub.dataset.salute = c.tipo === "nemico" ? c.salute || "illeso" : "";
 
+    // Condizioni: dei PG dal riepilogo del party (tempo reale), dei nemici
+    // dalla riga del tracker.
+    const riepilogo = c.tipo === "pg" ? party().find((x) => x.uid === c.uid) : null;
+    const chip = c.tipo === "pg"
+      ? creaChipCondizioni(riepilogo?.condizioni || [], riepilogo?.esaurimento || 0)
+      : creaChipCondizioni(c.condizioni || [], 0);
+    li.querySelector(".combattente-condizioni").replaceChildren(chip);
+
     const input = li.querySelector(".input-iniziativa");
     const valore = li.querySelector(".valore-iniziativa");
     if (input) {
@@ -445,9 +475,19 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     turnoPrecedente = `${stato.round}:${stato.turno}`;
   }
 
-  return ascoltaCombattimento(campagnaId, isDM, (dati) => {
+  let datiRicevuti = false;
+  const stop = ascoltaCombattimento(campagnaId, isDM, (dati) => {
     stato = dati.stato;
     combattenti = dati.combattenti;
+    datiRicevuti = true;
     render();
   }, (errore) => console.error(errore));
+
+  // "ridisegna": quando cambia il party (PF, condizioni, ritratti).
+  return {
+    stop,
+    ridisegna: () => {
+      if (datiRicevuti) render();
+    },
+  };
 }

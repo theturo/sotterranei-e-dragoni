@@ -2271,7 +2271,7 @@ table.tabella-punteggi select {
 
 @media (min-width: 900px) {
   .sessione-layout {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   }
 }
 
@@ -4165,4 +4165,166 @@ table.tabella-punteggi select {
   .vassoio-tiro.in-lancio .vassoio-ombra {
     animation: none;
   }
+}
+
+/* ---------- Condizioni (party, tracker, scheda) ---------- */
+.chip-condizioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.chip-condizioni[hidden] {
+  display: none;
+}
+
+.chip-condizione {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.1);
+  color: var(--color-burgundy);
+  cursor: help;
+}
+
+.chip-esaurimento {
+  border-color: #8a5a00;
+  background: rgba(138, 90, 0, 0.1);
+  color: #8a5a00;
+}
+
+.editor-condizioni {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-condizioni[hidden] {
+  display: none;
+}
+
+.griglia-condizioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.toggle-condizione {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(122, 31, 43, 0.4);
+  background: transparent;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+
+.toggle-condizione:hover {
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.toggle-condizione[aria-pressed="true"] {
+  background: var(--color-burgundy);
+  border-color: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.campo-esaurimento {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-ink-soft);
+}
+
+.select-esaurimento {
+  padding: 4px 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--color-ink);
+  max-width: 100%;
+}
+
+/* Party della Sessione: pannello "Stato" del DM sotto la riga */
+.lista-party-sessione .party-sessione-riga {
+  flex-wrap: wrap;
+}
+
+.party-sessione-pf {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.btn-stato-pg {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+}
+
+.btn-stato-pg[aria-expanded="true"],
+.btn-condizioni-nemico[aria-expanded="true"] {
+  background: rgba(122, 31, 43, 0.14);
+}
+
+.editor-stato-pg {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-ink-soft);
+  border-radius: 8px;
+}
+
+.editor-stato-pg[hidden] {
+  display: none;
+}
+
+.btn-condizioni-nemico {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+}
+
+.combattente-condizioni:empty {
+  display: none;
+}
+
+/* Scheda personaggio */
+.condizioni-scheda {
+  margin: 12px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Il pannello "Stato" non deve allargare la colonna del party. */
+.editor-stato-pg {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.campo-esaurimento {
+  flex-wrap: wrap;
+}
+
+.campo-esaurimento .select-esaurimento {
+  flex: 1 1 160px;
+  min-width: 0;
+  width: 100%;
 }
