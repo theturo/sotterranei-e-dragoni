@@ -210,6 +210,11 @@ service cloud.firestore {
 
       allow update: if isAdmin()
         || (isApprovato() && request.auth.uid == resource.data.proprietarioUid && aggiornamentoSchedaValido())
+        // Il DM della campagna aggiorna PF, condizioni ed esaurimento (danni,
+        // cure, "prono"…) dalla pagina Sessione: nient'altro della scheda.
+        || (isDMdellaCampagna(resource.data.get('campagnaId', 'nessuna'))
+          && campiModificati().hasOnly(['hp', 'condizioni', 'esaurimento', 'aggiornatoIl'])
+          && campiSchedaValidi(campiModificati()))
         // Migrazione dei dati pre-campagne: il DM può solo ASSEGNARE una
         // campagna a una scheda che non ne ha ancora una.
         || (isDM() && campiModificati().hasOnly(['campagnaId']) && !('campagnaId' in resource.data));
@@ -234,7 +239,10 @@ service cloud.firestore {
             'proprietarioUid', 'campagnaId', 'attiva', 'ordine', 'creataIl', 'aggiornatoIl',
             'inventario', 'allineamento', 'background', 'incantesimiConosciuti', 'incantesimiPreparati',
             'slotIncantesimoUsati', 'incantesimiRazzaUsati', 'armaturaIndossata', 'scudoIndossato',
-            'abilitaCompetenti', 'personalita', 'competenzeLinguaggi', 'talenti', 'monete', 'ritratto'])
+            'abilitaCompetenti', 'personalita', 'competenzeLinguaggi', 'talenti', 'monete', 'ritratto',
+            'condizioni', 'esaurimento'])
+          && (!campi.hasAny(['condizioni']) || condizioniValide(d.condizioni))
+          && (!campi.hasAny(['esaurimento']) || interoTra(d.esaurimento, 0, 6))
           && (!campi.hasAny(['nome']) || testoValido(d.nome, 1, 60))
           && (!campi.hasAny(['razza']) || testoOpzionale(d.razza, 40))
           && (!campi.hasAny(['sottorazza']) || testoOpzionale(d.sottorazza, 40))
@@ -426,7 +434,9 @@ service cloud.firestore {
 
     function combattenteValido() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['tipo', 'nome', 'uid', 'iniziativa', 'bonus', 'spareggio', 'salute', 'immagineId', 'creatoIl'])
+      return d.keys().hasOnly(['tipo', 'nome', 'uid', 'iniziativa', 'bonus', 'spareggio', 'salute', 'immagineId',
+          'condizioni', 'creatoIl'])
+        && condizioniValide(d.get('condizioni', []))
         && d.tipo in ['pg', 'nemico']
         && testoValido(d.nome, 1, 60)
         && (d.tipo == 'nemico' || d.uid is string)
@@ -448,12 +458,14 @@ service cloud.firestore {
     // Il riepilogo deve coincidere con il profilo e con la scheda attiva vera.
     function riepilogoValido(campagnaId, uid) {
       let d = request.resource.data;
-      return d.keys().hasOnly(['nomeGiocatore', 'schedaId', 'nomePersonaggio', 'classe', 'livello', 'hp', 'ritratto', 'aggiornatoIl'])
+      return d.keys().hasOnly(['nomeGiocatore', 'schedaId', 'nomePersonaggio', 'classe', 'livello', 'hp', 'ritratto',
+          'condizioni', 'esaurimento', 'aggiornatoIl'])
         && d.nomeGiocatore == get(percorsoUtente(uid)).data.get('nome', null)
         && d.aggiornatoIl == request.time
         && (d.schedaId == null
           ? (d.nomePersonaggio == null && d.classe == null && d.livello == null && d.hp == null
-              && d.get('ritratto', null) == null)
+              && d.get('ritratto', null) == null
+              && d.get('condizioni', []) == [] && d.get('esaurimento', 0) == 0)
           : riepilogoCoincideConScheda(campagnaId, uid, d));
     }
 
@@ -466,7 +478,17 @@ service cloud.firestore {
         && d.classe == scheda.get('classe', null)
         && d.livello == scheda.get('livello', null)
         && d.hp == scheda.get('hp', null)
-        && d.get('ritratto', null) == scheda.get('ritratto', null);
+        && d.get('ritratto', null) == scheda.get('ritratto', null)
+        && d.get('condizioni', []) == scheda.get('condizioni', [])
+        && d.get('esaurimento', 0) == scheda.get('esaurimento', 0);
+    }
+
+    // Condizioni di 5a edizione (l'esaurimento ha un campo a parte, 0–6).
+    function condizioniValide(lista) {
+      return lista is list && lista.size() <= 14
+        && lista.hasOnly(['accecato', 'affascinato', 'afferrato', 'assordato', 'avvelenato', 'incapacitato',
+          'invisibile', 'paralizzato', 'pietrificato', 'privo-di-sensi', 'prono', 'spaventato', 'stordito',
+          'trattenuto']);
     }
 
     // Vecchia collezione pre-campagne: solo lettura per admin/DM (migrazione).

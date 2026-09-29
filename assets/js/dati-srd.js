@@ -453,3 +453,49 @@ export const TRATTI_PER_LIVELLO = {
     15: ["Arcanum Mistico (8° livello)"], 17: ["Arcanum Mistico (9° livello)"], 20: ["Padronanza del Patto"],
   },
 };
+
+// ---------- Condizioni (SRD 5.1) ----------
+// Chiavi uguali a quelle ammesse da firestore.rules (condizioniValide).
+// L'esaurimento ha un campo a parte, con i livelli da 0 a 6.
+export const CONDIZIONI = [
+  { chiave: "accecato", nome: "Accecato", descrizione: "Non vede: fallisce le prove basate sulla vista; attacca con svantaggio, è attaccato con vantaggio." },
+  { chiave: "affascinato", nome: "Affascinato", descrizione: "Non può attaccare chi l'ha affascinato; questi ha vantaggio nelle interazioni sociali con lui." },
+  { chiave: "afferrato", nome: "Afferrato", descrizione: "Velocità 0; finisce se chi afferra è incapacitato o viene allontanato." },
+  { chiave: "assordato", nome: "Assordato", descrizione: "Non sente: fallisce le prove basate sull'udito." },
+  { chiave: "avvelenato", nome: "Avvelenato", descrizione: "Svantaggio ai tiri per colpire e alle prove di caratteristica." },
+  { chiave: "incapacitato", nome: "Incapacitato", descrizione: "Non può compiere azioni né reazioni." },
+  { chiave: "invisibile", nome: "Invisibile", descrizione: "Non può essere visto senza aiuti magici; attacca con vantaggio, è attaccato con svantaggio." },
+  { chiave: "paralizzato", nome: "Paralizzato", descrizione: "Incapacitato, non si muove né parla; fallisce i TS di Forza e Destrezza; i colpi da vicino sono critici." },
+  { chiave: "pietrificato", nome: "Pietrificato", descrizione: "Trasformato in sostanza inanimata: incapacitato, resistenza a tutti i danni." },
+  { chiave: "privo-di-sensi", nome: "Privo di sensi", descrizione: "Incapacitato, lascia cadere ciò che tiene e cade prono; i colpi da vicino sono critici." },
+  { chiave: "prono", nome: "Prono", descrizione: "Può solo strisciare; attacca con svantaggio; attacchi da vicino contro di lui con vantaggio, da lontano con svantaggio." },
+  { chiave: "spaventato", nome: "Spaventato", descrizione: "Svantaggio a prove e attacchi finché vede la fonte della paura; non può avvicinarsi a essa." },
+  { chiave: "stordito", nome: "Stordito", descrizione: "Incapacitato, non si muove, parla a fatica; fallisce i TS di Forza e Destrezza." },
+  { chiave: "trattenuto", nome: "Trattenuto", descrizione: "Velocità 0; attacca con svantaggio, è attaccato con vantaggio; svantaggio ai TS di Destrezza." },
+];
+
+export const LIVELLI_ESAURIMENTO = [
+  "Nessun esaurimento",
+  "1 — Svantaggio alle prove di caratteristica",
+  "2 — Velocità dimezzata",
+  "3 — Svantaggio a tiri per colpire e tiri salvezza",
+  "4 — PF massimi dimezzati",
+  "5 — Velocità ridotta a 0",
+  "6 — Morte",
+];
+
+// Danno (delta negativo) o cura (positivo) ai PF: il danno consuma prima i PF
+// temporanei; la cura non supera i massimi e non ridà PF temporanei.
+export function applicaVariazionePf(hp, delta) {
+  const nuovo = { massimi: hp.massimi || 0, attuali: hp.attuali || 0, temporanei: hp.temporanei || 0 };
+  if (delta < 0) {
+    let danno = -delta;
+    const assorbito = Math.min(nuovo.temporanei, danno);
+    nuovo.temporanei -= assorbito;
+    danno -= assorbito;
+    nuovo.attuali = Math.max(0, nuovo.attuali - danno);
+  } else {
+    nuovo.attuali = Math.min(nuovo.massimi, nuovo.attuali + delta);
+  }
+  return nuovo;
+}

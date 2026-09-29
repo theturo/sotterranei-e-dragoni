@@ -820,6 +820,8 @@ function datiRiepilogo(nomeGiocatore, scheda) {
     livello: scheda ? scheda.livello ?? null : null,
     hp: scheda ? scheda.hp ?? null : null,
     ritratto: scheda ? scheda.ritratto ?? null : null,
+    condizioni: scheda ? scheda.condizioni ?? [] : [],
+    esaurimento: scheda ? scheda.esaurimento ?? 0 : 0,
     aggiornatoIl: serverTimestamp(),
   };
 }
@@ -870,6 +872,47 @@ export async function rigeneraRiepiloghiParty(campagnaId) {
   await Promise.all(
     esistenti.docs.filter((documento) => !uidMembri.has(documento.id)).map((documento) => deleteDoc(documento.ref))
   );
+}
+
+// Riepiloghi del party in tempo reale (PF e condizioni si aggiornano da soli).
+export function ascoltaRiepiloghiParty(campagnaId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(collection(db, "campagne", campagnaId, "party"), (snapshot) => {
+    callback(
+      snapshot.docs
+        .map((documento) => ({ uid: documento.id, ...documento.data() }))
+        .sort((a, b) => (a.nomeGiocatore || "").localeCompare(b.nomeGiocatore || ""))
+    );
+  }, alErrore);
+}
+
+// Il DM aggiorna PF, condizioni o esaurimento di un personaggio dalla
+// Sessione: scheda e riepilogo del party insieme, in un'unica scrittura.
+// "riepilogo" è quello attuale del party (con uid e schedaId).
+export async function aggiornaStatoPersonaggio(campagnaId, riepilogo, { hp, condizioni, esaurimento }) {
+  // Sempre tutti e tre: scheda e riepilogo devono restare identici (le regole
+  // lo verificano), anche se il riepilogo era stato scritto prima di questi campi.
+  const campi = {
+    hp: hp ?? riepilogo.hp,
+    condizioni: condizioni ?? riepilogo.condizioni ?? [],
+    esaurimento: esaurimento ?? riepilogo.esaurimento ?? 0,
+  };
+  const batch = writeBatch(db);
+  batch.update(doc(db, "personaggi", riepilogo.schedaId), { ...campi, aggiornatoIl: serverTimestamp() });
+  batch.update(doc(db, "campagne", campagnaId, "party", riepilogo.uid), { ...campi, aggiornatoIl: serverTimestamp() });
+  await batch.commit();
+}
+
+// Il giocatore aggiorna condizioni ed esaurimento della propria scheda.
+export async function aggiornaCondizioniScheda(scheda, condizioni, esaurimento) {
+  await updateDoc(doc(db, "personaggi", scheda.id), { condizioni, esaurimento, aggiornatoIl: serverTimestamp() });
+  await sincronizzaRiepilogoParty({ ...scheda, condizioni, esaurimento });
+}
+
+// La scheda in tempo reale (es. il DM applica danni mentre è aperta).
+export function ascoltaScheda(schedaId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(doc(db, "personaggi", schedaId), (snapshot) => {
+    if (snapshot.exists()) callback({ id: snapshot.id, ...snapshot.data() });
+  }, alErrore);
 }
 
 // Riepiloghi del party di una campagna, in ordine di nome del giocatore.
@@ -1128,6 +1171,10 @@ export async function aggiornaPfNemico(campagnaId, combattenteId, pfAttuali, pfM
   batch.update(riferimentoCombattenteDM(campagnaId, combattenteId), { pfAttuali, pfMassimi });
   batch.update(riferimentoCombattente(campagnaId, combattenteId), { salute: saluteDaPf(pfAttuali, pfMassimi) });
   await batch.commit();
+}
+
+export async function impostaCondizioniCombattente(campagnaId, combattenteId, condizioni) {
+  await updateDoc(riferimentoCombattente(campagnaId, combattenteId), { condizioni });
 }
 
 export async function impostaTurno(campagnaId, round, turno) {

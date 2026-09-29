@@ -11,6 +11,8 @@ import {
   aggiornaScheda,
   applicaPassaggioLivello,
   impostaRitratto,
+  aggiornaCondizioniScheda,
+  ascoltaScheda,
 } from "../auth.js";
 import {
   ridimensionaImmagine,
@@ -23,6 +25,7 @@ import {
   ErroreImmagine,
 } from "../immagini.js";
 import { montaMenuUtente } from "../menu-utente.js";
+import { creaChipCondizioni, creaEditorCondizioni } from "../condizioni.js";
 import { esc } from "../utils.js";
 import {
   CLASSI,
@@ -1219,6 +1222,8 @@ document.getElementById("lista-incantesimi-razza").addEventListener("click", asy
   if (!bottone) return;
   const chiave = bottone.dataset.lanciaRazza;
   scheda.incantesimiRazzaUsati = scheda.incantesimiRazzaUsati || [];
+  scheda.condizioni = scheda.condizioni || [];
+  scheda.esaurimento = scheda.esaurimento || 0;
   if (!scheda.incantesimiRazzaUsati.includes(chiave)) scheda.incantesimiRazzaUsati.push(chiave);
   renderIncantesimiRazza();
   try {
@@ -1354,6 +1359,52 @@ function renderHp() {
   document.getElementById("hp-temporanei").disabled = soloLettura;
 }
 
+// Condizioni ed esaurimento: il proprietario le modifica, gli altri (es. il
+// DM che consulta la scheda) le vedono soltanto.
+let firmaCondizioniMostrate = null;
+function renderCondizioni() {
+  const contenitore = document.getElementById("condizioni-scheda");
+  const firma = JSON.stringify([scheda.condizioni, scheda.esaurimento, soloLettura]);
+  if (firma === firmaCondizioniMostrate) return;
+  firmaCondizioniMostrate = firma;
+  if (soloLettura) {
+    const chip = creaChipCondizioni(scheda.condizioni, scheda.esaurimento);
+    contenitore.replaceChildren(chip.hidden ? Object.assign(document.createElement("span"), { className: "party-sessione-sub", textContent: "Nessuna" }) : chip);
+    return;
+  }
+  contenitore.replaceChildren(creaEditorCondizioni({
+    condizioni: scheda.condizioni,
+    esaurimento: scheda.esaurimento,
+    onCambia: async ({ condizioni, esaurimento }) => {
+      scheda.condizioni = condizioni;
+      scheda.esaurimento = esaurimento;
+      firmaCondizioniMostrate = JSON.stringify([condizioni, esaurimento, soloLettura]);
+      try {
+        await aggiornaCondizioniScheda(scheda, condizioni, esaurimento);
+      } catch (errore) {
+        console.error(errore);
+      }
+    },
+  }));
+}
+
+// Aggiornamenti dal database mentre la scheda è aperta (es. il DM applica
+// danni o condizioni dalla Sessione): si aggiornano solo PF e condizioni,
+// senza toccare un campo che si sta scrivendo.
+function ascoltaModificheEsterne() {
+  ascoltaScheda(scheda.id, (remota) => {
+    const hp = remota.hp || scheda.hp;
+    const inputHp = [document.getElementById("hp-attuali"), document.getElementById("hp-temporanei")];
+    if (JSON.stringify(hp) !== JSON.stringify(scheda.hp) && !inputHp.includes(document.activeElement)) {
+      scheda.hp = hp;
+      renderHp();
+    }
+    scheda.condizioni = remota.condizioni || [];
+    scheda.esaurimento = remota.esaurimento || 0;
+    renderCondizioni();
+  });
+}
+
 function renderPalliniMorte() {
   document.querySelectorAll(".pallino-cliccabile").forEach((pallino) => {
     const tipo = pallino.dataset.tipo;
@@ -1484,6 +1535,7 @@ proteggiPagina(async (user, profilo) => {
   renderSalvezze();
   renderVelocitaEDadi();
   renderHp();
+  renderCondizioni();
   renderPalliniMorte();
   renderInventario();
   renderEquipaggiamentoIndossato();
@@ -1495,6 +1547,7 @@ proteggiPagina(async (user, profilo) => {
   renderTalenti();
   renderMonete();
   renderPulsanteLivello();
+  ascoltaModificheEsterne();
 
   veil.style.display = "none";
   contenuto.style.display = "block";
