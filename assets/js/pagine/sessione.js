@@ -22,6 +22,14 @@ import {
   collegaContenutiSessione,
   ascoltaRiepiloghiParty,
   aggiornaStatoPersonaggio,
+  ottieniScheda,
+  applicaRiposoScheda,
+  applicaRiposoPersonaggi,
+  avviaRiposoBreve,
+  terminaRiposoBreve,
+  segnaRiposoConcluso,
+  ascoltaRiposo,
+  annotaRiposo,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, creaScheletro } from "../utils.js";
@@ -38,6 +46,15 @@ import {
   scegliContenuti,
 } from "../contenuti.js";
 import { montaCombattimento } from "../combattimento.js";
+import {
+  apriRiposoBreve,
+  confermaRiposo,
+  dadiVitaDisponibili,
+  dadoVitaClasse,
+  effettiRiposoBreve,
+  effettiRiposoLungo,
+  testoRiposoBreve,
+} from "../riposo.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -65,7 +82,7 @@ function rigaAppunto(appunto, sessioneId) {
     ? `<button type="button" class="btn-rimuovi-talento" data-elimina-appunto="${esc(appunto.id)}" data-sessione="${esc(sessioneId)}" aria-label="Elimina appunto" title="Elimina appunto">×</button>`
     : "";
   return `
-    <div class="sessione-appunto">
+    <div class="sessione-appunto${appunto.tipo === "riposo" ? " sessione-appunto-riposo" : ""}">
       <div class="sessione-appunto-meta"><span>${esc(appunto.autoreNome) || "—"}</span><span>${formattaOrario(appunto.creatoIl)}${bottoneElimina}</span></div>
       <div class="sessione-appunto-testo">${esc(appunto.testo)}</div>
     </div>
@@ -126,6 +143,15 @@ function creaRigaParty(riepilogo) {
   // Con un ritratto, l'icona della classe lascia il posto alla sua miniatura
   // (e ricompare se l'immagine non si può caricare).
   li.querySelector(".party-sessione-info").append(creaChipCondizioni(riepilogo.condizioni, riepilogo.esaurimento));
+  const dv = creaElemento("span", "party-sessione-dv",
+    `DV ${dadiVitaDisponibili(riepilogo)}/${riepilogo.livello || 1}`);
+  dv.title = `Dadi vita disponibili (d${dadoVitaClasse(riepilogo.classe)})`;
+  li.querySelector(".party-sessione-pf").append(dv);
+  const inRiposo = statoRiposoDi(riepilogo.uid);
+  if (inRiposo) {
+    li.querySelector(".party-sessione-sub").append(" ",
+      creaElemento("span", `chip-riposo chip-riposo-${inRiposo}`, inRiposo === "finito" ? "Ha riposato" : "In riposo"));
+  }
   if (puoModerare) aggiungiEditorStato(li, riepilogo);
   if (riepilogo.ritratto) {
     const icona = li.querySelector(".icona-classe");
@@ -151,7 +177,7 @@ let trackerCombattimento = null;
 
 function firma(riepilogo) {
   const { aggiornatoIl, ...dati } = riepilogo;
-  return JSON.stringify(dati);
+  return JSON.stringify([dati, statoRiposoDi(riepilogo.uid)]);
 }
 
 function renderParty(party) {
@@ -179,6 +205,7 @@ function renderParty(party) {
     lista.appendChild(righeParty.get(riepilogo.uid));
   });
   trackerCombattimento?.ridisegna();
+  renderBannerRiposo();
 }
 
 // Pannello "Stato" del DM: danni e cure (i PF temporanei si consumano per
@@ -247,7 +274,184 @@ function aggiungiEditorStato(li, riepilogo) {
     esaurimento: riepilogo.esaurimento || 0,
     onCambia: ({ condizioni, esaurimento }) => salva({ condizioni, esaurimento }),
   }));
+  const riposoBreve = creaElemento("button", "btn-tabella btn-riposo-pg", "Riposo breve (spendi dadi vita)");
+  riposoBreve.type = "button";
+  riposoBreve.addEventListener("click", () => riposoBrevePerConto(attuale(), riposoBreve));
+  pannello.append(riposoBreve);
   li.append(pannello);
+}
+
+// ---------- Riposi ----------
+// Il DM avvia un riposo lungo (applicato subito) o breve (invito ai giocatori,
+// che spendono i propri dadi vita) per il party; può anche spendere i dadi
+// vita al posto di un giocatore. Tutto finisce negli appunti della sessione.
+let riposoCorrente = null;
+
+function statoRiposoDi(uid) {
+  if (!riposoCorrente?.attivo || !riposoCorrente.partecipanti?.includes(uid)) return null;
+  return riposoCorrente.conclusi?.includes(uid) ? "finito" : "in-corso";
+}
+
+const nomePg = (riepilogo) => riepilogo.nomePersonaggio || riepilogo.nomeGiocatore || "Personaggio";
+
+function annota(testo) {
+  annotaRiposo(campagnaIdCorrente, uidCorrente, nomeCorrente, testo);
+}
+
+// Riposo breve di un personaggio a partire dalla sua scheda completa: il DM
+// per conto di un giocatore, o il giocatore per sé.
+async function riposoBrevePerConto(riepilogo, bottone) {
+  if (!riepilogo?.schedaId) return;
+  bottone.disabled = true;
+  let scheda;
+  try {
+    scheda = await ottieniScheda(riepilogo.schedaId);
+  } catch (errore) {
+    console.error(errore);
+  } finally {
+    bottone.disabled = false;
+  }
+  if (!scheda) {
+    mostraAvvisoContenuto("Impossibile leggere la scheda.", true);
+    return;
+  }
+  const perSe = riepilogo.uid === uidCorrente;
+  const esito = await apriRiposoBreve(scheda, perSe ? {} : { sottotitolo: `Per conto di ${riepilogo.nomeGiocatore || "giocatore"}` });
+  if (!esito) return;
+  const campi = effettiRiposoBreve(scheda, esito);
+  try {
+    if (perSe) await applicaRiposoScheda(scheda, campi);
+    else await applicaRiposoPersonaggi(campagnaIdCorrente, [{ riepilogo, campi }]);
+  } catch (errore) {
+    console.error(errore);
+    mostraAvvisoContenuto("Impossibile salvare il riposo.", true);
+    return;
+  }
+  annota(testoRiposoBreve(nomePg(riepilogo), esito, dadoVitaClasse(scheda.classe)));
+  if (statoRiposoDi(riepilogo.uid) === "in-corso") {
+    segnaRiposoConcluso(campagnaIdCorrente, riepilogo.uid).catch((errore) => console.error(errore));
+  }
+}
+
+const personaggiDelParty = () => ultimoParty.filter((r) => r.schedaId);
+
+document.getElementById("btn-riposo-lungo-party").addEventListener("click", async () => {
+  const party = personaggiDelParty();
+  if (!party.length) {
+    mostraAvvisoContenuto("Nessun personaggio nel party.", true);
+    return;
+  }
+  const scelti = await confermaRiposo({
+    titolo: "Riposo lungo del party",
+    effetti: [
+      "PF al massimo, PF temporanei azzerati",
+      "Recupero di metà dei dadi vita totali (almeno 1)",
+      "Slot incantesimo e incantesimi di razza ripristinati",
+      "Tiri salvezza contro la morte azzerati, esaurimento −1",
+    ],
+    personaggi: party.map((r) => ({ id: r.uid, nome: nomePg(r), nota: r.nomeGiocatore })),
+    etichettaConferma: "Applica il riposo lungo",
+  });
+  if (!scelti) return;
+  const voci = party.filter((r) => scelti.includes(r.uid)).map((riepilogo) => ({ riepilogo, campi: effettiRiposoLungo(riepilogo) }));
+  try {
+    await applicaRiposoPersonaggi(campagnaIdCorrente, voci);
+  } catch (errore) {
+    console.error(errore);
+    mostraAvvisoContenuto("Impossibile applicare il riposo lungo.", true);
+    return;
+  }
+  mostraAvvisoContenuto("Riposo lungo applicato.");
+  annota(`Riposo lungo: ${voci.map((v) => nomePg(v.riepilogo)).join(", ")}.`);
+});
+
+document.getElementById("btn-riposo-breve-party").addEventListener("click", async () => {
+  const party = personaggiDelParty();
+  if (!party.length) {
+    mostraAvvisoContenuto("Nessun personaggio nel party.", true);
+    return;
+  }
+  const scelti = await confermaRiposo({
+    titolo: "Riposo breve del party",
+    effetti: [
+      "Ogni giocatore scelto riceve l'invito a spendere i propri dadi vita",
+      "Gli slot del Patto Magico del Warlock si ricaricano",
+      "Puoi spendere tu i dadi vita di chi è assente, dal pannello \"Stato\"",
+    ],
+    personaggi: party.map((r) => ({ id: r.uid, nome: nomePg(r), nota: r.nomeGiocatore })),
+    etichettaConferma: "Avvia il riposo breve",
+  });
+  if (!scelti) return;
+  try {
+    await avviaRiposoBreve(campagnaIdCorrente, scelti);
+  } catch (errore) {
+    console.error(errore);
+    mostraAvvisoContenuto("Impossibile avviare il riposo breve.", true);
+    return;
+  }
+  const nomi = party.filter((r) => scelti.includes(r.uid)).map(nomePg);
+  annota(`Il DM avvia un riposo breve: ${nomi.join(", ")}.`);
+});
+
+function renderBannerRiposo() {
+  const banner = document.getElementById("banner-riposo");
+  const breveBottone = document.getElementById("btn-riposo-breve-party");
+  breveBottone.disabled = Boolean(riposoCorrente?.attivo);
+  if (!riposoCorrente?.attivo) {
+    banner.hidden = true;
+    banner.replaceChildren();
+    return;
+  }
+  const partecipanti = riposoCorrente.partecipanti || [];
+  const conclusi = (riposoCorrente.conclusi || []).filter((uid) => partecipanti.includes(uid));
+  if (puoModerare) {
+    const termina = creaElemento("button", "btn-tabella", "Termina");
+    termina.type = "button";
+    termina.addEventListener("click", async () => {
+      termina.disabled = true;
+      try {
+        await terminaRiposoBreve(campagnaIdCorrente);
+      } catch (errore) {
+        console.error(errore);
+        termina.disabled = false;
+      }
+    });
+    banner.replaceChildren(
+      creaElemento("span", null, `Riposo breve in corso: ${conclusi.length} su ${partecipanti.length} hanno finito.`),
+      termina
+    );
+    banner.hidden = false;
+    return;
+  }
+  const mioStato = statoRiposoDi(uidCorrente);
+  if (!mioStato) {
+    banner.hidden = true;
+    return;
+  }
+  if (mioStato === "finito") {
+    banner.replaceChildren(creaElemento("span", null, "Riposo breve: hai finito, in attesa degli altri."));
+  } else {
+    const mio = ultimoParty.find((r) => r.uid === uidCorrente);
+    const spendi = creaElemento("button", "btn-tabella btn-tabella-evidenza", "Spendi i dadi vita");
+    spendi.type = "button";
+    spendi.disabled = !mio?.schedaId;
+    spendi.addEventListener("click", () => riposoBrevePerConto(mio, spendi));
+    banner.replaceChildren(creaElemento("span", null, "Il DM ha avviato un riposo breve."), spendi);
+  }
+  banner.hidden = false;
+}
+
+function avviaAscoltoRiposo() {
+  let primo = true;
+  ascoltaRiposo(campagnaIdCorrente, (riposo) => {
+    const eraInvitato = statoRiposoDi(uidCorrente) === "in-corso";
+    riposoCorrente = riposo;
+    if (!primo && !puoModerare && !eraInvitato && statoRiposoDi(uidCorrente) === "in-corso") {
+      mostraAvvisoContenuto("Il DM ha avviato un riposo breve: spendi i tuoi dadi vita.");
+    }
+    primo = false;
+    renderParty(ultimoParty);
+  }, (errore) => console.error(errore));
 }
 
 async function caricaParty() {
@@ -550,6 +754,7 @@ proteggiPagina(async (user, profilo) => {
   campagnaIdCorrente = campagna.id;
 
   document.getElementById("controlli-dm").hidden = !isDmOAdmin;
+  document.getElementById("azioni-riposo-party").hidden = !isDmOAdmin;
   document.getElementById("link-controllo-musica").hidden = !isDmOAdmin;
   montaWidgetMusica(document.getElementById("corpo-musica-sessione"), campagnaIdCorrente);
 
@@ -568,6 +773,7 @@ proteggiPagina(async (user, profilo) => {
   }
 
   await Promise.all([caricaParty(), avviaContenuti(isDmOAdmin)]);
+  avviaAscoltoRiposo();
   trackerCombattimento = montaCombattimento({
     pannello: document.getElementById("pannello-combattimento"),
     campagnaId: campagnaIdCorrente,

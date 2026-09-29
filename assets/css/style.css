@@ -4328,3 +4328,150 @@ table.tabella-punteggi select {
   min-width: 0;
   width: 100%;
 }
+
+/* ---------- Riposi (scheda, Sessione, finestre) ---------- */
+.azioni-riposo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(122, 31, 43, 0.3);
+}
+
+.azioni-riposo[hidden],
+.invito-riposo[hidden],
+.banner-riposo[hidden],
+.campo-riposo[hidden],
+.scelta-pf[hidden] {
+  display: none;
+}
+
+.invito-riposo {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-burgundy);
+  font-style: italic;
+}
+
+.modal-riposo {
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.modal-riposo h2 {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.modal-riposo .card-tagline {
+  text-align: center;
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+.modal-riposo p.riposo-situazione,
+.modal-riposo p.riposo-nota {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+}
+
+.modal-riposo p.riposo-nota {
+  font-style: italic;
+}
+
+.effetti-riposo {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--color-ink);
+  line-height: 1.5;
+}
+
+.campo-riposo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 0.92rem;
+}
+
+.campo-riposo .input-hp {
+  width: 80px;
+  flex: 0 0 auto;
+}
+
+.scelta-personaggi-riposo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(122, 31, 43, 0.25);
+  border-radius: 8px;
+  padding: 8px 12px 10px;
+  margin: 0;
+}
+
+.scelta-personaggi-riposo legend {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--color-burgundy);
+  padding: 0 4px;
+}
+
+.modal-riposo .vassoio-tiro {
+  text-align: center;
+}
+
+/* Party della Sessione */
+.party-sessione-dv {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--color-ink-soft);
+}
+
+.chip-riposo {
+  font-family: var(--font-heading);
+  font-size: 0.64rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+.chip-riposo-finito {
+  border-color: #3d6b3a;
+  color: #3d6b3a;
+}
+
+.banner-riposo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-gold);
+  background: rgba(201, 162, 39, 0.12);
+  font-size: 0.9rem;
+}
+
+.btn-riposo-pg {
+  align-self: flex-start;
+}
+
+.sessione-appunto-riposo {
+  background: rgba(201, 162, 39, 0.1);
+  border-color: rgba(201, 162, 39, 0.45);
+}
+
+.sessione-appunto-riposo .sessione-appunto-testo {
+  font-style: italic;
+}
