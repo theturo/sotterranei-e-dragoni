@@ -38,11 +38,12 @@ rules_version = '2';
 //   membri ("membriUid"). Leggibile solo da DM, membri e admin. Se il titolo è
 //   provvisorio, il campo pubblico "titolo" deve essere null: il titolo vero
 //   vive in "campagne/{id}/privato/titolo", leggibile solo dal DM e dall'admin.
-//   - "stato/{sessione|musica}": stato condiviso in tempo reale (lettura:
-//     DM/membri/admin; scrittura: DM/admin).
+//   - "stato/{sessione|musica|riposo}": stato condiviso in tempo reale
+//     (lettura: DM/membri/admin; scrittura: DM/admin). Nel riposo breve
+//     avviato dal DM ogni giocatore invitato può solo segnare di aver finito.
 //   - "party/{uid}": riepilogo pubblico della scheda attiva di ogni membro
-//     (nome giocatore, personaggio, classe, livello, PF, versione del
-//     ritratto). Le regole verificano che coincida con la scheda vera, quindi
+//     (nome giocatore, personaggio, classe, livello, PF, condizioni,
+//     esaurimento, dadi vita spesi, versione del ritratto). Le regole verificano che coincida con la scheda vera, quindi
 //     non può essere falsificato.
 //   - "immagini/{id}": libreria dei contenuti caricati dal DM (titolo,
 //     descrizione, a chi è mostrato ora e nell'archivio di chi è); un membro
@@ -60,7 +61,8 @@ rules_version = '2';
 //   solo le sessioni ancora "programmata"; l'admin qualsiasi.
 //   - "appunti": log scritto da tutti gli utenti approvati, sempre a proprio
 //     nome (nome verificato contro il profilo), max 2000 caratteri, solo
-//     mentre la sessione è in corso. Non modificabili; eliminabili solo da
+//     mentre la sessione è in corso ("tipo": "riposo" per le righe scritte
+//     dai riposi). Non modificabili; eliminabili solo da
 //     DM/admin (moderazione).
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -210,10 +212,13 @@ service cloud.firestore {
 
       allow update: if isAdmin()
         || (isApprovato() && request.auth.uid == resource.data.proprietarioUid && aggiornamentoSchedaValido())
-        // Il DM della campagna aggiorna PF, condizioni ed esaurimento (danni,
-        // cure, "prono"…) dalla pagina Sessione: nient'altro della scheda.
+        // Il DM della campagna aggiorna dalla pagina Sessione PF, condizioni ed
+        // esaurimento (danni, cure, "prono"…) e ciò che cambia con un riposo
+        // (dadi vita, slot, incantesimi di razza, tiri contro la morte):
+        // nient'altro della scheda.
         || (isDMdellaCampagna(resource.data.get('campagnaId', 'nessuna'))
-          && campiModificati().hasOnly(['hp', 'condizioni', 'esaurimento', 'aggiornatoIl'])
+          && campiModificati().hasOnly(['hp', 'condizioni', 'esaurimento', 'dadiVitaSpesi', 'slotIncantesimoUsati',
+              'incantesimiRazzaUsati', 'tiriSalvezzaMorte', 'aggiornatoIl'])
           && campiSchedaValidi(campiModificati()))
         // Migrazione dei dati pre-campagne: il DM può solo ASSEGNARE una
         // campagna a una scheda che non ne ha ancora una.
@@ -240,8 +245,9 @@ service cloud.firestore {
             'inventario', 'allineamento', 'background', 'incantesimiConosciuti', 'incantesimiPreparati',
             'slotIncantesimoUsati', 'incantesimiRazzaUsati', 'armaturaIndossata', 'scudoIndossato',
             'abilitaCompetenti', 'personalita', 'competenzeLinguaggi', 'talenti', 'monete', 'ritratto',
-            'condizioni', 'esaurimento'])
+            'condizioni', 'esaurimento', 'dadiVitaSpesi'])
           && (!campi.hasAny(['condizioni']) || condizioniValide(d.condizioni))
+          && (!campi.hasAny(['dadiVitaSpesi']) || interoTra(d.dadiVitaSpesi, 0, d.get('livello', 1)))
           && (!campi.hasAny(['esaurimento']) || interoTra(d.esaurimento, 0, 6))
           && (!campi.hasAny(['nome']) || testoValido(d.nome, 1, 60))
           && (!campi.hasAny(['razza']) || testoOpzionale(d.razza, 40))
@@ -318,7 +324,15 @@ service cloud.firestore {
 
       match /stato/{docId} {
         allow get: if isNellaCampagna(campagnaId);
-        allow write: if isDMdellaCampagna(campagnaId);
+        allow write: if isDMdellaCampagna(campagnaId) && (docId != "riposo" || riposoValido());
+        // Riposo breve avviato dal DM: ogni giocatore invitato può solo
+        // segnare di aver finito (aggiungersi a "conclusi").
+        allow update: if docId == "riposo"
+          && isApprovato()
+          && request.auth.uid in datiCampagna(campagnaId).membriUid
+          && request.auth.uid in resource.data.partecipanti
+          && campiModificati().hasOnly(['conclusi'])
+          && request.resource.data.conclusi.toSet() == resource.data.conclusi.toSet().union([request.auth.uid].toSet());
       }
 
       // Titolo vero della campagna (anche quando è ancora provvisorio).
@@ -397,6 +411,15 @@ service cloud.firestore {
       return valore is list && valore.size() <= 30;
     }
 
+    function riposoValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['tipo', 'attivo', 'partecipanti', 'conclusi', 'avviatoIl'])
+        && d.tipo == "breve"
+        && d.attivo is bool
+        && listaUid(d.partecipanti)
+        && listaUid(d.conclusi);
+    }
+
     function contenutoValido() {
       let d = request.resource.data;
       return d.keys().hasOnly(['titolo', 'descrizione', 'categoria', 'larghezza', 'altezza', 'caricataIl',
@@ -459,13 +482,13 @@ service cloud.firestore {
     function riepilogoValido(campagnaId, uid) {
       let d = request.resource.data;
       return d.keys().hasOnly(['nomeGiocatore', 'schedaId', 'nomePersonaggio', 'classe', 'livello', 'hp', 'ritratto',
-          'condizioni', 'esaurimento', 'aggiornatoIl'])
+          'condizioni', 'esaurimento', 'dadiVitaSpesi', 'aggiornatoIl'])
         && d.nomeGiocatore == get(percorsoUtente(uid)).data.get('nome', null)
         && d.aggiornatoIl == request.time
         && (d.schedaId == null
           ? (d.nomePersonaggio == null && d.classe == null && d.livello == null && d.hp == null
               && d.get('ritratto', null) == null
-              && d.get('condizioni', []) == [] && d.get('esaurimento', 0) == 0)
+              && d.get('condizioni', []) == [] && d.get('esaurimento', 0) == 0 && d.get('dadiVitaSpesi', 0) == 0)
           : riepilogoCoincideConScheda(campagnaId, uid, d));
     }
 
@@ -480,7 +503,8 @@ service cloud.firestore {
         && d.hp == scheda.get('hp', null)
         && d.get('ritratto', null) == scheda.get('ritratto', null)
         && d.get('condizioni', []) == scheda.get('condizioni', [])
-        && d.get('esaurimento', 0) == scheda.get('esaurimento', 0);
+        && d.get('esaurimento', 0) == scheda.get('esaurimento', 0)
+        && d.get('dadiVitaSpesi', 0) == scheda.get('dadiVitaSpesi', 0);
     }
 
     // Condizioni di 5a edizione (l'esaurimento ha un campo a parte, 0–6).
@@ -508,7 +532,8 @@ service cloud.firestore {
         allow get, list: if isApprovato();
 
         allow create: if isApprovato()
-          && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'creatoIl'])
+          && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'tipo', 'creatoIl'])
+          && request.resource.data.get('tipo', null) in [null, 'riposo']
           && request.resource.data.autoreUid == request.auth.uid
           && request.resource.data.autoreNome == profiloCorrente().get('nome', null)
           && testoValido(request.resource.data.testo, 1, 2000)

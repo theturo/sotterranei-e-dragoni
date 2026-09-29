@@ -13,6 +13,10 @@ import {
   impostaRitratto,
   aggiornaCondizioniScheda,
   ascoltaScheda,
+  applicaRiposoScheda,
+  annotaRiposo,
+  ascoltaRiposo,
+  segnaRiposoConcluso,
 } from "../auth.js";
 import {
   ridimensionaImmagine,
@@ -26,6 +30,15 @@ import {
 } from "../immagini.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "../condizioni.js";
+import {
+  apriRiposoBreve,
+  confermaRiposo,
+  dadiVitaDisponibili,
+  dadoVitaClasse,
+  effettiRiposoBreve,
+  effettiRiposoLungo,
+  testoRiposoBreve,
+} from "../riposo.js";
 import { esc } from "../utils.js";
 import {
   CLASSI,
@@ -1173,22 +1186,6 @@ document.getElementById("pips-slot-incantesimo").addEventListener("click", async
   }
 });
 
-document.getElementById("btn-riposo-lungo").addEventListener("click", async () => {
-  if (soloLettura) return;
-  scheda.slotIncantesimoUsati = {};
-  scheda.incantesimiRazzaUsati = [];
-  renderSlotPips();
-  renderIncantesimiRazza();
-  try {
-    await aggiornaScheda(scheda.id, {
-      slotIncantesimoUsati: scheda.slotIncantesimoUsati,
-      incantesimiRazzaUsati: scheda.incantesimiRazzaUsati,
-    });
-  } catch (errore) {
-    console.error(errore);
-  }
-});
-
 // Incantesimi innati di razza: indipendenti dalla classe (e quindi dalla
 // sezione "modo incantatore"), lanciabili 1 volta al giorno senza slot.
 function renderIncantesimiRazza() {
@@ -1347,8 +1344,12 @@ function renderSalvezze() {
 
 function renderVelocitaEDadi() {
   document.getElementById("valore-velocita").textContent = formattaVelocita(velocitaRazza(scheda.razza, scheda.sottorazza));
-  const classe = CLASSI[scheda.classe];
-  document.getElementById("dadi-vita").textContent = `${scheda.livello || 1}d${classe?.dadoVita || 8}`;
+  renderDadiVita();
+}
+
+function renderDadiVita() {
+  document.getElementById("dadi-vita").textContent =
+    `${dadiVitaDisponibili(scheda)} / ${scheda.livello || 1} (d${dadoVitaClasse(scheda.classe)})`;
 }
 
 function renderHp() {
@@ -1402,11 +1403,92 @@ function ascoltaModificheEsterne() {
     scheda.condizioni = remota.condizioni || [];
     scheda.esaurimento = remota.esaurimento || 0;
     renderCondizioni();
+    // Riposi applicati dal DM: dadi vita, slot, incantesimi di razza, tiri
+    // contro la morte.
+    const firmaRiposo = (s) => JSON.stringify([s.dadiVitaSpesi || 0, s.slotIncantesimoUsati || {},
+      s.incantesimiRazzaUsati || [], s.tiriSalvezzaMorte || null]);
+    if (firmaRiposo(remota) !== firmaRiposo(scheda)) {
+      scheda.dadiVitaSpesi = remota.dadiVitaSpesi || 0;
+      scheda.slotIncantesimoUsati = remota.slotIncantesimoUsati || {};
+      scheda.incantesimiRazzaUsati = remota.incantesimiRazzaUsati || [];
+      if (remota.tiriSalvezzaMorte) scheda.tiriSalvezzaMorte = remota.tiriSalvezzaMorte;
+      renderDadiVita();
+      renderSlotPips();
+      renderIncantesimiRazza();
+      renderPalliniMorte();
+    }
   });
 }
 
+// ---------- Riposi ----------
+// Il proprietario fa un riposo dalla scheda; se il DM ha avviato un riposo
+// breve per il party, compare l'invito e, finito il riposo, lo si segna.
+let invitoRiposoAperto = false;
+
+function ascoltaInvitoRiposo() {
+  if (soloLettura || !scheda.attiva || !scheda.campagnaId) return;
+  ascoltaRiposo(scheda.campagnaId, (riposo) => {
+    invitoRiposoAperto = Boolean(riposo?.attivo && riposo.partecipanti?.includes(uidCorrente)
+      && !riposo.conclusi?.includes(uidCorrente));
+    document.getElementById("invito-riposo").hidden = !invitoRiposoAperto;
+    document.getElementById("btn-riposo-breve").classList.toggle("btn-tabella-evidenza", invitoRiposoAperto);
+  }, (errore) => console.error(errore));
+}
+
+async function salvaRiposo(campi, testoAppunto) {
+  Object.assign(scheda, campi);
+  renderHp();
+  renderCondizioni();
+  renderDadiVita();
+  renderSlotPips();
+  renderIncantesimiRazza();
+  renderPalliniMorte();
+  try {
+    await applicaRiposoScheda(scheda, campi);
+  } catch (errore) {
+    console.error(errore);
+    mostraAvviso("Impossibile salvare il riposo. Riprova.");
+    return false;
+  }
+  if (scheda.campagnaId && scheda.attiva) {
+    annotaRiposo(scheda.campagnaId, uidCorrente, profiloCorrente?.nome ?? null, testoAppunto);
+  }
+  return true;
+}
+
+document.getElementById("btn-riposo-breve").addEventListener("click", async () => {
+  if (soloLettura) return;
+  const esito = await apriRiposoBreve(scheda);
+  if (!esito) return;
+  const salvato = await salvaRiposo(
+    effettiRiposoBreve(scheda, esito),
+    testoRiposoBreve(scheda.nome || "Personaggio", esito, dadoVitaClasse(scheda.classe))
+  );
+  if (salvato && invitoRiposoAperto) {
+    segnaRiposoConcluso(scheda.campagnaId, uidCorrente).catch((errore) => console.error(errore));
+  }
+});
+
+document.getElementById("btn-riposo-lungo").addEventListener("click", async () => {
+  if (soloLettura) return;
+  const campi = effettiRiposoLungo(scheda);
+  const recuperati = (scheda.dadiVitaSpesi || 0) - campi.dadiVitaSpesi;
+  const conferma = await confermaRiposo({
+    titolo: "Riposo lungo",
+    effetti: [
+      `PF al massimo (${scheda.hp.massimi}), PF temporanei azzerati`,
+      `Dadi vita recuperati: ${recuperati} (disponibili ${dadiVitaDisponibili({ ...scheda, ...campi })} su ${scheda.livello || 1})`,
+      "Slot incantesimo e incantesimi di razza ripristinati",
+      "Tiri salvezza contro la morte azzerati",
+      ...(scheda.esaurimento > 0 ? [`Esaurimento: da ${scheda.esaurimento} a ${campi.esaurimento}`] : []),
+    ],
+  });
+  if (!conferma) return;
+  await salvaRiposo(campi, `${scheda.nome || "Personaggio"}: riposo lungo.`);
+});
+
 function renderPalliniMorte() {
-  document.querySelectorAll(".pallino-cliccabile").forEach((pallino) => {
+  document.querySelectorAll(".pallini-morte .pallino[data-tipo]").forEach((pallino) => {
     const tipo = pallino.dataset.tipo;
     const indice = Number(pallino.dataset.indice);
     pallino.classList.toggle("competente", Boolean(scheda.tiriSalvezzaMorte[tipo][indice]));
@@ -1525,6 +1607,8 @@ proteggiPagina(async (user, profilo) => {
   scheda.incantesimiPreparati = scheda.incantesimiPreparati || [];
   scheda.slotIncantesimoUsati = scheda.slotIncantesimoUsati || {};
   scheda.incantesimiRazzaUsati = scheda.incantesimiRazzaUsati || [];
+  scheda.dadiVitaSpesi = scheda.dadiVitaSpesi || 0;
+  scheda.tiriSalvezzaMorte = scheda.tiriSalvezzaMorte || { successi: [false, false, false], fallimenti: [false, false, false] };
 
   renderBadgeStato();
   renderIntestazione();
@@ -1547,7 +1631,9 @@ proteggiPagina(async (user, profilo) => {
   renderTalenti();
   renderMonete();
   renderPulsanteLivello();
+  document.getElementById("azioni-riposo").hidden = soloLettura;
   ascoltaModificheEsterne();
+  ascoltaInvitoRiposo();
 
   veil.style.display = "none";
   contenuto.style.display = "block";
@@ -1571,7 +1657,7 @@ document.getElementById("hp-attuali").addEventListener("change", salvaHpDaInput)
 document.getElementById("hp-temporanei").addEventListener("change", salvaHpDaInput);
 
 // Tiri salvezza contro la morte: click su un pallino lo accende/spegne.
-document.querySelectorAll(".pallino-cliccabile").forEach((pallino) => {
+document.querySelectorAll(".pallini-morte .pallino[data-tipo]").forEach((pallino) => {
   pallino.addEventListener("click", async () => {
     if (soloLettura) return;
     const tipo = pallino.dataset.tipo;

@@ -455,3 +455,69 @@ describe("Stato condiviso della campagna", () => {
   test("il DM cambia la musica", () =>
     assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/stato/musica"), { sorgente: "youtube" })));
 });
+
+describe("Riposi e dadi vita", () => {
+  const riepilogoS1 = (extra = {}) => ({
+    nomeGiocatore: "Pia", schedaId: "s1", nomePersonaggio: "Eroe", classe: "guerriero", livello: 1,
+    hp: { massimi: 12, attuali: 12, temporanei: 0 }, condizioni: [], esaurimento: 0, dadiVitaSpesi: 0,
+    aggiornatoIl: serverTimestamp(), ...extra,
+  });
+  const riposo = (extra = {}) => ({ tipo: "breve", attivo: true, partecipanti: ["p1", "p2"], conclusi: [], avviatoIl: serverTimestamp(), ...extra });
+  const avviaRiposo = () => env.withSecurityRulesDisabled((ctx) =>
+    setDoc(doc(ctx.firestore(), "campagne/c1/stato/riposo"), { tipo: "breve", attivo: true, partecipanti: ["p1"], conclusi: [] }));
+
+  test("un giocatore spende un dado vita (PF e dadi spesi)", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), { dadiVitaSpesi: 1, hp: { massimi: 12, attuali: 12, temporanei: 0 } })));
+  test("NON si spendono più dadi vita del livello", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { dadiVitaSpesi: 2 })));
+  test("NON si segnano dadi vita spesi negativi", () =>
+    assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { dadiVitaSpesi: -1 })));
+  test("il DM applica un riposo lungo alla scheda e al riepilogo insieme", async () => {
+    const d = come("dm");
+    const batch = writeBatch(d);
+    const campi = {
+      hp: { massimi: 12, attuali: 12, temporanei: 0 }, dadiVitaSpesi: 0, esaurimento: 0,
+      slotIncantesimoUsati: {}, incantesimiRazzaUsati: [],
+      tiriSalvezzaMorte: { successi: [false, false, false], fallimenti: [false, false, false] },
+    };
+    batch.update(doc(d, "personaggi/s1"), { ...campi, aggiornatoIl: serverTimestamp() });
+    batch.set(doc(d, "campagne/c1/party/p1"), riepilogoS1());
+    await assertSucceeds(batch.commit());
+  });
+  test("il DM NON tocca altri campi della scheda con un riposo", () =>
+    assertFails(updateDoc(doc(come("dm"), "personaggi/s1"), { dadiVitaSpesi: 0, livello: 5 })));
+  test("NON si pubblica un riepilogo con dadi vita diversi dalla scheda", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/party/p1"), riepilogoS1({ dadiVitaSpesi: 1 }))));
+
+  test("il DM avvia un riposo breve per il party", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/stato/riposo"), riposo())));
+  test("il DM NON scrive un riposo con campi estranei", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/stato/riposo"), riposo({ extra: 1 }))));
+  test("un giocatore NON avvia un riposo breve", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/stato/riposo"), riposo())));
+  test("un giocatore invitato segna di aver finito", async () => {
+    await avviaRiposo();
+    await assertSucceeds(updateDoc(doc(come("p1"), "campagne/c1/stato/riposo"), { conclusi: ["p1"] }));
+  });
+  test("un giocatore NON segna la fine per un altro", async () => {
+    await avviaRiposo();
+    await assertFails(updateDoc(doc(come("p1"), "campagne/c1/stato/riposo"), { conclusi: ["p1", "p2"] }));
+  });
+  test("un giocatore non invitato NON si aggiunge", async () => {
+    await avviaRiposo();
+    await assertFails(updateDoc(doc(come("p2"), "campagne/c1/stato/riposo"), { conclusi: ["p2"] }));
+  });
+  test("un giocatore NON chiude il riposo breve", async () => {
+    await avviaRiposo();
+    await assertFails(updateDoc(doc(come("p1"), "campagne/c1/stato/riposo"), { attivo: false }));
+  });
+
+  test("un giocatore annota un riposo negli appunti", () =>
+    assertSucceeds(addDoc(collection(come("p2"), "registroSessioni/r1/appunti"), {
+      autoreUid: "p2", autoreNome: "Leo", testo: "Maga: riposo lungo", tipo: "riposo", creatoIl: serverTimestamp(),
+    })));
+  test("NON si annota un appunto di tipo inventato", () =>
+    assertFails(addDoc(collection(come("p2"), "registroSessioni/r1/appunti"), {
+      autoreUid: "p2", autoreNome: "Leo", testo: "x", tipo: "sistema", creatoIl: serverTimestamp(),
+    })));
+});

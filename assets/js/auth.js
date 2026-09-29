@@ -718,11 +718,13 @@ export async function chiudiSessione(campagnaId, sessioneAttivaId) {
 // Aggiunge un appunto alla sessione indicata: ogni utente approvato può
 // scriverne (DM e giocatori), sempre a proprio nome — le regole verificano che
 // autoreNome coincida con il nome del profilo (vedi firestore.rules).
-export async function aggiungiAppunto(sessioneId, autoreUid, autoreNome, testo) {
+// "tipo": null per gli appunti scritti a mano, "riposo" per quelli dei riposi.
+export async function aggiungiAppunto(sessioneId, autoreUid, autoreNome, testo, tipo = null) {
   await addDoc(collection(db, "registroSessioni", sessioneId, "appunti"), {
     autoreUid,
     autoreNome,
     testo,
+    ...(tipo ? { tipo } : {}),
     creatoIl: serverTimestamp(),
   });
 }
@@ -822,6 +824,7 @@ function datiRiepilogo(nomeGiocatore, scheda) {
     ritratto: scheda ? scheda.ritratto ?? null : null,
     condizioni: scheda ? scheda.condizioni ?? [] : [],
     esaurimento: scheda ? scheda.esaurimento ?? 0 : 0,
+    dadiVitaSpesi: scheda ? scheda.dadiVitaSpesi ?? 0 : 0,
     aggiornatoIl: serverTimestamp(),
   };
 }
@@ -906,6 +909,69 @@ export async function aggiornaStatoPersonaggio(campagnaId, riepilogo, { hp, cond
 export async function aggiornaCondizioniScheda(scheda, condizioni, esaurimento) {
   await updateDoc(doc(db, "personaggi", scheda.id), { condizioni, esaurimento, aggiornatoIl: serverTimestamp() });
   await sincronizzaRiepilogoParty({ ...scheda, condizioni, esaurimento });
+}
+
+// ---------- Riposi ----------
+
+// Il giocatore applica un riposo alla propria scheda ("campi" da riposo.js).
+export async function applicaRiposoScheda(scheda, campi) {
+  await updateDoc(doc(db, "personaggi", scheda.id), { ...campi, aggiornatoIl: serverTimestamp() });
+  await sincronizzaRiepilogoParty({ ...scheda, ...campi });
+}
+
+// Il DM applica un riposo a uno o più personaggi dalla Sessione: schede e
+// riepiloghi del party in un'unica scrittura. "voci" = [{ riepilogo, campi }].
+export async function applicaRiposoPersonaggi(campagnaId, voci) {
+  const batch = writeBatch(db);
+  voci.forEach(({ riepilogo, campi }) => {
+    batch.update(doc(db, "personaggi", riepilogo.schedaId), { ...campi, aggiornatoIl: serverTimestamp() });
+    batch.update(doc(db, "campagne", campagnaId, "party", riepilogo.uid), {
+      hp: campi.hp ?? riepilogo.hp,
+      condizioni: riepilogo.condizioni ?? [],
+      esaurimento: campi.esaurimento ?? riepilogo.esaurimento ?? 0,
+      dadiVitaSpesi: campi.dadiVitaSpesi ?? riepilogo.dadiVitaSpesi ?? 0,
+      aggiornatoIl: serverTimestamp(),
+    });
+  });
+  await batch.commit();
+}
+
+// Riposo breve avviato dal DM per il party: "campagne/{c}/stato/riposo" con
+// chi è invitato ("partecipanti") e chi ha già finito ("conclusi").
+const riferimentoRiposo = (campagnaId) => doc(db, "campagne", campagnaId, "stato", "riposo");
+
+export async function avviaRiposoBreve(campagnaId, partecipanti) {
+  await setDoc(riferimentoRiposo(campagnaId), {
+    tipo: "breve", attivo: true, partecipanti, conclusi: [], avviatoIl: serverTimestamp(),
+  });
+}
+
+export async function terminaRiposoBreve(campagnaId) {
+  await updateDoc(riferimentoRiposo(campagnaId), { attivo: false });
+}
+
+// Il giocatore (o il DM per lui) segna di aver finito il riposo breve.
+export async function segnaRiposoConcluso(campagnaId, uid) {
+  await updateDoc(riferimentoRiposo(campagnaId), { conclusi: arrayUnion(uid) });
+}
+
+export function ascoltaRiposo(campagnaId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(riferimentoRiposo(campagnaId), (snapshot) => {
+    callback(snapshot.exists() ? snapshot.data() : null);
+  }, alErrore);
+}
+
+// Annota un riposo negli appunti della sessione in corso (se ce n'è una).
+// Mai bloccante: il riposo resta applicato anche se l'annotazione fallisce.
+export async function annotaRiposo(campagnaId, autoreUid, autoreNome, testo) {
+  try {
+    const stato = await ottieniStatoSessione(campagnaId);
+    if (stato.inCorso && stato.sessioneAttivaId) {
+      await aggiungiAppunto(stato.sessioneAttivaId, autoreUid, autoreNome, testo, "riposo");
+    }
+  } catch (errore) {
+    console.error(errore);
+  }
 }
 
 // La scheda in tempo reale (es. il DM applica danni mentre è aperta).

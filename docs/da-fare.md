@@ -33,8 +33,9 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Riposo breve e lungo con un clic**, che ripristina slot incantesimo e dadi
-  vita.
+- **Contatori dei privilegi di classe** (Ira, Recuperare Energie, Azione
+  Impetuosa, Incanalare Divinità, Ispirazione Bardica, Ki…): usi e ricarica
+  automatici per classe e livello, ripristinati dai riposi.
 - **Lancio dadi condiviso** nel registro della sessione.
 - **Calendario delle sessioni con le disponibilità**, collegato
   all'interruttore della sessione.
@@ -62,6 +63,10 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   aggiornano da soli; il DM applica danni/cure (prima sui PF temporanei), PF
   temporanei, condizioni ed esaurimento dal pannello "Stato"; condizioni anche
   sui nemici del tracker, visibili a tutti.
+- Riposo breve e lungo: dalla scheda o dal DM per il party (il breve come
+  invito ai giocatori, che spendono i dadi vita tirandoli nell'app o a mano);
+  dadi vita, slot, incantesimi di razza, tiri contro la morte ed esaurimento,
+  con annotazione negli appunti della sessione.
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:
