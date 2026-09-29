@@ -17,7 +17,9 @@ import {
   annotaRiposo,
   ascoltaRiposo,
   segnaRiposoConcluso,
+  aggiornaUsiPrivilegi,
 } from "../auth.js";
+import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   ridimensionaImmagine,
   caricaImmagine,
@@ -561,6 +563,7 @@ document.getElementById("btn-conferma-livello").addEventListener("click", async 
     renderTalenti();
     renderIncantesimi();
     renderIncantesimiRazza();
+    renderPrivilegi();
     renderPulsanteLivello();
   } catch (errore) {
     console.error(errore);
@@ -1406,12 +1409,14 @@ function ascoltaModificheEsterne() {
     // Riposi applicati dal DM: dadi vita, slot, incantesimi di razza, tiri
     // contro la morte.
     const firmaRiposo = (s) => JSON.stringify([s.dadiVitaSpesi || 0, s.slotIncantesimoUsati || {},
-      s.incantesimiRazzaUsati || [], s.tiriSalvezzaMorte || null]);
+      s.incantesimiRazzaUsati || [], s.tiriSalvezzaMorte || null, s.usiPrivilegi || {}]);
     if (firmaRiposo(remota) !== firmaRiposo(scheda)) {
       scheda.dadiVitaSpesi = remota.dadiVitaSpesi || 0;
       scheda.slotIncantesimoUsati = remota.slotIncantesimoUsati || {};
       scheda.incantesimiRazzaUsati = remota.incantesimiRazzaUsati || [];
       if (remota.tiriSalvezzaMorte) scheda.tiriSalvezzaMorte = remota.tiriSalvezzaMorte;
+      scheda.usiPrivilegi = remota.usiPrivilegi || {};
+      renderPrivilegi();
       renderDadiVita();
       renderSlotPips();
       renderIncantesimiRazza();
@@ -1419,6 +1424,94 @@ function ascoltaModificheEsterne() {
     }
   });
 }
+
+// ---------- Privilegi di classe ----------
+// Usi limitati (Ira, Azione Impetuosa, Punti Ki…): pallini come gli slot
+// (pieno = disponibile, clic per usarlo o recuperarlo); per le riserve grandi
+// (Punti Ki, Imposizione delle Mani…) un contatore con quantità.
+const LIMITE_PALLINI = 10;
+
+function renderPrivilegi() {
+  const privilegi = privilegiDelPersonaggio(scheda);
+  document.getElementById("box-privilegi").hidden = privilegi.length === 0;
+  const lista = document.getElementById("lista-privilegi");
+  lista.replaceChildren(...privilegi.map((p) => {
+    const li = document.createElement("li");
+    li.className = "riga-privilegio";
+    li.dataset.privilegio = p.chiave;
+    const nome = document.createElement("span");
+    nome.className = "privilegio-nome";
+    nome.textContent = p.nome;
+    nome.title = `${p.descrizione} Si ricarica con un ${NOMI_RICARICA[p.ricarica]}.`;
+    const ricarica = document.createElement("small");
+    ricarica.className = "privilegio-ricarica";
+    ricarica.textContent = p.ricarica === "breve" ? "breve" : "lungo";
+    nome.append(" ", ricarica);
+    li.append(nome);
+    if (!Number.isFinite(p.max)) {
+      li.append(Object.assign(document.createElement("span"), { className: "privilegio-conteggio", textContent: "illimitato" }));
+      return li;
+    }
+    if (p.max <= LIMITE_PALLINI) {
+      const pallini = document.createElement("span");
+      pallini.className = "pallini-privilegio";
+      pallini.innerHTML = renderPipRow(p.max, p.usati, p.chiave);
+      pallini.setAttribute("aria-label", `${p.rimasti} su ${p.max} disponibili`);
+      li.append(pallini);
+      return li;
+    }
+    const conteggio = document.createElement("span");
+    conteggio.className = "privilegio-conteggio";
+    conteggio.textContent = `${p.rimasti} / ${p.max}`;
+    li.append(conteggio);
+    if (!soloLettura) {
+      const quanti = document.createElement("input");
+      quanti.type = "number";
+      quanti.min = "1";
+      quanti.value = "1";
+      quanti.className = "input-privilegio";
+      quanti.setAttribute("aria-label", `Quantità di ${p.nome}`);
+      const usa = Object.assign(document.createElement("button"), { type: "button", className: "btn-tabella", textContent: "Usa" });
+      const recupera = Object.assign(document.createElement("button"), { type: "button", className: "btn-tabella", textContent: "Recupera" });
+      usa.dataset.usaPrivilegio = p.chiave;
+      recupera.dataset.recuperaPrivilegio = p.chiave;
+      li.append(quanti, usa, recupera);
+    }
+    return li;
+  }));
+}
+
+async function cambiaUsoPrivilegio(chiave, delta) {
+  const privilegio = privilegiDelPersonaggio(scheda).find((p) => p.chiave === chiave);
+  if (!privilegio || !Number.isFinite(privilegio.max)) return;
+  const usati = Math.max(0, Math.min(privilegio.max, privilegio.usati + delta));
+  if (usati === privilegio.usati) return;
+  const usi = { ...(scheda.usiPrivilegi || {}) };
+  if (usati) usi[chiave] = usati;
+  else delete usi[chiave];
+  scheda.usiPrivilegi = usi;
+  renderPrivilegi();
+  try {
+    await aggiornaUsiPrivilegi(scheda, usi);
+  } catch (errore) {
+    console.error(errore);
+    mostraAvviso("Impossibile salvare il privilegio. Riprova.");
+  }
+}
+
+document.getElementById("lista-privilegi").addEventListener("click", (evento) => {
+  if (soloLettura) return;
+  const pip = evento.target.closest("[data-pip-slot]");
+  if (pip) {
+    cambiaUsoPrivilegio(pip.dataset.pipSlot, pip.classList.contains("competente") ? 1 : -1);
+    return;
+  }
+  const bottone = evento.target.closest("[data-usa-privilegio], [data-recupera-privilegio]");
+  if (!bottone) return;
+  const quanti = Math.max(1, Math.trunc(Number(bottone.closest("li").querySelector(".input-privilegio")?.value)) || 1);
+  if (bottone.dataset.usaPrivilegio) cambiaUsoPrivilegio(bottone.dataset.usaPrivilegio, quanti);
+  else cambiaUsoPrivilegio(bottone.dataset.recuperaPrivilegio, -quanti);
+});
 
 // ---------- Riposi ----------
 // Il proprietario fa un riposo dalla scheda; se il DM ha avviato un riposo
@@ -1437,6 +1530,7 @@ function ascoltaInvitoRiposo() {
 
 async function salvaRiposo(campi, testoAppunto) {
   Object.assign(scheda, campi);
+  renderPrivilegi();
   renderHp();
   renderCondizioni();
   renderDadiVita();
@@ -1480,6 +1574,7 @@ document.getElementById("btn-riposo-lungo").addEventListener("click", async () =
       `Dadi vita recuperati: ${recuperati} (disponibili ${dadiVitaDisponibili({ ...scheda, ...campi })} su ${scheda.livello || 1})`,
       "Slot incantesimo e incantesimi di razza ripristinati",
       "Tiri salvezza contro la morte azzerati",
+      ...(privilegiDelPersonaggio(scheda).length ? ["Privilegi di classe ripristinati"] : []),
       ...(scheda.esaurimento > 0 ? [`Esaurimento: da ${scheda.esaurimento} a ${campi.esaurimento}`] : []),
     ],
   });
@@ -1608,6 +1703,7 @@ proteggiPagina(async (user, profilo) => {
   scheda.slotIncantesimoUsati = scheda.slotIncantesimoUsati || {};
   scheda.incantesimiRazzaUsati = scheda.incantesimiRazzaUsati || [];
   scheda.dadiVitaSpesi = scheda.dadiVitaSpesi || 0;
+  scheda.usiPrivilegi = scheda.usiPrivilegi || {};
   scheda.tiriSalvezzaMorte = scheda.tiriSalvezzaMorte || { successi: [false, false, false], fallimenti: [false, false, false] };
 
   renderBadgeStato();
@@ -1627,6 +1723,7 @@ proteggiPagina(async (user, profilo) => {
   renderAttacchi();
   renderIncantesimi();
   renderIncantesimiRazza();
+  renderPrivilegi();
   renderPersonalita();
   renderTalenti();
   renderMonete();

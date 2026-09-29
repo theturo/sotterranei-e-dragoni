@@ -6,8 +6,10 @@
 // ripristinati, tiri salvezza contro la morte azzerati, esaurimento −1.
 // Riposo breve: si spendono dadi vita (dado + modificatore di Costituzione
 // ciascuno) e si ricaricano gli slot del Patto Magico del Warlock.
+// I privilegi di classe si ricaricano secondo privilegi.js.
 import { CLASSI, TIPO_LANCIATORE, modificatore, formattaModificatore } from "./dati-srd.js";
 import { creaElemento } from "./contenuti.js";
+import { privilegiDelPersonaggio, usiDopoRiposoBreve } from "./privilegi.js";
 
 export const dadoVitaClasse = (classe) => CLASSI[classe]?.dadoVita || 8;
 
@@ -30,6 +32,7 @@ export function effettiRiposoLungo(personaggio) {
     slotIncantesimoUsati: {},
     incantesimiRazzaUsati: [],
     tiriSalvezzaMorte: TIRI_MORTE_AZZERATI(),
+    usiPrivilegi: {},
   };
 }
 
@@ -55,7 +58,14 @@ export function effettiRiposoBreve(scheda, { dadi, pf }) {
     const { patto, ...altri } = scheda.slotIncantesimoUsati || {};
     campi.slotIncantesimoUsati = altri;
   }
+  const usi = usiDopoRiposoBreve(scheda);
+  if (JSON.stringify(usi) !== JSON.stringify(scheda.usiPrivilegi || {})) campi.usiPrivilegi = usi;
   return campi;
+}
+
+// Nomi dei privilegi che un riposo breve ricarica (per la finestra).
+export function privilegiRicaricatiDalBreve(personaggio) {
+  return privilegiDelPersonaggio(personaggio).filter((p) => p.ricarica === "breve" && Number.isFinite(p.max)).map((p) => p.nome);
 }
 
 // Testo per gli appunti della sessione.
@@ -173,8 +183,12 @@ export function apriRiposoBreve(scheda, { sottotitolo = null } = {}) {
 
     finestra.append(creaElemento("p", "riposo-situazione",
       `PF ${hp.attuali ?? 0} / ${hp.massimi ?? 0} · Dadi vita disponibili: ${disponibili} su ${scheda.livello || 1} (d${dadoVita}, Costituzione ${formattaModificatore(modCostituzione)} per dado)`));
-    if (TIPO_LANCIATORE[scheda.classe] === "patto") {
-      finestra.append(creaElemento("p", "riposo-nota", "Gli slot del Patto Magico si ricaricano."));
+    const ricaricati = [
+      ...(TIPO_LANCIATORE[scheda.classe] === "patto" ? ["slot del Patto Magico"] : []),
+      ...privilegiRicaricatiDalBreve(scheda),
+    ];
+    if (ricaricati.length) {
+      finestra.append(creaElemento("p", "riposo-nota", `Si ricaricano: ${ricaricati.join(", ")}.`));
     }
 
     const campoDadi = creaElemento("label", "campo-riposo");

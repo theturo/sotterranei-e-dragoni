@@ -825,6 +825,9 @@ function datiRiepilogo(nomeGiocatore, scheda) {
     condizioni: scheda ? scheda.condizioni ?? [] : [],
     esaurimento: scheda ? scheda.esaurimento ?? 0 : 0,
     dadiVitaSpesi: scheda ? scheda.dadiVitaSpesi ?? 0 : 0,
+    usiPrivilegi: scheda ? scheda.usiPrivilegi ?? {} : {},
+    // Serve a calcolare i massimi di alcuni privilegi (Ispirazione Bardica…).
+    carisma: scheda ? scheda.caratteristiche?.carisma ?? null : null,
     aggiornatoIl: serverTimestamp(),
   };
 }
@@ -913,10 +916,31 @@ export async function aggiornaCondizioniScheda(scheda, condizioni, esaurimento) 
 
 // ---------- Riposi ----------
 
+// Aggiorna la propria scheda e, se è quella attiva, il riepilogo del party
+// nella stessa scrittura: con due clic ravvicinati ogni riepilogo coincide
+// con la scheda scritta insieme a lui (le regole lo verificano). Se il
+// riepilogo non si può scrivere (es. non più membro), salva solo la scheda.
+async function aggiornaSchedaERiepilogo(scheda, campi) {
+  const riferimento = doc(db, "personaggi", scheda.id);
+  if (!scheda.attiva || !scheda.campagnaId || !scheda.proprietarioUid) {
+    await updateDoc(riferimento, { ...campi, aggiornatoIl: serverTimestamp() });
+    return;
+  }
+  const nome = await nomeProfilo(scheda.proprietarioUid);
+  const batch = writeBatch(db);
+  batch.update(riferimento, { ...campi, aggiornatoIl: serverTimestamp() });
+  batch.set(doc(db, "campagne", scheda.campagnaId, "party", scheda.proprietarioUid), datiRiepilogo(nome, { ...scheda, ...campi }));
+  try {
+    await batch.commit();
+  } catch (errore) {
+    console.error(errore);
+    await updateDoc(riferimento, { ...campi, aggiornatoIl: serverTimestamp() });
+  }
+}
+
 // Il giocatore applica un riposo alla propria scheda ("campi" da riposo.js).
 export async function applicaRiposoScheda(scheda, campi) {
-  await updateDoc(doc(db, "personaggi", scheda.id), { ...campi, aggiornatoIl: serverTimestamp() });
-  await sincronizzaRiepilogoParty({ ...scheda, ...campi });
+  await aggiornaSchedaERiepilogo(scheda, campi);
 }
 
 // Il DM applica un riposo a uno o più personaggi dalla Sessione: schede e
@@ -930,10 +954,16 @@ export async function applicaRiposoPersonaggi(campagnaId, voci) {
       condizioni: riepilogo.condizioni ?? [],
       esaurimento: campi.esaurimento ?? riepilogo.esaurimento ?? 0,
       dadiVitaSpesi: campi.dadiVitaSpesi ?? riepilogo.dadiVitaSpesi ?? 0,
+      usiPrivilegi: campi.usiPrivilegi ?? riepilogo.usiPrivilegi ?? {},
       aggiornatoIl: serverTimestamp(),
     });
   });
   await batch.commit();
+}
+
+// Il giocatore segna l'uso (o il recupero) di un privilegio di classe.
+export async function aggiornaUsiPrivilegi(scheda, usiPrivilegi) {
+  await aggiornaSchedaERiepilogo(scheda, { usiPrivilegi });
 }
 
 // Riposo breve avviato dal DM per il party: "campagne/{c}/stato/riposo" con

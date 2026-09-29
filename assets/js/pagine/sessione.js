@@ -46,6 +46,7 @@ import {
   scegliContenuti,
 } from "../contenuti.js";
 import { montaCombattimento } from "../combattimento.js";
+import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   apriRiposoBreve,
   confermaRiposo,
@@ -147,6 +148,23 @@ function creaRigaParty(riepilogo) {
     `DV ${dadiVitaDisponibili(riepilogo)}/${riepilogo.livello || 1}`);
   dv.title = `Dadi vita disponibili (d${dadoVitaClasse(riepilogo.classe)})`;
   li.querySelector(".party-sessione-pf").append(dv);
+  // Privilegi di classe con gli usi rimasti (visibili a tutto il tavolo).
+  const privilegi = privilegiDelPersonaggio({
+    classe: riepilogo.classe,
+    livello: riepilogo.livello,
+    usiPrivilegi: riepilogo.usiPrivilegi,
+    caratteristiche: { carisma: riepilogo.carisma ?? 10 },
+  });
+  if (privilegi.length) {
+    const riga = creaElemento("div", "party-sessione-privilegi");
+    privilegi.forEach((p) => {
+      const voce = creaElemento("span", `privilegio-party${p.rimasti === 0 ? " esaurito" : ""}`,
+        Number.isFinite(p.max) ? `${p.nome} ${p.rimasti}/${p.max}` : `${p.nome} ∞`);
+      voce.title = `${p.descrizione} Si ricarica con un ${NOMI_RICARICA[p.ricarica]}.`;
+      riga.append(voce);
+    });
+    li.querySelector(".party-sessione-info").append(riga);
+  }
   const inRiposo = statoRiposoDi(riepilogo.uid);
   if (inRiposo) {
     li.querySelector(".party-sessione-sub").append(" ",
@@ -348,6 +366,7 @@ document.getElementById("btn-riposo-lungo-party").addEventListener("click", asyn
       "Recupero di metà dei dadi vita totali (almeno 1)",
       "Slot incantesimo e incantesimi di razza ripristinati",
       "Tiri salvezza contro la morte azzerati, esaurimento −1",
+      "Privilegi di classe ripristinati",
     ],
     personaggi: party.map((r) => ({ id: r.uid, nome: nomePg(r), nota: r.nomeGiocatore })),
     etichettaConferma: "Applica il riposo lungo",
@@ -375,7 +394,7 @@ document.getElementById("btn-riposo-breve-party").addEventListener("click", asyn
     titolo: "Riposo breve del party",
     effetti: [
       "Ogni giocatore scelto riceve l'invito a spendere i propri dadi vita",
-      "Gli slot del Patto Magico del Warlock si ricaricano",
+      "Si ricaricano gli slot del Patto Magico e i privilegi da riposo breve di chi riposa",
       "Puoi spendere tu i dadi vita di chi è assente, dal pannello \"Stato\"",
     ],
     personaggi: party.map((r) => ({ id: r.uid, nome: nomePg(r), nota: r.nomeGiocatore })),
