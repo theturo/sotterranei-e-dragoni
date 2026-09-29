@@ -15,11 +15,13 @@ import {
   ottieniCampagnaCorrente,
 } from "./auth.js";
 import { esc } from "./utils.js";
+import { formattaDataOra } from "./calendario.js";
 
 const HTML_MENU = `
   <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
   <button id="mu-btn-modifica-ordine" class="btn-campanella" aria-label="Modifica ordinamento" title="Modifica ordinamento" type="button" hidden>✏️</button>
   <a id="mu-link-sessione" href="sessione.html" class="btn-campanella" aria-label="Sessione" title="Sessione" hidden>📜</a>
+  <a href="calendario.html" class="btn-campanella" aria-label="Calendario" title="Calendario">📅</a>
   <div class="notifiche-wrap">
     <button id="mu-btn-campanella" class="btn-campanella" aria-label="Notifiche" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -94,6 +96,13 @@ const HTML_MODALE = `
 function testoNotifica(notifica) {
   if (notifica.tipo === "livello_su") {
     return `Passaggio di livello: ${esc(notifica.livelloPrecedente)} → ${esc(notifica.livelloNuovo)}`;
+  }
+  if (notifica.tipo === "proposta_sessione") {
+    const quante = notifica.date === 1 ? "una data" : `${esc(notifica.date)} date`;
+    return `Il DM propone ${quante} per la prossima sessione${notifica.titolo ? ` (${esc(notifica.titolo)})` : ""}: <a href="calendario.html">rispondi nel calendario</a>`;
+  }
+  if (notifica.tipo === "sessione_confermata") {
+    return `Sessione ${esc(notifica.numero)} confermata: ${esc(formattaDataOra(notifica.data, notifica.ora))}${notifica.titolo ? ` — ${esc(notifica.titolo)}` : ""} · <a href="calendario.html">calendario</a>`;
   }
   return "Notifica";
 }

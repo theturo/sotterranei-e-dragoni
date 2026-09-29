@@ -1,6 +1,7 @@
 // Script della pagina dashboard.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import { proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente, contaUtentiInAttesa } from "../auth.js";
+import { proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente, contaUtentiInAttesa, riepilogoCalendario } from "../auth.js";
+import { prossimaSessione, etichettaSessione, formattaDataOra, distanzaGiorni } from "../calendario.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { montaMenuUtente } from "../menu-utente.js";
 
@@ -46,6 +47,7 @@ const SEZIONI_PANNELLI = [
     titolo: "Area Giocatore",
     pannelli: [
       { chiave: "sessione", titolo: "Sessione", testo: "Il punto di ritrovo per la sessione in corso: party, appunti condivisi e registro delle sessioni passate.", link: "sessione.html" },
+      { chiave: "calendario", titolo: "Calendario", testo: "Le prossime sessioni e le date proposte dal DM: segna quando puoi esserci.", link: "calendario.html" },
       { chiave: "archivio", titolo: "Archivio della campagna", testo: "Mappe, luoghi, personaggi e documenti incontrati durante l'avventura.", link: "archivio.html", soloRuolo: ROLES.PLAYER },
       { chiave: "personaggi", titolo: "I miei personaggi", testo: "Crea uno o più personaggi e scegli quale rendere attivo per la campagna.", link: "i-miei-personaggi.html" },
       {
@@ -144,6 +146,34 @@ proteggiPagina(async (user, profilo) => {
     } catch (errore) {
       console.error(errore);
     }
+  }
+
+  // Calendario: prossima sessione con il conto alla rovescia e proposte a
+  // cui rispondere.
+  const pannelloCalendario = griglia.querySelector('[data-chiave="calendario"]');
+  if (pannelloCalendario) {
+    ottieniCampagnaCorrente(uidCorrente, ruolo)
+      .then((campagna) => campagna && riepilogoCalendario(campagna.id, uidCorrente))
+      .then((riepilogo) => {
+        if (!riepilogo) return;
+        const righe = [];
+        const prossima = prossimaSessione(riepilogo.sessioni);
+        if (prossima) {
+          righe.push(`Prossima: ${etichettaSessione(prossima)}, ${formattaDataOra(prossima.dataProgrammata, prossima.oraProgrammata)} (${distanzaGiorni(prossima.dataProgrammata)}).`);
+        }
+        if (ruolo === ROLES.PLAYER && riepilogo.daRispondere > 0) {
+          righe.push(riepilogo.daRispondere === 1 ? "C'è una proposta di date a cui rispondere." : `Ci sono ${riepilogo.daRispondere} proposte di date a cui rispondere.`);
+        } else if (riepilogo.aperte > 0 && ruolo !== ROLES.PLAYER) {
+          righe.push(riepilogo.aperte === 1 ? "Una proposta di date aperta." : `${riepilogo.aperte} proposte di date aperte.`);
+        }
+        righe.forEach((testo) => {
+          const p = document.createElement("p");
+          p.className = "avviso-calendario";
+          p.textContent = testo;
+          pannelloCalendario.appendChild(p);
+        });
+      })
+      .catch((errore) => console.error(errore));
   }
 
   // Il livello personale è visibile a tutti: anche un DM o un admin possono

@@ -34,6 +34,7 @@ import {
   ascoltaTiriNascosti,
 } from "../auth.js";
 import { tira, testoTiro } from "../dadi.js";
+import { oggiIso, formattaDataOra, etichettaSessione } from "../calendario.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, creaScheletro } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
@@ -563,7 +564,23 @@ function mostraStatoAttivo(id) {
   renderContenuti();
 }
 
+// Apertura guidata: il pulsante dice quale sessione programmata si aprirà
+// (la prima in calendario, vedi apriSessione).
+async function aggiornaEtichettaApri() {
+  const bottone = document.getElementById("btn-apri-sessione");
+  if (!puoModerare || !campagnaIdCorrente) return;
+  try {
+    const [prima] = await elencaSessioniProgrammate(campagnaIdCorrente);
+    if (!prima) bottone.textContent = "Apri nuova sessione";
+    else if (prima.dataProgrammata === oggiIso()) bottone.textContent = `Apri la sessione di oggi (${etichettaSessione(prima)})`;
+    else bottone.textContent = `Apri la ${etichettaSessione(prima)} (programmata per ${formattaDataOra(prima.dataProgrammata, prima.oraProgrammata)})`;
+  } catch (errore) {
+    console.error(errore);
+  }
+}
+
 function mostraStatoInattivo() {
+  aggiornaEtichettaApri();
   sessioneAttivaId = null;
   aggiornaBadgeStato(false);
   document.getElementById("btn-apri-sessione").hidden = false;
