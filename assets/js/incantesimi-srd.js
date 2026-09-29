@@ -189,3 +189,41 @@ export function ottieniIncantesimo(chiave) {
   const dati = INCANTESIMI[chiave];
   return dati ? { chiave, ...dati } : null;
 }
+
+// Tiri degli incantesimi dalla scheda: "attacco" = tiro per colpire con
+// incantesimo; "danno"/"cura" = dadi da tirare al livello base (i trucchetti
+// crescono con il livello del personaggio: ×2 al 5°, ×3 all'11°, ×4 al 17°;
+// "perRaggio" = un tiro per raggio, i raggi non si sommano). "piuMod" aggiunge
+// il modificatore della caratteristica da incantatore.
+export const TIRI_INCANTESIMI = {
+  spruzzo_acido: { danno: "1d6", tipo: "acido" },
+  tocco_gelido: { attacco: true, danno: "1d8", tipo: "necrotico" },
+  saetta_occulta: { attacco: true, danno: "1d10", tipo: "forza", perRaggio: true },
+  dardo_di_fuoco: { attacco: true, danno: "1d10", tipo: "fuoco" },
+  spruzzo_di_veleno: { danno: "1d12", tipo: "veleno" },
+  produrre_fiamma: { attacco: true, danno: "1d8", tipo: "fuoco" },
+  raggio_di_gelo: { attacco: true, danno: "1d8", tipo: "freddo" },
+  fiamma_sacra: { danno: "1d8", tipo: "radioso" },
+  stretta_elettrica: { attacco: true, danno: "1d8", tipo: "elettrico" },
+  scherno_crudele: { danno: "1d4", tipo: "psichico" },
+  mani_brucianti: { danno: "3d6", tipo: "fuoco" },
+  sfera_cromatica: { attacco: true, danno: "3d8" },
+  sussurri_discordanti: { danno: "3d6", tipo: "psichico" },
+  dardo_incantato: { danno: "3d4+3", tipo: "forza" },
+  colpo_infernale: { danno: "2d10", tipo: "fuoco" },
+  freccia_acida: { attacco: true, danno: "4d4", tipo: "acido" },
+  sfera_di_fuoco_lanciata: { danno: "2d6", tipo: "fuoco" },
+  raggio_rovente: { attacco: true, danno: "2d6", tipo: "fuoco", perRaggio: true },
+  palla_di_fuoco: { danno: "8d6", tipo: "fuoco" },
+  fulmine: { danno: "8d6", tipo: "elettrico" },
+  barriera_di_fuoco: { danno: "5d8", tipo: "fuoco" },
+  cono_di_freddo: { danno: "8d8", tipo: "freddo" },
+  muro_di_ghiaccio: { danno: "10d6", tipo: "freddo" },
+  disintegrare: { danno: "10d6+40", tipo: "forza" },
+  fulmine_a_catena: { danno: "10d8", tipo: "elettrico" },
+  tempesta_di_fuoco: { danno: "7d10", tipo: "fuoco" },
+  curare_le_ferite: { cura: "1d8", piuMod: true },
+  falsa_vita: { cura: "1d4+4" },
+  preghiera_di_guarigione: { cura: "2d8", piuMod: true },
+  guarigione_di_massa_delle_ferite: { cura: "3d8", piuMod: true },
+};

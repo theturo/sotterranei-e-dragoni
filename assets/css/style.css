@@ -4662,3 +4662,30 @@ table.tabella-punteggi select {
   border-style: dashed;
   opacity: 0.85;
 }
+
+/* Tiri di armi e incantesimi */
+.statistiche-incantesimi {
+  margin: 0 0 10px;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--color-burgundy);
+}
+
+.btn-bonus-auto {
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  margin-left: 4px;
+}
+
+#sezione-incantesimi .inventario-riga {
+  flex-wrap: wrap;
+}
+
+.input-bonus-attacco {
+  width: 56px;
+  padding: 3px 6px;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-body);
+}

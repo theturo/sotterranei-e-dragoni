@@ -70,6 +70,9 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   dalla scheda (caratteristiche, salvezze, abilità, iniziativa, attacchi e
   danni), vantaggio/svantaggio, critici, tiri nascosti del DM; tutto negli
   appunti della sessione e l'iniziativa anche nel tracker.
+- Tiri degli incantesimi dalla scheda (per colpire, danni e cure, con attacco
+  e CD degli incantesimi) e bonus d'attacco delle armi calcolato in automatico
+  (modificabile a mano).
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:

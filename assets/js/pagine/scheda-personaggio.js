@@ -73,7 +73,7 @@ import {
   velocitaRazza,
 } from "../dati-srd.js";
 import { ARMI, ARMATURE, cercaEquipaggiamento, ETICHETTE_CATEGORIA } from "../equipaggiamento-srd.js";
-import { cercaIncantesimi, ottieniIncantesimo } from "../incantesimi-srd.js";
+import { cercaIncantesimi, ottieniIncantesimo, TIRI_INCANTESIMI } from "../incantesimi-srd.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -567,6 +567,7 @@ document.getElementById("btn-conferma-livello").addEventListener("click", async 
     renderIncantesimi();
     renderIncantesimiRazza();
     renderPrivilegi();
+    renderAttacchi();
     renderPulsanteLivello();
   } catch (errore) {
     console.error(errore);
@@ -798,13 +799,16 @@ function renderAttacchi() {
   corpo.innerHTML = armi
     .map((voce) => {
       const dati = ARMI[voce.chiave];
-      const bonus = voce.bonusAttacco || 0;
+      const bonus = bonusAttaccoArma(voce);
+      const automatico = bonusAttaccoSuggerito(voce.chiave);
+      const personalizzato = voce.bonusAttacco != null && voce.bonusAttacco !== automatico;
       return `<tr data-chiave="${esc(voce.chiave)}">
         <td>${esc(voce.nome)}</td>
         <td>${
           soloLettura
             ? esc(formattaModificatore(bonus))
-            : `<input type="number" class="input-bonus-attacco" data-chiave="${esc(voce.chiave)}" value="${esc(bonus)}" />`
+            : `<input type="number" class="input-bonus-attacco" data-chiave="${esc(voce.chiave)}" value="${esc(bonus)}" title="${personalizzato ? "Valore scritto a mano" : "Calcolato: competenza + caratteristica"}" />${
+              personalizzato ? `<button type="button" class="btn-tabella btn-bonus-auto" data-bonus-auto="${esc(voce.chiave)}" title="Torna al valore calcolato (${esc(formattaModificatore(automatico))})" aria-label="Torna al valore calcolato">↺</button>` : ""}`
         }</td>
         <td>${dati ? `${esc(dati.danno)} ${esc(dati.tipoDanno)}` : "—"}</td>
         <td class="colonna-tiri">${soloLettura ? "" : `<button type="button" class="btn-tabella btn-tiro" data-tiro-colpire="${esc(voce.chiave)}" title="Tiro per colpire">Colpire</button>${
@@ -916,12 +920,28 @@ function renderListaIncantesimi(idLista, idVuoto, chiavi, { campo, lanciabile })
       if (!dati) return "";
       const bottoneLancia = !soloLettura && lanciabile && dati.livello > 0 ? renderControlloLancio(chiave, dati) : "";
       const bottoneRimuovi = soloLettura ? "" : `<button class="btn-tabella" data-rimuovi="${esc(campo)}:${esc(chiave)}" type="button">Rimuovi</button>`;
+      const bottoniTiro = !soloLettura && (lanciabile || dati.livello === 0) ? bottoniTiroIncantesimo(chiave) : "";
       return `<li class="inventario-riga" data-chiave="${esc(chiave)}">
         <span class="inventario-nome" title="${esc(tooltipIncantesimo(dati))}">${esc(dati.nome)} <small>(${esc(etichettaIncantesimo(dati))})</small></span>
-        ${bottoneLancia}${bottoneRimuovi}
+        ${bottoniTiro}${bottoneLancia}${bottoneRimuovi}
       </li>`;
     })
     .join("");
+}
+
+// Tiri degli incantesimi: attacco = competenza + caratteristica da
+// incantatore; CD dei tiri salvezza = 8 + lo stesso bonus.
+function modIncantatore() {
+  return modificatore(scheda.caratteristiche?.[CARATTERISTICA_INCANTESIMI[scheda.classe]] ?? 10);
+}
+const bonusAttaccoIncantesimi = () => bonusCompetenza(scheda.livello) + modIncantatore();
+
+function bottoniTiroIncantesimo(chiave) {
+  const tiri = TIRI_INCANTESIMI[chiave];
+  if (!tiri) return "";
+  const bottone = (tipo, testo) =>
+    `<button class="btn-tabella btn-tiro" data-tiro-incantesimo="${esc(chiave)}" data-tipo-tiro="${tipo}" type="button">${testo}</button>`;
+  return `${tiri.attacco ? bottone("colpire", "Colpire") : ""}${tiri.danno ? bottone("danno", "Danno") : ""}${tiri.cura ? bottone("cura", "Cura") : ""}`;
 }
 
 function renderIncantesimi() {
@@ -930,6 +950,9 @@ function renderIncantesimi() {
   const sezione = document.getElementById("sezione-incantesimi");
   sezione.hidden = !modo;
   if (!modo) return;
+  const attacco = bonusAttaccoIncantesimi();
+  document.getElementById("statistiche-incantesimi").textContent =
+    `Attacco con incantesimi ${formattaModificatore(attacco)} · CD dei tiri salvezza ${8 + attacco}`;
 
   const livello = scheda.livello || 1;
   const livelloMax = livelloMassimoDisponibile(classe, livello);
@@ -1275,6 +1298,12 @@ document.getElementById("sezione-incantesimi").addEventListener("click", async (
     renderIncantesimi();
   }
 });
+
+// Bonus d'attacco di un'arma: quello scritto a mano se c'è, altrimenti
+// calcolato (si aggiorna da solo con livello e caratteristiche).
+function bonusAttaccoArma(voce) {
+  return voce.bonusAttacco ?? bonusAttaccoSuggerito(voce.chiave);
+}
 
 function bonusAttaccoSuggerito(chiaveArma) {
   const arma = ARMI[chiaveArma];
@@ -1699,6 +1728,11 @@ proteggiPagina(async (user, profilo) => {
   scheda.competenzeLinguaggi = scheda.competenzeLinguaggi || "";
   scheda.monete = scheda.monete || { rame: 0, argento: 0, oro: 0, elettro: 0, platino: 0 };
   scheda.inventario = scheda.inventario || [];
+  // Bonus d'attacco uguali al calcolato: diventano automatici (seguiranno
+  // livello e caratteristiche); quelli scritti a mano restano.
+  scheda.inventario.forEach((voce) => {
+    if (voce.categoria === "arma" && voce.bonusAttacco === bonusAttaccoSuggerito(voce.chiave)) voce.bonusAttacco = null;
+  });
   scheda.armaturaIndossata = scheda.armaturaIndossata || null;
   scheda.scudoIndossato = Boolean(scheda.scudoIndossato);
   scheda.background = scheda.background || "";
@@ -1803,7 +1837,7 @@ document.getElementById("risultati-equip").addEventListener("click", async (even
     esistente.quantita += 1;
   } else {
     const nuovaVoce = { chiave, nome: bottone.dataset.nome, categoria, quantita: 1 };
-    if (categoria === "arma") nuovaVoce.bonusAttacco = bonusAttaccoSuggerito(chiave);
+    if (categoria === "arma") nuovaVoce.bonusAttacco = null;
     scheda.inventario.push(nuovaVoce);
   }
 
@@ -1885,7 +1919,11 @@ document.getElementById("corpo-attacchi").addEventListener("change", async (even
   if (!input) return;
 
   const voce = (scheda.inventario || []).find((v) => v.chiave === input.dataset.chiave);
-  if (voce) voce.bonusAttacco = Number(input.value) || 0;
+  if (!voce) return;
+  const valore = Math.trunc(Number(input.value)) || 0;
+  // Uguale al calcolato: torna automatico (seguirà livello e caratteristiche).
+  voce.bonusAttacco = valore === bonusAttaccoSuggerito(voce.chiave) ? null : valore;
+  renderAttacchi();
   await salvaInventario();
 });
 
@@ -1967,7 +2005,7 @@ document.getElementById("corpo-attacchi").addEventListener("click", (evento) => 
   const dati = ARMI[chiave];
   if (!voce) return;
   if (colpire) {
-    tiroDallaScheda({ etichetta: `${voce.nome}: per colpire`, modificatore: voce.bonusAttacco || 0 });
+    tiroDallaScheda({ etichetta: `${voce.nome}: per colpire`, modificatore: bonusAttaccoArma(voce) });
     return;
   }
   const formula = dati && leggiFormula(dati.danno);
@@ -1978,6 +2016,46 @@ document.getElementById("corpo-attacchi").addEventListener("click", (evento) => 
     facce: formula.facce,
     modificatore: formula.modificatore + modDannoArma(dati),
     tipo: "danno",
+  });
+});
+
+document.getElementById("corpo-attacchi").addEventListener("click", async (evento) => {
+  const riporta = evento.target.closest("[data-bonus-auto]");
+  if (!riporta || soloLettura) return;
+  const voce = (scheda.inventario || []).find((v) => v.chiave === riporta.dataset.bonusAuto);
+  if (!voce) return;
+  voce.bonusAttacco = null;
+  renderAttacchi();
+  await salvaInventario();
+});
+
+// Incantesimi: tiro per colpire, danni o cure dalla lista.
+function moltiplicatoreTrucchetto(livello) {
+  return 1 + (livello >= 5) + (livello >= 11) + (livello >= 17);
+}
+
+document.getElementById("sezione-incantesimi").addEventListener("click", (evento) => {
+  const bottone = evento.target.closest("[data-tiro-incantesimo]");
+  if (!bottone) return;
+  const chiave = bottone.dataset.tiroIncantesimo;
+  const dati = ottieniIncantesimo(chiave);
+  const tiri = TIRI_INCANTESIMI[chiave];
+  if (!dati || !tiri) return;
+  const tipo = bottone.dataset.tipoTiro;
+  if (tipo === "colpire") {
+    tiroDallaScheda({ etichetta: `${dati.nome}: per colpire`, modificatore: bonusAttaccoIncantesimi() });
+    return;
+  }
+  const formula = leggiFormula(tipo === "cura" ? tiri.cura : tiri.danno);
+  if (!formula) return;
+  const quanti = dati.livello === 0 && !tiri.perRaggio ? formula.quanti * moltiplicatoreTrucchetto(scheda.livello || 1) : formula.quanti;
+  const dettaglio = tipo === "cura" ? "cura" : `danni${tiri.tipo ? ` (${tiri.tipo})` : ""}${tiri.perRaggio ? ", per raggio" : ""}`;
+  tiroDallaScheda({
+    etichetta: `${dati.nome}: ${dettaglio}`,
+    quanti,
+    facce: formula.facce,
+    modificatore: formula.modificatore + (tiri.piuMod ? modIncantatore() : 0),
+    tipo: tipo === "cura" ? "libero" : "danno",
   });
 });
 
