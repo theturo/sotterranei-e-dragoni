@@ -16,6 +16,7 @@ import {
 } from "./auth.js";
 import { esc } from "./utils.js";
 import { formattaDataOra } from "./calendario.js";
+import { attivaDescrizioni } from "./descrizioni.js";
 
 const HTML_MENU = `
   <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
@@ -324,6 +325,7 @@ async function inizializzaLinkSessione(uid, ruolo) {
 // riceve true quando si entra in modalità modifica, false quando si conferma.
 export async function montaMenuUtente({ contenitore, user, profilo, onModificaOrdine }) {
   contenitore.innerHTML = HTML_MENU;
+  attivaDescrizioni();
 
   if (!document.getElementById("mu-modal-impostazioni")) {
     document.body.insertAdjacentHTML("beforeend", HTML_MODALE);

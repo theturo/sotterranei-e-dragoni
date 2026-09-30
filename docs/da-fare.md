@@ -76,6 +76,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   crea la sessione programmata con data e ora, avvisi nella campanella,
   prossima sessione in dashboard, file .ics e apertura guidata della
   sessione del giorno.
+- Layout su telefono rivisto pagina per pagina (verifica automatica da 320 a
+  844 px): intestazione compatta con ruolo ed "Esci" nel pannello ⚙️, campi a
+  16 px, aree di tocco più grandi, tracker di combattimento a righe compatte
+  con i comandi dietro ▾, attacchi della scheda come piccole schede, libreria
+  e archivio a due colonne, descrizioni di condizioni, privilegi e
+  incantesimi con un tocco.
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:

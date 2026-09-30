@@ -5330,29 +5330,6 @@ table.tabella-punteggi select {
     padding: 18px 16px;
   }
 
-  /* Campi di testo a 16px: prima quelli senza stile proprio (specificità
-     zero), poi quelli che il foglio di stile rimpicciolisce. */
-  :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea) {
-    font-size: 16px;
-  }
-
-  .select-ruolo,
-  .riga-monete input.input-moneta,
-  .textarea-libero,
-  .form-aggiungi-talento input,
-  table.tabella-punteggi select,
-  .input-iniziativa,
-  .input-pf-nemico,
-  .griglia-form-nemici input,
-  .griglia-form-nemici select,
-  .select-esaurimento,
-  .input-dadi,
-  .select-dadi,
-  .input-bonus-attacco,
-  .input-quantita {
-    font-size: 16px;
-  }
-
   /* Aree di tocco. */
   .btn-tabella {
     min-height: 38px;
@@ -5391,5 +5368,127 @@ table.tabella-punteggi select {
   .galleria-filtri .select-galleria {
     min-width: 0;
     max-width: 100%;
+  }
+}
+
+/* Campi di testo a 16px sui telefoni e su ogni schermo senza mouse (tablet,
+   telefono in orizzontale): sotto quella soglia Safari ingrandisce la pagina
+   quando si tocca un campo. Prima i campi senza stile proprio (specificità
+   zero), poi quelli che il foglio di stile rimpicciolisce. */
+@media (max-width: 639px), (hover: none) {
+  /* Campi di testo a 16px: prima quelli senza stile proprio (specificità
+     zero), poi quelli che il foglio di stile rimpicciolisce. */
+  :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea) {
+    font-size: 16px;
+  }
+
+  .select-ruolo,
+  .riga-monete input.input-moneta,
+  .textarea-libero,
+  .form-aggiungi-talento input,
+  table.tabella-punteggi select,
+  .input-iniziativa,
+  .input-pf-nemico,
+  .griglia-form-nemici input,
+  .griglia-form-nemici select,
+  .select-esaurimento,
+  .input-dadi,
+  .select-dadi,
+  .input-bonus-attacco,
+  .input-quantita {
+    font-size: 16px;
+  }
+}
+
+/* ---------- Descrizioni al tocco (descrizioni.js) ---------- */
+.fumetto-descrizione {
+  position: fixed;
+  z-index: 400;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 10px 12px;
+  border: 1px solid var(--color-gold);
+  border-radius: 8px;
+  background: var(--color-bg-dark-2);
+  color: var(--color-parchment);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  box-shadow: var(--shadow-deep);
+}
+
+.btn-spiega-condizioni,
+.elenco-condizioni {
+  display: none;
+}
+
+@media (hover: none) {
+  .con-descrizione {
+    cursor: help;
+    text-decoration: underline dotted rgba(122, 31, 43, 0.45);
+    text-underline-offset: 3px;
+  }
+
+  .chip-condizione.con-descrizione {
+    text-decoration: none;
+  }
+
+  .btn-spiega-condizioni {
+    display: inline-block;
+    align-self: flex-start;
+    margin-top: 6px;
+    padding: 6px 0;
+    border: none;
+    background: none;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--color-burgundy);
+    cursor: pointer;
+  }
+
+  .elenco-condizioni:not([hidden]) {
+    display: block;
+    margin: 4px 0 0;
+    padding: 10px 12px;
+    border: 1px dashed rgba(122, 31, 43, 0.35);
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  .elenco-condizioni dt {
+    font-family: var(--font-heading);
+    color: var(--color-burgundy);
+  }
+
+  .elenco-condizioni dd {
+    margin: 0 0 8px;
+    color: var(--color-ink);
+  }
+}
+
+/* Libreria e archivio sul telefono: due colonne di miniature. */
+@media (max-width: 639px) {
+  .griglia-immagini {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .griglia-immagini .scheda-immagine-corpo {
+    padding: 8px;
+    gap: 4px;
+  }
+
+  .griglia-immagini .scheda-immagine-titolo {
+    font-size: 0.92rem;
+    line-height: 1.25;
+  }
+
+  .griglia-immagini .scheda-immagine-meta {
+    font-size: 0.7rem;
+    gap: 4px;
+  }
+
+  .griglia-immagini .etichetta-categoria,
+  .griglia-immagini .etichetta-visibilita {
+    padding: 1px 6px;
   }
 }
