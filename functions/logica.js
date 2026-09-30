@@ -28,7 +28,7 @@ export function emailNuovoIscritto({ nome, email }, urlGestioneUtenti) {
   return {
     oggetto: `Nuovo iscritto da approvare: ${nomePulito}`,
     testo: [
-      "Un nuovo utente si è registrato al portale Sotterranei e Dragoni ed è in attesa di approvazione.",
+      "Un nuovo utente si è registrato al portale Sotterranei & Dragoni ed è in attesa di approvazione.",
       "",
       `Nome: ${nomePulito}`,
       `Email: ${pulisci(email, 120)}`,

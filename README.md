@@ -1,4 +1,4 @@
-# Sotterranei e Dragoni
+# Sotterranei & Dragoni
 
 A web companion app for a Dungeons & Dragons (5th Edition) home campaign, built to be used
 by both players and the Dungeon Master during live sessions — character management, party
