@@ -35,7 +35,7 @@ const HTML_MENU = `
       <p id="mu-nessuna-notifica" class="dropdown-notifiche-vuoto" hidden>Nessuna notifica.</p>
     </div>
   </div>
-  <span id="mu-badge-ruolo" class="role-badge"></span>
+  <span id="mu-badge-ruolo" class="role-badge nascosto-telefono"></span>
   <button id="mu-btn-impostazioni" class="btn-campanella" aria-label="Impostazioni" title="Impostazioni" type="button">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="12" r="6.3" fill="none" stroke="currentColor" stroke-width="3.5"/>
@@ -49,7 +49,7 @@ const HTML_MENU = `
       <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(315 12 12)"/>
     </svg>
   </button>
-  <button id="mu-btn-logout" class="btn btn-ghost" type="button">Esci</button>
+  <button id="mu-btn-logout" class="btn btn-ghost nascosto-telefono" type="button">Esci</button>
 `;
 
 const HTML_MODALE = `
@@ -59,9 +59,11 @@ const HTML_MODALE = `
 
       <div id="mu-schermata-scelta" class="impostazioni-schermata">
         <h2>Impostazioni account</h2>
+        <p class="impostazioni-account solo-telefono"><span id="mu-nome-account"></span> <span id="mu-ruolo-account" class="role-badge"></span></p>
         <div class="impostazioni-opzioni">
           <button class="btn-tabella" data-apri="password" type="button">Cambia password</button>
           <button class="btn-tabella" data-apri="email" type="button">Cambia email</button>
+          <button id="mu-btn-logout-menu" class="btn-tabella btn-tabella-pericolo solo-telefono" type="button">Esci</button>
         </div>
       </div>
 
@@ -333,10 +335,18 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
   elementoBadgeRuolo.textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
   elementoBadgeRuolo.dataset.ruolo = ruolo;
 
-  document.getElementById("mu-btn-logout").addEventListener("click", async () => {
+  // Sui telefoni ruolo ed "Esci" stanno nel pannello delle impostazioni.
+  const ruoloAccount = document.getElementById("mu-ruolo-account");
+  ruoloAccount.textContent = elementoBadgeRuolo.textContent;
+  ruoloAccount.dataset.ruolo = ruolo;
+  document.getElementById("mu-nome-account").textContent = profilo?.nome || user.email || "";
+
+  const esci = async () => {
     await esciUtente();
     window.location.href = "index.html";
-  });
+  };
+  document.getElementById("mu-btn-logout").addEventListener("click", esci);
+  document.getElementById("mu-btn-logout-menu").onclick = esci;
 
   const btnModificaOrdine = document.getElementById("mu-btn-modifica-ordine");
   if (onModificaOrdine) {
