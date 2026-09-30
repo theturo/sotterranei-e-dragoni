@@ -31,7 +31,8 @@ it isn't set up to onboard outside users or accept contributions at this time.
   work on desktop, tablet, and phone alike.
 - **Installable app** — the site can be installed on a phone (PWA): its own icon, full
   screen, instant start from the saved copy, an "offline" page and an in-app notice when a
-  new version is published.
+  new version is published. Opening the installed app plays a short 3D intro: a d20 rolls
+  in, lands on a natural 20 and turns into the app icon.
 
 ## Where it's headed
 
@@ -58,6 +59,9 @@ The service worker (`sw.js`) saves every page and asset of the current version o
 device. After changing any file of the site, run `node strumenti/aggiorna-sw.mjs`: it
 refreshes the file list and the version fingerprint in `sw.js`, so installed apps pick up
 the new version (`test/pagine` fails if you forget).
+
+Third-party files shipped with the site: Three.js (`assets/vendor/`, MIT license) for the
+intro animation and the Cinzel typeface (`assets/fonts/`, SIL Open Font License).
 
 Any Dungeons & Dragons rules content referenced by this project is based on the freely
 licensed System Reference Document (SRD); this project is not affiliated with or endorsed

@@ -3,7 +3,8 @@
 //   del sito, mostra "È disponibile una nuova versione" con "Aggiorna";
 // - tiene l'invito a installare l'app: su Android/Chrome la finestra del
 //   browser (evento beforeinstallprompt), su iPhone le istruzioni per
-//   "Aggiungi alla schermata Home".
+//   "Aggiungi alla schermata Home";
+// - all'avvio dell'app installata lancia l'intro del d20 (intro.js).
 
 const inAppInstallata = () =>
   window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -146,4 +147,19 @@ function mostraIstruzioniIOS() {
   });
 }
 
+// ---------- Intro ----------
+// All'avvio dell'app installata (una volta per sessione: non cambiando pagina)
+// parte l'intro del d20 (intro.js, caricato solo quando serve).
+function avviaIntro() {
+  if (!inAppInstallata()) return;
+  try {
+    if (sessionStorage.getItem("sed-intro-vista") === "1") return;
+    sessionStorage.setItem("sed-intro-vista", "1");
+  } catch {
+    return;
+  }
+  import("./intro.js").then((m) => m.mostraIntro()).catch((errore) => console.warn("Intro non avviata", errore));
+}
+
 registraServiceWorker();
+avviaIntro();

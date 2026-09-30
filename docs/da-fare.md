@@ -33,8 +33,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Intro animata all'apertura dell'app installata**: tre proposte nella tela
-  di design (pagina "App (PWA)"), da scegliere.
 - **Notifiche push** ("la sessione è iniziata", "sei salito di livello"),
   sull'app installata.
 - **Esportazione e backup della scheda** (JSON o PDF).
@@ -88,6 +86,10 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   salva il sito sul telefono, pagina "sei offline", avviso "nuova versione"
   con "Aggiorna", invito a installare in dashboard e nel pannello ⚙️ (su
   iPhone con le istruzioni).
+- Intro dell'app installata: d20 in resina avorio con i numeri rossi (Three.js)
+  che entra rimbalzando, si ferma sul 20, il 20 si accende d'oro e il dado
+  diventa l'icona con il titolo (2,5 s, un tocco la salta, versione ferma con
+  "riduci animazioni").
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:
