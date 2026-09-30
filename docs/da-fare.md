@@ -33,8 +33,10 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
+- **Intro animata all'apertura dell'app installata**: tre proposte nella tela
+  di design (pagina "App (PWA)"), da scegliere.
 - **Notifiche push** ("la sessione è iniziata", "sei salito di livello"),
-  insieme alla PWA (sito installabile sul telefono).
+  sull'app installata.
 - **Esportazione e backup della scheda** (JSON o PDF).
 - **Mappe e nebbia di guerra, gestione dell'esplorazione**: il lavoro più
   grosso, da fare per ultimo. Nella pagina Sessione la mappa andrà sopra gli
@@ -82,6 +84,10 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   con i comandi dietro ▾, attacchi della scheda come piccole schede, libreria
   e archivio a due colonne, descrizioni di condizioni, privilegi e
   incantesimi con un tocco.
+- App installabile (PWA): icona "S&D" dal d20, manifest, service worker che
+  salva il sito sul telefono, pagina "sei offline", avviso "nuova versione"
+  con "Aggiorna", invito a installare in dashboard e nel pannello ⚙️ (su
+  iPhone con le istruzioni).
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:
