@@ -17,6 +17,7 @@ import {
 import { esc } from "./utils.js";
 import { formattaDataOra } from "./calendario.js";
 import { attivaDescrizioni } from "./descrizioni.js";
+import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "./pwa.js";
 
 const HTML_MENU = `
   <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
@@ -64,6 +65,7 @@ const HTML_MODALE = `
         <div class="impostazioni-opzioni">
           <button class="btn-tabella" data-apri="password" type="button">Cambia password</button>
           <button class="btn-tabella" data-apri="email" type="button">Cambia email</button>
+          <button id="mu-btn-installa" class="btn-tabella" type="button" hidden>Installa l'app</button>
           <button id="mu-btn-logout-menu" class="btn-tabella btn-tabella-pericolo solo-telefono" type="button">Esci</button>
         </div>
       </div>
@@ -349,6 +351,14 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
   };
   document.getElementById("mu-btn-logout").addEventListener("click", esci);
   document.getElementById("mu-btn-logout-menu").onclick = esci;
+
+  const btnInstalla = document.getElementById("mu-btn-installa");
+  const aggiornaInstalla = ({ possibile }) => {
+    btnInstalla.hidden = !possibile;
+  };
+  aggiornaInstalla(statoInstallazione());
+  quandoCambiaInstallazione(aggiornaInstalla);
+  btnInstalla.onclick = installaApp;
 
   const btnModificaOrdine = document.getElementById("mu-btn-modifica-ordine");
   if (onModificaOrdine) {

@@ -1,4 +1,4 @@
-// Cloud Functions di Sotterranei e Dragoni (piano Blaze).
+// Cloud Functions di Sotterranei & Dragoni (piano Blaze).
 // - notificaNuovoIscritto: email all'admin quando qualcuno si registra ed è in
 //   attesa di approvazione.
 // - bloccaSpeseOltreSoglia: "interruttore" di sicurezza. Riceve gli avvisi del
@@ -67,7 +67,7 @@ export const notificaNuovoIscritto = onDocumentCreated(
           auth: { user: EMAIL_MITTENTE.value(), pass: PASSWORD_APP_GMAIL.value() },
         });
     const messaggio = {
-      from: `Portale Sotterranei e Dragoni <${EMAIL_MITTENTE.value()}>`,
+      from: `Portale Sotterranei & Dragoni <${EMAIL_MITTENTE.value()}>`,
       to: EMAIL_ADMIN.value(),
       subject: oggetto,
       text: testo,

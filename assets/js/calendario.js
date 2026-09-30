@@ -53,10 +53,10 @@ const timbro = (data) => `${data.getFullYear()}${due(data.getMonth() + 1)}${due(
 
 // Evento in ora locale "fluttuante" (quella del telefono), 4 ore se c'è
 // l'orario, altrimenti tutto il giorno.
-export function testoIcs(sessione, nomeCampagna = "Sotterranei e Dragoni") {
+export function testoIcs(sessione, nomeCampagna = "Sotterranei & Dragoni") {
   const inizio = dataLocale(sessione.dataProgrammata, sessione.oraProgrammata);
   const righe = [
-    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Sotterranei e Dragoni//Calendario//IT", "CALSCALE:GREGORIAN",
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Sotterranei & Dragoni//Calendario//IT", "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     `UID:${sessione.id}@sotterranei-e-dragoni`,
     `DTSTAMP:${timbro(new Date())}`,

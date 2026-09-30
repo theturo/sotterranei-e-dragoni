@@ -4,6 +4,7 @@ import { proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente, co
 import { prossimaSessione, etichettaSessione, formattaDataOra, distanzaGiorni } from "../calendario.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { montaMenuUtente } from "../menu-utente.js";
+import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "../pwa.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -215,9 +216,38 @@ proteggiPagina(async (user, profilo) => {
     );
   }
 
+  mostraInvitoInstallazione();
   veil.style.display = "none";
   contenuto.style.display = "block";
 });
+
+// Invito a installare l'app: finché non è installata o finché non lo si chiude
+// (la scelta resta in questo browser; l'installazione resta nel pannello ⚙️).
+const CHIAVE_INVITO_CHIUSO = "sed-invito-installa-chiuso";
+function mostraInvitoInstallazione() {
+  const invito = document.getElementById("invito-installa");
+  let chiuso = false;
+  try {
+    chiuso = localStorage.getItem(CHIAVE_INVITO_CHIUSO) === "1";
+  } catch {
+    // Archivio del browser non disponibile: l'invito resta visibile.
+  }
+  const aggiorna = ({ possibile }) => {
+    invito.hidden = chiuso || !possibile;
+  };
+  aggiorna(statoInstallazione());
+  quandoCambiaInstallazione(aggiorna);
+  document.getElementById("btn-installa").addEventListener("click", installaApp);
+  document.getElementById("btn-chiudi-invito").addEventListener("click", () => {
+    chiuso = true;
+    invito.hidden = true;
+    try {
+      localStorage.setItem(CHIAVE_INVITO_CHIUSO, "1");
+    } catch {
+      // Non salvato: ricomparirà alla prossima apertura.
+    }
+  });
+}
 
 // Riordino dei pannelli via trascinamento, come per "I miei personaggi": attivo
 // solo in modalità modifica (matita nell'header), limitato ai pannelli della

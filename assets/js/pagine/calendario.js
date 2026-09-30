@@ -178,7 +178,7 @@ function renderProssime() {
     const azioni = creaElemento("div", "riga-calendario-azioni");
     const ics = bottone("Aggiungi al mio calendario");
     ics.title = "Scarica il file .ics per Google Calendar, Apple Calendario…";
-    ics.addEventListener("click", () => scaricaIcs(s, campagna.titolo || "Sotterranei e Dragoni"));
+    ics.addEventListener("click", () => scaricaIcs(s, campagna.titolo || "Sotterranei & Dragoni"));
     azioni.append(ics);
     if (isDM) {
       const annulla = bottone("Annulla", "btn-tabella btn-tabella-pericolo");

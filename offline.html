@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="S&amp;D" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <title>Sotterranei &amp; Dragoni — Verifica la tua email</title>
+  <title>Sotterranei &amp; Dragoni — Offline</title>
   <link rel="stylesheet" href="assets/css/style.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
@@ -26,31 +26,20 @@
   </div>
 
   <div class="page-shell">
-    <div class="scroll-card">
-      <h2>Verifica la tua email</h2>
-      <p class="card-tagline">Un ultimo passo prima di entrare nell'avventura</p>
-
-      <div id="messaggio" class="message"></div>
-
-      <p style="color: var(--color-ink-soft); line-height:1.5;">
-        Abbiamo inviato un'email di verifica a <strong id="email-utente"></strong>.
-        Apri il link che contiene, poi torna qui e premi il pulsante qui sotto
-        (controlla anche nello spam).
-      </p>
-
-      <button id="btn-controlla" class="btn" style="margin-bottom:12px;">Ho verificato, controlla di nuovo</button>
-      <button id="btn-reinvia" class="btn btn-ghost" style="width:100%;">Invia di nuovo l'email</button>
-
-      <div class="divider"></div>
-
-      <p class="form-footer">
-        Account sbagliato? <a href="#" id="link-esci">Esci e torna al login</a>
-      </p>
+    <div class="scroll-card pagina-offline">
+      <svg class="offline-dado" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+        <path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="currentColor" stroke-width="1.1" opacity="0.5"/>
+        <text x="50" y="54" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="22" fill="currentColor">1</text>
+      </svg>
+      <h2>Sei offline</h2>
+      <p class="card-tagline">Il telefono non è connesso ad internet (oppure sei bersaglio dell'incantesimo di uno stregone avversario).<br />Schede, sessioni e calendario non sono raggiungibili.</p>
+      <p class="card-tagline">Una volta ripristinata la connessione la pagina si ricarica da sola.</p>
+      <button type="button" id="btn-riprova" class="btn">Riprova</button>
     </div>
   </div>
 
   <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
-
-  <script type="module" src="assets/js/pagine/verifica-email.js"></script>
+  <script type="module" src="assets/js/pagine/offline.js"></script>
 </body>
 </html>

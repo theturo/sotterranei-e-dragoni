@@ -1,4 +1,4 @@
-# Sotterranei e Dragoni
+# Sotterranei & Dragoni
 
 A web companion app for a Dungeons & Dragons (5th Edition) home campaign, built to be used
 by both players and the Dungeon Master during live sessions — character management, party
@@ -29,6 +29,9 @@ it isn't set up to onboard outside users or accept contributions at this time.
   persistent notification history.
 - **Fantasy-themed UI** — designed to feel in-keeping with the tabletop experience, and to
   work on desktop, tablet, and phone alike.
+- **Installable app** — the site can be installed on a phone (PWA): its own icon, full
+  screen, instant start from the saved copy, an "offline" page and an in-app notice when a
+  new version is published.
 
 ## Where it's headed
 
@@ -50,6 +53,11 @@ safeguards against unexpected costs are listed in `docs/sicurezza-e-costi.md`.
 Every page also ships a Content Security Policy (no inline scripts: each page's code
 lives in `assets/js/pagine/`), checked by `test/pagine`. Both suites run on GitHub
 Actions for every pull request.
+
+The service worker (`sw.js`) saves every page and asset of the current version on the
+device. After changing any file of the site, run `node strumenti/aggiorna-sw.mjs`: it
+refreshes the file list and the version fingerprint in `sw.js`, so installed apps pick up
+the new version (`test/pagine` fails if you forget).
 
 Any Dungeons & Dragons rules content referenced by this project is based on the freely
 licensed System Reference Document (SRD); this project is not affiliated with or endorsed
