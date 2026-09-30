@@ -42,6 +42,12 @@ html, body {
   min-height: 100%;
 }
 
+/* Colore di riserva sotto lo sfondo fissato alla finestra (visibile quando si
+   scorre oltre la fine della pagina o dove "fixed" non è supportato). */
+html {
+  background-color: var(--color-bg-dark-2);
+}
+
 body {
   font-family: var(--font-body);
   font-size: 18px;
@@ -998,7 +1004,7 @@ table.tabella-utenti td.cella-email {
 
 .scheda-corpo {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 22px;
 }
 
@@ -2264,7 +2270,7 @@ table.tabella-punteggi select {
 
 .sessione-layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -4969,4 +4975,174 @@ table.tabella-punteggi select {
 
 .form-calendario .azioni-selettore {
   flex-wrap: wrap;
+}
+
+/* ---------- Telefoni ----------
+   Intestazione compatta (ruolo ed "Esci" passano nel pannello ⚙️), campi a
+   16px (sotto quella soglia Safari su iPhone ingrandisce la pagina quando si
+   tocca un campo) e aree di tocco più grandi. */
+
+.intestazione-destra {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.impostazioni-account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  font-family: var(--font-heading);
+  color: var(--color-ink);
+}
+
+.impostazioni-account .role-badge {
+  color: var(--color-burgundy);
+  border-color: var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.06);
+}
+
+@media (min-width: 640px) {
+  .solo-telefono {
+    display: none !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .nascosto-telefono {
+    display: none !important;
+  }
+
+  .dashboard-header {
+    position: relative;
+    gap: 8px;
+    padding: 12px 0 14px;
+    margin-bottom: 18px;
+  }
+
+  .dashboard-header > div:first-child {
+    min-width: 0;
+  }
+
+  .dashboard-header h1 {
+    font-size: clamp(1.5rem, 7vw, 2rem);
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-header .site-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .link-back {
+    padding-block: 8px;
+    margin-bottom: 2px;
+  }
+
+  .intestazione-destra {
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .intestazione-destra .role-badge {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+  }
+
+  .intestazione-destra .role-badge:empty {
+    display: none;
+  }
+
+  .slot-utente {
+    gap: 6px;
+    width: 100%;
+  }
+
+  .btn-campanella {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  /* Le notifiche si aprono a tutta larghezza sotto l'intestazione. */
+  .intestazione-destra,
+  .slot-utente,
+  .notifiche-wrap {
+    position: static;
+  }
+
+  .dropdown-notifiche {
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: none;
+    max-height: 60vh;
+  }
+
+  .panel,
+  .panel-wide {
+    padding: 18px 16px;
+  }
+
+  /* Campi di testo a 16px: prima quelli senza stile proprio (specificità
+     zero), poi quelli che il foglio di stile rimpicciolisce. */
+  :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea) {
+    font-size: 16px;
+  }
+
+  .select-ruolo,
+  .riga-monete input.input-moneta,
+  .textarea-libero,
+  .form-aggiungi-talento input,
+  table.tabella-punteggi select,
+  .input-iniziativa,
+  .input-pf-nemico,
+  .griglia-form-nemici input,
+  .griglia-form-nemici select,
+  .select-esaurimento,
+  .input-dadi,
+  .select-dadi,
+  .input-bonus-attacco,
+  .input-quantita {
+    font-size: 16px;
+  }
+
+  /* Aree di tocco. */
+  .btn-tabella {
+    min-height: 38px;
+  }
+
+  a.btn-tabella {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toggle-condizione {
+    min-height: 34px;
+    padding: 6px 12px;
+  }
+
+  summary {
+    padding-block: 6px;
+  }
+
+  .btn-rimuovi-talento {
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  /* Piccoli sbordamenti. */
+  .checkbox-scudo {
+    white-space: normal;
+  }
+
+  .galleria-filtri .select-galleria {
+    min-width: 0;
+    max-width: 100%;
+  }
 }
