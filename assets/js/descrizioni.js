@@ -6,6 +6,7 @@ const senzaMouse = window.matchMedia("(hover: none)");
 
 let fumetto = null;
 let origine = null;
+let apertoIl = 0;
 
 function chiudi() {
   fumetto?.remove();
@@ -23,6 +24,7 @@ function apri(elemento) {
   fumetto.textContent = testo;
   document.body.append(fumetto);
   origine = elemento;
+  apertoIl = Date.now();
 
   // Sotto l'elemento, o sopra se sotto non c'è spazio; sempre dentro lo schermo.
   const margine = 12;
@@ -48,7 +50,11 @@ export function attivaDescrizioni() {
     }
     apri(elemento);
   });
-  window.addEventListener("scroll", chiudi, { passive: true, capture: true });
+  // Lo scorrimento chiude il fumetto, tranne quello che arriva subito dopo il
+  // tocco (fine di uno scorrimento iniziato prima).
+  window.addEventListener("scroll", () => {
+    if (fumetto && Date.now() - apertoIl > 400) chiudi();
+  }, { passive: true, capture: true });
   window.addEventListener("resize", chiudi);
   document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape") chiudi();
