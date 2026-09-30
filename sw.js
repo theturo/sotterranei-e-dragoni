@@ -13,11 +13,13 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "18ff4d1b17ec";
+const VERSIONE = "b46b1b9cb9b9";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
   "./assets/css/style.css",
+  "./assets/fonts/cinzel-700.woff2",
+  "./assets/fonts/cinzel-OFL.txt",
   "./assets/icone/apple-touch-icon.png",
   "./assets/icone/favicon-32.png",
   "./assets/icone/favicon.svg",
@@ -37,6 +39,8 @@ const FILE = [
   "./assets/js/icone.js",
   "./assets/js/immagini.js",
   "./assets/js/incantesimi-srd.js",
+  "./assets/js/intro-dado.js",
+  "./assets/js/intro.js",
   "./assets/js/menu-utente.js",
   "./assets/js/pagine/admin-utenti.js",
   "./assets/js/pagine/archivio.js",
@@ -65,6 +69,8 @@ const FILE = [
   "./assets/js/utils.js",
   "./assets/js/widget-musica.js",
   "./assets/js/youtube.js",
+  "./assets/vendor/three-LICENSE.txt",
+  "./assets/vendor/three.module.min.js",
   "./attesa-approvazione.html",
   "./calendario.html",
   "./campagna.html",
