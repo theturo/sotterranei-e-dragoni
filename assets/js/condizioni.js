@@ -13,12 +13,12 @@ export function creaChipCondizioni(condizioni = [], esaurimento = 0) {
   condizioni.forEach((chiave) => {
     const dati = PER_CHIAVE.get(chiave);
     if (!dati) return;
-    const chip = creaElemento("span", "chip-condizione", dati.nome);
+    const chip = creaElemento("span", "chip-condizione con-descrizione", dati.nome);
     chip.title = dati.descrizione;
     contenitore.append(chip);
   });
   if (esaurimento > 0) {
-    const chip = creaElemento("span", "chip-condizione chip-esaurimento", `Esaurimento ${esaurimento}`);
+    const chip = creaElemento("span", "chip-condizione chip-esaurimento con-descrizione", `Esaurimento ${esaurimento}`);
     chip.title = LIVELLI_ESAURIMENTO[esaurimento] || "";
     contenitore.append(chip);
   }
@@ -50,6 +50,20 @@ export function creaEditorCondizioni({ condizioni = [], esaurimento = 0, conEsau
     griglia.append(bottone);
   });
   editor.append(griglia);
+
+  // Senza mouse il tocco sulle condizioni le attiva: le descrizioni stanno
+  // in un elenco che si apre con ⓘ.
+  const spiega = creaElemento("button", "btn-spiega-condizioni", "ⓘ Cosa comportano");
+  spiega.type = "button";
+  spiega.setAttribute("aria-expanded", "false");
+  const elenco = creaElemento("dl", "elenco-condizioni");
+  elenco.hidden = true;
+  CONDIZIONI.forEach(({ nome, descrizione }) => elenco.append(creaElemento("dt", null, nome), creaElemento("dd", null, descrizione)));
+  spiega.addEventListener("click", () => {
+    elenco.hidden = !elenco.hidden;
+    spiega.setAttribute("aria-expanded", String(!elenco.hidden));
+  });
+  editor.append(spiega, elenco);
 
   if (conEsaurimento) {
     const etichetta = creaElemento("label", "campo-esaurimento");

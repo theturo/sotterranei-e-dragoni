@@ -5393,3 +5393,96 @@ table.tabella-punteggi select {
     max-width: 100%;
   }
 }
+
+/* ---------- Descrizioni al tocco (descrizioni.js) ---------- */
+.fumetto-descrizione {
+  position: fixed;
+  z-index: 400;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 10px 12px;
+  border: 1px solid var(--color-gold);
+  border-radius: 8px;
+  background: var(--color-bg-dark-2);
+  color: var(--color-parchment);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  box-shadow: var(--shadow-deep);
+}
+
+.btn-spiega-condizioni,
+.elenco-condizioni {
+  display: none;
+}
+
+@media (hover: none) {
+  .con-descrizione {
+    cursor: help;
+    text-decoration: underline dotted rgba(122, 31, 43, 0.45);
+    text-underline-offset: 3px;
+  }
+
+  .chip-condizione.con-descrizione {
+    text-decoration: none;
+  }
+
+  .btn-spiega-condizioni {
+    display: inline-block;
+    align-self: flex-start;
+    margin-top: 6px;
+    padding: 6px 0;
+    border: none;
+    background: none;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--color-burgundy);
+    cursor: pointer;
+  }
+
+  .elenco-condizioni:not([hidden]) {
+    display: block;
+    margin: 4px 0 0;
+    padding: 10px 12px;
+    border: 1px dashed rgba(122, 31, 43, 0.35);
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  .elenco-condizioni dt {
+    font-family: var(--font-heading);
+    color: var(--color-burgundy);
+  }
+
+  .elenco-condizioni dd {
+    margin: 0 0 8px;
+    color: var(--color-ink);
+  }
+}
+
+/* Libreria e archivio sul telefono: due colonne di miniature. */
+@media (max-width: 639px) {
+  .griglia-immagini {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .griglia-immagini .scheda-immagine-corpo {
+    padding: 8px;
+    gap: 4px;
+  }
+
+  .griglia-immagini .scheda-immagine-titolo {
+    font-size: 0.92rem;
+    line-height: 1.25;
+  }
+
+  .griglia-immagini .scheda-immagine-meta {
+    font-size: 0.7rem;
+    gap: 4px;
+  }
+
+  .griglia-immagini .etichetta-categoria,
+  .griglia-immagini .etichetta-visibilita {
+    padding: 1px 6px;
+  }
+}

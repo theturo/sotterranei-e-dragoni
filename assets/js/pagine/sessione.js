@@ -190,7 +190,7 @@ function creaRigaParty(riepilogo) {
   if (privilegi.length) {
     const riga = creaElemento("div", "party-sessione-privilegi");
     privilegi.forEach((p) => {
-      const voce = creaElemento("span", `privilegio-party${p.rimasti === 0 ? " esaurito" : ""}`,
+      const voce = creaElemento("span", `privilegio-party con-descrizione${p.rimasti === 0 ? " esaurito" : ""}`,
         Number.isFinite(p.max) ? `${p.nome} ${p.rimasti}/${p.max}` : `${p.nome} ∞`);
       voce.title = `${p.descrizione} Si ricarica con un ${NOMI_RICARICA[p.ricarica]}.`;
       riga.append(voce);

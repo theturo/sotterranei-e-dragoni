@@ -922,7 +922,7 @@ function renderListaIncantesimi(idLista, idVuoto, chiavi, { campo, lanciabile })
       const bottoneRimuovi = soloLettura ? "" : `<button class="btn-tabella" data-rimuovi="${esc(campo)}:${esc(chiave)}" type="button">Rimuovi</button>`;
       const bottoniTiro = !soloLettura && (lanciabile || dati.livello === 0) ? bottoniTiroIncantesimo(chiave) : "";
       return `<li class="inventario-riga" data-chiave="${esc(chiave)}">
-        <span class="inventario-nome" title="${esc(tooltipIncantesimo(dati))}">${esc(dati.nome)} <small>(${esc(etichettaIncantesimo(dati))})</small></span>
+        <span class="inventario-nome con-descrizione" title="${esc(tooltipIncantesimo(dati))}">${esc(dati.nome)} <small>(${esc(etichettaIncantesimo(dati))})</small></span>
         ${bottoniTiro}${bottoneLancia}${bottoneRimuovi}
       </li>`;
     })
@@ -1237,7 +1237,7 @@ function renderIncantesimiRazza() {
         ? `<span class="etichetta-incantesimo-razza-usato">Usato oggi</span>`
         : `<button class="btn-tabella btn-lancia-incantesimo" data-lancia-razza="${esc(chiave)}" type="button">Lancia</button>`;
       return `<li class="inventario-riga">
-        <span class="inventario-nome" title="${esc(tooltipIncantesimo(dati))}">${pip} ${esc(dati.nome)} <small>(1/giorno)</small></span>
+        <span class="inventario-nome con-descrizione" title="${esc(tooltipIncantesimo(dati))}">${pip} ${esc(dati.nome)} <small>(1/giorno)</small></span>
         ${azione}
       </li>`;
     })
@@ -1474,7 +1474,7 @@ function renderPrivilegi() {
     li.className = "riga-privilegio";
     li.dataset.privilegio = p.chiave;
     const nome = document.createElement("span");
-    nome.className = "privilegio-nome";
+    nome.className = "privilegio-nome con-descrizione";
     nome.textContent = p.nome;
     nome.title = `${p.descrizione} Si ricarica con un ${NOMI_RICARICA[p.ricarica]}.`;
     const ricarica = document.createElement("small");
