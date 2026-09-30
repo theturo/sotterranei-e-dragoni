@@ -1095,7 +1095,7 @@ table.tabella-utenti td.cella-email {
 
 .riga-tre-box {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1389,6 +1389,7 @@ table.tabella-utenti td.cella-email {
 
 .form-aggiungi-talento input {
   flex: 1;
+  min-width: 0;
   padding: 8px 10px;
   font-family: var(--font-body);
   font-size: 0.9rem;
@@ -3526,18 +3527,259 @@ table.tabella-punteggi select {
   color: var(--color-ink);
 }
 
-@media (max-width: 600px) {
+/* Iniziativa modificabile, comandi del DM e riga compatta del telefono. */
+.iniziativa-editor {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.etichetta-iniziativa,
+.btn-apri-combattente,
+.combattente-pf-breve {
+  display: none;
+}
+
+.combattente-iniziativa.modificabile .valore-iniziativa {
+  display: none;
+}
+
+.combattente-controlli {
+  grid-column: 3 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.combattente-controlli:empty {
+  display: none;
+}
+
+.combattente-controlli .editor-condizioni {
+  flex-basis: 100%;
+}
+
+@media (max-width: 639px) {
   .riga-combattente {
-    grid-template-columns: 22px 40px minmax(0, 1fr) auto;
+    grid-template-columns: 18px 36px minmax(0, 1fr) auto auto;
+    column-gap: 8px;
+    row-gap: 8px;
+    padding: 8px;
   }
+
   .riga-combattente .party-avatar {
-    width: 40px;
-    height: 40px;
-    flex-basis: 40px;
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
   }
+
+  .riga-combattente .party-avatar .icona-classe svg,
+  .riga-combattente .combattente-icona svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .combattente-posizione { grid-row: 1; grid-column: 1; }
+  .combattente-avatar { grid-row: 1; grid-column: 2; }
+  .combattente-info { grid-row: 1; grid-column: 3; }
+
+  .combattente-nome {
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: auto;
+  }
+
+  /* Il valore dell'iniziativa resta nella riga; l'editor va nel pannello. */
+  .combattente-iniziativa {
+    display: contents;
+  }
+
+  .combattente-iniziativa .valore-iniziativa,
+  .combattente-iniziativa.modificabile .valore-iniziativa {
+    display: block;
+    grid-row: 1;
+    grid-column: 4;
+  }
+
+  .btn-apri-combattente {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1;
+    grid-column: 5;
+    min-width: 40px;
+  }
+
+  .combattente-pf-breve {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+  }
+
+  .riga-combattente.aperta .combattente-pf-breve {
+    display: none;
+  }
+
+  .iniziativa-editor,
+  .combattente-controlli,
   .combattente-azioni {
-    grid-column: 3 / -1;
-    justify-content: flex-end;
+    grid-column: 1 / -1;
+    display: none;
+  }
+
+  .iniziativa-editor { grid-row: 2; }
+  .combattente-controlli { grid-row: 3; }
+  .combattente-azioni { grid-row: 4; justify-content: flex-end; }
+
+  .riga-combattente.aperta .iniziativa-editor,
+  .riga-combattente.aperta .combattente-controlli,
+  .riga-combattente.aperta .combattente-azioni {
+    display: flex;
+  }
+
+  .riga-combattente.aperta .combattente-controlli:empty,
+  .riga-combattente.aperta .combattente-azioni:empty {
+    display: none;
+  }
+
+  .etichetta-iniziativa {
+    display: inline;
+    margin-right: 4px;
+  }
+
+  .riga-combattente.aperta {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  .editor-pf .btn-tabella,
+  .btn-condizioni-nemico,
+  .btn-spareggio {
+    min-width: 40px;
+    font-size: 0.85rem;
+  }
+
+  /* Appunti: campo a tutta larghezza, pulsante sotto. Lanciatore: "Tira" largo. */
+  .sessione-appunti-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sessione-appunti-form button {
+    align-self: flex-end;
+  }
+
+  .lanciatore-dadi button[type="submit"] {
+    flex: 1 1 100px;
+  }
+
+  /* Scheda: margini interni ridotti. */
+  .scheda {
+    padding: 16px 14px;
+  }
+
+  .scheda-box {
+    padding: 12px;
+  }
+
+  .riga-tre-box {
+    gap: 8px;
+  }
+
+  .riga-tre-box .valore-grande {
+    font-size: 1.6rem;
+  }
+
+  .riga-tre-box .valore-grande-etichetta {
+    font-size: 0.62rem;
+    letter-spacing: 0.3px;
+  }
+
+  /* Attacchi: ogni arma diventa una piccola scheda (nome e danno a sinistra,
+     bonus a destra, tiri sotto). */
+  .tabella-attacchi thead {
+    display: none;
+  }
+
+  .tabella-attacchi,
+  .tabella-attacchi tbody {
+    display: block;
+  }
+
+  .tabella-attacchi tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(43, 27, 16, 0.1);
+  }
+
+  .tabella-attacchi td {
+    padding: 0;
+    border: none;
+    font-size: 0.95rem;
+  }
+
+  .tabella-attacchi td:nth-child(1) {
+    grid-row: 1;
+    grid-column: 1;
+    font-family: var(--font-heading);
+    font-weight: 600;
+  }
+
+  .tabella-attacchi td:nth-child(2) {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .tabella-attacchi td:nth-child(2)::before {
+    content: "Attacco";
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+
+  .tabella-attacchi td:nth-child(3) {
+    grid-row: 2;
+    grid-column: 1;
+    color: var(--color-ink-soft);
+  }
+
+  .tabella-attacchi td.colonna-tiri {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+  }
+
+  .tabella-attacchi td.colonna-tiri:empty {
+    display: none;
+  }
+
+  .tabella-attacchi .btn-tiro {
+    flex: 1;
+  }
+
+  /* Comandi del DM in testa al pannello: ◀ piccolo, "Turno successivo" largo. */
+  .comandi-combattimento {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: stretch;
+    gap: 8px;
+  }
+
+  .comandi-combattimento .btn-tabella-evidenza {
+    flex: 1;
+  }
+
+  .sessione-pannello-combattimento .sessione-appunti-intestazione {
+    flex-wrap: wrap;
   }
 }
 
@@ -5125,6 +5367,11 @@ table.tabella-punteggi select {
   .toggle-condizione {
     min-height: 34px;
     padding: 6px 12px;
+  }
+
+  .btn-tiro {
+    font-size: 0.85rem;
+    padding-inline: 12px;
   }
 
   summary {

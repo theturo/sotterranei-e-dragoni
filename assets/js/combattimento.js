@@ -214,8 +214,12 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       creaElemento("div", "party-sessione-sub combattente-sub"),
       creaElemento("div", "combattente-condizioni")
     );
+    // Comandi del DM sul nemico: su computer sotto il nome, sul telefono nel
+    // pannello che si apre toccando ▾ (lì la riga mostra solo "PF x/y").
+    const controlli = creaElemento("div", "combattente-controlli");
     if (isDM && c.tipo === "nemico") {
-      info.append(creaEditorPf(c));
+      info.append(creaElemento("div", "combattente-pf-breve"));
+      controlli.append(creaEditorPf(c));
       // Condizioni del nemico: le segna il DM, le vedono tutti.
       const apri = bottone("Condizioni", "btn-tabella btn-condizioni-nemico");
       apri.setAttribute("aria-expanded", "false");
@@ -229,7 +233,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
         editor.hidden = !editor.hidden;
         apri.setAttribute("aria-expanded", String(!editor.hidden));
       });
-      info.append(apri, editor);
+      controlli.append(apri, editor);
     }
 
     const iniziativa = creaElemento("div", "combattente-iniziativa");
@@ -259,7 +263,10 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
         avviso(`${c.nome}: ${tiro.dadi[0]} ${conSegno(bonus)} = ${tiro.totale}`);
         registraTiro?.(c.nome, tiro);
       }));
-      iniziativa.replaceChildren(input, tira);
+      const editor = creaElemento("div", "iniziativa-editor");
+      editor.append(creaElemento("span", "etichetta-pf etichetta-iniziativa", "Iniziativa"), input, tira);
+      iniziativa.classList.add("modificabile");
+      iniziativa.append(editor);
     }
 
     const azioni = creaElemento("div", "combattente-azioni");
@@ -290,8 +297,28 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       azioni.append(su, giu, togli);
     }
 
-    li.append(posizione, avatar, info, iniziativa, azioni);
+    li.append(posizione, avatar, info, iniziativa);
+    // Sul telefono la riga resta compatta: ▾ apre iniziativa e comandi.
+    if (modificabile) {
+      const espandi = bottone("▾", "btn-tabella btn-apri-combattente");
+      espandi.setAttribute("aria-expanded", "false");
+      espandi.setAttribute("aria-label", `Comandi per ${c.nome}`);
+      espandi.addEventListener("click", () => {
+        li.dataset.toccata = "1";
+        apriRiga(li, !li.classList.contains("aperta"));
+      });
+      li.append(espandi);
+    }
+    li.append(azioni, controlli);
     return li;
+  }
+
+  function apriRiga(li, aperta) {
+    li.classList.toggle("aperta", aperta);
+    const espandi = li.querySelector(".btn-apri-combattente");
+    if (!espandi) return;
+    espandi.textContent = aperta ? "▴" : "▾";
+    espandi.setAttribute("aria-expanded", String(aperta));
   }
 
   function caricaAvatar(c, img, icona) {
@@ -403,18 +430,20 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     li.querySelector(".combattente-condizioni").replaceChildren(chip);
 
     const input = li.querySelector(".input-iniziativa");
-    const valore = li.querySelector(".valore-iniziativa");
+    li.querySelector(".valore-iniziativa").textContent = c.iniziativa ?? "—";
     if (input) {
       if (document.activeElement !== input) input.value = c.iniziativa ?? "";
       input.placeholder = "—";
-    } else if (valore) {
-      valore.textContent = c.iniziativa ?? "—";
     }
+    // Il proprio personaggio senza iniziativa: comandi già aperti (finché il
+    // giocatore non apre o chiude la riga da sé).
+    if (c.tipo === "pg" && c.uid === uid && !li.dataset.toccata) apriRiga(li, c.iniziativa == null);
 
     if (isDM && c.tipo === "nemico" && c.dm) {
       const [attuali] = li.querySelectorAll(".input-pf-nemico");
       if (document.activeElement !== attuali) attuali.value = c.dm.pfAttuali;
       li.querySelector(".pf-massimi").textContent = `/ ${c.dm.pfMassimi}`;
+      li.querySelector(".combattente-pf-breve").textContent = `PF ${c.dm.pfAttuali} / ${c.dm.pfMassimi}`;
     }
     if (isDM) {
       const pari = (altro) => altro && altro.iniziativa === c.iniziativa && c.iniziativa != null;
