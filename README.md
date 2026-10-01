@@ -29,6 +29,9 @@ it isn't set up to onboard outside users or accept contributions at this time.
   and race, walks the player through background, skills, class features, equipment,
   spells and level-ups up to the campaign's starting level, which the Dungeon Master sets
   for the whole party in one click.
+- **Export and backup** — any character sheet can be downloaded as a print-ready PDF
+  (portrait, abilities, skills, attacks, spells, equipment, personality) or as a full JSON
+  backup; the Dungeon Master can export the whole party in one go.
 - **Notifications** — players get notified when their character levels up, when the DM
   proposes dates or confirms a session and when a session starts, with a persistent
   notification history; the same alerts can arrive as push notifications on the phone

@@ -73,6 +73,11 @@ export async function eliminaImmagine(percorso) {
 // URL locale (blob:) per mostrare un'immagine protetta in un <img>. Le immagini
 // già scaricate in questa pagina vengono riutilizzate.
 const cacheUrl = new Map();
+// Il file dell'immagine (per elaborarlo, es. il ritratto nel PDF della scheda).
+export function scaricaImmagine(percorso) {
+  return getBlob(ref(storage, percorso));
+}
+
 export function urlImmagine(percorso) {
   if (!cacheUrl.has(percorso)) {
     const promessa = getBlob(ref(storage, percorso)).then((blob) => URL.createObjectURL(blob));

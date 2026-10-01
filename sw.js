@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "1b5a6897e227";
+const VERSIONE = "d747dfc939ef";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -30,6 +30,7 @@ const FILE = [
   "./assets/icone/icona-512.png",
   "./assets/icone/icona-maskable-512.png",
   "./assets/js/auth.js",
+  "./assets/js/calcoli-scheda.js",
   "./assets/js/calendario.js",
   "./assets/js/combattimento.js",
   "./assets/js/condizioni.js",
@@ -38,6 +39,7 @@ const FILE = [
   "./assets/js/dati-srd.js",
   "./assets/js/descrizioni.js",
   "./assets/js/equipaggiamento-srd.js",
+  "./assets/js/esporta-scheda.js",
   "./assets/js/firebase-config.js",
   "./assets/js/guida-personaggio-dati.js",
   "./assets/js/guida-personaggio.js",
@@ -67,6 +69,7 @@ const FILE = [
   "./assets/js/pagine/scheda-personaggio.js",
   "./assets/js/pagine/sessione.js",
   "./assets/js/pagine/verifica-email.js",
+  "./assets/js/pdf-scheda.js",
   "./assets/js/privilegi.js",
   "./assets/js/pwa.js",
   "./assets/js/riposo.js",
@@ -142,9 +145,19 @@ async function navigazione(richiesta) {
   }
 }
 
+// Librerie e font del PDF della scheda: pesanti e usati di rado, non sono
+// in FILE e si salvano al primo uso (vedi SU_RICHIESTA in aggiorna-sw.mjs).
+const SU_RICHIESTA = ["./assets/vendor/pdf/", "./assets/fonts/pdf/"].map(indirizzo);
+
 async function file(richiesta) {
   const salvato = await caches.match(richiesta, { cacheName: CACHE });
-  return salvato || fetch(richiesta);
+  if (salvato) return salvato;
+  const risposta = await fetch(richiesta);
+  if (risposta.ok && SU_RICHIESTA.some((prefisso) => richiesta.url.startsWith(prefisso))) {
+    const copia = risposta.clone();
+    caches.open(CACHE).then((cache) => cache.put(richiesta, copia)).catch(() => {});
+  }
+  return risposta;
 }
 
 async function sdkFirebase(richiesta) {

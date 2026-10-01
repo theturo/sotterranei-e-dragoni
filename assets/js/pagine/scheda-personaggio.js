@@ -76,6 +76,7 @@ import {
 import { ARMI, ARMATURE, cercaEquipaggiamento, ETICHETTE_CATEGORIA } from "../equipaggiamento-srd.js";
 import { cercaIncantesimi, ottieniIncantesimo, TIRI_INCANTESIMI } from "../incantesimi-srd.js";
 import { montaGuida } from "../guida-personaggio.js";
+import { apriEsportazione, pdfDelleSchede, jsonDelleSchede, nomeFile } from "../esporta-scheda.js";
 import { talentiConSottoclasse } from "../guida-personaggio-dati.js";
 
 const veil = document.getElementById("veil");
@@ -1778,7 +1779,20 @@ proteggiPagina(async (user, profilo) => {
 
   veil.style.display = "none";
   contenuto.style.display = "block";
+  document.getElementById("btn-esporta").hidden = false;
   if (!soloLettura) avviaGuida();
+});
+
+// ---------- Esportazione (esporta-scheda.js) ----------
+document.getElementById("btn-esporta").addEventListener("click", () => {
+  const voce = [{ scheda, giocatore: soloLettura ? null : profiloCorrente?.nome || null }];
+  const base = `${scheda.nome || "scheda"}-livello-${scheda.livello || 1}`;
+  apriEsportazione({
+    titolo: "Esporta la scheda",
+    descrizione: scheda.nome || "",
+    pdf: async () => ({ blob: await pdfDelleSchede(voce, `${scheda.nome} — scheda`), nome: nomeFile(base, "pdf") }),
+    json: async () => ({ blob: jsonDelleSchede(voce), nome: nomeFile(`${base}-backup`, "json") }),
+  });
 });
 
 // ---------- Guida alla creazione (guida-personaggio.js) ----------
