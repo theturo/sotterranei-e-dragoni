@@ -6051,3 +6051,31 @@ table.tabella-punteggi select {
   font-size: 0.88rem;
   color: var(--color-ink-soft);
 }
+
+/* ---------- Esportazione della scheda (esporta-scheda.js) ---------- */
+
+.btn-esporta {
+  border-color: var(--color-gold);
+  background: transparent;
+  color: var(--color-gold-bright);
+}
+
+.btn-esporta:hover,
+.btn-esporta:focus-visible {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+.btn-esporta[hidden] {
+  display: none;
+}
+
+.modal-esporta .impostazioni-opzioni {
+  gap: 4px;
+}
+
+.esporta-nota {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  color: var(--color-ink-soft);
+  text-align: center;
+}

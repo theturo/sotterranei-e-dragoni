@@ -12,6 +12,7 @@ import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
 import { CLASSI, nomeRazzaCompleto } from "../dati-srd.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
+import { apriEsportazione, pdfDelleSchede, jsonDelleSchede, nomeFile } from "../esporta-scheda.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -55,6 +56,7 @@ function testoPf(scheda) {
 // Un'unica lettura della scheda attiva del giocatore alimenta PF, Personaggio,
 // Classe e il link "Visualizza scheda" — evita fetch ripetute per la stessa riga.
 let campagnaIdCorrente = null;
+let campagnaCorrente = null;
 
 async function caricaDatiRiga(riga) {
   const cellaPersonaggio = riga.querySelector('[data-cella="personaggio"]');
@@ -103,6 +105,7 @@ proteggiPaginaDM(async (user, profilo) => {
     return;
   }
   campagnaIdCorrente = campagna.id;
+  campagnaCorrente = campagna;
   preparaLivelloPartenza(campagna.livelloPartenza || 1);
 
   try {
@@ -216,3 +219,27 @@ function preparaLivelloPartenza(attuale) {
     }
   });
 }
+
+// Esportazione del party: un solo PDF con le schede attive di tutti i membri
+// (una dopo l'altra) e un backup JSON con tutti i dati.
+async function schedeDelParty() {
+  const membri = await elencaMembriCampagna(campagnaIdCorrente);
+  const voci = await Promise.all(membri.map(async (m) => ({ scheda: await ottieniSchedaAttiva(m.uid, campagnaIdCorrente), giocatore: m.nome || null })));
+  const schede = voci.filter((v) => v.scheda);
+  if (schede.length === 0) throw new Error("Nessuna scheda attiva nel party.");
+  return schede;
+}
+
+document.getElementById("btn-esporta-party").addEventListener("click", () => {
+  const titoloCampagna = campagnaCorrente?.titolo || "party";
+  const data = new Date().toISOString().slice(0, 10);
+  apriEsportazione({
+    titolo: "Esporta il party",
+    descrizione: "Le schede attive di tutti i giocatori della campagna, una dopo l'altra.",
+    pdf: async () => ({ blob: await pdfDelleSchede(await schedeDelParty(), `Party — ${titoloCampagna}`), nome: nomeFile(`party-${titoloCampagna}-${data}`, "pdf") }),
+    json: async () => ({
+      blob: jsonDelleSchede(await schedeDelParty(), { campagna: { id: campagnaIdCorrente, titolo: campagnaCorrente?.titolo || null } }),
+      nome: nomeFile(`party-${titoloCampagna}-${data}-backup`, "json"),
+    }),
+  });
+});

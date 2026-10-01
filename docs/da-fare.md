@@ -47,9 +47,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - **Creazione di PNG e nemici per il DM**: schede rapide, con la possibilità di
   partire dai mostri del materiale gratuito di Wizards of the Coast (SRD 5.1,
   licenza Creative Commons), come già fatto per incantesimi ed equipaggiamento.
-- **Esportazione e backup della scheda** (prossimo lavoro): PDF in stile app,
-  leggibile anche stampato in bianco e nero, e backup JSON completo; il
-  giocatore esporta le proprie schede, il DM tutto il party in un colpo.
 - **Mappe e nebbia di guerra, gestione dell'esplorazione**: il lavoro più
   grosso, da fare per ultimo. Nella pagina Sessione la mappa andrà sopra gli
   appunti, con una scheda di dimensioni simili (anche sul telefono, prima
@@ -113,6 +110,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   sul telefono (app installata; su iPhone da iOS 16.4) o sul computer;
   attivabili dall'invito in dashboard o dal pannello ⚙️, al tocco aprono la
   pagina giusta (Cloud Function `inviaNotificaPush`).
+- Esportazione delle schede: PDF in stile app (ritratto grande, caratteristiche
+  in verticale come nella scheda, leggibile anche in bianco e nero) e backup
+  JSON completo; dalla scheda (giocatore o DM) e, per il DM, tutto il party in
+  un colpo dalla pagina del party. Librerie e font del PDF si scaricano solo
+  al primo uso. Il ripristino da JSON, se servirà, è da fare.
 - Guida alla creazione del personaggio nella scheda: pannello con i passi
   (background, abilità, allineamento, privilegi, equipaggiamento, competenze,
   personalità, passaggi di livello, sottoclasse, incantesimi) che si spuntano

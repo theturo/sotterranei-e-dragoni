@@ -21,10 +21,16 @@ function fileIn(cartella) {
   });
 }
 
-// Pagine, manifest e tutto assets/, in ordine stabile.
+// Cartelle pesanti usate di rado (librerie e font del PDF della scheda): non
+// si scaricano all'installazione, il service worker le salva al primo uso.
+// Lo stesso elenco è in sw.js (SU_RICHIESTA).
+export const SU_RICHIESTA = ["assets/vendor/pdf/", "assets/fonts/pdf/"];
+
+// Pagine, manifest e tutto assets/ (tranne SU_RICHIESTA), in ordine stabile.
 export function elencoFile() {
   const pagine = readdirSync(RADICE).filter((f) => f.endsWith(".html"));
-  return [...pagine, "manifest.webmanifest", ...fileIn("assets")].sort();
+  const asset = fileIn("assets").filter((f) => !SU_RICHIESTA.some((c) => f.startsWith(c)));
+  return [...pagine, "manifest.webmanifest", ...asset].sort();
 }
 
 export function versione(file = elencoFile()) {
