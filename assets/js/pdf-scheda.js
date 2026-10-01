@@ -96,72 +96,91 @@ export async function creaPdfSchede(schede, { pdfLib, fontkit, font, titoloDocum
 
   // ---------- Pagina 1 ----------
 
-  async function intestazione(v, giocatore, ritratto) {
+  function intestazione(v, giocatore) {
     scrivi("SOTTERRANEI & DRAGONI", MARGINE, y - 8, { font: "titolo", size: 8.5, colore: C.oro });
     scrivi(`Scheda personaggio · ${dataTesto}`, MARGINE, y - 8, { size: 9, colore: C.tenue, allinea: "destra", larghezza: LARGHEZZA });
     pagina.drawLine({ start: { x: MARGINE, y: y - 14 }, end: { x: MARGINE + LARGHEZZA, y: y - 14 }, thickness: 0.8, color: C.oro });
     y -= 22;
-    const lato = 76;
-    let larghezzaTesto = LARGHEZZA;
+    const nome = righe(v.nome, LARGHEZZA, { font: "titolo", size: 24 })[0];
+    scrivi(nome, MARGINE, y - 24, { font: "titolo", size: 24, colore: C.bordeaux });
+    scrivi(`${v.classe} ${v.livello} · ${v.razza}`, MARGINE, y - 43, { font: "grassetto", size: 12.5 });
+    const dettagli = [`Background: ${v.background}`, `Allineamento: ${v.allineamento}`, giocatore ? `Giocatore: ${giocatore}` : null].filter(Boolean).join(" · ");
+    scrivi(dettagli, MARGINE, y - 59, { size: 10.5, colore: C.tenue });
+    y -= 84;
+  }
+
+  // Colonna delle caratteristiche, in verticale come nella scheda del sito.
+  function colonnaCaratteristiche(v, x, w) {
+    let yy = y;
+    const h = 64;
+    v.caratteristiche.forEach((c) => {
+      riquadro(x, yy, w, h);
+      scrivi(c.nome.toUpperCase(), x, yy - 13, { font: "titolo", size: 6.8, colore: C.bordeaux, allinea: "centro", larghezza: w });
+      scrivi(c.mod, x, yy - 38, { font: "grassetto", size: 21, allinea: "centro", larghezza: w });
+      pagina.drawEllipse({ x: x + w / 2, y: yy - 52, xScale: 13, yScale: 7.5, color: C.bianco, borderColor: C.oro, borderWidth: 0.7 });
+      scrivi(String(c.punteggio), x, yy - 55.5, { size: 9.5, allinea: "centro", larghezza: w });
+      yy -= h + 7;
+    });
+    for (const [etichetta, valore] of [["Competenza", v.bonusCompetenza], ["Perc. passiva", String(v.percezionePassiva)]]) {
+      riquadro(x, yy, w, 40);
+      scrivi(valore, x, yy - 20, { font: "grassetto", size: 15, allinea: "centro", larghezza: w });
+      scrivi(etichetta.toUpperCase(), x, yy - 33, { font: "titolo", size: 5.8, colore: C.bordeaux, allinea: "centro", larghezza: w });
+      yy -= 47;
+    }
+    return yy;
+  }
+
+  // Ritratto grande (ritagliato al centro dalla pagina, qui già quadrato);
+  // senza ritratto resta una cornice vuota, da disegnare a mano sulla stampa.
+  async function ritrattoGrande(ritratto, x, w) {
+    const lato = w;
+    let disegnato = false;
     if (ritratto) {
       try {
         const immagine = ritratto.tipo === "png" ? await pdf.embedPng(ritratto.byte) : await pdf.embedJpg(ritratto.byte);
-        const xR = MARGINE + LARGHEZZA - lato;
-        pagina.drawImage(immagine, { x: xR, y: y - lato, width: lato, height: lato });
-        pagina.drawRectangle({ x: xR, y: y - lato, width: lato, height: lato, borderColor: C.oro, borderWidth: 1.2 });
-        larghezzaTesto -= lato + 12;
+        pagina.drawImage(immagine, { x, y: y - lato, width: lato, height: lato });
+        disegnato = true;
       } catch {
-        // Ritratto non leggibile: la scheda si stampa senza.
+        // Ritratto non leggibile: resta la cornice vuota.
       }
     }
-    const nome = righe(v.nome, larghezzaTesto, { font: "titolo", size: 24 })[0];
-    scrivi(nome, MARGINE, y - 24, { font: "titolo", size: 24, colore: C.bordeaux });
-    scrivi(`${v.classe} ${v.livello} · ${v.razza}`, MARGINE, y - 44, { font: "grassetto", size: 12.5 });
-    scrivi(`Background: ${v.background} · Allineamento: ${v.allineamento}`, MARGINE, y - 60, { size: 10.5, colore: C.tenue });
-    if (giocatore) scrivi(`Giocatore: ${giocatore}`, MARGINE, y - 74, { size: 10.5, colore: C.tenue });
-    y -= ritratto ? Math.max(lato, 80) + 10 : 88;
+    if (!disegnato) {
+      pagina.drawRectangle({ x, y: y - lato, width: lato, height: lato, color: C.carta });
+      scrivi("RITRATTO", x, y - lato / 2 - 3, { font: "titolo", size: 9, colore: C.linea, allinea: "centro", larghezza: lato });
+    }
+    pagina.drawRectangle({ x, y: y - lato, width: lato, height: lato, borderColor: C.oro, borderWidth: 1.4 });
+    pagina.drawRectangle({ x: x + 4, y: y - lato + 4, width: lato - 8, height: lato - 8, borderColor: C.linea, borderWidth: 0.5 });
+    return y - lato - 10;
   }
 
-  function caratteristiche(v) {
-    const gap = 8;
-    const w = (LARGHEZZA - gap * 5) / 6;
-    const h = 62;
-    v.caratteristiche.forEach((c, i) => {
-      const x = MARGINE + i * (w + gap);
-      riquadro(x, y, w, h);
-      scrivi(c.nome.toUpperCase(), x, y - 13, { font: "titolo", size: 7, colore: C.bordeaux, allinea: "centro", larghezza: w });
-      scrivi(c.mod, x, y - 38, { font: "grassetto", size: 21, allinea: "centro", larghezza: w });
-      pagina.drawEllipse({ x: x + w / 2, y: y - 51, xScale: 13, yScale: 7.5, color: C.bianco, borderColor: C.oro, borderWidth: 0.7 });
-      scrivi(String(c.punteggio), x, y - 54.5, { size: 9.5, allinea: "centro", larghezza: w });
-    });
-    y -= h + 10;
-  }
-
-  function combattimento(v) {
-    const valori = [
-      ["Classe Armatura", String(v.ca)],
-      ["Iniziativa", v.iniziativa],
-      ["Velocità", v.velocita],
-      ["Punti Ferita", `${v.pf.attuali} / ${v.pf.massimi}${v.pf.temporanei ? ` (+${v.pf.temporanei})` : ""}`],
-      ["Dadi Vita", v.dadiVita],
-      ["Competenza", v.bonusCompetenza],
-      ["Perc. passiva", String(v.percezionePassiva)],
+  // CA, iniziativa, velocità / PF, dadi vita: due righe sotto il ritratto.
+  function valoriCombattimento(v, x, w, yy) {
+    const righeValori = [
+      [["Classe Armatura", String(v.ca)], ["Iniziativa", v.iniziativa], ["Velocità", v.velocita]],
+      [["Punti Ferita", `${v.pf.attuali} / ${v.pf.massimi}${v.pf.temporanei ? ` (+${v.pf.temporanei})` : ""}`], ["Dadi Vita", v.dadiVita]],
     ];
     const gap = 6;
-    const w = (LARGHEZZA - gap * (valori.length - 1)) / valori.length;
-    const h = 42;
-    valori.forEach(([etichetta, valore], i) => {
-      const x = MARGINE + i * (w + gap);
-      riquadro(x, y, w, h);
-      const size = F.grassetto.widthOfTextAtSize(valore, 15) > w - 6 ? 11 : 15;
-      scrivi(valore, x, y - 21, { font: "grassetto", size, allinea: "centro", larghezza: w });
-      scrivi(etichetta.toUpperCase(), x, y - 35, { font: "titolo", size: 5.8, colore: C.bordeaux, allinea: "centro", larghezza: w });
-    });
-    y -= h + 14;
+    const h = 40;
+    for (const riga of righeValori) {
+      const larghezze = riga.length === 3 ? [1, 1, 1] : [1.6, 1.4];
+      const totale = larghezze.reduce((a, b) => a + b, 0);
+      let xx = x;
+      riga.forEach(([etichetta, valore], i) => {
+        const ww = ((w - gap * (riga.length - 1)) * larghezze[i]) / totale;
+        riquadro(xx, yy, ww, h);
+        const size = F.grassetto.widthOfTextAtSize(valore, 15) > ww - 6 ? 11.5 : 15;
+        scrivi(valore, xx, yy - 20, { font: "grassetto", size, allinea: "centro", larghezza: ww });
+        scrivi(etichetta.toUpperCase(), xx, yy - 33, { font: "titolo", size: 5.8, colore: C.bordeaux, allinea: "centro", larghezza: ww });
+        xx += ww + gap;
+      });
+      yy -= h + gap;
+    }
+    return yy - 8;
   }
 
   function colonnaSinistra(v, x, w) {
-    let yy = y;
+    // Il titolo sta all'altezza del bordo superiore dei riquadri accanto.
+    let yy = y - 8;
     titoloSezione("Tiri salvezza", x, yy, w);
     yy -= 17;
     v.salvezze.forEach((s) => {
@@ -216,10 +235,12 @@ export async function creaPdfSchede(schede, { pdfLib, fontkit, font, titoloDocum
       for (let i = 0; i < blocco.tabella.length; i++) {
         if (yy < yMinimo) return { y: yy, resto: { ...blocco, titolo: `${blocco.titolo} (segue)`, tabella: blocco.tabella.slice(i) } };
         const [nome, bonus, danno] = blocco.tabella[i];
-        scrivi(righe(nome, col[0] - 6, { size: 10 })[0], x, yy, { size: 10 });
+        const lineeNome = righe(nome, col[0] - 6, { size: 10 }).slice(0, 2);
+        const lineeDanno = righe(danno, col[2], { size: 10 }).slice(0, 2);
+        lineeNome.forEach((l, j) => scrivi(l, x, yy - j * 12, { size: 10 }));
         scrivi(bonus, x + col[0], yy, { font: "grassetto", size: 10 });
-        scrivi(righe(danno, col[2], { size: 10 })[0], x + col[0] + col[1], yy, { size: 10 });
-        yy -= 13.5;
+        lineeDanno.forEach((l, j) => scrivi(l, x + col[0] + col[1], yy - j * 12, { size: 10 }));
+        yy -= 13.5 + 12 * (Math.max(lineeNome.length, lineeDanno.length) - 1);
       }
       return { y: yy - 8, resto: null };
     }
@@ -264,7 +285,6 @@ export async function creaPdfSchede(schede, { pdfLib, fontkit, font, titoloDocum
       titolo: "Personalità",
       riquadri: [["Tratti", p.tratti], ["Ideali", p.ideali], ["Legami", p.legami], ["Difetti", p.difetti]],
     });
-    if (v.competenzeLinguaggi.trim()) blocchi.push({ titolo: "Competenze e linguaggi", testo: v.competenzeLinguaggi });
     return blocchi;
   }
 
@@ -341,17 +361,29 @@ export async function creaPdfSchede(schede, { pdfLib, fontkit, font, titoloDocum
   for (const { vista: v, giocatore, ritratto } of schede) {
     vistaCorrente = v;
     nuovaPagina(false);
-    await intestazione(v, giocatore, ritratto);
-    caratteristiche(v);
-    combattimento(v);
-    const wSinistra = 178;
-    const xDestra = MARGINE + wSinistra + 22;
-    const wDestra = LARGHEZZA - wSinistra - 22;
-    colonnaSinistra(v, MARGINE, wSinistra);
-    let yDestra = y;
-    const rimasti = [];
+    intestazione(v, giocatore);
+    // Tre colonne come nella scheda del sito: caratteristiche, tiri salvezza
+    // e abilità, ritratto e combattimento.
+    const wCar = 82;
+    const wCentro = 168;
+    const gap = 16;
+    const xCentro = MARGINE + wCar + gap;
+    const xDestra = xCentro + wCentro + gap;
+    const wDestra = MARGINE + LARGHEZZA - xDestra;
+    colonnaCaratteristiche(v, MARGINE, wCar);
+    const yCentro = colonnaSinistra(v, xCentro, wCentro);
+    // Sotto le abilità: competenze e linguaggi (quel che non entra va avanti).
+    const rimastiCentro = [];
+    if (v.competenzeLinguaggi.trim()) {
+      const blocco = { titolo: "Competenze e linguaggi", voci: v.competenzeLinguaggi.split("\n").filter((r) => r.trim()) };
+      const esito = disegnaBlocco(blocco, xCentro, wCentro, yCentro - 8, FONDO);
+      if (esito.resto) rimastiCentro.push(esito.resto);
+    }
+    let yDestra = await ritrattoGrande(ritratto, xDestra, wDestra);
+    yDestra = valoriCombattimento(v, xDestra, wDestra, yDestra);
+    const rimasti = [...rimastiCentro];
     for (const blocco of blocchiDestra(v)) {
-      if (rimasti.length) {
+      if (rimasti.length > rimastiCentro.length) {
         rimasti.push(blocco);
         continue;
       }
