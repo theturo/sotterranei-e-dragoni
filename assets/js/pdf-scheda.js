@@ -85,6 +85,12 @@ export async function creaPdfSchede(schede, { pdfLib, fontkit, font, titoloDocum
     pagina.drawRectangle({ x, y: yAlto - altezza, width: larghezza, height: altezza, color: riempi, borderColor: C.linea, borderWidth: 0.8 });
   }
 
+  // Rettangolo con gli angoli smussati (x, yAlto: angolo in alto a sinistra).
+  function rettangoloSmussato(x, yAlto, w, h, r, opzioni) {
+    const percorso = `M ${r} 0 H ${w - r} Q ${w} 0 ${w} ${r} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+    pagina.drawSvgPath(percorso, { x, y: yAlto, ...opzioni });
+  }
+
   function titoloSezione(testo, x, yy, larghezza) {
     scrivi(testo.toUpperCase(), x, yy, { font: "titolo", size: 8.5, colore: C.bordeaux });
     pagina.drawLine({ start: { x, y: yy - 4 }, end: { x: x + larghezza, y: yy - 4 }, thickness: 0.6, color: C.oro });
@@ -117,7 +123,7 @@ export async function creaPdfSchede(schede, { pdfLib, fontkit, font, titoloDocum
       riquadro(x, yy, w, h);
       scrivi(c.nome.toUpperCase(), x, yy - 13, { font: "titolo", size: 6.8, colore: C.bordeaux, allinea: "centro", larghezza: w });
       scrivi(c.mod, x, yy - 38, { font: "grassetto", size: 21, allinea: "centro", larghezza: w });
-      pagina.drawEllipse({ x: x + w / 2, y: yy - 52, xScale: 13, yScale: 7.5, color: C.bianco, borderColor: C.oro, borderWidth: 0.7 });
+      rettangoloSmussato(x + w / 2 - 15, yy - 44.5, 30, 15, 3, { color: C.bianco, borderColor: C.oro, borderWidth: 0.7 });
       scrivi(String(c.punteggio), x, yy - 55.5, { size: 9.5, allinea: "centro", larghezza: w });
       yy -= h + 7;
     });
