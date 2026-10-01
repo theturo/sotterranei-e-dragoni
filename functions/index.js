@@ -1,6 +1,8 @@
 // Cloud Functions di Sotterranei & Dragoni (piano Blaze).
 // - notificaNuovoIscritto: email all'admin quando qualcuno si registra ed è in
 //   attesa di approvazione.
+// - inviaNotificaPush: ogni avviso della campanella (users/{uid}/notifiche)
+//   parte anche come notifica push verso i dispositivi dell'utente.
 // - bloccaSpeseOltreSoglia: "interruttore" di sicurezza. Riceve gli avvisi del
 //   budget via Pub/Sub e, se la spesa raggiunge la soglia scelta, scollega la
 //   fatturazione dal progetto (tutti i servizi a pagamento si fermano finché
@@ -12,9 +14,12 @@ import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { defineString, defineInt, defineSecret } from "firebase-functions/params";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { getMessaging } from "firebase-admin/messaging";
 import nodemailer from "nodemailer";
 import { CloudBillingClient } from "@google-cloud/billing";
-import { registraInvio, emailNuovoIscritto, deveBloccare, idProgetto } from "./logica.js";
+import {
+  registraInvio, emailNuovoIscritto, deveBloccare, idProgetto, messaggioPush, tokenDaRimuovere, MASSIMO_DISPOSITIVI,
+} from "./logica.js";
 
 initializeApp();
 const db = getFirestore();
@@ -77,6 +82,33 @@ export const notificaNuovoIscritto = onDocumentCreated(
     logger.info("Notifica di nuovo iscritto inviata.", { uid: evento.params.uid });
   }
 );
+
+// I dispositivi si registrano dalla pagina (pannello ⚙️, vedi
+// assets/js/notifiche-push.js). Il messaggio è di soli dati: a mostrarlo è il
+// service worker del sito (sw.js, evento "push"), con titolo, testo e la
+// pagina da aprire al tocco.
+export const inviaNotificaPush = onDocumentCreated("users/{uid}/notifiche/{notificaId}", async (evento) => {
+  const messaggio = messaggioPush(evento.data?.data());
+  if (!messaggio) return;
+  const { uid, notificaId } = evento.params;
+  const dispositivi = (await db.collection(`users/${uid}/dispositivi`).get()).docs
+    .filter((d) => typeof d.get("token") === "string" && d.get("token"))
+    .sort((a, b) => (b.get("aggiornatoIl")?.toMillis?.() ?? 0) - (a.get("aggiornatoIl")?.toMillis?.() ?? 0))
+    .slice(0, MASSIMO_DISPOSITIVI);
+  if (dispositivi.length === 0) return;
+
+  const esito = await getMessaging().sendEach(dispositivi.map((d) => ({
+    token: d.get("token"),
+    data: { ...messaggio, tag: notificaId },
+    // Consegna subito anche col telefono a riposo; dopo un giorno non serve più.
+    webpush: { headers: { Urgency: "high", TTL: "86400" } },
+  })));
+  const scaduti = dispositivi.filter((_, i) => tokenDaRimuovere(esito.responses[i]?.error));
+  await Promise.all(scaduti.map((d) => d.ref.delete()));
+  logger.info("Notifica push inviata.", {
+    uid, tipo: evento.data.get("tipo"), inviate: esito.successCount, fallite: esito.failureCount, rimossi: scaduti.length,
+  });
+});
 
 // Account di servizio dedicato, l'unico con il permesso di gestire la
 // fatturazione (vedi docs/funzioni.md): le altre funzioni non lo hanno.

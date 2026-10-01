@@ -28,6 +28,8 @@ rules_version = '2';
 //   party (vedi "campagne/{id}/party").
 // - "users/{uid}/notifiche": leggibili dal destinatario (o admin), create da
 //   admin o da un DM verso un giocatore, segnabili come lette dal destinatario.
+//   Ogni notifica parte anche come notifica push verso "users/{uid}/dispositivi"
+//   (token dei dispositivi, gestiti solo dal proprietario).
 // - "personaggi/{schedaId}": una scheda per documento, con "proprietarioUid" e
 //   "campagnaId" (entrambi immutabili dopo la creazione). Sono ammessi solo i
 //   campi noti di una scheda, con tipo e dimensione controllati. Leggibile per intero
@@ -199,6 +201,19 @@ service cloud.firestore {
         allow update: if isAutenticato() && request.auth.uid == uid &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letta']);
         allow delete: if isAdmin();
+      }
+
+      // Dispositivi su cui ricevere le notifiche push (token di Firebase Cloud
+      // Messaging): ognuno gestisce solo i propri. Li legge per inviare la
+      // Cloud Function inviaNotificaPush, che toglie i token scaduti.
+      match /dispositivi/{dispositivoId} {
+        allow read, delete: if isAutenticato() && request.auth.uid == uid;
+        allow create, update: if isApprovato() && request.auth.uid == uid
+          && dispositivoId.size() <= 64
+          && request.resource.data.keys().hasOnly(['token', 'piattaforma', 'aggiornatoIl'])
+          && testoValido(request.resource.data.token, 1, 4096)
+          && testoOpzionale(request.resource.data.get('piattaforma', null), 120)
+          && request.resource.data.aggiornatoIl == request.time;
       }
     }
 

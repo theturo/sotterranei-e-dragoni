@@ -25,8 +25,10 @@ it isn't set up to onboard outside users or accept contributions at this time.
   roll or type their own initiative, the DM adds enemies (optionally with a library image),
   tracks their hit points privately and advances turns and rounds, while everyone sees the
   order, whose turn it is and a vague health status for each enemy, live.
-- **Notifications** — players get notified in-app when their character levels up, with a
-  persistent notification history.
+- **Notifications** — players get notified when their character levels up, when the DM
+  proposes dates or confirms a session and when a session starts, with a persistent
+  notification history; the same alerts can arrive as push notifications on the phone
+  (installed app) or the computer, even with the app closed.
 - **Fantasy-themed UI** — designed to feel in-keeping with the tabletop experience, and to
   work on desktop, tablet, and phone alike.
 - **Installable app** — the site can be installed on a phone (PWA): its own icon, full

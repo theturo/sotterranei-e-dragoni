@@ -33,8 +33,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Notifiche push** ("la sessione è iniziata", "sei salito di livello"),
-  sull'app installata.
 - **Esportazione e backup della scheda** (JSON o PDF).
 - **Mappe e nebbia di guerra, gestione dell'esplorazione**: il lavoro più
   grosso, da fare per ultimo. Nella pagina Sessione la mappa andrà sopra gli
@@ -90,6 +88,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   che entra rimbalzando, si ferma sul 20, il 20 si accende d'oro e il dado
   diventa l'icona con il titolo (2,5 s, un tocco la salta, versione ferma con
   "riduci animazioni").
+- Notifiche push: gli avvisi della campanella (livello, date proposte, sessione
+  confermata e il nuovo "la sessione è iniziata") arrivano anche ad app chiusa,
+  sul telefono (app installata; su iPhone da iOS 16.4) o sul computer;
+  attivabili dall'invito in dashboard o dal pannello ⚙️, al tocco aprono la
+  pagina giusta (Cloud Function `inviaNotificaPush`).
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:

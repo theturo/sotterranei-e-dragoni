@@ -5,6 +5,7 @@ import { prossimaSessione, etichettaSessione, formattaDataOra, distanzaGiorni } 
 import { montaWidgetMusica } from "../widget-musica.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "../pwa.js";
+import { statoNotifichePush, attivaNotifichePush } from "../notifiche-push.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -217,6 +218,7 @@ proteggiPagina(async (user, profilo) => {
   }
 
   mostraInvitoInstallazione();
+  mostraInvitoNotifiche(user.uid);
   veil.style.display = "none";
   contenuto.style.display = "block";
 });
@@ -243,6 +245,41 @@ function mostraInvitoInstallazione() {
     invito.hidden = true;
     try {
       localStorage.setItem(CHIAVE_INVITO_CHIUSO, "1");
+    } catch {
+      // Non salvato: ricomparirà alla prossima apertura.
+    }
+  });
+}
+
+// Invito ad attivare le notifiche push: solo nell'app installata, finché sono
+// spente e finché non lo si chiude (restano attivabili dal pannello ⚙️).
+const CHIAVE_INVITO_NOTIFICHE_CHIUSO = "sed-invito-notifiche-chiuso";
+function mostraInvitoNotifiche(uid) {
+  const invito = document.getElementById("invito-notifiche");
+  try {
+    if (localStorage.getItem(CHIAVE_INVITO_NOTIFICHE_CHIUSO) === "1") return;
+  } catch {
+    // Archivio del browser non disponibile: l'invito resta visibile.
+  }
+  if (!statoInstallazione().installata || statoNotifichePush(uid) !== "spente") return;
+  invito.hidden = false;
+  const bottone = document.getElementById("btn-attiva-notifiche");
+  bottone.addEventListener("click", async () => {
+    bottone.disabled = true;
+    try {
+      await attivaNotifichePush(uid);
+      // Attivate o rifiutate, l'invito ha fatto il suo lavoro (il pannello ⚙️ dice lo stato).
+      invito.hidden = true;
+    } catch (errore) {
+      console.error(errore);
+      invito.querySelector("p").textContent = "Non è stato possibile attivarle: riprova più tardi dal pannello ⚙️.";
+      bottone.hidden = true;
+    }
+  });
+  document.getElementById("btn-chiudi-invito-notifiche").addEventListener("click", () => {
+    invito.hidden = true;
+    try {
+      localStorage.setItem(CHIAVE_INVITO_NOTIFICHE_CHIUSO, "1");
     } catch {
       // Non salvato: ricomparirà alla prossima apertura.
     }

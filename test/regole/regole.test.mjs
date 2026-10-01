@@ -440,6 +440,32 @@ describe("Registro sessioni e appunti", () => {
     assertFails(addDoc(collection(come("p1"), "registroSessioni"), { campagnaId: "c1", numero: 9, stato: "in-corso" })));
 });
 
+describe("Dispositivi per le notifiche push", () => {
+  const dispositivo = (extra = {}) => ({ token: "tok-123", piattaforma: "Android", aggiornatoIl: serverTimestamp(), ...extra });
+
+  test("un giocatore registra il proprio dispositivo", () =>
+    assertSucceeds(setDoc(doc(come("p1"), "users/p1/dispositivi/d1"), dispositivo())));
+  test("un giocatore aggiorna il token e poi toglie il dispositivo", async () => {
+    await assertSucceeds(setDoc(doc(come("p1"), "users/p1/dispositivi/d1"), dispositivo()));
+    await assertSucceeds(setDoc(doc(come("p1"), "users/p1/dispositivi/d1"), dispositivo({ token: "tok-456" })));
+    await assertSucceeds(getDoc(doc(come("p1"), "users/p1/dispositivi/d1")));
+    await assertSucceeds(deleteDoc(doc(come("p1"), "users/p1/dispositivi/d1")));
+  });
+  test("NON si registra un dispositivo a nome di un altro", () =>
+    assertFails(setDoc(doc(come("p2"), "users/p1/dispositivi/d1"), dispositivo())));
+  test("il DM NON legge i dispositivi di un giocatore", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "users/p1/dispositivi/d1"), { token: "t" }));
+    await assertFails(getDoc(doc(come("dm"), "users/p1/dispositivi/d1")));
+  });
+  test("NON si registra un dispositivo con campi extra o token vuoto", async () => {
+    await assertFails(setDoc(doc(come("p1"), "users/p1/dispositivi/d1"), dispositivo({ extra: 1 })));
+    await assertFails(setDoc(doc(come("p1"), "users/p1/dispositivi/d1"), dispositivo({ token: "" })));
+    await assertFails(setDoc(doc(come("p1"), "users/p1/dispositivi/d1"), dispositivo({ token: "x".repeat(5000) })));
+  });
+  test("un iscritto in attesa NON registra dispositivi", () =>
+    assertFails(setDoc(doc(come("attesa"), "users/attesa/dispositivi/d1"), dispositivo())));
+});
+
 describe("Documenti tecnici delle Cloud Functions", () => {
   test("nemmeno l'admin legge sistema/* dal browser", () =>
     assertFails(getDoc(doc(come("admin"), "sistema/notificheEmail"))));
