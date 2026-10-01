@@ -1,10 +1,11 @@
 # Cloud Functions: pubblicazione e configurazione
 
-Le funzioni (`functions/`) sono due:
+Le funzioni (`functions/`) sono tre:
 
 | Funzione | Cosa fa | Si attiva |
 |---|---|---|
 | `notificaNuovoIscritto` | Invia un'email all'admin quando qualcuno si registra ed è in attesa di approvazione (massimo 10 email all'ora, contro le registrazioni in massa) | alla creazione di un documento in `users` |
+| `inviaNotificaPush` | Manda ogni avviso della campanella (passaggio di livello, date proposte, sessione confermata, sessione iniziata) come **notifica push** ai dispositivi su cui l'utente le ha attivate; toglie i dispositivi il cui token non vale più | alla creazione di un documento in `users/{uid}/notifiche` |
 | `bloccaSpeseOltreSoglia` | Se la spesa del mese raggiunge la soglia (predefinita: 10), **scollega la fatturazione** dal progetto | a ogni avviso del budget, via Pub/Sub |
 
 Girano in `europe-west1` (la regione che corrisponde al database Firestore `eur3`),
@@ -88,6 +89,10 @@ cd sotterranei-e-dragoni
 # appoggio: quest'ultimo non ha permessi sul progetto (errore 403).
 npx firebase-tools@latest login --no-localhost
 
+# Firebase Cloud Messaging, per le notifiche push (di solito è già attivo:
+# il comando non fa nulla in quel caso)
+gcloud services enable fcm.googleapis.com --project sotterranei-e-dragoni
+
 # Chiede la password per le app del punto 1 e la salva in Secret Manager
 npx firebase-tools@latest functions:secrets:set PASSWORD_APP_GMAIL --project sotterranei-e-dragoni
 
@@ -136,7 +141,8 @@ gcloud eventarc triggers list --location=eur3 --format="table(name, serviceAccou
 ```
 
 e concedere il ruolo a quegli account (sostituire `ACCOUNT` con quello mostrato
-per `notificanuovoiscritto`):
+per `notificanuovoiscritto` e `ACCOUNT_PUSH` con quello di `invianotificapush`,
+di solito lo stesso):
 
 ```sh
 gcloud run services add-iam-policy-binding bloccaspeseoltresoglia --region=europe-west1 \
@@ -145,7 +151,13 @@ gcloud run services add-iam-policy-binding bloccaspeseoltresoglia --region=europ
 
 gcloud run services add-iam-policy-binding notificanuovoiscritto --region=europe-west1 \
   --member="serviceAccount:ACCOUNT" --role="roles/run.invoker"
+
+gcloud run services add-iam-policy-binding invianotificapush --region=europe-west1 \
+  --member="serviceAccount:ACCOUNT_PUSH" --role="roles/run.invoker"
 ```
+
+Per una funzione aggiunta dopo il primo deploy (come `inviaNotificaPush`) basta
+lanciare i comandi che la riguardano.
 
 Gli eventi rimasti in sospeso nel frattempo vengono riconsegnati da soli (fino a
 circa 24 ore).
@@ -165,6 +177,14 @@ circa 24 ore).
   Se nei log compare "Invalid login", reimpostare la password per le app
   (`functions:secrets:set PASSWORD_APP_GMAIL`, senza spazi) e ripubblicare con
   `deploy --only functions:notificaNuovoIscritto`.
+- **Notifiche push**: sul telefono, nell'app installata, toccare **Attiva** nella
+  dashboard (o ⚙️ → **Attiva le notifiche**) e consentire. Poi, da un altro
+  dispositivo, il DM apre una sessione (o segnala un passaggio di livello):
+  entro pochi secondi arriva la notifica, anche ad app chiusa, e toccandola si
+  apre la pagina giusta. Nei log della funzione compare "Notifica push inviata"
+  con quante sono partite. I dispositivi registrati stanno in Firestore sotto
+  `users/{uid}/dispositivi`. Su iPhone e iPad serve iOS 16.4 o successivo e
+  l'app aggiunta alla schermata Home.
 - **Blocco spese** (senza farlo scattare davvero): pubblicare un avviso finto
   **sotto** la soglia
 

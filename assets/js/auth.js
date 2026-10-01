@@ -651,18 +651,19 @@ export async function eliminaSessioneProgrammata(campagnaId, sessioneId) {
 // già assegnati); altrimenti ne crea una nuova ad-hoc con numero progressivo.
 // Se una sessione è già in corso (doppio clic, altra scheda) non ne apre
 // un'altra: restituisce quella. Da qui in poi gli appunti scritti da chiunque
-// finiscono in questa voce. Solo admin/DM (vedi firestore.rules).
+// finiscono in questa voce. Ai membri arriva l'avviso "la sessione è
+// iniziata" (campanella e notifica push). Solo admin/DM (vedi firestore.rules).
 export async function apriSessione(campagnaId) {
   const sessioni = await elencaSessioniCampagna(campagnaId);
   const programmate = sessioni
     .filter((s) => s.stato === "programmata")
     .sort((a, b) => (a.dataProgrammata || "").localeCompare(b.dataProgrammata || ""));
 
-  return runTransaction(db, async (transazione) => {
+  const aperta = await runTransaction(db, async (transazione) => {
     const { numero: prossimo, stato } = await prenotaNumero(transazione, campagnaId, sessioni);
     if (stato.inCorso && stato.sessioneAttivaId) {
       const giaAperta = sessioni.find((s) => s.id === stato.sessioneAttivaId);
-      return { id: stato.sessioneAttivaId, numero: giaAperta?.numero ?? null };
+      return { id: stato.sessioneAttivaId, numero: giaAperta?.numero ?? null, giaAperta: true };
     }
 
     // La prima pianificata ancora tale (riletta nella transazione).
@@ -670,7 +671,7 @@ export async function apriSessione(campagnaId) {
     for (const candidata of programmate) {
       const attuale = await transazione.get(doc(db, "registroSessioni", candidata.id));
       if (attuale.exists() && attuale.data().stato === "programmata") {
-        scelta = { id: candidata.id, numero: attuale.data().numero };
+        scelta = { id: candidata.id, numero: attuale.data().numero, titolo: attuale.data().titolo || null };
         break;
       }
     }
@@ -697,8 +698,12 @@ export async function apriSessione(campagnaId) {
       { inCorso: true, sessioneAttivaId: sessioneId, ...(scelta ? {} : { ultimoNumero: numero }) },
       { merge: true }
     );
-    return { id: sessioneId, numero };
+    return { id: sessioneId, numero, titolo: scelta?.titolo ?? null };
   });
+  if (!aperta.giaAperta) {
+    await notificaMembri(campagnaId, { tipo: "sessione_iniziata", numero: aperta.numero, titolo: aperta.titolo });
+  }
+  return { id: aperta.id, numero: aperta.numero };
 }
 
 // Il DM chiude la sessione in corso: i contenuti mostrati vanno in archivio

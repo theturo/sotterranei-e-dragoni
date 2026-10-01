@@ -18,6 +18,12 @@ import { esc } from "./utils.js";
 import { formattaDataOra } from "./calendario.js";
 import { attivaDescrizioni } from "./descrizioni.js";
 import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "./pwa.js";
+import {
+  statoNotifichePush,
+  attivaNotifichePush,
+  disattivaNotifichePush,
+  riconfermaNotifichePush,
+} from "./notifiche-push.js";
 
 const HTML_MENU = `
   <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
@@ -66,6 +72,8 @@ const HTML_MODALE = `
           <button class="btn-tabella" data-apri="password" type="button">Cambia password</button>
           <button class="btn-tabella" data-apri="email" type="button">Cambia email</button>
           <button id="mu-btn-installa" class="btn-tabella" type="button" hidden>Installa l'app</button>
+          <button id="mu-btn-notifiche" class="btn-tabella" type="button" hidden>Attiva le notifiche</button>
+          <p id="mu-nota-notifiche" class="impostazioni-nota" hidden></p>
           <button id="mu-btn-logout-menu" class="btn-tabella btn-tabella-pericolo solo-telefono" type="button">Esci</button>
         </div>
       </div>
@@ -105,6 +113,9 @@ function testoNotifica(notifica) {
   if (notifica.tipo === "proposta_sessione") {
     const quante = notifica.date === 1 ? "una data" : `${esc(notifica.date)} date`;
     return `Il DM propone ${quante} per la prossima sessione${notifica.titolo ? ` (${esc(notifica.titolo)})` : ""}: <a href="calendario.html">rispondi nel calendario</a>`;
+  }
+  if (notifica.tipo === "sessione_iniziata") {
+    return `La sessione ${esc(notifica.numero)} è iniziata${notifica.titolo ? ` — ${esc(notifica.titolo)}` : ""}: <a href="sessione.html">raggiungi il tavolo</a>`;
   }
   if (notifica.tipo === "sessione_confermata") {
     return `Sessione ${esc(notifica.numero)} confermata: ${esc(formattaDataOra(notifica.data, notifica.ora))}${notifica.titolo ? ` — ${esc(notifica.titolo)}` : ""} · <a href="calendario.html">calendario</a>`;
@@ -295,6 +306,47 @@ function inizializzaImpostazioni() {
   });
 }
 
+// Notifiche push nel pannello ⚙️: un pulsante per attivarle o spegnerle su
+// questo dispositivo, oppure una nota se non si possono avere (vedi
+// notifiche-push.js).
+const NOTE_NOTIFICHE = {
+  "attive": "Su questo dispositivo ricevi gli avvisi della campanella anche ad app chiusa.",
+  "bloccate": "Le notifiche sono bloccate: riattivale dalle impostazioni del browser o del telefono per questo sito.",
+  "serve-installazione": "Su iPhone e iPad le notifiche arrivano solo all'app installata: installala e attivale da lì.",
+};
+
+function inizializzaNotifichePush(uid) {
+  const bottone = document.getElementById("mu-btn-notifiche");
+  const nota = document.getElementById("mu-nota-notifiche");
+  const aggiorna = (stato = statoNotifichePush(uid)) => {
+    bottone.hidden = stato !== "attive" && stato !== "spente";
+    bottone.textContent = stato === "attive" ? "Disattiva le notifiche" : "Attiva le notifiche";
+    nota.textContent = NOTE_NOTIFICHE[stato] || "";
+    nota.hidden = !nota.textContent;
+  };
+  aggiorna();
+  quandoCambiaInstallazione(() => aggiorna());
+  bottone.onclick = async () => {
+    bottone.disabled = true;
+    try {
+      if (statoNotifichePush(uid) === "attive") {
+        await disattivaNotifichePush(uid);
+        aggiorna();
+      } else {
+        aggiorna(await attivaNotifichePush(uid));
+      }
+    } catch (errore) {
+      console.error(errore);
+      aggiorna();
+      nota.textContent = "Non è stato possibile attivare le notifiche: riprova più tardi.";
+      nota.hidden = false;
+    } finally {
+      bottone.disabled = false;
+    }
+  };
+  riconfermaNotifichePush(uid).then(() => aggiorna());
+}
+
 // Link "Sessione" nell'header: porta alla pagina dedicata (sessione.html), non
 // più a una modale. Sempre visibile al DM/admin; a un giocatore compare SOLO
 // quando la sua campagna attiva ha una sessione segnata "in corso" — stato
@@ -346,6 +398,7 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
   document.getElementById("mu-nome-account").textContent = profilo?.nome || user.email || "";
 
   const esci = async () => {
+    await disattivaNotifichePush(user.uid).catch(() => {});
     await esciUtente();
     window.location.href = "index.html";
   };
@@ -359,6 +412,7 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
   aggiornaInstalla(statoInstallazione());
   quandoCambiaInstallazione(aggiornaInstalla);
   btnInstalla.onclick = installaApp;
+  inizializzaNotifichePush(user.uid);
 
   const btnModificaOrdine = document.getElementById("mu-btn-modifica-ordine");
   if (onModificaOrdine) {

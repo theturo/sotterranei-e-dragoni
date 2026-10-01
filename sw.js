@@ -7,13 +7,15 @@
 //   mostra "È disponibile una nuova versione" e, con "Aggiorna", manda il
 //   messaggio "attiva" (vedi assets/js/pwa.js). Altrimenti si attiva alla
 //   prossima apertura dell'app.
+// - Mostra le notifiche push (inviate dalla Cloud Function inviaNotificaPush,
+//   vedi assets/js/notifiche-push.js) e al tocco apre la pagina indicata.
 // - Le richieste a Firebase e agli altri servizi esterni non passano di qui,
 //   tranne gli script dell'SDK di Firebase (indirizzi con la versione, che
 //   non cambiano mai: si salvano alla prima richiesta).
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "b46b1b9cb9b9";
+const VERSIONE = "c82047aa3d06";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -21,6 +23,7 @@ const FILE = [
   "./assets/fonts/cinzel-700.woff2",
   "./assets/fonts/cinzel-OFL.txt",
   "./assets/icone/apple-touch-icon.png",
+  "./assets/icone/badge-96.png",
   "./assets/icone/favicon-32.png",
   "./assets/icone/favicon.svg",
   "./assets/icone/icona-192.png",
@@ -42,6 +45,7 @@ const FILE = [
   "./assets/js/intro-dado.js",
   "./assets/js/intro.js",
   "./assets/js/menu-utente.js",
+  "./assets/js/notifiche-push.js",
   "./assets/js/pagine/admin-utenti.js",
   "./assets/js/pagine/archivio.js",
   "./assets/js/pagine/attesa-approvazione.js",
@@ -159,4 +163,58 @@ self.addEventListener("fetch", (evento) => {
   }
   if (new URL(richiesta.url).origin !== self.location.origin) return;
   evento.respondWith(richiesta.mode === "navigate" ? navigazione(richiesta) : file(richiesta));
+});
+
+// ---------- Notifiche push ----------
+// Messaggi di soli dati di Firebase Cloud Messaging: { data: { titolo, testo,
+// url, tag } }. Ogni push mostra sempre una notifica (lo esigono i browser).
+
+const ICONA_NOTIFICA = "./assets/icone/icona-192.png";
+const BADGE_NOTIFICA = "./assets/icone/badge-96.png";
+
+// Solo pagine di questo sito: qualunque altro indirizzo porta alla dashboard.
+function paginaDaAprire(url) {
+  try {
+    const destinazione = new URL(url || "./dashboard.html", self.registration.scope);
+    if (destinazione.href.startsWith(self.registration.scope)) return destinazione.href;
+  } catch {
+    // Indirizzo non valido.
+  }
+  return indirizzo("./dashboard.html");
+}
+
+self.addEventListener("push", (evento) => {
+  let dati = {};
+  try {
+    const corpo = evento.data?.json() || {};
+    dati = corpo.data || corpo.notification || {};
+  } catch {
+    dati = { testo: evento.data?.text() || "" };
+  }
+  const titolo = String(dati.titolo || dati.title || "Sotterranei & Dragoni").slice(0, 120);
+  evento.waitUntil(self.registration.showNotification(titolo, {
+    body: String(dati.testo || dati.body || "").slice(0, 300),
+    icon: indirizzo(ICONA_NOTIFICA),
+    badge: indirizzo(BADGE_NOTIFICA),
+    lang: "it",
+    ...(dati.tag ? { tag: String(dati.tag) } : {}),
+    data: { url: paginaDaAprire(dati.url) },
+  }));
+});
+
+self.addEventListener("notificationclick", (evento) => {
+  evento.notification.close();
+  const url = paginaDaAprire(evento.notification.data?.url);
+  evento.waitUntil((async () => {
+    const finestre = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const stessa = finestre.find((f) => f.url === url);
+    if (stessa) return stessa.focus();
+    // Se l'app è già aperta la si porta in primo piano sulla pagina giusta.
+    const aperta = finestre.find((f) => f.url.startsWith(self.registration.scope));
+    if (aperta) {
+      const portata = await aperta.focus().catch(() => aperta);
+      if (portata.navigate) return portata.navigate(url).catch(() => self.clients.openWindow(url));
+    }
+    return self.clients.openWindow(url);
+  })());
 });
