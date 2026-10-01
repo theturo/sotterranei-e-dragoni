@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "c82047aa3d06";
+const VERSIONE = "1b5a6897e227";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -39,6 +39,8 @@ const FILE = [
   "./assets/js/descrizioni.js",
   "./assets/js/equipaggiamento-srd.js",
   "./assets/js/firebase-config.js",
+  "./assets/js/guida-personaggio-dati.js",
+  "./assets/js/guida-personaggio.js",
   "./assets/js/icone.js",
   "./assets/js/immagini.js",
   "./assets/js/incantesimi-srd.js",

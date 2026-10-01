@@ -61,11 +61,16 @@
       <div id="pannello-party" class="panel-wide">
         <p style="margin-top:0; color: var(--color-ink-soft);">
           Quando un giocatore sale di livello durante la sessione, segnalalo qui:
-          al suo prossimo accesso vedrà un avviso e potrà gestire i punti guadagnati
-          (la spesa dei punti sarà disponibile con la scheda personaggio).
+          riceverà un avviso e farà il passaggio di livello dalla propria scheda.
         </p>
         <div class="azioni-party">
           <button id="btn-livello-party" class="btn-tabella btn-tabella-evidenza">Aumento di livello party</button>
+        </div>
+        <div class="livello-partenza">
+          <label for="select-livello-partenza">Livello di partenza della campagna</label>
+          <select id="select-livello-partenza"></select>
+          <button id="btn-livello-partenza" class="btn-tabella" type="button">Porta il party a questo livello</button>
+          <p class="livello-partenza-nota">Ogni giocatore riceve i livelli che gli mancano (una sola notifica) e la guida della scheda lo accompagna nella creazione fino a quel livello.</p>
         </div>
         <div class="table-scroll">
           <table class="tabella-utenti">

@@ -21,8 +21,8 @@ rules_version = '2';
 //   (email sincronizzata, flag di verifica, ordine dei pannelli) e può SOLO
 //   consumare (-1) un credito "livelliDaSpendere", mai aggiungerne.
 // - Solo un admin può modificare ruolo/approvazione/dati di un altro utente o
-//   eliminare un account. Un DM può solo segnalare un passaggio di livello
-//   (+1 a "livello" e "livelliDaSpendere") di un giocatore.
+//   eliminare un account. Un DM può solo concedere livelli a un giocatore
+//   (lo stesso aumento a "livello" e "livelliDaSpendere").
 // - Profili utente (con le email) leggibili solo dal proprietario, dal DM e
 //   dall'admin: i giocatori vedono gli altri solo tramite il riepilogo del
 //   party (vedi "campagne/{id}/party").
@@ -188,11 +188,13 @@ service cloud.firestore {
                 && dati.livelliDaSpendere == resource.data.livelliDaSpendere - 1));
       }
 
-      // Il DM segnala un passaggio di livello: +1 a entrambi i contatori, nient'altro.
+      // Il DM concede uno o più livelli (es. il livello di partenza della
+      // campagna): lo stesso aumento a entrambi i contatori, nient'altro.
       function passaggioLivelloDM() {
+        let aumento = request.resource.data.livello - resource.data.get('livello', 0);
         return campiModificati().hasOnly(['livello', 'livelliDaSpendere'])
-          && request.resource.data.livello == resource.data.get('livello', 0) + 1
-          && request.resource.data.livelliDaSpendere == resource.data.get('livelliDaSpendere', 0) + 1;
+          && aumento >= 1 && aumento <= 19
+          && request.resource.data.livelliDaSpendere == resource.data.get('livelliDaSpendere', 0) + aumento;
       }
 
       match /notifiche/{notificaId} {

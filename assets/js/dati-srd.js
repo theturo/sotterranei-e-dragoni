@@ -295,6 +295,8 @@ export function slotIncantesimoAlLivello(classeChiave, livello) {
 // regolistico completo): al passaggio di livello vengono aggiunti in automatico
 // a "Caratteristiche e talenti". Quando è coinvolta una sottoclasse non ancora
 // scelta dal giocatore, compare come voce generica da specificare a mano.
+// I tratti di 1° livello (e le sottoclassi che si scelgono all'1°) stanno in
+// guida-personaggio-dati.js, usati dalla guida alla creazione.
 // ---------- Incantesimi conosciuti / preparati (limiti per classe) ----------
 
 // Caratteristica da incantatore per classe (usata per calcolare i preparati).
@@ -393,15 +395,17 @@ export function incantesimiPreparatiAlLivello(classeChiave, livello, punteggioCa
 
 export const TRATTI_PER_LIVELLO = {
   barbaro: {
-    2: ["Attacco Fatidico", "Percezione del Pericolo"], 3: ["Cammino Primordiale (sottoclasse)"],
+    2: ["Attacco Irruento", "Percezione del Pericolo"], 3: ["Cammino Primordiale (sottoclasse)"],
     5: ["Attacco Extra", "Movimento Veloce"], 7: ["Istinto Ferino"], 9: ["Critico Brutale (1 dado)"],
     11: ["Furia Implacabile"], 13: ["Critico Brutale (2 dadi)"], 15: ["Ira Persistente"],
     17: ["Critico Brutale (3 dadi)"], 18: ["Forza Indomabile"], 20: ["Campione Primordiale"],
   },
   bardo: {
-    2: ["Ispirazione Bardica (d8)", "Jack of All Trades"], 3: ["Collegio Bardico (sottoclasse)", "Competenza"],
-    5: ["Fonte di Ispirazione", "Ispirazione Bardica (d10)"], 10: ["Ispirazione Bardica (d12)", "Segreti Magici", "Competenza"],
-    14: ["Segreti Magici"], 18: ["Ispirazione Illimitata"], 20: ["Superiorità Ispiratrice"],
+    2: ["Factotum", "Canto di Riposo (d6)"], 3: ["Collegio Bardico (sottoclasse)", "Maestria"],
+    5: ["Ispirazione Bardica (d8)", "Fonte d'Ispirazione"], 6: ["Controfascino"], 9: ["Canto di Riposo (d8)"],
+    10: ["Ispirazione Bardica (d10)", "Segreti Magici", "Maestria"], 13: ["Canto di Riposo (d10)"],
+    14: ["Segreti Magici"], 15: ["Ispirazione Bardica (d12)"], 17: ["Canto di Riposo (d12)"],
+    18: ["Segreti Magici"], 20: ["Ispirazione Superiore"],
   },
   chierico: {
     2: ["Incanalare Divinità", "Potere del Dominio Divino"], 5: ["Distruggere non Morti (GS 1/2)"],
@@ -410,13 +414,14 @@ export const TRATTI_PER_LIVELLO = {
     17: ["Potere del Dominio Divino", "Distruggere non Morti (GS 4)"], 20: ["Intervento Divino Migliorato"],
   },
   druido: {
-    2: ["Forma Selvatica", "Circolo Druidico (sottoclasse)"], 4: ["Discepolo del Wild Shape"],
+    2: ["Forma Selvatica", "Circolo Druidico (sottoclasse)"], 4: ["Forma Selvatica migliorata (GS 1/2)"],
+    8: ["Forma Selvatica migliorata (GS 1)"],
     18: ["Corpo Senza Tempo"], 20: ["Arcidruido"],
   },
   guerriero: {
-    2: ["Recupero Energie", "Stile di Combattimento"], 3: ["Archetipo Marziale (sottoclasse)"],
+    2: ["Azione Impetuosa"], 3: ["Archetipo Marziale (sottoclasse)"],
     5: ["Attacco Extra"], 9: ["Indomito"], 11: ["Attacco Extra (2)"], 13: ["Indomito (2 usi)"],
-    17: ["Attacco Extra (3)", "Indomito (3 usi)"],
+    17: ["Azione Impetuosa (2 usi)", "Indomito (3 usi)"], 20: ["Attacco Extra (3)"],
   },
   ladro: {
     2: ["Azione Scaltra"], 3: ["Archetipo Ladresco (sottoclasse)"], 5: ["Elusione"],
@@ -434,21 +439,21 @@ export const TRATTI_PER_LIVELLO = {
     18: ["Corpo Vuoto"], 20: ["Perfezione dell'Essere"],
   },
   paladino: {
-    2: ["Punizione Divina", "Sentire il Male e il Bene"], 3: ["Giuramento Sacro (sottoclasse)", "Incanalare Divinità", "Salute Divina"],
+    2: ["Stile di Combattimento", "Incantesimi", "Punizione Divina"], 3: ["Giuramento Sacro (sottoclasse)", "Incanalare Divinità", "Salute Divina"],
     5: ["Attacco Extra"], 6: ["Aura di Protezione"], 10: ["Aura di Coraggio"], 11: ["Colpi Radiosi"],
     14: ["Tocco Purificatore"], 18: ["Aura Migliorata"], 20: ["Potere del Giuramento Sacro (finale)"],
   },
   ranger: {
-    2: ["Stile di Combattimento", "Magia del Ranger"], 3: ["Archetipo del Ranger (sottoclasse)", "Nemico Prescelto", "Esploratore Nato"],
+    2: ["Stile di Combattimento", "Incantesimi"], 3: ["Archetipo del Ranger (sottoclasse)", "Consapevolezza Primordiale"],
     5: ["Attacco Extra"], 8: ["Andatura Terrestre"], 10: ["Occultarsi nella Natura"],
     14: ["Sparire"], 18: ["Sensi Selvaggi"], 20: ["Massacro di Mostri"],
   },
   stregone: {
-    2: ["Metamagia (1 opzione)"], 3: ["Origine Stregonesca (sottoclasse)"], 10: ["Metamagia (2 opzioni)"],
-    17: ["Metamagia (3 opzioni)"], 20: ["Restauro Stregonesco"],
+    2: ["Fonte della Magia (punti stregoneria)"], 3: ["Metamagia (2 opzioni)"], 10: ["Metamagia (3 opzioni)"],
+    17: ["Metamagia (4 opzioni)"], 20: ["Ristoro Stregonesco"],
   },
   warlock: {
-    2: ["Invocazioni Occulte"], 3: ["Patto Occulto (sottoclasse)"], 7: ["Invocazioni Occulte aggiuntive"],
+    2: ["Suppliche Occulte (2)"], 3: ["Dono del Patto"], 7: ["Invocazioni Occulte aggiuntive"],
     9: ["Recupero Magico"], 11: ["Arcanum Mistico (6° livello)"], 13: ["Arcanum Mistico (7° livello)"],
     15: ["Arcanum Mistico (8° livello)"], 17: ["Arcanum Mistico (9° livello)"], 20: ["Padronanza del Patto"],
   },

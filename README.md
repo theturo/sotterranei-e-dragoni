@@ -25,6 +25,10 @@ it isn't set up to onboard outside users or accept contributions at this time.
   roll or type their own initiative, the DM adds enemies (optionally with a library image),
   tracks their hit points privately and advances turns and rounds, while everyone sees the
   order, whose turn it is and a vague health status for each enemy, live.
+- **Guided character creation** — on a new sheet a step-by-step guide, tailored to class
+  and race, walks the player through background, skills, class features, equipment,
+  spells and level-ups up to the campaign's starting level, which the Dungeon Master sets
+  for the whole party in one click.
 - **Notifications** — players get notified when their character levels up, when the DM
   proposes dates or confirms a session and when a session starts, with a persistent
   notification history; the same alerts can arrive as push notifications on the phone

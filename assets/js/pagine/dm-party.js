@@ -6,6 +6,7 @@ import {
   elencaMembriCampagna,
   segnalaLivelloSu,
   ottieniSchedaAttiva,
+  impostaLivelloPartenza,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
@@ -102,6 +103,7 @@ proteggiPaginaDM(async (user, profilo) => {
     return;
   }
   campagnaIdCorrente = campagna.id;
+  preparaLivelloPartenza(campagna.livelloPartenza || 1);
 
   try {
     const giocatori = await elencaMembriCampagna(campagnaIdCorrente);
@@ -177,3 +179,40 @@ document.getElementById("btn-livello-party").addEventListener("click", async (ev
   bottoneParty.disabled = false;
   corpoTabella.querySelectorAll("[data-uid]").forEach((b) => (b.disabled = false));
 });
+
+// Livello di partenza: porta tutto il party al livello scelto (vedi
+// impostaLivelloPartenza in auth.js) e lo ricorda per la guida della scheda.
+function preparaLivelloPartenza(attuale) {
+  const select = document.getElementById("select-livello-partenza");
+  select.innerHTML = Array.from({ length: 20 }, (_, i) => i + 1)
+    .map((n) => `<option value="${n}"${n === attuale ? " selected" : ""}>Livello ${n}</option>`)
+    .join("");
+  const bottone = document.getElementById("btn-livello-partenza");
+  bottone.addEventListener("click", async () => {
+    const livello = Number(select.value);
+    if (!confirm(`Portare tutto il party al livello ${livello}? Chi è sotto riceverà i livelli mancanti da spendere nella scheda.`)) return;
+    bottone.disabled = true;
+    try {
+      const esiti = await impostaLivelloPartenza(campagnaIdCorrente, livello);
+      const falliti = esiti.filter((e) => e.errore).length;
+      const aggiornati = esiti.filter((e) => e.concessi > 0);
+      aggiornati.forEach(({ uid, concessi }) => {
+        const cella = corpoTabella.querySelector(`tr[data-uid="${CSS.escape(uid)}"] .cella-livello`);
+        if (cella) cella.textContent = String(Number(cella.textContent) + concessi);
+      });
+      mostraToast(
+        falliti
+          ? `Livello di partenza salvato; ${falliti} giocatori non aggiornati.`
+          : aggiornati.length
+            ? `Livello ${livello}: livelli concessi a ${aggiornati.length} giocatori.`
+            : `Livello di partenza ${livello}: tutti i giocatori ci sono già.`,
+        falliti > 0
+      );
+    } catch (errore) {
+      console.error(errore);
+      mostraToast("Impossibile impostare il livello di partenza.", true);
+    } finally {
+      bottone.disabled = false;
+    }
+  });
+}
