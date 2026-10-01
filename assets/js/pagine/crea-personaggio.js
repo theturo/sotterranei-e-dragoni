@@ -301,7 +301,7 @@ btnCrea.addEventListener("click", async () => {
       tiriSalvezzaMorte: { successi: [false, false, false], fallimenti: [false, false, false] },
     });
 
-    window.location.href = `scheda-personaggio.html?id=${id}`;
+    window.location.href = `scheda-personaggio.html?id=${id}&guida=1`;
   } catch (errore) {
     mostraErrore("Impossibile creare il personaggio. Riprova.");
     console.error(errore);

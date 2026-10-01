@@ -10,6 +10,9 @@ indicativo. Si aggiorna man mano che si completano.
   si può cancellare dal browser), che elimini anche profilo e personaggi.
 - **Selettore della campagna** per il DM (oggi si lavora sempre su quella
   "attiva").
+- **Eliminazione delle sessioni di prova**: poter cancellare le sessioni
+  aperte durante i test (anche quelle chiuse, con appunti e tiri), non solo
+  quelle programmate.
 - **Pulizia del codice** e piccole rifiniture dell'interfaccia.
 
 ## Grafica
@@ -33,11 +36,28 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Esportazione e backup della scheda** (JSON o PDF).
+- **Dashboard e pannello di controllo della campagna da ridisegnare**: UI e
+  usabilità della gestione della campagna per il DM.
+- **Notifiche, seconda parte**:
+  - avviso "Tocca a te" quando arriva il proprio turno nel tracker di
+    combattimento;
+  - scelta dei tipi di avviso da ricevere come push;
+  - fascia "non disturbare", che rispetti comunque le impostazioni del
+    telefono (modalità silenziosa / full immersion).
+- **Creazione di PNG e nemici per il DM**: schede rapide, con la possibilità di
+  partire dai mostri del materiale gratuito di Wizards of the Coast (SRD 5.1,
+  licenza Creative Commons), come già fatto per incantesimi ed equipaggiamento.
+- **Esportazione e backup della scheda** (prossimo lavoro): PDF in stile app,
+  leggibile anche stampato in bianco e nero, e backup JSON completo; il
+  giocatore esporta le proprie schede, il DM tutto il party in un colpo.
 - **Mappe e nebbia di guerra, gestione dell'esplorazione**: il lavoro più
   grosso, da fare per ultimo. Nella pagina Sessione la mappa andrà sopra gli
   appunti, con una scheda di dimensioni simili (anche sul telefono, prima
   degli appunti).
+  - **Segnalini sulla mappa** (da valutare insieme, sul modello di Roll20):
+    un livello sopra la mappa con le icone di personaggi e nemici, da muovere
+    per il posizionamento preciso in combattimento (griglia, distanze),
+    collegato al tracker di iniziativa.
 
 ## Altro
 
@@ -93,6 +113,14 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   sul telefono (app installata; su iPhone da iOS 16.4) o sul computer;
   attivabili dall'invito in dashboard o dal pannello ⚙️, al tocco aprono la
   pagina giusta (Cloud Function `inviaNotificaPush`).
+- Guida alla creazione del personaggio nella scheda: pannello con i passi
+  (background, abilità, allineamento, privilegi, equipaggiamento, competenze,
+  personalità, passaggi di livello, sottoclasse, incantesimi) che si spuntano
+  da soli, fumetti su misura per classe e razza, azioni rapide (aggiungi i
+  privilegi, scrivi le competenze, imposta la sottoclasse, sali di livello).
+  Il DM sceglie il livello di partenza della campagna dalla pagina del party e
+  i livelli mancanti arrivano a tutti con un solo avviso. Corretti i tratti di
+  classe dei livelli 2 e 3 (e i dadi del Bardo) secondo il SRD.
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:

@@ -5732,3 +5732,322 @@ table.tabella-punteggi select {
   text-transform: uppercase;
   color: rgba(230, 211, 163, 0.62);
 }
+
+/* ---------- Guida alla creazione del personaggio (guida-personaggio.js) ---------- */
+
+.btn-guida {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-ink);
+}
+
+.btn-guida[hidden] {
+  display: none;
+}
+
+.guida-pannello {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 180; /* sotto le finestre modali (200), es. il passaggio di livello */
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  max-height: min(70vh, 560px);
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-dark-2);
+  color: var(--color-parchment);
+  box-shadow: var(--shadow-deep);
+}
+
+.guida-pannello[hidden] {
+  display: none;
+}
+
+.guida-testata {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.35);
+}
+
+.guida-pannello.ridotto .guida-testata {
+  border-bottom: none;
+}
+
+.guida-titolo {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.guida-avanzamento {
+  color: var(--color-parchment);
+  font-family: var(--font-body);
+}
+
+.guida-chiudi {
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.guida-chiudi:hover,
+.guida-chiudi:focus-visible {
+  opacity: 1;
+}
+
+.guida-corpo {
+  overflow-y: auto;
+  padding: 8px 10px 12px;
+}
+
+.guida-pannello.ridotto .guida-corpo {
+  display: none;
+}
+
+.guida-obiettivo {
+  margin: 0 4px 8px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.guida-passi {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guida-passi button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.guida-passi button:hover,
+.guida-passi button:focus-visible {
+  background: rgba(201, 162, 39, 0.12);
+}
+
+.guida-passi button.aperto {
+  border-color: var(--color-gold);
+}
+
+.guida-passi button.fatto {
+  opacity: 0.7;
+}
+
+.guida-passi button.prossimo {
+  color: var(--color-gold-bright);
+}
+
+.guida-segno {
+  flex-shrink: 0;
+  width: 1.2em;
+  text-align: center;
+  color: var(--color-gold-bright);
+}
+
+.guida-passi i {
+  opacity: 0.7;
+  font-size: 0.85em;
+}
+
+.guida-completa {
+  margin: 10px 4px 0;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+}
+
+.guida-fumetto {
+  position: absolute;
+  z-index: 190;
+  padding: 12px 14px;
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-dark-2);
+  color: var(--color-parchment);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: var(--shadow-deep);
+}
+
+.guida-fumetto[hidden] {
+  display: none;
+}
+
+.guida-fumetto::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: var(--freccia, 24px);
+  width: 14px;
+  height: 14px;
+  border-top: 1px solid var(--color-gold);
+  border-left: 1px solid var(--color-gold);
+  background: var(--color-bg-dark-2);
+  transform: rotate(45deg);
+}
+
+.guida-fumetto-testata {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.guida-fumetto h3 {
+  margin: 4px 0 6px;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+}
+
+.guida-fumetto .guida-chiudi {
+  margin: -8px -10px 0 0;
+}
+
+.guida-fumetto p {
+  margin: 0 0 8px;
+}
+
+.guida-elenco {
+  margin: 0 0 8px;
+  padding-left: 1.2em;
+}
+
+.guida-elenco li {
+  margin-bottom: 3px;
+}
+
+.guida-fatto,
+.guida-conteggio b {
+  color: var(--color-gold-bright);
+}
+
+.guida-fumetto .btn-tabella {
+  border-color: var(--color-gold);
+  background: transparent;
+  color: var(--color-gold-bright);
+}
+
+.guida-fumetto .btn-tabella:hover,
+.guida-fumetto .btn-tabella:focus-visible {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+.guida-fumetto .btn-tabella-evidenza {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-ink);
+}
+
+.guida-sottoclasse {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.guida-sottoclasse label {
+  width: 100%;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.guida-sottoclasse input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-gold);
+  border-radius: 6px;
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+.guida-fumetto-azioni {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.guida-evidenziata {
+  outline: 3px solid var(--color-gold-bright);
+  outline-offset: 4px;
+  border-radius: 6px;
+  scroll-margin-top: 16px;
+  animation: guida-pulsa 1.6s ease-in-out 2;
+}
+
+@keyframes guida-pulsa {
+  50% { outline-color: rgba(232, 198, 90, 0.35); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guida-evidenziata {
+    animation: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .guida-pannello {
+    right: 8px;
+    left: 8px;
+    bottom: 8px;
+    width: auto;
+    max-height: 60vh;
+  }
+}
+
+.livello-partenza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 18px;
+}
+
+.livello-partenza label {
+  font-weight: 600;
+}
+
+.livello-partenza select {
+  min-height: 40px;
+  padding: 6px 10px;
+}
+
+.livello-partenza-nota {
+  width: 100%;
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-ink-soft);
+}

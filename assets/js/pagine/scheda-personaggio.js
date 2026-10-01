@@ -2,6 +2,7 @@
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 import {
   proteggiPagina,
+  ottieniCampagna,
   ottieniCampagnaCorrente,
   ottieniScheda,
   ottieniSchedaAttiva,
@@ -74,6 +75,8 @@ import {
 } from "../dati-srd.js";
 import { ARMI, ARMATURE, cercaEquipaggiamento, ETICHETTE_CATEGORIA } from "../equipaggiamento-srd.js";
 import { cercaIncantesimi, ottieniIncantesimo, TIRI_INCANTESIMI } from "../incantesimi-srd.js";
+import { montaGuida } from "../guida-personaggio.js";
+import { talentiConSottoclasse } from "../guida-personaggio-dati.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -82,6 +85,7 @@ let uidCorrente = null;
 let scheda = null;
 let soloLettura = false;
 let profiloCorrente = null;
+let guida = null;
 
 function formattaVelocita(velocita) {
   return `${String(velocita).replace(".", ",")} m`;
@@ -569,6 +573,7 @@ document.getElementById("btn-conferma-livello").addEventListener("click", async 
     renderPrivilegi();
     renderAttacchi();
     renderPulsanteLivello();
+    guida?.aggiorna();
   } catch (errore) {
     console.error(errore);
     mostraToastLivello("Impossibile salvare il livello. Riprova.");
@@ -1773,7 +1778,46 @@ proteggiPagina(async (user, profilo) => {
 
   veil.style.display = "none";
   contenuto.style.display = "block";
+  if (!soloLettura) avviaGuida();
 });
+
+// ---------- Guida alla creazione (guida-personaggio.js) ----------
+// Parte da sola sulla scheda appena creata (?guida=1) e quando la campagna
+// parte da un livello più alto di quello del personaggio; altrimenti resta il
+// pulsante "Guida" nell'intestazione.
+async function avviaGuida() {
+  let livelloPartenza = 1;
+  try {
+    livelloPartenza = (await ottieniCampagna(scheda.campagnaId))?.livelloPartenza || 1;
+  } catch (errore) {
+    console.error(errore);
+  }
+  const crediti = () => profiloCorrente?.livelliDaSpendere || 0;
+  const livelloObiettivo = () => Math.max(livelloPartenza, (scheda.livello || 1) + crediti());
+  const salvaETalenti = async (talenti) => {
+    scheda.talenti = talenti;
+    renderTalenti();
+    await salvaTalenti();
+  };
+  guida = montaGuida({
+    scheda: () => scheda,
+    crediti,
+    livelloObiettivo,
+    apri: new URLSearchParams(window.location.search).get("guida") === "1",
+    apriSeIncompleta: livelloObiettivo() > (scheda.livello || 1),
+    pulsante: document.getElementById("btn-guida"),
+    azioni: {
+      aggiungiTalenti: (lista) => salvaETalenti([...(scheda.talenti || []), ...lista]),
+      impostaSottoclasse: (nome) => salvaETalenti(talentiConSottoclasse(scheda, nome)),
+      compilaCompetenze: async (testo) => {
+        scheda.competenzeLinguaggi = testo;
+        document.getElementById("competenze-linguaggi").value = testo;
+        await aggiornaScheda(scheda.id, { competenzeLinguaggi: testo });
+      },
+      apriLivello: apriModalLivello,
+    },
+  });
+}
 
 // PF attuali/temporanei: salva al cambio di valore (blur o invio).
 async function salvaHpDaInput() {

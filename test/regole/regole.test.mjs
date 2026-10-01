@@ -99,8 +99,18 @@ describe("Registrazione e profili", () => {
     assertSucceeds(updateDoc(doc(come("admin"), "users/attesa"), { approvato: true })));
   test("il DM segnala un passaggio di livello (+1)", () =>
     assertSucceeds(updateDoc(doc(come("dm"), "users/p2"), { livello: increment(1), livelliDaSpendere: increment(1) })));
-  test("il DM NON regala più livelli in un colpo", () =>
-    assertFails(updateDoc(doc(come("dm"), "users/p2"), { livello: 5, livelliDaSpendere: 4 })));
+  test("il DM concede più livelli in un colpo (livello di partenza)", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "users/p2"), { livello: increment(2), livelliDaSpendere: increment(2) })));
+  test("il DM NON concede livelli e crediti diversi", () =>
+    assertFails(updateDoc(doc(come("dm"), "users/p2"), { livello: 5, livelliDaSpendere: 3 })));
+  test("il DM NON toglie livelli", () =>
+    assertFails(updateDoc(doc(come("dm"), "users/p1"), { livello: increment(-1), livelliDaSpendere: increment(-1) })));
+  test("il DM NON concede livelli all'admin", () =>
+    assertFails(updateDoc(doc(come("dm"), "users/admin"), { livello: increment(1), livelliDaSpendere: increment(1) })));
+  test("il DM imposta il livello di partenza della campagna", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1"), { livelloPartenza: 3 })));
+  test("un giocatore NON imposta il livello di partenza", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1"), { livelloPartenza: 3 })));
 
   test("un giocatore NON legge il profilo (e l'email) di un altro", () =>
     assertFails(getDoc(doc(come("p1"), "users/p2"))));

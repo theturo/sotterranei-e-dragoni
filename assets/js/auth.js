@@ -214,17 +214,18 @@ export async function applicaPassaggioLivello(scheda, campi) {
 
 // Il DM segnala che un giocatore è salito di livello (solo DM/admin, vedi firestore.rules).
 // livelloAttuale è il livello mostrato in UI prima dell'aggiornamento, usato solo
-// per scrivere un testo leggibile nella notifica (es. "2 → 3").
-export async function segnalaLivelloSu(uid, livelloAttuale) {
+// per scrivere un testo leggibile nella notifica (es. "2 → 3"); quanti è il
+// numero di livelli concessi in una volta (es. livello di partenza della campagna).
+export async function segnalaLivelloSu(uid, livelloAttuale, quanti = 1) {
   const livelloPrecedente = livelloAttuale ?? 1;
   await updateDoc(doc(db, "users", uid), {
-    livello: increment(1),
-    livelliDaSpendere: increment(1),
+    livello: increment(quanti),
+    livelliDaSpendere: increment(quanti),
   });
   await addDoc(collection(db, "users", uid, "notifiche"), {
     tipo: "livello_su",
     livelloPrecedente,
-    livelloNuovo: livelloPrecedente + 1,
+    livelloNuovo: livelloPrecedente + quanti,
     letta: false,
     creataIl: serverTimestamp(),
   });
@@ -329,6 +330,34 @@ export async function ottieniCampagnaCorrente(uid, ruolo) {
   const snapshot = await getDocs(riferimento);
   const attiva = snapshot.docs.find((documento) => documento.data().stato === "attiva");
   return attiva ? { id: attiva.id, ...attiva.data() } : null;
+}
+
+export async function ottieniCampagna(campagnaId) {
+  const snapshot = await getDoc(doc(db, "campagne", campagnaId));
+  return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+}
+
+// Livello di partenza: il DM porta tutto il party al livello scelto. A ogni
+// membro arrivano, con un solo avviso, i crediti che mancano rispetto al
+// livello della scheda attiva più i crediti ancora da spendere; chi è già a
+// quel livello (o oltre) non riceve nulla. Il livello resta sulla campagna
+// ("livelloPartenza") per la guida alla creazione dei personaggi.
+// Restituisce [{ uid, nome, concessi }] oppure { uid, nome, errore }.
+export async function impostaLivelloPartenza(campagnaId, livello) {
+  await updateDoc(doc(db, "campagne", campagnaId), { livelloPartenza: livello });
+  const membri = await elencaMembriCampagna(campagnaId);
+  return Promise.all(membri.map(async (membro) => {
+    try {
+      const scheda = await ottieniSchedaAttiva(membro.uid, campagnaId);
+      const raggiunto = (scheda?.livello || 1) + (membro.livelliDaSpendere || 0);
+      const concessi = Math.max(0, livello - raggiunto);
+      if (concessi > 0) await segnalaLivelloSu(membro.uid, raggiunto, concessi);
+      return { uid: membro.uid, nome: membro.nome, concessi };
+    } catch (errore) {
+      console.error(errore);
+      return { uid: membro.uid, nome: membro.nome, errore };
+    }
+  }));
 }
 
 export async function aggiornaCampagna(campagnaId, campi) {
