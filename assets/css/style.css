@@ -2409,6 +2409,49 @@ table.tabella-punteggi select {
   margin-bottom: 12px;
 }
 
+.registro-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.registro-selezione {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.registro-selezione[hidden] {
+  display: none;
+}
+
+.registro-riga {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.registro-riga > .registro-sessione-voce {
+  flex: 1;
+  min-width: 0;
+}
+
+.registro-casella {
+  display: none;
+  padding-top: 12px;
+}
+
+.in-selezione .registro-casella {
+  display: block;
+}
+
+.registro-casella input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-burgundy);
+}
+
 .registro-sessione-voce summary {
   cursor: pointer;
   font-family: var(--font-heading);
@@ -6078,4 +6121,57 @@ table.tabella-punteggi select {
   font-size: 0.88rem;
   color: var(--color-ink-soft);
   text-align: center;
+}
+
+.azioni-utente {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.azioni-campagna {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ---------- Selettore della campagna (menu-utente.js) ---------- */
+
+.selettore-campagna {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 22px;
+}
+
+.selettore-campagna[hidden],
+.selettore-campagna-impostazioni[hidden] {
+  display: none;
+}
+
+.selettore-campagna label {
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.select-campagna {
+  min-height: 42px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-gold);
+  border-radius: 8px;
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+
+.selettore-campagna-impostazioni {
+  margin-top: 14px;
+  text-align: left;
 }

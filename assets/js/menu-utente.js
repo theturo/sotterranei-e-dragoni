@@ -13,6 +13,9 @@ import {
   ROLES,
   ottieniStatoSessione,
   ottieniCampagnaCorrente,
+  elencaCampagneAttive,
+  elencaCampagneDMConTitolo,
+  scegliCampagna,
 } from "./auth.js";
 import { esc } from "./utils.js";
 import { formattaDataOra } from "./calendario.js";
@@ -68,6 +71,10 @@ const HTML_MODALE = `
       <div id="mu-schermata-scelta" class="impostazioni-schermata">
         <h2>Impostazioni account</h2>
         <p class="impostazioni-account solo-telefono"><span id="mu-nome-account"></span> <span id="mu-ruolo-account" class="role-badge"></span></p>
+        <div class="field selettore-campagna-impostazioni" hidden>
+          <label for="mu-select-campagna">Campagna</label>
+          <select id="mu-select-campagna" class="select-campagna"></select>
+        </div>
         <div class="impostazioni-opzioni">
           <button class="btn-tabella" data-apri="password" type="button">Cambia password</button>
           <button class="btn-tabella" data-apri="email" type="button">Cambia email</button>
@@ -347,6 +354,33 @@ function inizializzaNotifichePush(uid) {
   riconfermaNotifichePush(uid).then(() => aggiorna());
 }
 
+// Selettore della campagna: compare solo a chi ha più di una campagna attiva
+// (DM con più gruppi, giocatore in più tavoli). La scelta resta in questo
+// browser e la pagina si ricarica sulla campagna scelta.
+let campagneAttive = null;
+async function caricaCampagneAttive(uid, ruolo) {
+  if (!campagneAttive) {
+    // Il DM vede il titolo vero anche delle campagne con titolo provvisorio.
+    campagneAttive = ruolo === ROLES.PLAYER
+      ? elencaCampagneAttive(uid, ruolo)
+      : elencaCampagneDMConTitolo(uid).then((tutte) => tutte.filter((c) => c.stato === "attiva"));
+  }
+  return campagneAttive;
+}
+
+export async function riempiSelettoreCampagna(select, uid, ruolo) {
+  const [attive, corrente] = await Promise.all([caricaCampagneAttive(uid, ruolo), ottieniCampagnaCorrente(uid, ruolo)]);
+  if (attive.length < 2) return false;
+  select.innerHTML = attive
+    .map((c, i) => `<option value="${esc(c.id)}"${c.id === corrente?.id ? " selected" : ""}>${esc(c.titolo || `Campagna ${i + 1} (titolo ancora segreto)`)}</option>`)
+    .join("");
+  select.onchange = () => {
+    scegliCampagna(uid, select.value);
+    window.location.reload();
+  };
+  return true;
+}
+
 // Link "Sessione" nell'header: porta alla pagina dedicata (sessione.html), non
 // più a una modale. Sempre visibile al DM/admin; a un giocatore compare SOLO
 // quando la sua campagna attiva ha una sessione segnata "in corso" — stato
@@ -427,6 +461,12 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
       onModificaOrdine(attivo);
     });
   }
+
+  riempiSelettoreCampagna(document.getElementById("mu-select-campagna"), user.uid, ruolo)
+    .then((mostra) => {
+      document.querySelector(".selettore-campagna-impostazioni").hidden = !mostra;
+    })
+    .catch((errore) => console.error(errore));
 
   await inizializzaLinkSessione(user.uid, ruolo);
 

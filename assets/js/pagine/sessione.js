@@ -10,6 +10,7 @@ import {
   aggiungiAppunto,
   ascoltaAppunti,
   elencaRegistroSessioni,
+  eliminaSessioni,
   elencaAppuntiSessione,
   elencaSessioniProgrammate,
   rigeneraRiepiloghiParty,
@@ -36,7 +37,7 @@ import {
 import { tira, testoTiro } from "../dadi.js";
 import { oggiIso, formattaDataOra, etichettaSessione } from "../calendario.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc, creaScheletro } from "../utils.js";
+import { esc, creaScheletro, mostraAttesa } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK, applicaVariazionePf } from "../dati-srd.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "../condizioni.js";
@@ -969,12 +970,75 @@ function rigaSessioneProgrammata(sessione) {
     ? sessione.dataProgrammata.split("-").reverse().join("/")
     : "";
   div.innerHTML = `<p style="margin:0; padding:10px 0;">Sessione ${esc(sessione.numero)} — programmata per il ${esc(dataFormattata)}${sessione.titolo ? ` (${esc(sessione.titolo)})` : ""}</p>`;
-  return div;
+  return conSelezione(div, sessione);
 }
 
-document.getElementById("btn-apri-registro").addEventListener("click", async () => {
+// Eliminazione delle sessioni (solo DM/admin): in modalità selezione ogni
+// voce del registro ha una casella; "Elimina selezionate" chiede conferma.
+function conSelezione(voce, sessione) {
+  if (!puoModerare) return voce;
+  const riga = document.createElement("div");
+  riga.className = "registro-riga";
+  const etichetta = document.createElement("label");
+  etichetta.className = "registro-casella";
+  etichetta.innerHTML = `<input type="checkbox" data-sessione="${esc(sessione.id)}" data-numero="${esc(sessione.numero ?? "")}" /><span class="sr-only">Seleziona la sessione ${esc(sessione.numero)}</span>`;
+  riga.append(etichetta, voce);
+  return riga;
+}
+
+const listaRegistro = document.getElementById("lista-registro");
+const selezionate = () => Array.from(listaRegistro.querySelectorAll("input[data-sessione]:checked"));
+
+function modalitaSelezione(attiva) {
+  listaRegistro.classList.toggle("in-selezione", attiva);
+  document.getElementById("btn-seleziona-sessioni").hidden = attiva;
+  document.getElementById("registro-selezione").hidden = !attiva;
+  if (!attiva) listaRegistro.querySelectorAll("input[data-sessione]").forEach((c) => (c.checked = false));
+  aggiornaSelezione();
+}
+
+function aggiornaSelezione() {
+  const n = selezionate().length;
+  const bottone = document.getElementById("btn-elimina-selezionate");
+  bottone.disabled = n === 0;
+  bottone.textContent = n ? `Elimina selezionate (${n})` : "Elimina selezionate";
+}
+
+listaRegistro.addEventListener("change", (evento) => {
+  if (evento.target.matches("input[data-sessione]")) aggiornaSelezione();
+});
+document.getElementById("btn-seleziona-sessioni").addEventListener("click", () => modalitaSelezione(true));
+document.getElementById("btn-annulla-selezione").addEventListener("click", () => modalitaSelezione(false));
+document.getElementById("btn-elimina-selezionate").addEventListener("click", async (evento) => {
+  const caselle = selezionate();
+  if (caselle.length === 0) return;
+  const numeri = caselle.map((c) => c.dataset.numero).filter(Boolean).join(", ");
+  const domanda = `Eliminare ${caselle.length === 1 ? "la sessione" : `${caselle.length} sessioni`}${numeri ? ` (n. ${numeri})` : ""} con tutti i loro appunti e tiri? Non si può annullare.`;
+  if (!confirm(domanda)) return;
+  const bottone = evento.currentTarget;
+  bottone.disabled = true;
+  mostraAttesa(bottone, "Eliminazione…");
+  try {
+    await eliminaSessioni(campagnaIdCorrente, caselle.map((c) => c.dataset.sessione));
+    mostraAvvisoContenuto(caselle.length === 1 ? "Sessione eliminata." : `${caselle.length} sessioni eliminate.`);
+    modalitaSelezione(false);
+    await caricaRegistro();
+  } catch (errore) {
+    console.error(errore);
+    mostraAvvisoContenuto("Impossibile eliminare le sessioni.", true);
+    aggiornaSelezione();
+  }
+});
+
+document.getElementById("btn-apri-registro").addEventListener("click", () => {
   modaleRegistro.style.display = "flex";
-  const lista = document.getElementById("lista-registro");
+  document.getElementById("registro-azioni-dm").hidden = !puoModerare;
+  modalitaSelezione(false);
+  caricaRegistro();
+});
+
+async function caricaRegistro() {
+  const lista = listaRegistro;
   const vuoto = document.getElementById("registro-vuoto");
   lista.replaceChildren(creaScheletro(3));
   vuoto.hidden = true;
@@ -1015,14 +1079,16 @@ document.getElementById("btn-apri-registro").addEventListener("click", async () 
           corpo.innerHTML = '<p class="scheda-testo-libero">Impossibile caricare gli appunti.</p>';
         }
       });
-      lista.appendChild(dettagli);
+      lista.appendChild(conSelezione(dettagli, sessione));
     });
   } catch (errore) {
     console.error(errore);
     lista.replaceChildren();
     mostraAvvisoContenuto("Impossibile caricare il registro.", true);
+  } finally {
+    document.getElementById("btn-seleziona-sessioni").disabled = !lista.querySelector("input[data-sessione]");
   }
-});
+}
 
 document.getElementById("chiudi-registro").addEventListener("click", () => {
   modaleRegistro.style.display = "none";

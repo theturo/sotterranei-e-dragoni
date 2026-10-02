@@ -444,8 +444,16 @@ describe("Registro sessioni e appunti", () => {
     assertSucceeds(deleteDoc(doc(come("dm"), "registroSessioni/r1/appunti/a1"))));
   test("il DM annulla una sessione programmata", () =>
     assertSucceeds(deleteDoc(doc(come("dm"), "registroSessioni/r2"))));
-  test("il DM NON cancella una sessione chiusa", () =>
-    assertFails(deleteDoc(doc(come("dm"), "registroSessioni/r0"))));
+  test("il DM della campagna elimina una sessione chiusa (es. di prova)", () =>
+    assertSucceeds(deleteDoc(doc(come("dm"), "registroSessioni/r0"))));
+  test("il DM elimina gli appunti di una sessione chiusa", () =>
+    assertSucceeds(deleteDoc(doc(come("dm"), "registroSessioni/r1/appunti/a1"))));
+  test("un altro DM NON elimina le sessioni di una campagna non sua", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "users/dm2"), { nome: "Altro", email: "dm2@x.it", ruolo: "dm", approvato: true }));
+    await assertFails(deleteDoc(doc(come("dm2"), "registroSessioni/r0")));
+  });
+  test("un giocatore NON elimina sessioni", () =>
+    assertFails(deleteDoc(doc(come("p1"), "registroSessioni/r0"))));
   test("un giocatore NON crea sessioni", () =>
     assertFails(addDoc(collection(come("p1"), "registroSessioni"), { campagnaId: "c1", numero: 9, stato: "in-corso" })));
 });
@@ -474,6 +482,28 @@ describe("Dispositivi per le notifiche push", () => {
   });
   test("un iscritto in attesa NON registra dispositivi", () =>
     assertFails(setDoc(doc(come("attesa"), "users/attesa/dispositivi/d1"), dispositivo())));
+});
+
+describe("Eliminazione degli utenti", () => {
+  const richiesta = (da) => ({ richiestaDa: da, richiestaIl: serverTimestamp() });
+  test("l'admin chiede di eliminare un utente", () =>
+    assertSucceeds(setDoc(doc(come("admin"), "richiesteEliminazione/p2"), richiesta("admin"))));
+  test("l'admin NON chiede di eliminare sé stesso", () =>
+    assertFails(setDoc(doc(come("admin"), "richiesteEliminazione/admin"), richiesta("admin"))));
+  test("l'admin NON firma la richiesta a nome di altri", () =>
+    assertFails(setDoc(doc(come("admin"), "richiesteEliminazione/p2"), richiesta("dm"))));
+  test("il DM NON chiede di eliminare un utente", () =>
+    assertFails(setDoc(doc(come("dm"), "richiesteEliminazione/p2"), richiesta("dm"))));
+  test("un giocatore NON legge le richieste", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "richiesteEliminazione/p2"), { richiestaDa: "admin", stato: "completata" }));
+    await assertFails(getDoc(doc(come("p1"), "richiesteEliminazione/p2")));
+    await assertSucceeds(getDoc(doc(come("admin"), "richiesteEliminazione/p2")));
+  });
+  test("nessuno modifica l'esito scritto dalla funzione", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "richiesteEliminazione/p2"), { richiestaDa: "admin", stato: "errore" }));
+    await assertFails(updateDoc(doc(come("admin"), "richiesteEliminazione/p2"), { stato: "completata" }));
+    await assertSucceeds(deleteDoc(doc(come("admin"), "richiesteEliminazione/p2")));
+  });
 });
 
 describe("Documenti tecnici delle Cloud Functions", () => {

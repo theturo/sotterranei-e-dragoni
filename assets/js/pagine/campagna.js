@@ -7,6 +7,9 @@ import {
   aggiornaCampagna,
   aggiornaTitoloCampagna,
   impostaCampagnaAttiva,
+  mettiInPausaCampagna,
+  campagnaScelta,
+  scegliCampagna,
   aggiungiMembroCampagna,
   rimuoviMembroCampagna,
   elencaGiocatori,
@@ -69,7 +72,9 @@ async function ricaricaTutto() {
   // Con il titolo vero (anche se provvisorio), letto dal documento privato.
   campagne = await elencaCampagneDMConTitolo(uidCorrente);
   const idPrecedente = campagnaAttiva?.id;
-  campagnaAttiva = campagne.find((c) => c.stato === "attiva") || null;
+  // La campagna su cui si lavora: quella scelta (se attiva), altrimenti la prima attiva.
+  const attive = campagne.filter((c) => c.stato === "attiva");
+  campagnaAttiva = attive.find((c) => c.id === campagnaScelta(uidCorrente)) || attive[0] || null;
   if (campagnaAttiva?.id !== idPrecedente || !smettiLibreria) ascoltaLibreria();
 
   const nessunaCampagna = campagne.length === 0;
@@ -105,7 +110,8 @@ function renderCampagnaAttiva() {
       <input type="checkbox" id="campo-provvisorio-attiva" ${campagnaAttiva.titoloProvvisorio ? "checked" : ""} />
       Titolo provvisorio (non ancora rivelato ai giocatori)
     </label>
-    <div style="margin-top:16px;">
+    <div class="azioni-campagna">
+      <button type="button" id="btn-pausa-campagna" class="btn-tabella">Metti in pausa</button>
       <button type="button" id="btn-concludi-campagna" class="btn-tabella btn-tabella-pericolo">Concludi questa campagna</button>
     </div>
   `;
@@ -140,6 +146,18 @@ function renderCampagnaAttiva() {
       console.error(errore);
       mostraToast("Impossibile aggiornare.", true);
       evento.target.checked = !evento.target.checked;
+    }
+  });
+
+  document.getElementById("btn-pausa-campagna").addEventListener("click", async () => {
+    if (!confirm(`Mettere in pausa "${campagnaAttiva.titolo}"? Sparirà dal selettore dei giocatori finché non la riattivi.`)) return;
+    try {
+      await mettiInPausaCampagna(campagnaAttiva.id);
+      mostraToast("Campagna in pausa.");
+      await ricaricaTutto();
+    } catch (errore) {
+      console.error(errore);
+      mostraToast("Impossibile mettere in pausa la campagna.", true);
     }
   });
 
@@ -251,7 +269,9 @@ function renderAltreCampagne() {
         <strong>${esc(campagna.titolo)}</strong>
         <div class="party-sessione-sub">${esc(campagna.stato)}${campagna.titoloProvvisorio ? " · titolo provvisorio" : ""}</div>
       </div>
-      <button type="button" class="btn-tabella btn-tabella-evidenza" data-rendi-attiva="${esc(campagna.id)}">Rendi attiva</button>
+      ${campagna.stato === "attiva"
+        ? `<button type="button" class="btn-tabella btn-tabella-evidenza" data-scegli="${esc(campagna.id)}">Lavora su questa</button>`
+        : `<button type="button" class="btn-tabella btn-tabella-evidenza" data-rendi-attiva="${esc(campagna.id)}">Rendi attiva</button>`}
     `;
     lista.appendChild(riga);
   });
@@ -383,13 +403,19 @@ document.getElementById("form-nuova-campagna").addEventListener("submit", async 
 });
 
 document.getElementById("lista-altre-campagne").addEventListener("click", async (evento) => {
+  const scegli = evento.target.closest("[data-scegli]");
+  if (scegli) {
+    scegliCampagna(uidCorrente, scegli.dataset.scegli);
+    window.location.reload();
+    return;
+  }
   const bottone = evento.target.closest("[data-rendi-attiva]");
   if (!bottone) return;
   bottone.disabled = true;
   try {
     await impostaCampagnaAttiva(uidCorrente, bottone.dataset.rendiAttiva);
-    mostraToast("Campagna attivata.");
-    await ricaricaTutto();
+    // Si ricarica la pagina: anche intestazione e selettore passano alla nuova campagna.
+    window.location.reload();
   } catch (errore) {
     console.error(errore);
     mostraToast("Impossibile attivare la campagna.", true);

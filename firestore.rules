@@ -219,6 +219,18 @@ service cloud.firestore {
       }
     }
 
+    // ---------- Eliminazione degli utenti ----------
+    // L'admin chiede di eliminare un utente (non sé stesso) creando questo
+    // documento: la Cloud Function eliminaUtente lo esegue e scrive l'esito.
+    // Si può cancellare la richiesta (es. per riprovare dopo un errore).
+    match /richiesteEliminazione/{uid} {
+      allow get, list, delete: if isAdmin();
+      allow create: if isAdmin() && uid != request.auth.uid
+        && request.resource.data.keys().hasOnly(['richiestaDa', 'richiestaIl'])
+        && request.resource.data.richiestaDa == request.auth.uid
+        && request.resource.data.richiestaIl == request.time;
+    }
+
     // ---------- Schede personaggio ----------
 
     match /personaggi/{schedaId} {
@@ -591,7 +603,11 @@ service cloud.firestore {
       allow get, list: if isApprovato();
 
       allow create, update: if isDMoAdmin();
-      allow delete: if isAdmin() || (isDM() && resource.data.get('stato', null) == "programmata");
+      // Il DM della campagna può eliminare anche le sessioni già giocate (es.
+      // quelle di prova): appunti e tiri si eliminano a parte, qui sotto.
+      allow delete: if isAdmin()
+        || (isDM() && resource.data.get('stato', null) == "programmata")
+        || isDMdellaCampagna(resource.data.get('campagnaId', 'nessuna'));
 
       match /appunti/{appuntoId} {
         allow get, list: if isApprovato();

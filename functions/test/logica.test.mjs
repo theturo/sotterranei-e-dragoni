@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   registraInvio, emailNuovoIscritto, deveBloccare, idProgetto, MASSIMO_EMAIL_ORARIE,
-  messaggioPush, dataLeggibile, tokenDaRimuovere,
+  messaggioPush, dataLeggibile, tokenDaRimuovere, motivoRifiutoEliminazione,
 } from "../logica.js";
 
 const ORA = 60 * 60 * 1000;
@@ -101,4 +101,12 @@ test("push: si tolgono solo i token che non torneranno validi", () => {
   assert.equal(tokenDaRimuovere({ code: "messaging/registration-token-not-registered" }), true);
   assert.equal(tokenDaRimuovere({ code: "messaging/internal-error" }), false);
   assert.equal(tokenDaRimuovere(undefined), false);
+});
+
+test("eliminazione utente: solo un admin, mai il proprio account", () => {
+  assert.equal(motivoRifiutoEliminazione({ richiestaDa: "a1" }, "u1", { ruolo: "admin" }), null);
+  assert.match(motivoRifiutoEliminazione({ richiestaDa: "d1" }, "u1", { ruolo: "dm" }), /solo un admin/);
+  assert.match(motivoRifiutoEliminazione({ richiestaDa: "a1" }, "a1", { ruolo: "admin" }), /proprio account/);
+  assert.match(motivoRifiutoEliminazione({}, "u1", { ruolo: "admin" }), /senza autore/);
+  assert.match(motivoRifiutoEliminazione({ richiestaDa: "x" }, "u1", undefined), /solo un admin/);
 });
