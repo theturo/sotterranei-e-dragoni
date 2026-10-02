@@ -7,7 +7,7 @@
 //   lo attiva con il pulsante.
 import { ascoltaStatoMusica } from "./auth.js";
 import { esc, escUrl } from "./utils.js";
-import { ICONA_NOTA } from "./icone.js";
+import { ICONA_NOTA, ICONA_COPERTINA, ICONA_RIPRODUCI } from "./icone.js";
 import { caricaApiYouTube, sorgenteDaStato, messaggioErroreYouTube } from "./youtube.js";
 
 // Monta il widget nel contenitore indicato e resta in ascolto dello stato
@@ -116,7 +116,7 @@ export function montaWidgetMusica(contenitore, campagnaId) {
         ${
           s.copertinaUrl
             ? `<img src="${escUrl(s.copertinaUrl)}" class="cover-grande" alt="" />`
-            : '<div class="cover-grande cover-quadrata">🎵</div>'
+            : `<div class="cover-grande cover-quadrata">${ICONA_COPERTINA}</div>`
         }
         <div class="musica-titolo-brano">${esc(s.brano)}</div>
         <div class="musica-sottotitolo">${esc(s.artista)}</div>
@@ -139,7 +139,7 @@ export function montaWidgetMusica(contenitore, campagnaId) {
         modalita = "youtube";
         contenitore.innerHTML = `
           <img data-yt-copertina class="cover-grande" hidden alt="" />
-          <div data-yt-segnaposto class="cover-grande cover-quadrata">▶</div>
+          <div data-yt-segnaposto class="cover-grande cover-quadrata">${ICONA_RIPRODUCI}</div>
           <div data-yt-titolo class="musica-titolo-brano">Caricamento…</div>
           <div class="volume-riga" style="justify-content:center;">
             <button type="button" data-yt-muto aria-label="Attiva l'audio" title="Attiva l'audio">🔈</button>

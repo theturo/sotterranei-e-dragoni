@@ -487,6 +487,19 @@ a:hover {
 .die-svg .num-3  { animation: dieShow3  3.6s linear infinite; }
 .die-svg .num-14 { animation: dieShow14 3.6s linear infinite; }
 
+/* Dado in 3D vero (dado-caricamento.js): sostituisce il dado CSS qui sopra. */
+.die-stage.dado-js {
+  width: 170px;
+  height: 170px;
+  perspective: none;
+}
+
+.palco-dado {
+  display: block;
+  width: 170px;
+  height: 170px;
+}
+
 @keyframes dieShow20 {
   0%, 4%   { opacity: 1; }
   8%, 74%  { opacity: 0; }
@@ -2548,6 +2561,18 @@ table.tabella-punteggi select {
   font-size: 3rem;
 }
 
+/* Icone SVG (tavola "Icone per il controllo musica") */
+.cover-quadrata svg {
+  width: 30px;
+  height: 30px;
+  color: var(--color-gold-bright);
+}
+
+.cover-grande.cover-quadrata svg {
+  width: 56px;
+  height: 56px;
+}
+
 .musica-titolo-brano {
   font-family: var(--font-heading);
   color: var(--color-burgundy);
@@ -2572,6 +2597,16 @@ table.tabella-punteggi select {
   font-size: 1.3rem;
   cursor: pointer;
   padding: 4px;
+  display: flex;
+  min-width: 36px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+}
+
+.trasporto button svg {
+  width: 22px;
+  height: 22px;
 }
 
 .volume-riga {
@@ -5165,6 +5200,25 @@ table.tabella-punteggi select {
   font-family: var(--font-heading);
   font-size: 0.8rem;
   color: var(--color-burgundy);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.conteggi-opzione > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.conteggi-opzione svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.conteggi-punto {
+  color: rgba(122, 31, 43, 0.4);
 }
 
 .scelta-disponibilita {
@@ -6174,4 +6228,89 @@ table.tabella-punteggi select {
 .selettore-campagna-impostazioni {
   margin-top: 14px;
   text-align: left;
+}
+
+/* ---------- Tooltip pergamena degli incantesimi (descrizioni.js) ---------- */
+/* Tavola "Tooltip danno/cura incantesimi": al posto del title nativo. */
+
+.con-pergamena {
+  cursor: help;
+  border-bottom: 1px dotted var(--color-ink-soft);
+}
+
+.con-pergamena:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.tooltip-incantesimo {
+  position: fixed;
+  z-index: 400;
+  width: min(260px, calc(100vw - 24px));
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 2px solid var(--color-gold);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  animation: tooltip-compare 0.15s ease;
+}
+
+@keyframes tooltip-compare {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip-incantesimo { animation: none; }
+}
+
+/* La punta: verso il basso (sopra l'elemento) o verso l'alto se è sotto. */
+.tooltip-incantesimo::after,
+.tooltip-incantesimo::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: var(--punta, 50%);
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: var(--color-gold);
+}
+
+.tooltip-incantesimo::before {
+  z-index: 1;
+  top: calc(100% - 2px);
+  border-width: 5px;
+  border-top-color: var(--color-parchment-dark);
+}
+
+.tooltip-incantesimo.sotto::after,
+.tooltip-incantesimo.sotto::before {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--color-gold);
+}
+
+.tooltip-incantesimo.sotto::before {
+  bottom: calc(100% - 2px);
+  border-bottom-color: var(--color-parchment);
+}
+
+.tooltip-riga-effetto {
+  margin: 0 0 6px;
+  color: var(--color-burgundy);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.tooltip-descrizione {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
 }

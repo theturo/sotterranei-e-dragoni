@@ -12,19 +12,17 @@ indicativo. Si aggiorna man mano che si completano.
 La tela di design "Grafica di Base e Caricamento" è la fonte di verità: si
 integra solo ciò che è segnato ✅, con una pull request per lotto.
 
-- **Icone per il controllo musica** (⏳ in revisione nella tela): al posto di
-  🎵 ⏮ ⏸ ▶ ⏭ nel controllo musica e nel widget della dashboard.
-- **Tooltip danno/cura degli incantesimi** in stile pergamena (⏳ in revisione).
-- **Icone dell'header ancora in emoji** (🏠 Home, ✏️ Modifica ordinamento,
-  📜 Sessione) e il pulsante 🎲 del tracker: da disegnare nella tela.
+- **Tiro dei PF in 3D vero (JS)** (⏳ in revisione nella tela): ottaedro al
+  posto dell'illusione CSS nel passaggio di livello.
+- **Pulsante 🎲 del tracker di combattimento**: ancora in emoji, da disegnare
+  nella tela.
 - **Stemma per l'intestazione** (❌ scartato, drago da rifare).
 - **Bussola per la mappa** (tavola degli stati vuoti della Sessione): da usare
   quando arriverà la mappa.
-- **Animazioni in JavaScript** (da valutare insieme): rivedere le animazioni
-  oggi fatte solo in CSS (d20 di caricamento, lancio del dado dei PF, annuncio
-  di livello, comparsa dei contenuti in sessione, turno nel tracker…) e capire
-  dove un'animazione in JavaScript, eventualmente con risorse aggiuntive
-  (sprite, suoni, particelle), renderebbe meglio.
+- **Animazioni in JavaScript** (da valutare insieme): fatto il dado di
+  caricamento, in revisione il tiro dei PF; l'annuncio di livello resta in CSS
+  (scelta della tela). Da valutare: comparsa dei contenuti in sessione, turno
+  nel tracker, eventuali risorse aggiuntive (sprite, suoni, particelle).
 
 ## Funzioni per il tavolo
 
@@ -123,6 +121,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   classe dei livelli 2 e 3 (e i dadi del Bardo) secondo il SRD.
 - Avviso di sicurezza su `uuid` nelle Cloud Functions (override in
   `functions/package.json`).
+- Grafica, lotto 4: icone del controllo musica, dell'header (Home, Modifica
+  ordinamento, Sessione, Calendario) e del conteggio disponibilità nel
+  calendario; tooltip pergamena di danno/cura degli incantesimi (mouse, tab e
+  tocco sul telefono); dado di caricamento in 3D vero (fermo sul 20 con
+  "riduci animazioni").
 - Grafica dalla tela di design, tutte le tavole ✅ in tre lotti:
   velo di caricamento con il d20 su ogni pagina, icone SVG di classe, stati
   vuoti con icona; fregi d'angolo, divisori tematici, segnalini a dado, spinner

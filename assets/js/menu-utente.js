@@ -18,6 +18,7 @@ import {
   scegliCampagna,
 } from "./auth.js";
 import { esc } from "./utils.js";
+import { ICONA_HOME, ICONA_MODIFICA, ICONA_SESSIONE, ICONA_CALENDARIO, ICONA_SI } from "./icone.js";
 import { formattaDataOra } from "./calendario.js";
 import { attivaDescrizioni } from "./descrizioni.js";
 import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "./pwa.js";
@@ -29,10 +30,10 @@ import {
 } from "./notifiche-push.js";
 
 const HTML_MENU = `
-  <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">🏠</a>
-  <button id="mu-btn-modifica-ordine" class="btn-campanella" aria-label="Modifica ordinamento" title="Modifica ordinamento" type="button" hidden>✏️</button>
-  <a id="mu-link-sessione" href="sessione.html" class="btn-campanella" aria-label="Sessione" title="Sessione" hidden>📜</a>
-  <a href="calendario.html" class="btn-campanella" aria-label="Calendario" title="Calendario">📅</a>
+  <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">${ICONA_HOME}</a>
+  <button id="mu-btn-modifica-ordine" class="btn-campanella" aria-label="Modifica ordinamento" title="Modifica ordinamento" type="button" hidden>${ICONA_MODIFICA}</button>
+  <a id="mu-link-sessione" href="sessione.html" class="btn-campanella" aria-label="Sessione" title="Sessione" hidden>${ICONA_SESSIONE}</a>
+  <a href="calendario.html" class="btn-campanella" aria-label="Calendario" title="Calendario">${ICONA_CALENDARIO}</a>
   <div class="notifiche-wrap">
     <button id="mu-btn-campanella" class="btn-campanella" aria-label="Notifiche" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -454,7 +455,7 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
     let attivo = false;
     btnModificaOrdine.addEventListener("click", () => {
       attivo = !attivo;
-      btnModificaOrdine.textContent = attivo ? "✓" : "✏️";
+      btnModificaOrdine.innerHTML = attivo ? ICONA_SI : ICONA_MODIFICA;
       const etichetta = attivo ? "Conferma ordinamento" : "Modifica ordinamento";
       btnModificaOrdine.title = etichetta;
       btnModificaOrdine.setAttribute("aria-label", etichetta);

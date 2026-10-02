@@ -4,7 +4,8 @@
 // - tiene l'invito a installare l'app: su Android/Chrome la finestra del
 //   browser (evento beforeinstallprompt), su iPhone le istruzioni per
 //   "Aggiungi alla schermata Home";
-// - all'avvio dell'app installata lancia l'intro del d20 (intro.js).
+// - all'avvio dell'app installata lancia l'intro del d20 (intro.js);
+// - nel velo di caricamento monta il dado in 3D (dado-caricamento.js).
 
 const inAppInstallata = () =>
   window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -161,5 +162,17 @@ function avviaIntro() {
   import("./intro.js").then((m) => m.mostraIntro()).catch((errore) => console.warn("Intro non avviata", errore));
 }
 
+// ---------- Dado di caricamento ----------
+// Il velo di caricamento delle pagine (#veil) ha un dado disegnato in CSS:
+// lo si sostituisce subito con quello in 3D vero (dado-caricamento.js).
+function avviaDadoCaricamento() {
+  const palco = document.querySelector("#veil .die-stage");
+  if (!palco) return;
+  import("./dado-caricamento.js")
+    .then((m) => m.montaDadoCaricamento(palco))
+    .catch((errore) => console.warn("Dado di caricamento non avviato", errore));
+}
+
 registraServiceWorker();
+avviaDadoCaricamento();
 avviaIntro();

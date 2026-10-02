@@ -1,7 +1,13 @@
-// Descrizioni al tocco. Su computer le spiegazioni di condizioni, privilegi e
-// incantesimi compaiono passando il mouse (attributo title); sui dispositivi
-// senza mouse gli elementi con classe "con-descrizione" le mostrano in un
-// fumetto quando si toccano. Un altro tocco (anche altrove) lo chiude.
+// Descrizioni al tocco e tooltip pergamena.
+// - Elementi "con-descrizione" (condizioni, privilegi…): su computer la
+//   spiegazione compare passando il mouse (attributo title); sui dispositivi
+//   senza mouse si mostra in un fumetto quando si toccano.
+// - Elementi "con-pergamena" (incantesimi della scheda, tavola "Tooltip
+//   danno/cura" della tela): niente title nativo, ma un popover in stile
+//   pergamena con la riga dell'effetto (data-effetto) e la descrizione
+//   (data-descrizione). Compare passando il mouse o arrivandoci col tab; sui
+//   dispositivi senza mouse al tocco.
+// Un altro tocco (anche altrove), lo scorrimento o Esc lo chiudono.
 const senzaMouse = window.matchMedia("(hover: none)");
 
 let fumetto = null;
@@ -14,27 +20,59 @@ function chiudi() {
   origine = null;
 }
 
+function creaPergamena(elemento) {
+  const box = document.createElement("div");
+  box.className = "tooltip-incantesimo";
+  if (elemento.dataset.effetto) {
+    const effetto = document.createElement("p");
+    effetto.className = "tooltip-riga-effetto";
+    effetto.textContent = elemento.dataset.effetto;
+    box.append(effetto);
+  }
+  if (elemento.dataset.descrizione) {
+    const descrizione = document.createElement("p");
+    descrizione.className = "tooltip-descrizione";
+    descrizione.textContent = elemento.dataset.descrizione;
+    box.append(descrizione);
+  }
+  return box;
+}
+
 function apri(elemento) {
+  const pergamena = elemento.classList.contains("con-pergamena");
   const testo = elemento.dataset.descrizione || elemento.title;
-  if (!testo) return;
+  if (!testo && !elemento.dataset.effetto) return;
   chiudi();
-  fumetto = document.createElement("div");
-  fumetto.className = "fumetto-descrizione";
+  if (pergamena) {
+    fumetto = creaPergamena(elemento);
+  } else {
+    fumetto = document.createElement("div");
+    fumetto.className = "fumetto-descrizione";
+    fumetto.textContent = testo;
+  }
   fumetto.setAttribute("role", "tooltip");
-  fumetto.textContent = testo;
   document.body.append(fumetto);
   origine = elemento;
   apertoIl = Date.now();
 
-  // Sotto l'elemento, o sopra se sotto non c'è spazio; sempre dentro lo schermo.
+  // La pergamena sta sopra l'elemento (con la punta verso il basso), il
+  // fumetto sotto; se non c'è spazio si girano. Sempre dentro lo schermo.
   const margine = 12;
+  const distanza = pergamena ? 12 : 8;
   const r = elemento.getBoundingClientRect();
   const larghezza = fumetto.offsetWidth;
   const altezza = fumetto.offsetHeight;
-  const sinistra = Math.min(Math.max(margine, r.left + r.width / 2 - larghezza / 2), window.innerWidth - larghezza - margine);
-  const sotto = r.bottom + 8 + altezza <= window.innerHeight - margine;
+  const centro = r.left + r.width / 2;
+  const sinistra = Math.min(Math.max(margine, centro - larghezza / 2), window.innerWidth - larghezza - margine);
+  const spazioSopra = r.top - distanza - altezza >= margine;
+  const spazioSotto = r.bottom + distanza + altezza <= window.innerHeight - margine;
+  const sotto = pergamena ? !spazioSopra && spazioSotto : spazioSotto || !spazioSopra;
   fumetto.style.left = `${sinistra}px`;
-  fumetto.style.top = `${sotto ? r.bottom + 8 : Math.max(margine, r.top - 8 - altezza)}px`;
+  fumetto.style.top = `${sotto ? r.bottom + distanza : Math.max(margine, r.top - distanza - altezza)}px`;
+  if (pergamena) {
+    fumetto.classList.toggle("sotto", sotto);
+    fumetto.style.setProperty("--punta", `${Math.min(Math.max(16, centro - sinistra), larghezza - 16)}px`);
+  }
 }
 
 let attivo = false;
@@ -43,12 +81,32 @@ export function attivaDescrizioni() {
   attivo = true;
   document.addEventListener("click", (evento) => {
     if (!senzaMouse.matches) return;
-    const elemento = evento.target.closest?.(".con-descrizione");
+    const elemento = evento.target.closest?.(".con-descrizione, .con-pergamena");
     if (!elemento || elemento === origine) {
       chiudi();
       return;
     }
     apri(elemento);
+  });
+  // Con il mouse e la tastiera: la pergamena compare sopra l'elemento.
+  document.addEventListener("mouseover", (evento) => {
+    if (senzaMouse.matches) return;
+    const elemento = evento.target.closest?.(".con-pergamena");
+    if (elemento && elemento !== origine) apri(elemento);
+  });
+  document.addEventListener("mouseout", (evento) => {
+    if (senzaMouse.matches || !origine?.classList.contains("con-pergamena")) return;
+    if (!origine.contains(evento.relatedTarget)) chiudi();
+  });
+  // Sui dispositivi touch il tocco mette anche il fuoco sull'elemento: lì
+  // apre e chiude solo il tocco (sopra), altrimenti si richiuderebbe subito.
+  document.addEventListener("focusin", (evento) => {
+    if (senzaMouse.matches) return;
+    const elemento = evento.target.closest?.(".con-pergamena");
+    if (elemento && elemento !== origine) apri(elemento);
+  });
+  document.addEventListener("focusout", (evento) => {
+    if (origine && evento.target === origine) chiudi();
   });
   // Lo scorrimento chiude il fumetto, tranne quello che arriva subito dopo il
   // tocco (fine di uno scorrimento iniziato prima).
