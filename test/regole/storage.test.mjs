@@ -75,8 +75,10 @@ describe("Ritratti", () => {
 describe("Immagini della campagna", () => {
   test("il DM carica una mappa", () =>
     assertSucceeds(uploadBytes(ref(come("dm"), "campagne/c1/nuova.jpg"), png(), { contentType: "image/jpeg" })));
-  test("il DM NON carica oltre i 5 MB", () =>
-    assertFails(uploadBytes(ref(come("dm"), "campagne/c1/enorme.jpg"), png(5 * MB + 1), { contentType: "image/jpeg" })));
+  test("il DM carica una mappa grande (fino a 10 MB)", () =>
+    assertSucceeds(uploadBytes(ref(come("dm"), "campagne/c1/grande.webp"), png(10 * MB), { contentType: "image/webp" })));
+  test("il DM NON carica oltre i 10 MB", () =>
+    assertFails(uploadBytes(ref(come("dm"), "campagne/c1/enorme.jpg"), png(10 * MB + 1), { contentType: "image/jpeg" })));
   test("un giocatore NON carica immagini della campagna", () =>
     assertFails(uploadBytes(ref(come("p1"), "campagne/c1/x.png"), png(), { contentType: "image/png" })));
   test("il DM vede anche le immagini nascoste", () => assertSucceeds(getBytes(ref(come("dm"), "campagne/c1/nascosta"))));

@@ -22,7 +22,9 @@ export class ErroreImmagine extends Error {}
 // Ridimensiona un'immagine scelta dall'utente perché il lato più lungo misuri
 // al massimo "lato" pixel, e la ricomprime in WebP (o JPEG, se il browser non
 // sa produrre WebP). Restituisce { blob, larghezza, altezza }.
-export async function ridimensionaImmagine(file, lato, qualita = 0.85) {
+// Con "massimoByte" abbassa la qualità a passi finché il file non ci sta
+// (le mappe a 4096 px molto dettagliate possono superare il limite).
+export async function ridimensionaImmagine(file, lato, qualita = 0.85, massimoByte = Infinity) {
   if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
     throw new ErroreImmagine("Formato non supportato: usa un'immagine PNG, JPEG, WebP o GIF.");
   }
@@ -44,12 +46,16 @@ export async function ridimensionaImmagine(file, lato, qualita = 0.85) {
   tela.getContext("2d").drawImage(bitmap, 0, 0, larghezza, altezza);
   bitmap.close?.();
 
-  const comprimi = (tipo) => new Promise((risolvi) => tela.toBlob(risolvi, tipo, qualita));
-  let blob = await comprimi("image/webp");
-  // Browser che non producono WebP restituiscono un PNG: meglio un JPEG.
-  if (!blob || blob.type !== "image/webp") blob = await comprimi("image/jpeg");
-  if (!blob) throw new ErroreImmagine("Impossibile elaborare l'immagine.");
-  return { blob, larghezza, altezza };
+  const comprimi = (tipo, q) => new Promise((risolvi) => tela.toBlob(risolvi, tipo, q));
+  let blob = null;
+  for (const q of [qualita, 0.75, 0.65, 0.55].filter((q) => q <= qualita)) {
+    blob = await comprimi("image/webp", q);
+    // Browser che non producono WebP restituiscono un PNG: meglio un JPEG.
+    if (!blob || blob.type !== "image/webp") blob = await comprimi("image/jpeg", q);
+    if (!blob) throw new ErroreImmagine("Impossibile elaborare l'immagine.");
+    if (blob.size <= massimoByte) return { blob, larghezza, altezza };
+  }
+  throw new ErroreImmagine(`Immagine troppo pesante anche dopo la compressione (massimo ${Math.round(massimoByte / 1024 / 1024)} MB).`);
 }
 
 // Carica un blob già ridimensionato. I file non vengono mai sovrascritti (ogni
@@ -115,8 +121,14 @@ export function percorsiRitratto(uid, schedaId, versione) {
 // ---------- Immagini della campagna ----------
 // Il file ha lo stesso ID del documento che ne descrive titolo e visibilità
 // (campagne/{id}/immagini/{immagineId}); "-mini" è la miniatura per la galleria.
+// Le mappe tengono più dettaglio (4096 px): si ingrandiscono sullo schermo
+// del tavolo e sul telefono. Il limite di peso è lo stesso di storage.rules.
 export const LATO_IMMAGINE_CAMPAGNA = 1920;
+export const LATO_MAPPA = 4096;
 export const LATO_MINIATURA = 480;
+export const MASSIMO_BYTE_CAMPAGNA = 10 * 1024 * 1024;
+
+export const latoImmagineCampagna = (categoria) => (categoria === "mappa" ? LATO_MAPPA : LATO_IMMAGINE_CAMPAGNA);
 
 export function percorsiImmagineCampagna(campagnaId, immagineId) {
   return {

@@ -22,8 +22,9 @@ import {
   caricaImmagine,
   eliminaImmagine,
   mostraImmagine,
-  LATO_IMMAGINE_CAMPAGNA,
+  latoImmagineCampagna,
   LATO_MINIATURA,
+  MASSIMO_BYTE_CAMPAGNA,
   percorsiImmagineCampagna,
 } from "../immagini.js";
 import {
@@ -352,7 +353,8 @@ formCarica.addEventListener("submit", async (evento) => {
   const percorsi = percorsiImmagineCampagna(campagnaIdCorrente, immagineId);
   let fileCaricati = false;
   try {
-    const grande = await ridimensionaImmagine(file, LATO_IMMAGINE_CAMPAGNA);
+    const categoria = document.getElementById("carica-categoria").value;
+    const grande = await ridimensionaImmagine(file, latoImmagineCampagna(categoria), 0.85, MASSIMO_BYTE_CAMPAGNA);
     const mini = await ridimensionaImmagine(file, LATO_MINIATURA, 0.8);
     // Prima i file, poi i documenti: il contenuto compare solo quando è già scaricabile.
     await Promise.all([caricaImmagine(percorsi.grande, grande.blob), caricaImmagine(percorsi.mini, mini.blob)]);
@@ -360,7 +362,7 @@ formCarica.addEventListener("submit", async (evento) => {
     await creaContenuto(campagnaIdCorrente, immagineId, {
       titolo,
       descrizione: document.getElementById("carica-descrizione").value.trim(),
-      categoria: document.getElementById("carica-categoria").value,
+      categoria,
       larghezza: grande.larghezza,
       altezza: grande.altezza,
       note: document.getElementById("carica-note").value.trim(),

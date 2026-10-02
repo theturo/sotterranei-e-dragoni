@@ -11,11 +11,12 @@ della Console (qui sotto, da fare una volta) e limiti nel codice.
   leggono e scrivono dati della campagna; campi e dimensioni dei documenti
   limitati (schede, appunti, riepiloghi).
 - `storage.rules`: solo utenti approvati leggono o caricano file; solo immagini
-  (PNG, JPEG, WebP, GIF), massimo 2 MB per i ritratti e 5 MB per le immagini
+  (PNG, JPEG, WebP, GIF), massimo 2 MB per i ritratti e 10 MB per le immagini
   della campagna, solo nelle cartelle previste; tutto il resto è vietato.
 - Le immagini vengono ridimensionate nel browser prima dell'invio (ritratti
-  512 px con icona da 96 px, immagini della campagna 1920 px con miniatura da
-  480 px, in WebP): pochi KB/centinaia di KB ciascuna invece di foto da vari MB.
+  512 px con icona da 96 px, immagini della campagna 1920 px (le mappe 4096 px,
+  ricompresse finché non stanno nei 10 MB) con miniatura da 480 px, in WebP):
+  pochi KB/centinaia di KB ciascuna invece di foto da vari MB.
 - Le immagini si scaricano con l'SDK, non con link pubblici: ogni lettura passa
   dalle regole. Un contenuto della libreria che il DM non ha mostrato a un
   giocatore (o messo nel suo archivio) non si scarica
