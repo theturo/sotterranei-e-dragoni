@@ -3,6 +3,7 @@
 import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagnaCorrente } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, escUrl } from "../utils.js";
+import { ICONA_COPERTINA, ICONA_PRECEDENTE, ICONA_PAUSA, ICONA_RIPRODUCI, ICONA_SUCCESSIVO } from "../icone.js";
 import * as Spotify from "../spotify.js";
 import { caricaApiYouTube, interpretaLinkYouTube, sorgenteDaStato, messaggioErroreYouTube } from "../youtube.js";
 
@@ -68,15 +69,15 @@ function renderSpotifyNowPlaying(stato) {
       ${
         stato.copertinaUrl
           ? `<img src="${escUrl(stato.copertinaUrl)}" class="cover-quadrata-img" alt="" />`
-          : '<div class="cover-quadrata">🎵</div>'
+          : `<div class="cover-quadrata">${ICONA_COPERTINA}</div>`
       }
       <div style="flex:1; min-width:0;">
         <div class="musica-titolo-brano">${esc(stato.brano)}</div>
         <div class="musica-sottotitolo">${esc(stato.artista)}</div>
         <div class="trasporto" style="margin-top:10px;">
-          <button type="button" data-azione="precedente">⏮</button>
-          <button type="button" data-azione="play-pausa">${stato.inRiproduzione ? "⏸" : "▶"}</button>
-          <button type="button" data-azione="successivo">⏭</button>
+          <button type="button" data-azione="precedente" aria-label="Brano precedente" title="Brano precedente">${ICONA_PRECEDENTE}</button>
+          <button type="button" data-azione="play-pausa" aria-label="${stato.inRiproduzione ? "Pausa" : "Riproduci"}" title="${stato.inRiproduzione ? "Pausa" : "Riproduci"}">${stato.inRiproduzione ? ICONA_PAUSA : ICONA_RIPRODUCI}</button>
+          <button type="button" data-azione="successivo" aria-label="Brano successivo" title="Brano successivo">${ICONA_SUCCESSIVO}</button>
         </div>
       </div>
     </div>
@@ -199,9 +200,9 @@ function renderYouTubeNowPlaying() {
         <div class="musica-titolo-brano">${esc(dati.title) || "—"}</div>
         <div class="musica-sottotitolo">${lista.length ? `Brano ${indice + 1} di ${lista.length}` : ""}</div>
         <div class="trasporto" style="margin-top:10px;">
-          <button type="button" data-azione="precedente" aria-label="Brano precedente">⏮</button>
-          <button type="button" data-azione="play-pausa" aria-label="${inRiproduzione ? "Pausa" : "Riproduci"}">${inRiproduzione ? "⏸" : "▶"}</button>
-          <button type="button" data-azione="successivo" aria-label="Brano successivo">⏭</button>
+          <button type="button" data-azione="precedente" aria-label="Brano precedente" title="Brano precedente">${ICONA_PRECEDENTE}</button>
+          <button type="button" data-azione="play-pausa" aria-label="${inRiproduzione ? "Pausa" : "Riproduci"}" title="${inRiproduzione ? "Pausa" : "Riproduci"}">${inRiproduzione ? ICONA_PAUSA : ICONA_RIPRODUCI}</button>
+          <button type="button" data-azione="successivo" aria-label="Brano successivo" title="Brano successivo">${ICONA_SUCCESSIVO}</button>
         </div>
       </div>
     </div>

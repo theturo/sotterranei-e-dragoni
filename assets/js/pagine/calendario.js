@@ -22,6 +22,7 @@ import {
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { creaElemento } from "../contenuti.js";
+import { ICONA_SI, ICONA_FORSE, ICONA_NO } from "../icone.js";
 import {
   isoGiorno,
   oggiIso,
@@ -206,8 +207,13 @@ function rigaOpzione(proposta, opzione, rispostePropose) {
   li.dataset.opzione = opzione.id;
   const intestazione = creaElemento("div", "opzione-intestazione");
   const quando = creaElemento("strong", null, formattaDataOra(opzione.data, opzione.ora));
-  const conteggi = creaElemento("span", "conteggi-opzione",
-    `✓ ${nomiPer(rispostePropose, opzione.id, "si").length} · ? ${nomiPer(rispostePropose, opzione.id, "forse").length} · ✗ ${nomiPer(rispostePropose, opzione.id, "no").length}`);
+  // Conteggi con le icone della tela (sì / forse / no): solo numeri e SVG fissi.
+  const [si, forse, no] = ["si", "forse", "no"].map((v) => nomiPer(rispostePropose, opzione.id, v).length);
+  const conteggi = creaElemento("span", "conteggi-opzione");
+  conteggi.setAttribute("aria-label", `${si} sì, ${forse} forse, ${no} no`);
+  conteggi.innerHTML = `<span aria-hidden="true">${ICONA_SI}${si}</span><span class="conteggi-punto" aria-hidden="true">·</span>`
+    + `<span aria-hidden="true">${ICONA_FORSE}${forse}</span><span class="conteggi-punto" aria-hidden="true">·</span>`
+    + `<span aria-hidden="true">${ICONA_NO}${no}</span>`;
   intestazione.append(quando, conteggi);
   li.append(intestazione);
 
