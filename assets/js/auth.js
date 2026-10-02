@@ -1285,8 +1285,10 @@ export async function elencaRiepiloghiParty(campagnaId) {
 
 const unione = (...liste) => [...new Set(liste.flat())];
 
-function campiVisibilita(mostrataA, archiviataPer) {
-  return { mostrataA, archiviataPer, visibileA: unione(mostrataA, archiviataPer) };
+// "inTavolaPer": i membri che vedono il contenuto perché è la mappa in tavola
+// (vedi impostaMappaInTavola). Va ripassato a ogni ricalcolo.
+function campiVisibilita(mostrataA, archiviataPer, inTavolaPer = []) {
+  return { mostrataA, archiviataPer, inTavolaPer, visibileA: unione(mostrataA, archiviataPer, inTavolaPer) };
 }
 
 // ID per un nuovo contenuto, da usare anche come nome del file.
@@ -1324,7 +1326,7 @@ export async function aggiornaContenuto(campagnaId, contenuto, { titolo, descriz
     titolo,
     descrizione: descrizione || null,
     categoria,
-    ...campiVisibilita(contenuto.mostrataA || [], archiviataPer),
+    ...campiVisibilita(contenuto.mostrataA || [], archiviataPer, contenuto.inTavolaPer || []),
   });
   batch.update(doc(db, "campagne", campagnaId, "immaginiDM", contenuto.id), {
     note: note || null,
@@ -1343,7 +1345,7 @@ export async function mostraContenuto(campagnaId, contenuto, uids, sessioneId) {
   const batch = writeBatch(db);
   batch.update(doc(db, "campagne", campagnaId, "immagini", contenuto.id), {
     vistaDa: unione(contenuto.vistaDa || [], uids),
-    ...campiVisibilita(uids, contenuto.archiviataPer || []),
+    ...campiVisibilita(uids, contenuto.archiviataPer || [], contenuto.inTavolaPer || []),
   });
   if (sessioneId && uids.length > 0) {
     batch.update(doc(db, "campagne", campagnaId, "immaginiDM", contenuto.id), { sessioniCollegate: arrayUnion(sessioneId) });
@@ -1363,10 +1365,21 @@ export async function collegaContenutiSessione(campagnaId, sessioneId, daCollega
   await batch.commit();
 }
 
+// Se era la mappa in tavola, il tavolo resta vuoto; griglia e pedine della
+// mappa se ne vanno con lei.
 export async function eliminaContenuto(campagnaId, immagineId) {
+  const [tavola, pedine] = await Promise.all([
+    getDoc(doc(db, "campagne", campagnaId, "stato", "tavola")),
+    getDocs(collection(db, "campagne", campagnaId, "mappe", immagineId, "pedine")),
+  ]);
   const batch = writeBatch(db);
   batch.delete(doc(db, "campagne", campagnaId, "immagini", immagineId));
   batch.delete(doc(db, "campagne", campagnaId, "immaginiDM", immagineId));
+  batch.delete(doc(db, "campagne", campagnaId, "mappe", immagineId));
+  pedine.docs.forEach((d) => batch.delete(d.ref));
+  if (tavola.exists() && tavola.data().immagineId === immagineId) {
+    batch.set(doc(db, "campagne", campagnaId, "stato", "tavola"), { immagineId: null, inquadratura: null, aggiornatoIl: serverTimestamp() });
+  }
   await batch.commit();
 }
 
@@ -1389,7 +1402,7 @@ async function archiviaContenutiMostrati(campagnaId, sessioneId) {
     batch.update(documento.ref, {
       vistaDa: [],
       sessioniMostrata: sessioneId ? unione(dati.sessioniMostrata || [], [sessioneId]) : dati.sessioniMostrata || [],
-      ...campiVisibilita([], archiviataPer),
+      ...campiVisibilita([], archiviataPer, dati.inTavolaPer || []),
     });
     modifiche += 1;
   });
@@ -1431,6 +1444,87 @@ export function ascoltaContenutiVisibili(campagnaId, uid, callback, alErrore = (
     (s) => callback(unisciContenuti(s.docs.map((d) => ({ id: d.id, ...d.data() })), new Map())),
     alErrore
   );
+}
+
+// ---------- Mappe della sessione ----------
+// campagne/{c}/stato/tavola: { immagineId (mappa della Libreria in tavola, o
+//   null), inquadratura ({x, y, w, h} in pixel dell'immagine: ciò che mostra
+//   lo schermo comune; null = tutta la mappa) }
+// campagne/{c}/mappe/{immagineId}: griglia della mappa { lato, ox, oy,
+//   visibile, snap } (lato e scarto in pixel dell'immagine).
+// campagne/{c}/mappe/{immagineId}/pedine/{uid}: { tipo: "pg", uid, c, r }
+//   (colonna e riga della casella, decimali se la pedina non è agganciata).
+// I giocatori leggono solo la mappa in tavola, e ne scaricano l'immagine
+// perché compaiono nel suo "inTavolaPer".
+
+const riferimentoTavola = (campagnaId) => doc(db, "campagne", campagnaId, "stato", "tavola");
+const riferimentoMappa = (campagnaId, immagineId) => doc(db, "campagne", campagnaId, "mappe", immagineId);
+const riferimentoPedine = (campagnaId, immagineId) => collection(db, "campagne", campagnaId, "mappe", immagineId, "pedine");
+
+export const GRIGLIA_PREDEFINITA = { lato: 50, ox: 0, oy: 0, visibile: true, snap: true };
+
+export function ascoltaTavola(campagnaId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(
+    riferimentoTavola(campagnaId),
+    (s) => callback(s.exists() ? { immagineId: null, inquadratura: null, ...s.data() } : { immagineId: null, inquadratura: null }),
+    alErrore
+  );
+}
+
+// Mette in tavola una mappa (o la toglie, con "nuova" null): i membri indicati
+// la vedono finché resta in tavola; la mappa precedente torna com'era.
+export async function impostaMappaInTavola(campagnaId, { nuova, precedente, membri }) {
+  const batch = writeBatch(db);
+  if (precedente && precedente.id !== nuova?.id) {
+    batch.update(doc(db, "campagne", campagnaId, "immagini", precedente.id),
+      campiVisibilita(precedente.mostrataA || [], precedente.archiviataPer || [], []));
+  }
+  if (nuova) {
+    batch.update(doc(db, "campagne", campagnaId, "immagini", nuova.id),
+      campiVisibilita(nuova.mostrataA || [], nuova.archiviataPer || [], membri));
+  }
+  batch.set(riferimentoTavola(campagnaId), { immagineId: nuova?.id ?? null, inquadratura: null, aggiornatoIl: serverTimestamp() });
+  await batch.commit();
+}
+
+export function impostaInquadratura(campagnaId, inquadratura) {
+  return updateDoc(riferimentoTavola(campagnaId), { inquadratura, aggiornatoIl: serverTimestamp() });
+}
+
+export function ascoltaGriglia(campagnaId, immagineId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(
+    riferimentoMappa(campagnaId, immagineId),
+    (s) => callback({ ...GRIGLIA_PREDEFINITA, ...(s.exists() ? s.data() : {}) }),
+    alErrore
+  );
+}
+
+export function salvaGriglia(campagnaId, immagineId, { lato, ox, oy, visibile, snap }) {
+  return setDoc(riferimentoMappa(campagnaId, immagineId), { lato, ox, oy, visibile, snap, aggiornatoIl: serverTimestamp() });
+}
+
+export function ascoltaPedine(campagnaId, immagineId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(
+    riferimentoPedine(campagnaId, immagineId),
+    (s) => callback(s.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    alErrore
+  );
+}
+
+export function salvaPedina(campagnaId, immagineId, uid, { c, r }) {
+  return setDoc(doc(riferimentoPedine(campagnaId, immagineId), uid), { tipo: "pg", uid, c, r, aggiornatoIl: serverTimestamp() });
+}
+
+// Più pedine insieme (il DM piazza il party).
+export async function salvaPedine(campagnaId, immagineId, posizioni) {
+  const batch = writeBatch(db);
+  posizioni.forEach(({ uid, c, r }) =>
+    batch.set(doc(riferimentoPedine(campagnaId, immagineId), uid), { tipo: "pg", uid, c, r, aggiornatoIl: serverTimestamp() }));
+  await batch.commit();
+}
+
+export function rimuoviPedina(campagnaId, immagineId, uid) {
+  return deleteDoc(doc(riferimentoPedine(campagnaId, immagineId), uid));
 }
 
 // ---------- Tracker di combattimento ----------

@@ -47,6 +47,13 @@ beforeEach(async () => {
     await set("campagne/c1/immagini/soloP1", contenuto([], ["p1"]));
     await set("campagne/c1/immaginiDM/nascosta", { note: "È il traditore", tag: ["spoiler"], archivio: true, sessioniCollegate: ["r1"] });
     await set("campagne/c1/stato/sessione", { inCorso: true, sessioneAttivaId: "r1" });
+    // Mappe: "pubblica" è in tavola, "nascosta" è in preparazione.
+    await set("campagne/c1/stato/tavola", { immagineId: "pubblica", inquadratura: null });
+    const griglia = { lato: 50, ox: 0, oy: 0, visibile: true, snap: true };
+    await set("campagne/c1/mappe/pubblica", griglia);
+    await set("campagne/c1/mappe/nascosta", griglia);
+    await set("campagne/c1/mappe/pubblica/pedine/p1", { tipo: "pg", uid: "p1", c: 3, r: 4 });
+    await set("campagne/c1/mappe/nascosta/pedine/p1", { tipo: "pg", uid: "p1", c: 1, r: 1 });
     await set("campagne/c1/combattimento/stato", { attivo: true, round: 1, turno: "pgP1" });
     await set("campagne/c1/combattenti/pgP1", { tipo: "pg", nome: "Eroe", uid: "p1", iniziativa: null, bonus: 0, spareggio: 0 });
     await set("campagne/c1/combattenti/pgP2", { tipo: "pg", nome: "Lyra", uid: "p2", iniziativa: 12, bonus: 2, spareggio: 0 });
@@ -690,4 +697,57 @@ describe("Calendario: proposte e disponibilità", () => {
     await creaProposta();
     await assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/proposte/p1"), { stato: "confermata", confermata: { opzioneId: "a", sessioneId: "r9" } }));
   });
+});
+
+describe("Mappe della sessione", () => {
+  const pedina = (uid, c = 5, r = 6) => ({ tipo: "pg", uid, c, r, aggiornatoIl: serverTimestamp() });
+  const griglia = (extra = {}) => ({ lato: 62.5, ox: 20, oy: 10.5, visibile: true, snap: false, aggiornatoIl: serverTimestamp(), ...extra });
+
+  test("un membro sa quale mappa è in tavola", () => assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/stato/tavola"))));
+  test("il DM mette in tavola una mappa e inquadra lo schermo", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/stato/tavola"), {
+      immagineId: "nascosta", inquadratura: { x: -10, y: 0, w: 640.5, h: 360 }, aggiornatoIl: serverTimestamp(),
+    })));
+  test("il DM toglie la mappa dal tavolo", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/stato/tavola"), { immagineId: null, inquadratura: null })));
+  test("il DM NON salva un'inquadratura senza larghezza", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/stato/tavola"), { immagineId: "nascosta", inquadratura: { x: 0, y: 0, w: 0, h: 10 } })));
+  test("un giocatore NON cambia la mappa in tavola", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/stato/tavola"), { immagineId: "nascosta", inquadratura: null })));
+
+  test("un membro legge la griglia della mappa in tavola", () => assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/mappe/pubblica"))));
+  test("un membro NON legge una mappa in preparazione", () => assertFails(getDoc(doc(come("p1"), "campagne/c1/mappe/nascosta"))));
+  test("chi non è membro NON legge la mappa in tavola", () => assertFails(getDoc(doc(come("vecchio"), "campagne/c1/mappe/pubblica"))));
+  test("il DM salva la griglia di una mappa", () => assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta"), griglia())));
+  test("il DM NON salva uno scarto più grande della casella", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta"), griglia({ ox: 80 }))));
+  test("il DM NON salva campi estranei nella griglia", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta"), griglia({ nebbia: [] }))));
+  test("un giocatore NON cambia la griglia", () => assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica"), griglia())));
+
+  test("un membro legge le pedine della mappa in tavola", () =>
+    assertSucceeds(getDocs(collection(come("p2"), "campagne/c1/mappe/pubblica/pedine"))));
+  test("un membro NON legge le pedine di una mappa in preparazione", () =>
+    assertFails(getDocs(collection(come("p2"), "campagne/c1/mappe/nascosta/pedine"))));
+  test("il giocatore muove la propria pedina sulla mappa in tavola", () =>
+    assertSucceeds(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/pedine/p1"), pedina("p1", 7.4, 2))));
+  test("il giocatore entra in mappa con la propria pedina", () =>
+    assertSucceeds(setDoc(doc(come("p2"), "campagne/c1/mappe/pubblica/pedine/p2"), pedina("p2"))));
+  test("il giocatore NON muove la pedina di un altro", () =>
+    assertFails(setDoc(doc(come("p2"), "campagne/c1/mappe/pubblica/pedine/p1"), pedina("p1"))));
+  test("il giocatore NON muove la propria pedina su una mappa in preparazione", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/nascosta/pedine/p1"), pedina("p1"))));
+  test("il giocatore NON toglie la propria pedina", () =>
+    assertFails(deleteDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/pedine/p1"))));
+  test("NON si salva una pedina con l'uid sbagliato", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedine/p1"), pedina("p2"))));
+  test("il DM muove e toglie qualsiasi pedina", async () => {
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta/pedine/p2"), pedina("p2")));
+    await assertSucceeds(deleteDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedine/p1")));
+  });
+
+  test("il DM rende visibile la mappa in tavola ai membri", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"), { inTavolaPer: ["p1", "p2"], visibileA: ["p1", "p2"] })));
+  test("NON si rende visibile la mappa in tavola senza aggiornare visibileA", () =>
+    assertFails(updateDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"), { inTavolaPer: ["p1"] })));
 });

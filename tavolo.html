@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Content Security Policy: vedi il commento in testa a test/pagine/pagine.test.mjs -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#150d08" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icone/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="assets/icone/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/icone/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="S&amp;D" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <title>Sotterranei &amp; Dragoni — Schermo del tavolo</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script type="module" src="assets/js/pwa.js"></script>
+</head>
+<body class="pagina-tavolo">
+  <div id="veil" class="loading-veil">
+    <div class="die-stage">
+      <div class="die-shadow"></div>
+      <div class="die-svg-wrap">
+        <svg class="die-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.1" opacity="0.5"/>
+          <text class="num num-20" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">20</text>
+          <text class="num num-7" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">7</text>
+          <text class="num num-3" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">3</text>
+          <text class="num num-14" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">14</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="loading-text">Consultando gli antichi registri…</div>
+      <div class="loading-sub">un istante: il destino si sta scrivendo</div>
+    </div>
+  </div>
+
+  <!-- Schermo del tavolo: la vista dei giocatori della mappa in tavola, da
+       aprire sul computer del DM e spostare a schermo intero sulla TV. Nessun
+       comando: segue l'inquadratura che il DM sceglie dalla pagina Sessione. -->
+  <div id="contenuto" class="tavolo" style="display:none;">
+    <div id="tavolo-mappa" class="tavolo-mappa"></div>
+    <div id="tavolo-comandi" class="tavolo-comandi">
+      <button id="btn-schermo-intero" class="btn-tabella btn-tabella-evidenza" type="button">Schermo intero</button>
+      <a class="btn-tabella" href="sessione.html">Torna alla sessione</a>
+    </div>
+  </div>
+
+  <script type="module" src="assets/js/pagine/tavolo.js"></script>
+</body>
+</html>

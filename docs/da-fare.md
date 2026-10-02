@@ -18,7 +18,7 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   nella tela.
 - **Stemma per l'intestazione** (❌ scartato, drago da rifare).
 - **Bussola per la mappa** (tavola degli stati vuoti della Sessione): da usare
-  quando arriverà la mappa.
+  nel pannello Mappa quando non c'è ancora nessuna mappa.
 - **Animazioni in JavaScript** (da valutare insieme): fatto il dado di
   caricamento, in revisione il tiro dei PF; l'annuncio di livello resta in CSS
   (scelta della tela). Da valutare: comparsa dei contenuti in sessione, turno
@@ -37,20 +37,28 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - **Creazione di PNG e nemici per il DM**: schede rapide, con la possibilità di
   partire dai mostri del materiale gratuito di Wizards of the Coast (SRD 5.1,
   licenza Creative Commons), come già fatto per incantesimi ed equipaggiamento.
-- **Mappe e nebbia di guerra, gestione dell'esplorazione**: il lavoro più
-  grosso, da fare per ultimo. Nella pagina Sessione la mappa andrà sopra gli
-  appunti, con una scheda di dimensioni simili (anche sul telefono, prima
-  degli appunti).
-  - **Segnalini sulla mappa** (da valutare insieme, sul modello di Roll20):
-    un livello sopra la mappa con le icone di personaggi e nemici, da muovere
-    per il posizionamento preciso in combattimento (griglia, distanze),
-    collegato al tracker di iniziativa.
+- **Mappe della sessione, fasi successive** (ogni fase con la sua bozza nella
+  tela prima del codice):
+  - fase 2, nemici e combattimento: pedine dal tracker con l'immagine della
+    Libreria e il turno evidenziato, pedine piazzate a mano dal DM, nascoste
+    finché non le rivela, taglie (Grande 2×2, Enorme 3×3, Mastodontica 4×4);
+  - fase 3, nebbia di guerra: il DM svela e copre a mano (pennello o
+    rettangoli, a caselle con la griglia), lui ci vede attraverso;
+  - fase 4, strumenti: righello e distanze, ping, aree degli incantesimi
+    (cono, sfera, cubo, linea).
 
 ## Altro
 
 - **Corto animato in JavaScript**: da discutere.
 
 ## Già fatto
+
+- Mappe della sessione, fase 1: pannello Mappa nella Sessione (sopra gli
+  appunti), mappe della Libreria fino a 4096 px, griglia per mappa (anche
+  con la taratura a due clic), mappa in tavola e mappe in preparazione,
+  pedine dei personaggi (ritratto, PF, condizioni, "A terra") che ogni
+  giocatore muove da sé con la distanza in metri, schermo del tavolo
+  (tavolo.html) che segue l'inquadratura del DM.
 
 - Dispense del DM da "sbloccare" per i giocatori: Libreria dei contenuti,
   contenuti mostrati in sessione e Archivio dei giocatori (su Firebase Storage,
