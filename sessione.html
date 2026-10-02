@@ -145,6 +145,13 @@
     <div class="modal-card">
       <button id="chiudi-registro" class="btn-chiudi-modal" aria-label="Chiudi" type="button">×</button>
       <h2>Registro delle sessioni</h2>
+      <div id="registro-azioni-dm" class="registro-azioni" hidden>
+        <button type="button" id="btn-seleziona-sessioni" class="btn-tabella">Elimina sessioni…</button>
+        <span id="registro-selezione" class="registro-selezione" hidden>
+          <button type="button" id="btn-elimina-selezionate" class="btn-tabella btn-tabella-pericolo" disabled>Elimina selezionate</button>
+          <button type="button" id="btn-annulla-selezione" class="btn-tabella">Annulla</button>
+        </span>
+      </div>
       <div id="lista-registro"></div>
       <div id="registro-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4 C4.5 4 3.5 5 3.5 6.5 C3.5 8 4.5 9 6 9 L6 19 C6 20.5 7 21.5 8.5 21.5 L18 21.5 C19.5 21.5 20.5 20.5 20.5 19 L20.5 17"/><path d="M18 4 C19.5 4 20.5 5 20.5 6.5 L20.5 17 L15.5 17 L15.5 21.5"/><line x1="6" y1="4" x2="18" y2="4"/><line x1="9" y1="12" x2="17" y2="12" opacity="0.5"/><line x1="9" y1="15.5" x2="14" y2="15.5" opacity="0.5"/></svg><p>Nessuna sessione registrata ancora.</p></div>
     </div>

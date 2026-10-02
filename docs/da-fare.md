@@ -5,14 +5,6 @@ indicativo. Si aggiorna man mano che si completano.
 
 ## Manutenzione e rifiniture
 
-- **Eliminazione di un utente dall'area admin**: pulsante "Elimina" in
-  Gestione utenti. Richiede una Cloud Function (l'account di Authentication non
-  si può cancellare dal browser), che elimini anche profilo e personaggi.
-- **Selettore della campagna** per il DM (oggi si lavora sempre su quella
-  "attiva").
-- **Eliminazione delle sessioni di prova**: poter cancellare le sessioni
-  aperte durante i test (anche quelle chiuse, con appunti e tiri), non solo
-  quelle programmate.
 - **Pulizia del codice** e piccole rifiniture dell'interfaccia.
 
 ## Grafica
@@ -110,6 +102,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   sul telefono (app installata; su iPhone da iOS 16.4) o sul computer;
   attivabili dall'invito in dashboard o dal pannello ⚙️, al tocco aprono la
   pagina giusta (Cloud Function `inviaNotificaPush`).
+- Pulizia e campagne: il DM elimina dal registro una o più sessioni (anche
+  già giocate, con appunti e tiri; il contatore riparte dal numero più alto
+  rimasto); l'admin elimina un utente da Gestione utenti (Cloud Function
+  `eliminaUtente`: account, profilo, personaggi e ritratti; gli appunti
+  restano); più campagne attive insieme, con il selettore in dashboard e nel
+  pannello ⚙️ (la scelta resta nel browser).
 - Esportazione delle schede: PDF in stile app (ritratto grande, caratteristiche
   in verticale come nella scheda, leggibile anche in bianco e nero) e backup
   JSON completo; dalla scheda (giocatore o DM) e, per il DM, tutto il party in

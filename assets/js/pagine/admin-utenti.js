@@ -3,6 +3,8 @@
 import {
   proteggiPaginaAdmin,
   elencaUtenti,
+  richiediEliminazioneUtente,
+  ascoltaRichiestaEliminazione,
   aggiornaRuoloUtente,
   inviaResetPassword,
   approvaUtente,
@@ -58,6 +60,7 @@ function creaRiga(utente, uidCorrente) {
     ? '<span class="simbolo-verifica" title="Approvato" aria-label="Approvato">✓</span>'
     : `<button class="btn-tabella btn-tabella-evidenza" data-approva="${esc(utente.uid)}">Approva</button>`;
 
+  tr.dataset.uid = utente.uid;
   tr.innerHTML = `
     <td>${esc(utente.nome) || "—"}${eIlTuoAccount ? '<span class="badge-tu">(tu)</span>' : ""}</td>
     <td class="cella-email">${esc(utente.email) || "—"}</td>
@@ -70,13 +73,19 @@ function creaRiga(utente, uidCorrente) {
     </td>
     <td>${formattaData(utente.creatoIl)}</td>
     <td>
-      <button class="btn-tabella" data-email="${esc(utente.email)}">Reset password</button>
+      <div class="azioni-utente">
+        <button class="btn-tabella" data-email="${esc(utente.email)}">Reset password</button>
+        ${eIlTuoAccount ? "" : `<button class="btn-tabella btn-tabella-pericolo" data-elimina="${esc(utente.uid)}" data-nome="${esc(utente.nome || utente.email || "")}" type="button">Elimina</button>`}
+      </div>
     </td>
   `;
   return tr;
 }
 
+let uidAdmin = null;
+
 proteggiPaginaAdmin(async (user, profilo) => {
+  uidAdmin = user.uid;
   montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
   try {
     const utenti = await elencaUtenti();
@@ -152,5 +161,52 @@ corpoTabella.addEventListener("click", async (evento) => {
   } finally {
     bottone.disabled = false;
     bottone.textContent = testoOriginale;
+  }
+});
+
+// Eliminazione di un utente: la richiesta va alla Cloud Function eliminaUtente
+// (l'account di accesso si può cancellare solo dal server); la riga resta in
+// attesa finché non arriva l'esito.
+const ATTESA_MASSIMA = 90000;
+corpoTabella.addEventListener("click", async (evento) => {
+  const bottone = evento.target.closest("[data-elimina]");
+  if (!bottone) return;
+  const uid = bottone.dataset.elimina;
+  const nome = bottone.dataset.nome;
+  const domanda = `Eliminare definitivamente ${nome}?\n\n` +
+    "Spariscono account, profilo, personaggi con i ritratti, notifiche; esce dalle campagne. " +
+    "Gli appunti scritti in sessione restano, firmati con il suo nome. Non si può annullare.";
+  if (!confirm(domanda)) return;
+  const riga = bottone.closest("tr");
+  riga.querySelectorAll("button, select").forEach((el) => (el.disabled = true));
+  mostraAttesa(bottone, "Eliminazione…");
+  let smetti = () => {};
+  const scadenza = setTimeout(() => {
+    smetti();
+    mostraToast("Nessuna risposta dalla funzione eliminaUtente: è pubblicata? (vedi docs/funzioni.md)", true);
+    riga.querySelectorAll("button, select").forEach((el) => (el.disabled = false));
+    bottone.textContent = "Elimina";
+  }, ATTESA_MASSIMA);
+  try {
+    await richiediEliminazioneUtente(uid, uidAdmin);
+    smetti = ascoltaRichiestaEliminazione(uid, (richiesta) => {
+      if (!richiesta?.stato) return;
+      clearTimeout(scadenza);
+      smetti();
+      if (richiesta.stato === "completata") {
+        riga.remove();
+        mostraToast(`${nome} è stato eliminato.`);
+      } else {
+        mostraToast(`Eliminazione non riuscita: ${richiesta.messaggio || "errore"}.`, true);
+        riga.querySelectorAll("button, select").forEach((el) => (el.disabled = false));
+        bottone.textContent = "Elimina";
+      }
+    });
+  } catch (errore) {
+    clearTimeout(scadenza);
+    console.error(errore);
+    mostraToast("Impossibile inviare la richiesta di eliminazione.", true);
+    riga.querySelectorAll("button, select").forEach((el) => (el.disabled = false));
+    bottone.textContent = "Elimina";
   }
 });

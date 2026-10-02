@@ -231,6 +231,20 @@ export async function segnalaLivelloSu(uid, livelloAttuale, quanti = 1) {
   });
 }
 
+// L'admin chiede di eliminare un utente: la Cloud Function eliminaUtente
+// esegue la richiesta e scrive l'esito ("stato": completata | errore).
+// Una richiesta precedente (es. finita in errore) si toglie prima di rifarla.
+export async function richiediEliminazioneUtente(uid, adminUid) {
+  const riferimento = doc(db, "richiesteEliminazione", uid);
+  const precedente = await getDoc(riferimento);
+  if (precedente.exists()) await deleteDoc(riferimento);
+  await setDoc(riferimento, { richiestaDa: adminUid, richiestaIl: serverTimestamp() });
+}
+
+export function ascoltaRichiestaEliminazione(uid, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(doc(db, "richiesteEliminazione", uid), (snapshot) => callback(snapshot.data() || null), alErrore);
+}
+
 // Restituisce lo storico delle notifiche di un utente, più recenti prima.
 export async function elencaNotifiche(uid) {
   const riferimento = query(collection(db, "users", uid, "notifiche"), orderBy("creataIl", "desc"));
@@ -246,9 +260,10 @@ export async function segnaNotificaLetta(uid, notificaId) {
 // Una campagna (collezione "campagne") è il contenitore di tutto ciò che un
 // tavolo gioca insieme: ha un titolo (eventualmente provvisorio, per un
 // "reveal" alla prima sessione), un DM proprietario e un elenco di giocatori
-// membri. Un DM può avere più campagne nel tempo, ma solo una alla volta ha
-// stato "attiva" (non esiste ancora un selettore in dashboard): è quella
-// campagna a determinare party, personaggi e registro sessioni mostrati.
+// membri. Più campagne possono essere "attive" insieme (gruppi diversi in
+// parallelo): ognuno sceglie dal selettore su quale lavorare (la scelta resta
+// in questo browser, vedi scegliCampagna) ed è quella a determinare party,
+// personaggi e registro sessioni mostrati.
 //
 // Titolo provvisorio: finché la campagna non viene "rivelata", il titolo vero
 // vive SOLO in "campagne/{id}/privato/titolo" (leggibile dal DM e dall'admin),
@@ -315,21 +330,46 @@ export async function aggiornaTitoloCampagna(campagnaId, { titolo, titoloProvvis
   await batch.commit();
 }
 
-// Restituisce la campagna "corrente" per un utente: per un DM/admin, la
-// propria campagna con stato "attiva"; per un giocatore, la campagna attiva
-// di cui è membro. Restituisce null se non ne esiste ancora una (prima
-// configurazione, o giocatore non ancora invitato a nessuna campagna). Il
-// filtro per ruolo è fatto lato client (non con una seconda clausola "where")
-// per evitare un indice composito: le campagne di un singolo utente sono
-// comunque pochissime.
-export async function ottieniCampagnaCorrente(uid, ruolo) {
+// Campagne attive dell'utente: per DM e admin quelle che guidano, per un
+// giocatore quelle di cui è membro. Più vecchia prima. Il filtro per stato è
+// fatto lato client (niente indice composito: sono pochissime).
+export async function elencaCampagneAttive(uid, ruolo) {
   const riferimento =
     ruolo === ROLES.PLAYER
       ? query(collection(db, "campagne"), where("membriUid", "array-contains", uid))
       : query(collection(db, "campagne"), where("dmUid", "==", uid));
   const snapshot = await getDocs(riferimento);
-  const attiva = snapshot.docs.find((documento) => documento.data().stato === "attiva");
-  return attiva ? { id: attiva.id, ...attiva.data() } : null;
+  return snapshot.docs
+    .filter((documento) => documento.data().stato === "attiva")
+    .map((documento) => ({ id: documento.id, ...documento.data() }))
+    .sort((a, b) => (a.creataIl?.toMillis?.() ?? 0) - (b.creataIl?.toMillis?.() ?? 0));
+}
+
+// Campagna su cui si sta lavorando, scelta dal selettore e ricordata in
+// questo browser (per utente).
+const chiaveCampagna = (uid) => `sed-campagna-${uid}`;
+export function campagnaScelta(uid) {
+  try {
+    return localStorage.getItem(chiaveCampagna(uid));
+  } catch {
+    return null;
+  }
+}
+export function scegliCampagna(uid, campagnaId) {
+  try {
+    localStorage.setItem(chiaveCampagna(uid), campagnaId);
+  } catch {
+    // Non salvata: si torna alla prima campagna attiva.
+  }
+}
+
+// La campagna corrente: quella scelta, se è ancora attiva, altrimenti la
+// prima attiva. null se non ce n'è (prima configurazione, giocatore non
+// ancora invitato a nessuna campagna).
+export async function ottieniCampagnaCorrente(uid, ruolo) {
+  const attive = await elencaCampagneAttive(uid, ruolo);
+  const scelta = campagnaScelta(uid);
+  return attive.find((c) => c.id === scelta) || attive[0] || null;
 }
 
 export async function ottieniCampagna(campagnaId) {
@@ -364,20 +404,16 @@ export async function aggiornaCampagna(campagnaId, campi) {
   await updateDoc(doc(db, "campagne", campagnaId), campi);
 }
 
-// Rende attiva una campagna tra quelle di un DM: quella eventualmente già
-// attiva torna "in pausa" (non "conclusa": il DM non ha chiesto di
-// concluderla, solo di metterla temporaneamente da parte).
+// Rende attiva una campagna di un DM (le altre attive restano tali: si
+// possono guidare più gruppi insieme) e la sceglie come campagna corrente.
 export async function impostaCampagnaAttiva(dmUid, campagnaId) {
-  const campagne = await elencaCampagneDM(dmUid);
-  const batch = writeBatch(db);
-  campagne.forEach((campagna) => {
-    if (campagna.id === campagnaId) {
-      batch.update(doc(db, "campagne", campagna.id), { stato: "attiva" });
-    } else if (campagna.stato === "attiva") {
-      batch.update(doc(db, "campagne", campagna.id), { stato: "in pausa" });
-    }
-  });
-  await batch.commit();
+  await updateDoc(doc(db, "campagne", campagnaId), { stato: "attiva" });
+  scegliCampagna(dmUid, campagnaId);
+}
+
+// Mette da parte una campagna attiva (non "conclusa": si potrà riprendere).
+export async function mettiInPausaCampagna(campagnaId) {
+  await updateDoc(doc(db, "campagne", campagnaId), { stato: "in pausa" });
 }
 
 export async function aggiungiMembroCampagna(campagnaId, uid) {
@@ -672,6 +708,43 @@ export async function eliminaSessioneProgrammata(campagnaId, sessioneId) {
       transazione.set(riferimentoStatoSessione(campagnaId), { ultimoNumero: numeroPiuAlto(altre) }, { merge: true });
     }
     transazione.delete(riferimento);
+  });
+}
+
+// Il DM elimina sessioni dal registro (es. quelle di prova), anche già
+// chiuse: con loro spariscono appunti, tiri e tiri nascosti; la libreria
+// dimentica dove erano state mostrate o collegate; se una era in corso la
+// sessione si chiude; il contatore riparte dal numero più alto rimasto (se
+// non ne resta nessuna, la prossima sarà la n. 1).
+export async function eliminaSessioni(campagnaId, sessioniId) {
+  const daEliminare = new Set(sessioniId);
+  for (const sessioneId of daEliminare) {
+    const [appunti, nascosti, mostrati, collegati] = await Promise.all([
+      getDocs(collection(db, "registroSessioni", sessioneId, "appunti")),
+      getDocs(collection(db, "registroSessioni", sessioneId, "tiriNascosti")),
+      getDocs(query(collection(db, "campagne", campagnaId, "immagini"), where("sessioniMostrata", "array-contains", sessioneId))),
+      getDocs(query(collection(db, "campagne", campagnaId, "immaginiDM"), where("sessioniCollegate", "array-contains", sessioneId))),
+    ]);
+    // A blocchi: una scrittura atomica accetta al massimo 500 operazioni.
+    const operazioni = [
+      ...appunti.docs.map((d) => (b) => b.delete(d.ref)),
+      ...nascosti.docs.map((d) => (b) => b.delete(d.ref)),
+      ...mostrati.docs.map((d) => (b) => b.update(d.ref, { sessioniMostrata: arrayRemove(sessioneId) })),
+      ...collegati.docs.map((d) => (b) => b.update(d.ref, { sessioniCollegate: arrayRemove(sessioneId) })),
+    ];
+    for (let i = 0; i < operazioni.length; i += 450) {
+      const batch = writeBatch(db);
+      operazioni.slice(i, i + 450).forEach((op) => op(batch));
+      await batch.commit();
+    }
+  }
+  const rimaste = (await elencaSessioniCampagna(campagnaId)).filter((s) => !daEliminare.has(s.id));
+  await runTransaction(db, async (transazione) => {
+    const stato = await transazione.get(riferimentoStatoSessione(campagnaId));
+    const aggiornamento = { ultimoNumero: numeroPiuAlto(rimaste) };
+    if (daEliminare.has(stato.data()?.sessioneAttivaId)) Object.assign(aggiornamento, { inCorso: false, sessioneAttivaId: null });
+    transazione.set(riferimentoStatoSessione(campagnaId), aggiornamento, { merge: true });
+    daEliminare.forEach((id) => transazione.delete(doc(db, "registroSessioni", id)));
   });
 }
 

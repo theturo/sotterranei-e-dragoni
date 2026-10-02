@@ -1,11 +1,12 @@
 # Cloud Functions: pubblicazione e configurazione
 
-Le funzioni (`functions/`) sono tre:
+Le funzioni (`functions/`) sono quattro:
 
 | Funzione | Cosa fa | Si attiva |
 |---|---|---|
 | `notificaNuovoIscritto` | Invia un'email all'admin quando qualcuno si registra ed è in attesa di approvazione (massimo 10 email all'ora, contro le registrazioni in massa) | alla creazione di un documento in `users` |
 | `inviaNotificaPush` | Manda ogni avviso della campanella (passaggio di livello, date proposte, sessione confermata, sessione iniziata) come **notifica push** ai dispositivi su cui l'utente le ha attivate; toglie i dispositivi il cui token non vale più | alla creazione di un documento in `users/{uid}/notifiche` |
+| `eliminaUtente` | Esegue l'eliminazione di un utente chiesta dall'admin in Gestione utenti: account di accesso, profilo con notifiche e dispositivi, personaggi con i ritratti, posto tra i membri e nel party delle campagne. Gli appunti scritti in sessione restano, firmati con il nome | alla creazione di un documento in `richiesteEliminazione` |
 | `bloccaSpeseOltreSoglia` | Se la spesa del mese raggiunge la soglia (predefinita: 10), **scollega la fatturazione** dal progetto | a ogni avviso del budget, via Pub/Sub |
 
 Girano in `europe-west1` (la regione che corrisponde al database Firestore `eur3`),
@@ -141,8 +142,8 @@ gcloud eventarc triggers list --location=eur3 --format="table(name, serviceAccou
 ```
 
 e concedere il ruolo a quegli account (sostituire `ACCOUNT` con quello mostrato
-per `notificanuovoiscritto` e `ACCOUNT_PUSH` con quello di `invianotificapush`,
-di solito lo stesso):
+per `notificanuovoiscritto`, `ACCOUNT_PUSH` con quello di `invianotificapush` e
+`ACCOUNT_ELIMINA` con quello di `eliminautente`, di solito lo stesso):
 
 ```sh
 gcloud run services add-iam-policy-binding bloccaspeseoltresoglia --region=europe-west1 \
@@ -154,6 +155,9 @@ gcloud run services add-iam-policy-binding notificanuovoiscritto --region=europe
 
 gcloud run services add-iam-policy-binding invianotificapush --region=europe-west1 \
   --member="serviceAccount:ACCOUNT_PUSH" --role="roles/run.invoker"
+
+gcloud run services add-iam-policy-binding eliminautente --region=europe-west1 \
+  --member="serviceAccount:ACCOUNT_ELIMINA" --role="roles/run.invoker"
 ```
 
 Per una funzione aggiunta dopo il primo deploy (come `inviaNotificaPush`) basta
@@ -185,6 +189,12 @@ circa 24 ore).
   con quante sono partite. I dispositivi registrati stanno in Firestore sotto
   `users/{uid}/dispositivi`. Su iPhone e iPad serve iOS 16.4 o successivo e
   l'app aggiunta alla schermata Home.
+- **Eliminazione di un utente**: in Gestione utenti registrare un account di
+  prova (con un alias Gmail), poi **Elimina** sulla sua riga: entro qualche
+  secondo la riga sparisce e nei log compare "Utente eliminato". Se dopo un
+  minuto e mezzo compare "Nessuna risposta dalla funzione", manca il deploy o
+  il permesso di invocazione (§4b). L'esito di ogni richiesta resta in
+  Firestore, in `richiesteEliminazione/{uid}`.
 - **Blocco spese** (senza farlo scattare davvero): pubblicare un avviso finto
   **sotto** la soglia
 

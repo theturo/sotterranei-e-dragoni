@@ -3,6 +3,8 @@
 //   attesa di approvazione.
 // - inviaNotificaPush: ogni avviso della campanella (users/{uid}/notifiche)
 //   parte anche come notifica push verso i dispositivi dell'utente.
+// - eliminaUtente: esegue le richieste dell'admin in
+//   "richiesteEliminazione/{uid}" (account, profilo, personaggi, ritratti…).
 // - bloccaSpeseOltreSoglia: "interruttore" di sicurezza. Riceve gli avvisi del
 //   budget via Pub/Sub e, se la spesa raggiunge la soglia scelta, scollega la
 //   fatturazione dal progetto (tutti i servizi a pagamento si fermano finché
@@ -13,12 +15,15 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { defineString, defineInt, defineSecret } from "firebase-functions/params";
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
+import { getAuth } from "firebase-admin/auth";
+import { getStorage } from "firebase-admin/storage";
 import nodemailer from "nodemailer";
 import { CloudBillingClient } from "@google-cloud/billing";
 import {
   registraInvio, emailNuovoIscritto, deveBloccare, idProgetto, messaggioPush, tokenDaRimuovere, MASSIMO_DISPOSITIVI,
+  motivoRifiutoEliminazione,
 } from "./logica.js";
 
 initializeApp();
@@ -108,6 +113,55 @@ export const inviaNotificaPush = onDocumentCreated("users/{uid}/notifiche/{notif
   logger.info("Notifica push inviata.", {
     uid, tipo: evento.data.get("tipo"), inviate: esito.successCount, fallite: esito.failureCount, rimossi: scaduti.length,
   });
+});
+
+// L'admin elimina un utente dalla pagina Gestione utenti scrivendo
+// "richiesteEliminazione/{uid}" (solo lui può, vedi firestore.rules). Si
+// eliminano: account di accesso, profilo con notifiche e dispositivi,
+// personaggi con i ritratti, posto tra i membri e nel party delle campagne.
+// Gli appunti e i tiri scritti in sessione restano, firmati con il nome.
+// L'esito torna nella richiesta ("stato": completata | errore).
+export const eliminaUtente = onDocumentCreated("richiesteEliminazione/{uid}", async (evento) => {
+  const { uid } = evento.params;
+  const richiesta = evento.data?.data();
+  const riferimento = evento.data.ref;
+  const richiedente = richiesta?.richiestaDa ? (await db.doc(`users/${richiesta.richiestaDa}`).get()).data() : null;
+  const motivo = motivoRifiutoEliminazione(richiesta, uid, richiedente);
+  if (motivo) {
+    logger.warn("Eliminazione rifiutata.", { uid, motivo });
+    await riferimento.update({ stato: "errore", messaggio: motivo });
+    return;
+  }
+  try {
+    const personaggi = await db.collection("personaggi").where("proprietarioUid", "==", uid).get();
+    await Promise.all(personaggi.docs.map((d) => d.ref.delete()));
+    await getStorage().bucket().deleteFiles({ prefix: `ritratti/${uid}/` }).catch((errore) => {
+      logger.warn("Ritratti non eliminati.", { uid, errore: errore.message });
+    });
+
+    const campagne = await db.collection("campagne").where("membriUid", "array-contains", uid).get();
+    await Promise.all(campagne.docs.map(async (c) => {
+      const batch = db.batch();
+      batch.update(c.ref, { membriUid: FieldValue.arrayRemove(uid) });
+      batch.delete(c.ref.collection("party").doc(uid));
+      await batch.commit();
+    }));
+
+    await db.recursiveDelete(db.doc(`users/${uid}`));
+    await getAuth().deleteUser(uid).catch((errore) => {
+      if (errore.code !== "auth/user-not-found") throw errore;
+    });
+    await riferimento.update({
+      stato: "completata",
+      completataIl: FieldValue.serverTimestamp(),
+      personaggi: personaggi.size,
+      campagne: campagne.size,
+    });
+    logger.info("Utente eliminato.", { uid, personaggi: personaggi.size, campagne: campagne.size });
+  } catch (errore) {
+    logger.error("Eliminazione non riuscita.", { uid, errore: errore.message });
+    await riferimento.update({ stato: "errore", messaggio: "eliminazione non riuscita: riprova" });
+  }
 });
 
 // Account di servizio dedicato, l'unico con il permesso di gestire la

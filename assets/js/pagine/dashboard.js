@@ -3,7 +3,7 @@
 import { proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente, contaUtentiInAttesa, riepilogoCalendario } from "../auth.js";
 import { prossimaSessione, etichettaSessione, formattaDataOra, distanzaGiorni } from "../calendario.js";
 import { montaWidgetMusica } from "../widget-musica.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaMenuUtente, riempiSelettoreCampagna } from "../menu-utente.js";
 import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "../pwa.js";
 import { statoNotifichePush, attivaNotifichePush } from "../notifiche-push.js";
 
@@ -219,6 +219,11 @@ proteggiPagina(async (user, profilo) => {
 
   mostraInvitoInstallazione();
   mostraInvitoNotifiche(user.uid);
+  riempiSelettoreCampagna(document.getElementById("select-campagna-dashboard"), user.uid, profilo?.ruolo || "player")
+    .then((mostra) => {
+      document.getElementById("selettore-campagna").hidden = !mostra;
+    })
+    .catch((errore) => console.error(errore));
   veil.style.display = "none";
   contenuto.style.display = "block";
 });

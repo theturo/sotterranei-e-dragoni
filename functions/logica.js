@@ -126,3 +126,15 @@ export function tokenDaRimuovere(errore) {
     "messaging/invalid-argument",
   ].includes(errore?.code);
 }
+
+// ---------- Eliminazione di un utente ----------
+
+// Controlla una richiesta in "richiesteEliminazione/{uid}" (le regole già
+// permettono di crearla solo all'admin, qui si ricontrolla per sicurezza).
+// Restituisce il motivo del rifiuto, o null se si può procedere.
+export function motivoRifiutoEliminazione(richiesta, uid, profiloRichiedente) {
+  if (!richiesta?.richiestaDa) return "richiesta senza autore";
+  if (richiesta.richiestaDa === uid) return "un admin non può eliminare il proprio account da qui";
+  if (profiloRichiedente?.ruolo !== "admin") return "solo un admin può eliminare un utente";
+  return null;
+}
