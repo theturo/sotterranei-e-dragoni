@@ -361,7 +361,9 @@ service cloud.firestore {
 
       match /stato/{docId} {
         allow get: if isNellaCampagna(campagnaId);
-        allow write: if isDMdellaCampagna(campagnaId) && (docId != "riposo" || riposoValido());
+        allow write: if isDMdellaCampagna(campagnaId)
+          && (docId != "riposo" || riposoValido())
+          && (docId != "tavola" || tavolaValida());
         // Riposo breve avviato dal DM: ogni giocatore invitato può solo
         // segnare di aver finito (aggiungersi a "conclusi").
         allow update: if docId == "riposo"
@@ -383,7 +385,8 @@ service cloud.firestore {
       // oggetti, dispense). Il file è in Storage (campagne/{campagnaId}/{id}).
       // Qui i dati che un giocatore può vedere: titolo, descrizione, a chi è
       // mostrato ora durante la sessione ("mostrataA"), nell'archivio di chi è
-      // ("archiviataPer"). "visibileA" è l'unione dei due, verificata qui sotto:
+      // ("archiviataPer"), a chi serve perché è la mappa in tavola
+      // ("inTavolaPer"). "visibileA" è l'unione dei tre, verificata qui sotto:
       // un membro legge il documento (e scarica il file, vedi storage.rules)
       // solo se ci compare.
       match /immagini/{immagineId} {
@@ -450,6 +453,27 @@ service cloud.firestore {
         }
       }
 
+      // Mappe della sessione. "stato/tavola" dice quale mappa della Libreria è
+      // in tavola (e cosa inquadra lo schermo comune); per ogni mappa il DM
+      // salva la griglia (mappe/{immagineId}) e le pedine (pedine/{id}, per ora
+      // quelle dei personaggi, con l'uid del giocatore come ID). I membri
+      // leggono solo la mappa in tavola; ogni giocatore muove solo la propria
+      // pedina e solo su quella mappa.
+      match /mappe/{immagineId} {
+        allow get: if isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId);
+        allow list, delete: if isDMdellaCampagna(campagnaId);
+        allow create, update: if isDMdellaCampagna(campagnaId) && grigliaValida();
+
+        match /pedine/{pedinaId} {
+          allow get, list: if isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId);
+          allow create, update: if pedinaValida(pedinaId) && (
+            isDMdellaCampagna(campagnaId)
+            || (pedinaId == request.auth.uid && mappaInTavolaPerMembro(campagnaId, immagineId))
+          );
+          allow delete: if isDMdellaCampagna(campagnaId);
+        }
+      }
+
       // Riepilogo pubblico della scheda attiva di un membro.
       match /party/{uid} {
         allow get, list: if isNellaCampagna(campagnaId);
@@ -494,17 +518,55 @@ service cloud.firestore {
         && listaUid(d.conclusi);
     }
 
+    // Mappe della sessione (vedi match /mappe).
+    function mappaInTavolaPerMembro(campagnaId, immagineId) {
+      return isApprovato()
+        && request.auth.uid in datiCampagna(campagnaId).membriUid
+        && get(/databases/$(database)/documents/campagne/$(campagnaId)/stato/tavola).data.get('immagineId', null) == immagineId;
+    }
+
+    function numeroTra(valore, minimo, massimo) {
+      return (valore is int || valore is float) && valore >= minimo && valore <= massimo;
+    }
+
+    function tavolaValida() {
+      let d = request.resource.data;
+      let q = d.get('inquadratura', null);
+      return d.keys().hasOnly(['immagineId', 'inquadratura', 'aggiornatoIl'])
+        && (d.immagineId == null || (d.immagineId is string && d.immagineId.size() <= 40))
+        && (q == null || (q is map && q.keys().hasOnly(['x', 'y', 'w', 'h'])
+          && numeroTra(q.x, -100000, 100000) && numeroTra(q.y, -100000, 100000)
+          && numeroTra(q.w, 1, 100000) && numeroTra(q.h, 1, 100000)));
+    }
+
+    function grigliaValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['lato', 'ox', 'oy', 'visibile', 'snap', 'aggiornatoIl'])
+        && numeroTra(d.lato, 4, 2000)
+        && numeroTra(d.ox, 0, d.lato) && numeroTra(d.oy, 0, d.lato)
+        && d.visibile is bool && d.snap is bool;
+    }
+
+    function pedinaValida(pedinaId) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['tipo', 'uid', 'c', 'r', 'aggiornatoIl'])
+        && d.tipo == 'pg' && d.uid == pedinaId
+        && numeroTra(d.c, -50, 2000) && numeroTra(d.r, -50, 2000)
+        && d.aggiornatoIl == request.time;
+    }
+
     function contenutoValido() {
       let d = request.resource.data;
       return d.keys().hasOnly(['titolo', 'descrizione', 'categoria', 'larghezza', 'altezza', 'caricataIl',
-          'mostrataA', 'vistaDa', 'archiviataPer', 'visibileA', 'sessioniMostrata'])
+          'mostrataA', 'vistaDa', 'archiviataPer', 'inTavolaPer', 'visibileA', 'sessioniMostrata'])
         && testoValido(d.titolo, 1, 80)
         && testoOpzionale(d.get('descrizione', null), 500)
         && d.categoria in ['mappa', 'luogo', 'png', 'nemico', 'oggetto', 'dispensa', 'altro']
         && d.larghezza is int && d.altezza is int
         && listaUid(d.mostrataA) && listaUid(d.vistaDa) && listaUid(d.archiviataPer)
+        && listaUid(d.get('inTavolaPer', []))
         && d.visibileA is list
-        && d.visibileA.toSet() == d.mostrataA.toSet().union(d.archiviataPer.toSet())
+        && d.visibileA.toSet() == d.mostrataA.toSet().union(d.archiviataPer.toSet()).union(d.get('inTavolaPer', []).toSet())
         && d.sessioniMostrata is list && d.sessioniMostrata.size() <= 200;
     }
 

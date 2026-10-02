@@ -1,0 +1,459 @@
+// Vista di una mappa della sessione: immagine, griglia e pedine dentro una
+// finestra in cui ci si sposta (trascinando lo sfondo) e si fa zoom (rotella,
+// due dita o i metodi zoom/adatta). Usata dal pannello Mappa della pagina
+// Sessione (DM e giocatori) e dallo schermo del tavolo (tavolo.html, solo
+// visione). Mentre si trascina una pedina compare la distanza percorsa
+// rispetto alla velocità; al rilascio "onSposta" salva la nuova casella.
+import {
+  camAdatta,
+  camPerRettangolo,
+  camCentrata,
+  rettangoloVisibile,
+  daSchermo,
+  zoomIntorno,
+  centroCasella,
+  casellaDaCentro,
+  aggancia,
+  caselleTra,
+  testoDistanza,
+  righeGriglia,
+  coloreSalute,
+} from "./mappa-calcoli.js";
+
+const SVG = "http://www.w3.org/2000/svg";
+const SOGLIA_TRASCINAMENTO = 5;
+
+function crea(tag, classe, testo) {
+  const el = document.createElement(tag);
+  if (classe) el.className = classe;
+  if (testo != null) el.textContent = testo;
+  return el;
+}
+
+function creaSvg(tag, attributi = {}) {
+  const el = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attributi)) el.setAttribute(k, v);
+  return el;
+}
+
+// opzioni:
+// - interattiva: false per lo schermo del tavolo (niente tocchi né rotella)
+// - puoMuovere(id): se la pedina si può trascinare da qui
+// - velocita(id): metri di movimento (null se non noti)
+// - onSposta(id, { c, r }): pedina lasciata in una nuova casella
+// - onSeleziona(id | null): tocco su una pedina (o sullo sfondo)
+// - avviso(testo): messaggio breve (es. pedina di un altro giocatore)
+export function creaVistaMappa(contenitore, opzioni = {}) {
+  const {
+    interattiva = true,
+    puoMuovere = () => false,
+    velocita = () => null,
+    onSposta = () => {},
+    onSeleziona = () => {},
+    avviso = () => {},
+  } = opzioni;
+
+  const finestra = crea("div", "mappa-finestra");
+  if (!interattiva) finestra.classList.add("solo-visione");
+  const mondo = crea("div", "mappa-mondo");
+  const immagine = crea("img", "mappa-immagine");
+  immagine.alt = "";
+  immagine.draggable = false;
+  const svgGriglia = creaSvg("svg", { class: "mappa-griglia", "aria-hidden": "true" });
+  const gruppoGriglia = creaSvg("g", { stroke: "rgba(10, 6, 3, 0.45)" });
+  svgGriglia.append(gruppoGriglia);
+  const cornice = crea("div", "mappa-cornice-tavolo");
+  cornice.append(crea("span", null, "Schermo del tavolo"));
+  cornice.hidden = true;
+  const svgMisura = creaSvg("svg", { class: "mappa-misura", "aria-hidden": "true" });
+  const cerchioPartenza = creaSvg("circle", { fill: "rgba(232, 198, 90, 0.12)" });
+  const lineaMisura = creaSvg("line", {});
+  svgMisura.append(cerchioPartenza, lineaMisura);
+  svgMisura.style.display = "none";
+  const etichettaMisura = crea("div", "mappa-etichetta-misura");
+  etichettaMisura.hidden = true;
+  const strato = crea("div", "mappa-pedine");
+  mondo.append(immagine, svgGriglia, cornice, svgMisura, strato, etichettaMisura);
+  const vuoto = crea("div", "mappa-vuota");
+  vuoto.hidden = true;
+  finestra.append(mondo, vuoto);
+  contenitore.append(finestra);
+
+  let mappa = null; // { larghezza, altezza }
+  let griglia = { lato: 50, ox: 0, oy: 0, visibile: true, snap: true };
+  let pedine = [];
+  let selezionata = null;
+  let cam = { x: 0, y: 0, z: 1 };
+  let rettangoloFisso = null; // tavolo: rettangolo da mostrare (null = tutta la mappa)
+  let segueRettangolo = false;
+  let presa = null; // trascinamento di una pedina in corso
+  let taraturaCallback = null;
+  const puntatori = new Map();
+
+  const dimensioni = () => ({ w: finestra.clientWidth || 1, h: finestra.clientHeight || 1 });
+  // Finestra ancora nascosta (dimensioni zero): si adatta quando compare.
+  let daAdattare = false;
+  const haDimensioni = () => finestra.clientWidth > 0 && finestra.clientHeight > 0;
+  const camIniziale = () => {
+    const { w, h } = dimensioni();
+    return camAdatta(w, h, mappa.larghezza, mappa.altezza);
+  };
+  const limitiZoom = () => {
+    const base = camIniziale().z;
+    return { min: base * 0.5, max: Math.max(base * 2, 320 / (griglia.lato || 50)) };
+  };
+
+  function applicaCamera() {
+    mondo.style.transform = `translate(${cam.x}px, ${cam.y}px) scale(${cam.z})`;
+    gruppoGriglia.setAttribute("stroke-width", String(1.2 / cam.z));
+    lineaMisura.setAttribute("stroke-width", String(2.5 / cam.z));
+    lineaMisura.setAttribute("stroke-dasharray", `${8 / cam.z} ${6 / cam.z}`);
+    cerchioPartenza.setAttribute("stroke-width", String(2.5 / cam.z));
+    cerchioPartenza.setAttribute("stroke-dasharray", `${8 / cam.z} ${6 / cam.z}`);
+    etichettaMisura.style.fontSize = `${13 / cam.z}px`;
+    cornice.style.borderWidth = `${2 / cam.z}px`;
+    cornice.firstChild.style.fontSize = `${11 / cam.z}px`;
+    cornice.firstChild.style.padding = `${2 / cam.z}px ${7 / cam.z}px`;
+  }
+
+  function disegnaGriglia() {
+    gruppoGriglia.replaceChildren();
+    if (!mappa || !griglia.visibile) return;
+    const { verticali, orizzontali } = righeGriglia(griglia, mappa.larghezza, mappa.altezza);
+    verticali.forEach((x) => gruppoGriglia.append(creaSvg("line", { x1: x, y1: 0, x2: x, y2: mappa.altezza })));
+    orizzontali.forEach((y) => gruppoGriglia.append(creaSvg("line", { x1: 0, y1: y, x2: mappa.larghezza, y2: y })));
+  }
+
+  function posizioneDi(p) {
+    return presa && presa.id === p.id ? presa.a : { c: p.c, r: p.r };
+  }
+
+  function disegnaPedina(p) {
+    const lato = griglia.lato * 0.86;
+    const centro = centroCasella(griglia, posizioneDi(p));
+    const el = crea("div", "pedina-mappa");
+    el.dataset.pedina = p.id;
+    el.title = p.nome;
+    if (puoMuovere(p.id) && interattiva) el.classList.add("mobile");
+    if (p.mia) el.classList.add("mia");
+    if (p.aTerra) el.classList.add("a-terra");
+    if (selezionata === p.id) el.classList.add("selezionata");
+    if (presa?.id === p.id) el.classList.add("presa");
+    Object.assign(el.style, {
+      left: `${centro.x - lato / 2}px`,
+      top: `${centro.y - lato / 2}px`,
+      width: `${lato}px`,
+      height: `${lato}px`,
+      fontSize: `${griglia.lato * 0.24}px`,
+    });
+    const volto = crea("div", "pedina-volto");
+    if (p.ritrattoUrl) {
+      const img = crea("img");
+      img.alt = "";
+      img.draggable = false;
+      img.src = p.ritrattoUrl;
+      volto.append(img);
+    } else {
+      volto.textContent = p.iniziali || "?";
+      if (p.colore) volto.style.background = p.colore;
+    }
+    el.append(volto);
+    if (p.aTerra) {
+      el.append(crea("div", "pedina-croce", "✚"), crea("div", "pedina-terra", "A terra"));
+    } else if (p.quotaPf != null) {
+      const pf = crea("div", "pedina-pf");
+      const barra = crea("div", "pedina-pf-barra");
+      barra.style.width = `${Math.max(0, Math.min(1, p.quotaPf)) * 100}%`;
+      barra.style.background = coloreSalute(p.quotaPf);
+      pf.append(barra);
+      el.append(pf);
+    }
+    if (p.condizioni?.length) {
+      const lista = crea("div", "pedina-condizioni");
+      p.condizioni.slice(0, 4).forEach((c) => {
+        const chip = crea("span", "pedina-condizione", c.sigla);
+        chip.title = c.nome;
+        chip.style.background = c.colore;
+        lista.append(chip);
+      });
+      el.append(lista);
+    }
+    el.append(crea("div", "pedina-nome", p.nome));
+    return el;
+  }
+
+  function disegnaPedine() {
+    strato.replaceChildren(...(mappa ? pedine.map(disegnaPedina) : []));
+  }
+
+  function disegnaMisura() {
+    if (!presa || !presa.mosso) {
+      svgMisura.style.display = "none";
+      etichettaMisura.hidden = true;
+      return;
+    }
+    const da = centroCasella(griglia, presa.da);
+    const a = centroCasella(griglia, presa.a);
+    const { testo, oltre } = testoDistanza(caselleTra(presa.da, presa.a), velocita(presa.id));
+    const colore = oltre ? "#e0525f" : "#e8c65a";
+    svgMisura.style.display = "";
+    for (const [k, v] of Object.entries({ cx: da.x, cy: da.y, r: griglia.lato * 0.43, stroke: colore })) cerchioPartenza.setAttribute(k, v);
+    for (const [k, v] of Object.entries({ x1: da.x, y1: da.y, x2: a.x, y2: a.y, stroke: colore })) lineaMisura.setAttribute(k, v);
+    etichettaMisura.hidden = false;
+    etichettaMisura.textContent = testo;
+    etichettaMisura.classList.toggle("oltre", oltre);
+    etichettaMisura.style.left = `${a.x}px`;
+    etichettaMisura.style.top = `${a.y - griglia.lato * 0.62}px`;
+  }
+
+  function adattaDimensioni() {
+    if (!mappa) return;
+    svgGriglia.setAttribute("width", mappa.larghezza);
+    svgGriglia.setAttribute("height", mappa.altezza);
+    svgGriglia.setAttribute("viewBox", `0 0 ${mappa.larghezza} ${mappa.altezza}`);
+    svgMisura.setAttribute("width", mappa.larghezza);
+    svgMisura.setAttribute("height", mappa.altezza);
+    mondo.style.width = `${mappa.larghezza}px`;
+    mondo.style.height = `${mappa.altezza}px`;
+  }
+
+  // ---------- puntatore ----------
+  function puntoSchermo(evento) {
+    const r = finestra.getBoundingClientRect();
+    const k = r.width / (finestra.offsetWidth || r.width || 1) || 1;
+    return { sx: (evento.clientX - r.left) / k, sy: (evento.clientY - r.top) / k };
+  }
+
+  function giu(evento) {
+    if (!mappa || evento.button > 0) return;
+    const { sx, sy } = puntoSchermo(evento);
+    const punto = daSchermo(cam, sx, sy);
+    if (taraturaCallback) {
+      evento.preventDefault();
+      taraturaCallback(punto);
+      return;
+    }
+    const id = evento.target.closest?.("[data-pedina]")?.dataset.pedina;
+    const p = id && pedine.find((x) => x.id === id);
+    if (p && puntatori.size === 0) {
+      evento.preventDefault();
+      const centro = centroCasella(griglia, p);
+      presa = {
+        id, puntatore: evento.pointerId, sx, sy, mosso: false, mobile: puoMuovere(id),
+        dx: centro.x - punto.x, dy: centro.y - punto.y, da: { c: p.c, r: p.r }, a: { c: p.c, r: p.r },
+      };
+      finestra.setPointerCapture?.(evento.pointerId);
+      return;
+    }
+    puntatori.set(evento.pointerId, { sx, sy, inizio: { sx, sy } });
+    finestra.setPointerCapture?.(evento.pointerId);
+  }
+
+  function muovi(evento) {
+    const { sx, sy } = puntoSchermo(evento);
+    if (presa && evento.pointerId === presa.puntatore) {
+      if (!presa.mosso && Math.hypot(sx - presa.sx, sy - presa.sy) < SOGLIA_TRASCINAMENTO) return;
+      if (!presa.mobile) {
+        // Pedina altrui: il gesto diventa uno spostamento della mappa.
+        if (!presa.avvisato) avviso("Puoi muovere solo la tua pedina.");
+        presa.avvisato = true;
+        cam = { ...cam, x: cam.x + sx - presa.sx, y: cam.y + sy - presa.sy };
+        presa.sx = sx;
+        presa.sy = sy;
+        presa.mosso = true;
+        applicaCamera();
+        return;
+      }
+      presa.mosso = true;
+      const punto = daSchermo(cam, sx, sy);
+      const x = Math.min(mappa.larghezza, Math.max(0, punto.x + presa.dx));
+      const y = Math.min(mappa.altezza, Math.max(0, punto.y + presa.dy));
+      presa.a = casellaDaCentro(griglia, { x, y });
+      disegnaPedine();
+      disegnaMisura();
+      return;
+    }
+    if (!puntatori.has(evento.pointerId)) return;
+    const prima = [...puntatori.values()].map((p) => ({ ...p }));
+    const vecchio = puntatori.get(evento.pointerId);
+    puntatori.set(evento.pointerId, { ...vecchio, sx, sy });
+    if (puntatori.size === 1) {
+      cam = { ...cam, x: cam.x + sx - vecchio.sx, y: cam.y + sy - vecchio.sy };
+    } else if (puntatori.size === 2) {
+      const dopo = [...puntatori.values()];
+      const distanza = (a) => Math.hypot(a[0].sx - a[1].sx, a[0].sy - a[1].sy) || 1;
+      const mezzo = (a) => ({ x: (a[0].sx + a[1].sx) / 2, y: (a[0].sy + a[1].sy) / 2 });
+      const m0 = mezzo(prima);
+      const m1 = mezzo(dopo);
+      const { min, max } = limitiZoom();
+      const z = Math.min(max, Math.max(min, cam.z * (distanza(dopo) / distanza(prima))));
+      const k = z / cam.z;
+      cam = { x: m1.x - (m0.x - cam.x) * k, y: m1.y - (m0.y - cam.y) * k, z };
+    }
+    applicaCamera();
+  }
+
+  function su(evento) {
+    if (presa && evento.pointerId === presa.puntatore) {
+      const finita = presa;
+      presa = null;
+      if (!finita.mosso) {
+        selezionata = selezionata === finita.id ? null : finita.id;
+        onSeleziona(selezionata);
+      } else if (finita.mobile) {
+        const arrivo = griglia.snap ? aggancia(finita.a) : {
+          c: Math.round(finita.a.c * 100) / 100,
+          r: Math.round(finita.a.r * 100) / 100,
+        };
+        const p = pedine.find((x) => x.id === finita.id);
+        if (p) Object.assign(p, arrivo);
+        onSposta(finita.id, arrivo);
+      }
+      disegnaPedine();
+      disegnaMisura();
+      return;
+    }
+    const puntatore = puntatori.get(evento.pointerId);
+    puntatori.delete(evento.pointerId);
+    if (puntatore && puntatori.size === 0 && Math.hypot(puntatore.sx - puntatore.inizio.sx, puntatore.sy - puntatore.inizio.sy) < SOGLIA_TRASCINAMENTO && selezionata) {
+      selezionata = null;
+      onSeleziona(null);
+      disegnaPedine();
+    }
+  }
+
+  if (interattiva) {
+    finestra.addEventListener("pointerdown", giu);
+    finestra.addEventListener("pointermove", muovi);
+    finestra.addEventListener("pointerup", su);
+    finestra.addEventListener("pointercancel", su);
+    finestra.addEventListener("wheel", (evento) => {
+      if (!mappa) return;
+      evento.preventDefault();
+      const { sx, sy } = puntoSchermo(evento);
+      const { min, max } = limitiZoom();
+      cam = zoomIntorno(cam, sx, sy, Math.exp(-evento.deltaY * 0.0015), min, max);
+      applicaCamera();
+    }, { passive: false });
+  }
+
+  // Lo schermo del tavolo segue le dimensioni della finestra.
+  const osservatore = new ResizeObserver(() => {
+    if (!mappa || !haDimensioni()) return;
+    if (segueRettangolo) mostraRettangolo(rettangoloFisso);
+    else if (daAdattare) {
+      daAdattare = false;
+      cam = camIniziale();
+      applicaCamera();
+    }
+  });
+  osservatore.observe(finestra);
+
+  function mostraRettangolo(rettangolo) {
+    rettangoloFisso = rettangolo;
+    segueRettangolo = true;
+    if (!mappa) return;
+    const { w, h } = dimensioni();
+    cam = rettangolo ? camPerRettangolo(w, h, rettangolo) : camIniziale();
+    applicaCamera();
+  }
+
+  return {
+    elemento: finestra,
+    // { url, larghezza, altezza } oppure null (nessuna mappa: "messaggio").
+    impostaMappa(dati, messaggio = "") {
+      const nuova = dati && (!mappa || mappa.url !== dati.url || mappa.larghezza !== dati.larghezza);
+      mappa = dati ? { ...dati } : null;
+      mondo.hidden = !mappa;
+      vuoto.hidden = Boolean(mappa);
+      vuoto.textContent = messaggio;
+      if (!mappa) return;
+      if (immagine.getAttribute("src") !== dati.url) immagine.src = dati.url;
+      adattaDimensioni();
+      disegnaGriglia();
+      disegnaPedine();
+      if (nuova) {
+        selezionata = null;
+        if (segueRettangolo) mostraRettangolo(rettangoloFisso);
+        else {
+          cam = camIniziale();
+          daAdattare = !haDimensioni();
+          applicaCamera();
+        }
+      }
+    },
+    impostaGriglia(nuova) {
+      griglia = { ...griglia, ...nuova };
+      disegnaGriglia();
+      disegnaPedine();
+      disegnaMisura();
+    },
+    impostaPedine(elenco) {
+      pedine = elenco.map((p) => ({ ...p }));
+      if (selezionata && !pedine.some((p) => p.id === selezionata)) {
+        selezionata = null;
+        onSeleziona(null);
+      }
+      disegnaPedine();
+    },
+    seleziona(id) {
+      selezionata = id;
+      disegnaPedine();
+    },
+    adatta() {
+      segueRettangolo = false;
+      if (!mappa) return;
+      cam = camIniziale();
+      applicaCamera();
+    },
+    zoom(fattore) {
+      if (!mappa) return;
+      const { w, h } = dimensioni();
+      const { min, max } = limitiZoom();
+      cam = zoomIntorno(cam, w / 2, h / 2, fattore, min, max);
+      applicaCamera();
+    },
+    centraSu(id, zMinimo = 0) {
+      const p = pedine.find((x) => x.id === id);
+      if (!p || !mappa) return false;
+      daAdattare = false;
+      const { w, h } = dimensioni();
+      const { max } = limitiZoom();
+      const z = Math.min(max, Math.max(cam.z, zMinimo || 0.9 * (64 / griglia.lato)));
+      cam = camCentrata(w, h, centroCasella(griglia, p), z);
+      applicaCamera();
+      return true;
+    },
+    // Tavolo: mostra sempre questo rettangolo (null = tutta la mappa).
+    mostraRettangolo,
+    rettangoloVisibile() {
+      const { w, h } = dimensioni();
+      return rettangoloVisibile(w, h, cam);
+    },
+    // Centro della parte visibile, come casella (per piazzare pedine).
+    casellaAlCentro() {
+      const r = this.rettangoloVisibile();
+      return casellaDaCentro(griglia, { x: r.x + r.w / 2, y: r.y + r.h / 2 });
+    },
+    // DM: riquadro tratteggiato di ciò che mostra lo schermo del tavolo.
+    impostaCornice(rettangolo) {
+      cornice.hidden = !rettangolo;
+      if (!rettangolo) return;
+      Object.assign(cornice.style, {
+        left: `${rettangolo.x}px`,
+        top: `${rettangolo.y}px`,
+        width: `${rettangolo.w}px`,
+        height: `${rettangolo.h}px`,
+      });
+    },
+    // Taratura: i prossimi tocchi arrivano a "callback" (null per smettere).
+    modoTaratura(callback) {
+      taraturaCallback = callback;
+      finestra.classList.toggle("in-taratura", Boolean(callback));
+    },
+    distruggi() {
+      osservatore.disconnect();
+      finestra.remove();
+    },
+  };
+}

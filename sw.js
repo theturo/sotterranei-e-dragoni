@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "196a9d52475d";
+const VERSIONE = "a86049668706";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -49,6 +49,10 @@ const FILE = [
   "./assets/js/incantesimi-srd.js",
   "./assets/js/intro-dado.js",
   "./assets/js/intro.js",
+  "./assets/js/mappa-calcoli.js",
+  "./assets/js/mappa-pedine.js",
+  "./assets/js/mappa-vista.js",
+  "./assets/js/mappa.js",
   "./assets/js/menu-utente.js",
   "./assets/js/notifiche-push.js",
   "./assets/js/pagine/admin-utenti.js",
@@ -69,6 +73,7 @@ const FILE = [
   "./assets/js/pagine/register.js",
   "./assets/js/pagine/scheda-personaggio.js",
   "./assets/js/pagine/sessione.js",
+  "./assets/js/pagine/tavolo.js",
   "./assets/js/pagine/verifica-email.js",
   "./assets/js/pdf-scheda.js",
   "./assets/js/privilegi.js",
@@ -98,6 +103,7 @@ const FILE = [
   "./register.html",
   "./scheda-personaggio.html",
   "./sessione.html",
+  "./tavolo.html",
   "./verifica-email.html",
 ];
 // === FINE ELENCO GENERATO ===

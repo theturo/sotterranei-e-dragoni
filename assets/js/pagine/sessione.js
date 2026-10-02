@@ -51,6 +51,7 @@ import {
   scegliContenuti,
 } from "../contenuti.js";
 import { montaCombattimento } from "../combattimento.js";
+import { montaMappa } from "../mappa.js";
 import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   apriRiposoBreve,
@@ -225,6 +226,7 @@ const righeParty = new Map();
 const firmeParty = new Map();
 const statoAperto = new Set();
 let trackerCombattimento = null;
+let pannelloMappa = null;
 
 function firma(riepilogo) {
   const { aggiornatoIl, ...dati } = riepilogo;
@@ -256,6 +258,7 @@ function renderParty(party) {
     lista.appendChild(righeParty.get(riepilogo.uid));
   });
   trackerCombattimento?.ridisegna();
+  pannelloMappa?.ridisegna();
   renderBannerRiposo();
 }
 
@@ -720,6 +723,7 @@ function rigaContenutoGiocatore(c) {
 
 function renderContenuti() {
   if (!campagnaIdCorrente) return;
+  pannelloMappa?.ridisegna();
   const lista = document.getElementById("lista-contenuti-sessione");
   const vuoto = document.getElementById("contenuti-vuoto");
   const collega = document.getElementById("btn-collega-contenuti");
@@ -868,6 +872,17 @@ proteggiPagina(async (user, profilo) => {
     avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
     // I tiri di iniziativa del DM (per i nemici) restano nascosti.
     registraTiro: (chi, tiro) => registraTiro(chi, tiro, isDmOAdmin),
+  });
+
+  pannelloMappa = montaMappa({
+    pannello: document.getElementById("pannello-mappa"),
+    campagnaId: campagnaIdCorrente,
+    uid: uidCorrente,
+    isDM: isDmOAdmin,
+    party: () => ultimoParty,
+    libreria: () => contenuti,
+    membri: () => membriCampagna.map((m) => m.uid),
+    avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
   });
 
   veil.style.display = "none";
