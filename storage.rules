@@ -81,7 +81,7 @@ service firebase.storage {
     match /campagne/{campagnaId}/{nome} {
       allow read: if request.auth != null && request.auth.token.email_verified == true
         && immagineVisibile(campagnaId, nome.split('-')[0]);
-      allow create, update: if isDMdellaCampagna(campagnaId) && nomeValido(nome) && immagineValida(5);
+      allow create, update: if isDMdellaCampagna(campagnaId) && nomeValido(nome) && immagineValida(10);
       allow delete: if isDMdellaCampagna(campagnaId);
     }
 
