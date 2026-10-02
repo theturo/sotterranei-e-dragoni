@@ -34,15 +34,29 @@ export function zoomIntorno(cam, sx, sy, fattore, minimo, massimo) {
 // Telecamera con quel punto della mappa al centro della finestra.
 export const camCentrata = (vw, vh, punto, z) => ({ x: vw / 2 - punto.x * z, y: vh / 2 - punto.y * z, z });
 
-export const centroCasella = (griglia, { c, r }) => ({
-  x: griglia.ox + (c + 0.5) * griglia.lato,
-  y: griglia.oy + (r + 0.5) * griglia.lato,
+// Taglie delle creature e caselle per lato che occupano (Manuale dei Mostri).
+export const TAGLIE = [
+  { chiave: "minuscola", nome: "Minuscola", caselle: 1 },
+  { chiave: "piccola", nome: "Piccola", caselle: 1 },
+  { chiave: "media", nome: "Media", caselle: 1 },
+  { chiave: "grande", nome: "Grande", caselle: 2 },
+  { chiave: "enorme", nome: "Enorme", caselle: 3 },
+  { chiave: "mastodontica", nome: "Mastodontica", caselle: 4 },
+];
+
+export const caselleTaglia = (chiave) => TAGLIE.find((t) => t.chiave === chiave)?.caselle || 1;
+
+// Una pedina grande "n" caselle sta con l'angolo in alto a sinistra in { c, r }:
+// il centro è a metà del suo quadrato.
+export const centroCasella = (griglia, { c, r }, n = 1) => ({
+  x: griglia.ox + (c + n / 2) * griglia.lato,
+  y: griglia.oy + (r + n / 2) * griglia.lato,
 });
 
-// Casella (con decimali) il cui centro è nel punto indicato.
-export const casellaDaCentro = (griglia, { x, y }) => ({
-  c: (x - griglia.ox) / griglia.lato - 0.5,
-  r: (y - griglia.oy) / griglia.lato - 0.5,
+// Casella (con decimali) di una pedina larga "n" il cui centro è nel punto indicato.
+export const casellaDaCentro = (griglia, { x, y }, n = 1) => ({
+  c: (x - griglia.ox) / griglia.lato - n / 2,
+  r: (y - griglia.oy) / griglia.lato - n / 2,
 });
 
 export const aggancia = ({ c, r }) => ({ c: Math.round(c), r: Math.round(r) });

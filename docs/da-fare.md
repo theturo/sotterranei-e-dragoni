@@ -39,9 +39,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   licenza Creative Commons), come già fatto per incantesimi ed equipaggiamento.
 - **Mappe della sessione, fasi successive** (ogni fase con la sua bozza nella
   tela prima del codice):
-  - fase 2, nemici e combattimento: pedine dal tracker con l'immagine della
-    Libreria e il turno evidenziato, pedine piazzate a mano dal DM, nascoste
-    finché non le rivela, taglie (Grande 2×2, Enorme 3×3, Mastodontica 4×4);
   - fase 3, nebbia di guerra: il DM svela e copre a mano (pennello o
     rettangoli, a caselle con la griglia), lui ci vede attraverso;
   - fase 4, strumenti: righello e distanze, ping, aree degli incantesimi
@@ -59,6 +56,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   pedine dei personaggi (ritratto, PF, condizioni, "A terra") che ogni
   giocatore muove da sé con la distanza in metri, schermo del tavolo
   (tavolo.html) che segue l'inquadratura del DM.
+- Mappe della sessione, fase 2: nemici sulla mappa dal vassoio del tracker o
+  messi a mano dalla Libreria, nascosti finché il DM non li rivela (anche
+  dall'ordine di iniziativa dei giocatori), taglie fino a 4×4, salute vaga per
+  i giocatori, "A terra" a 0 PF, alone sul turno, schermo del tavolo che segue
+  chi è di turno, "Tocca a te!" sul telefono.
 
 - Dispense del DM da "sbloccare" per i giocatori: Libreria dei contenuti,
   contenuti mostrati in sessione e Archivio dei giocatori (su Firebase Storage,

@@ -54,6 +54,11 @@ beforeEach(async () => {
     await set("campagne/c1/mappe/nascosta", griglia);
     await set("campagne/c1/mappe/pubblica/pedine/p1", { tipo: "pg", uid: "p1", c: 3, r: 4 });
     await set("campagne/c1/mappe/nascosta/pedine/p1", { tipo: "pg", uid: "p1", c: 1, r: 1 });
+    // Nemici: "ombra" è nascosta (tracker e mappa), "goblin1" è rivelato.
+    const nemico = { tipo: "nemico", nome: "Ombra", immagineId: null, taglia: "media", salute: "illeso", condizioni: [], c: 6, r: 6 };
+    await set("campagne/c1/combattentiNascosti/ombra", { tipo: "nemico", nome: "Ombra", uid: null, iniziativa: 16, bonus: 2, spareggio: 0, salute: "illeso", immagineId: null, taglia: "media" });
+    await set("campagne/c1/mappe/pubblica/pedineDM/ombra", nemico);
+    await set("campagne/c1/mappe/pubblica/pedine/goblin1", { ...nemico, nome: "Goblin 1", taglia: "piccola" });
     await set("campagne/c1/combattimento/stato", { attivo: true, round: 1, turno: "pgP1" });
     await set("campagne/c1/combattenti/pgP1", { tipo: "pg", nome: "Eroe", uid: "p1", iniziativa: null, bonus: 0, spareggio: 0 });
     await set("campagne/c1/combattenti/pgP2", { tipo: "pg", nome: "Lyra", uid: "p2", iniziativa: 12, bonus: 2, spareggio: 0 });
@@ -751,3 +756,59 @@ describe("Mappe della sessione", () => {
   test("NON si rende visibile la mappa in tavola senza aggiornare visibileA", () =>
     assertFails(updateDoc(doc(come("dm"), "campagne/c1/immagini/nascosta"), { inTavolaPer: ["p1"] })));
 });
+
+describe("Nemici nascosti e pedine dei nemici", () => {
+  const pedinaNemico = (extra = {}) => ({
+    tipo: "nemico", nome: "Ogre", immagineId: null, taglia: "grande", salute: "illeso", condizioni: [],
+    c: 8, r: 3, aggiornatoIl: serverTimestamp(), ...extra,
+  });
+  const combattente = (extra = {}) => ({
+    tipo: "nemico", nome: "Ogre", uid: null, iniziativa: 9, bonus: -1, spareggio: 0, salute: "illeso",
+    immagineId: null, taglia: "grande", creatoIl: serverTimestamp(), ...extra,
+  });
+
+  test("un giocatore NON vede i nemici nascosti del tracker", async () => {
+    await assertFails(getDoc(doc(come("p1"), "campagne/c1/combattentiNascosti/ombra")));
+    await assertFails(getDocs(collection(come("p1"), "campagne/c1/combattentiNascosti")));
+  });
+  test("un giocatore NON vede le pedine nascoste della mappa in tavola", async () => {
+    await assertFails(getDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/pedineDM/ombra")));
+    await assertFails(getDocs(collection(come("p1"), "campagne/c1/mappe/pubblica/pedineDM")));
+  });
+  test("un giocatore vede i nemici rivelati sulla mappa in tavola", () =>
+    assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/pedine/goblin1"))));
+  test("il DM aggiunge un nemico nascosto, con la taglia", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/combattentiNascosti/ogre"), combattente())));
+  test("il DM NON mette un personaggio tra i nascosti", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/combattentiNascosti/pg"), combattente({ tipo: "pg", uid: "p1" }))));
+  test("NON si salva una taglia inventata", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/combattenti/ogre"), combattente({ taglia: "colossale" }))));
+  test("il DM rivela un nemico: dai nascosti ai visibili, tracker e mappa insieme", async () => {
+    const d = come("dm");
+    const batch = writeBatch(d);
+    batch.delete(doc(d, "campagne/c1/combattentiNascosti/ombra"));
+    batch.set(doc(d, "campagne/c1/combattenti/ombra"), { tipo: "nemico", nome: "Ombra", uid: null, iniziativa: 16, bonus: 2, spareggio: 0, salute: "illeso", immagineId: null, taglia: "media" });
+    batch.delete(doc(d, "campagne/c1/mappe/pubblica/pedineDM/ombra"));
+    batch.set(doc(d, "campagne/c1/mappe/pubblica/pedine/ombra"), pedinaNemico({ nome: "Ombra", taglia: "media" }));
+    await assertSucceeds(batch.commit());
+  });
+  test("il DM piazza un nemico nascosto e uno visibile", async () => {
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedineDM/ogre"), pedinaNemico()));
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedine/ogre"), pedinaNemico({ condizioni: ["prono"], salute: "grave" })));
+  });
+  test("NON si salva una pedina nemico con salute o campi sbagliati", async () => {
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedine/ogre"), pedinaNemico({ salute: "morto" })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedineDM/ogre"), pedinaNemico({ pf: 59 })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedineDM/ogre"), { ...pedinaNemico(), tipo: "pg", uid: "ogre" }));
+  });
+  test("un giocatore NON piazza né muove nemici", async () => {
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/pedine/p1"), pedinaNemico()));
+    await assertFails(updateDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/pedine/goblin1"), { c: 1, aggiornatoIl: serverTimestamp() }));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/pedineDM/x"), pedinaNemico()));
+  });
+  test("il tavolo segue il turno (scelta del DM)", async () => {
+    await assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1/stato/tavola"), { segueTurno: false }));
+    await assertFails(updateDoc(doc(come("dm"), "campagne/c1/stato/tavola"), { segueTurno: "sì" }));
+  });
+});
+

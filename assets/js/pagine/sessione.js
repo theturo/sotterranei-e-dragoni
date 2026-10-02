@@ -872,6 +872,7 @@ proteggiPagina(async (user, profilo) => {
     avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
     // I tiri di iniziativa del DM (per i nemici) restano nascosti.
     registraTiro: (chi, tiro) => registraTiro(chi, tiro, isDmOAdmin),
+    mappaInTavola: () => pannelloMappa?.haMappaInTavola() ?? false,
   });
 
   pannelloMappa = montaMappa({

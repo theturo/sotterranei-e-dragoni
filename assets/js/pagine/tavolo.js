@@ -1,10 +1,15 @@
 // Script di tavolo.html: lo schermo comune del tavolo (TV o monitor). Mostra
 // la mappa in tavola come la vedono i giocatori, con le pedine del party, e
-// segue l'inquadratura scelta dal DM ("Mostra qui a tutti" nella Sessione).
-// Si apre dall'account del DM; non ha comandi di gioco.
-import { proteggiPaginaDM, ottieniCampagnaCorrente, ascoltaTavola, ascoltaGriglia, ascoltaPedine, ascoltaRiepiloghiParty } from "../auth.js";
+// segue l'inquadratura scelta dal DM ("Mostra qui a tutti" nella Sessione);
+// durante il combattimento, se il DM lo lascia attivo, segue la pedina di turno.
+// Si apre dall'account del DM ma mostra solo ciò che vedono i giocatori: niente
+// nemici nascosti, niente PF dei nemici. Non ha comandi di gioco.
+import {
+  proteggiPaginaDM, ottieniCampagnaCorrente, ascoltaTavola, ascoltaGriglia, ascoltaPedine, ascoltaRiepiloghiParty,
+  ascoltaCombattimento,
+} from "../auth.js";
 import { creaVistaMappa } from "../mappa-vista.js";
-import { pedineDaParty, creaCacheRitratti } from "../mappa-pedine.js";
+import { costruisciPedine, creaCacheRitratti, creaCacheImmagini, pedinaDiTurno } from "../mappa-pedine.js";
 import { caricaMappa } from "../mappa.js";
 
 const veil = document.getElementById("veil");
@@ -47,16 +52,39 @@ proteggiPaginaDM(async (user, profilo) => {
   let smettiGriglia = null;
   let smettiPedine = null;
   let caricamento = 0;
+  let tavola = { inquadratura: null, segueTurno: true };
+  // Lettura come un giocatore (false): solo i combattenti già rivelati.
+  let combattimento = { stato: { attivo: false }, combattenti: [] };
   const ritratto = creaCacheRitratti(() => disegnaPedine());
-  const disegnaPedine = () => vista.impostaPedine(pedineDaParty({ party, pedine, ritratto }));
+  const immagine = creaCacheImmagini(campagna.id, () => disegnaPedine());
+  const disegnaPedine = () => {
+    vista.impostaPedine(costruisciPedine({ party, pedine, combattimento, ritratto, immagine }));
+    inquadra();
+  };
+  // Pedina di turno (se visibile e se il DM lo vuole), altrimenti l'inquadratura del DM.
+  let ultimaInquadratura = "";
+  function inquadra() {
+    const id = tavola.segueTurno !== false ? pedinaDiTurno(combattimento.stato) : null;
+    const rettangolo = (id && vista.rettangoloIntorno(id)) || tavola.inquadratura || null;
+    const chiave = JSON.stringify(rettangolo);
+    if (chiave === ultimaInquadratura) return;
+    ultimaInquadratura = chiave;
+    vista.mostraRettangolo(rettangolo);
+  }
+
+  ascoltaCombattimento(campagna.id, false, (dati) => {
+    combattimento = dati;
+    disegnaPedine();
+  });
 
   ascoltaRiepiloghiParty(campagna.id, (elenco) => {
     party = elenco;
     disegnaPedine();
   });
 
-  ascoltaTavola(campagna.id, async (tavola) => {
-    vista.mostraRettangolo(tavola.inquadratura || null);
+  ascoltaTavola(campagna.id, async (dati) => {
+    tavola = dati;
+    inquadra();
     if (tavola.immagineId === mappaId) return;
     mappaId = tavola.immagineId;
     smettiGriglia?.();
@@ -75,10 +103,11 @@ proteggiPaginaDM(async (user, profilo) => {
       disegnaPedine();
     });
     try {
-      const immagine = await caricaMappa(campagna.id, mappaId);
+      const datiMappa = await caricaMappa(campagna.id, mappaId);
       if (turno !== caricamento) return;
-      vista.impostaMappa(immagine);
-      vista.mostraRettangolo(tavola.inquadratura || null);
+      vista.impostaMappa(datiMappa);
+      ultimaInquadratura = "";
+      inquadra();
     } catch (errore) {
       console.error(errore);
       if (turno === caricamento) vista.impostaMappa(null, "Impossibile caricare l'immagine della mappa.");

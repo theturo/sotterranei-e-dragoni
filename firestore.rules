@@ -428,6 +428,13 @@ service cloud.firestore {
         allow delete: if isDMdellaCampagna(campagnaId);
       }
 
+      // Nemici non ancora rivelati: solo il DM. Quando li rivela passano in
+      // "combattenti" (e i giocatori li vedono comparire nell'ordine).
+      match /combattentiNascosti/{combattenteId} {
+        allow get, list, delete: if isDMdellaCampagna(campagnaId);
+        allow create, update: if isDMdellaCampagna(campagnaId) && combattenteValido() && request.resource.data.tipo == 'nemico';
+      }
+
       // PF dei nemici e note: solo il DM (i giocatori vedono solo "salute").
       match /combattentiDM/{combattenteId} {
         allow get, list, delete: if isDMdellaCampagna(campagnaId);
@@ -454,11 +461,12 @@ service cloud.firestore {
       }
 
       // Mappe della sessione. "stato/tavola" dice quale mappa della Libreria è
-      // in tavola (e cosa inquadra lo schermo comune); per ogni mappa il DM
-      // salva la griglia (mappe/{immagineId}) e le pedine (pedine/{id}, per ora
-      // quelle dei personaggi, con l'uid del giocatore come ID). I membri
-      // leggono solo la mappa in tavola; ogni giocatore muove solo la propria
-      // pedina e solo su quella mappa.
+      // in tavola (cosa inquadra lo schermo comune, se segue il turno); per
+      // ogni mappa il DM salva la griglia (mappe/{immagineId}) e le pedine:
+      // "pedine" quelle che vedono tutti (personaggi, con l'uid del giocatore
+      // come ID, e nemici rivelati), "pedineDM" i nemici nascosti, solo per il
+      // DM. I membri leggono solo la mappa in tavola; ogni giocatore muove solo
+      // la propria pedina e solo su quella mappa.
       match /mappe/{immagineId} {
         allow get: if isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId);
         allow list, delete: if isDMdellaCampagna(campagnaId);
@@ -468,9 +476,15 @@ service cloud.firestore {
           allow get, list: if isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId);
           allow create, update: if pedinaValida(pedinaId) && (
             isDMdellaCampagna(campagnaId)
-            || (pedinaId == request.auth.uid && mappaInTavolaPerMembro(campagnaId, immagineId))
+            || (pedinaId == request.auth.uid && request.resource.data.tipo == 'pg'
+              && mappaInTavolaPerMembro(campagnaId, immagineId))
           );
           allow delete: if isDMdellaCampagna(campagnaId);
+        }
+
+        match /pedineDM/{pedinaId} {
+          allow get, list, delete: if isDMdellaCampagna(campagnaId);
+          allow create, update: if isDMdellaCampagna(campagnaId) && pedinaNemicoValida();
         }
       }
 
@@ -532,7 +546,8 @@ service cloud.firestore {
     function tavolaValida() {
       let d = request.resource.data;
       let q = d.get('inquadratura', null);
-      return d.keys().hasOnly(['immagineId', 'inquadratura', 'aggiornatoIl'])
+      return d.keys().hasOnly(['immagineId', 'inquadratura', 'segueTurno', 'aggiornatoIl'])
+        && d.get('segueTurno', true) is bool
         && (d.immagineId == null || (d.immagineId is string && d.immagineId.size() <= 40))
         && (q == null || (q is map && q.keys().hasOnly(['x', 'y', 'w', 'h'])
           && numeroTra(q.x, -100000, 100000) && numeroTra(q.y, -100000, 100000)
@@ -547,12 +562,32 @@ service cloud.firestore {
         && d.visibile is bool && d.snap is bool;
     }
 
+    // Pedina di un personaggio (ID = uid del giocatore) o di un nemico.
     function pedinaValida(pedinaId) {
       let d = request.resource.data;
-      return d.keys().hasOnly(['tipo', 'uid', 'c', 'r', 'aggiornatoIl'])
-        && d.tipo == 'pg' && d.uid == pedinaId
+      return (d.tipo == 'pg'
+          && d.keys().hasOnly(['tipo', 'uid', 'c', 'r', 'aggiornatoIl'])
+          && d.uid == pedinaId
+          && numeroTra(d.c, -50, 2000) && numeroTra(d.r, -50, 2000)
+          && d.aggiornatoIl == request.time)
+        || pedinaNemicoValida();
+    }
+
+    function pedinaNemicoValida() {
+      let d = request.resource.data;
+      return d.tipo == 'nemico'
+        && d.keys().hasOnly(['tipo', 'nome', 'immagineId', 'taglia', 'salute', 'condizioni', 'c', 'r', 'aggiornatoIl'])
+        && testoValido(d.nome, 1, 60)
+        && (d.immagineId == null || (d.immagineId is string && d.immagineId.size() <= 40))
+        && tagliaValida(d.taglia)
+        && d.salute in ['illeso', 'ferito', 'grave', 'a terra']
+        && condizioniValide(d.condizioni)
         && numeroTra(d.c, -50, 2000) && numeroTra(d.r, -50, 2000)
         && d.aggiornatoIl == request.time;
+    }
+
+    function tagliaValida(taglia) {
+      return taglia in ['minuscola', 'piccola', 'media', 'grande', 'enorme', 'mastodontica'];
     }
 
     function contenutoValido() {
@@ -594,8 +629,9 @@ service cloud.firestore {
     function combattenteValido() {
       let d = request.resource.data;
       return d.keys().hasOnly(['tipo', 'nome', 'uid', 'iniziativa', 'bonus', 'spareggio', 'salute', 'immagineId',
-          'condizioni', 'creatoIl'])
+          'condizioni', 'taglia', 'creatoIl'])
         && condizioniValide(d.get('condizioni', []))
+        && tagliaValida(d.get('taglia', 'media'))
         && d.tipo in ['pg', 'nemico']
         && testoValido(d.nome, 1, 60)
         && (d.tipo == 'nemico' || d.uid is string)

@@ -4,6 +4,8 @@
 // tira o scrive l'iniziativa del proprio personaggio. Tutti vedono in tempo
 // reale l'ordine, il round e di chi è il turno; dei nemici i giocatori vedono
 // solo una salute vaga (i PF restano al DM, vedi firestore.rules).
+// I nemici possono entrare nascosti: i giocatori non li vedono finché il DM
+// non li rivela (dal tracker o dalla mappa), e allora compaiono al loro posto.
 import {
   ascoltaCombattimento,
   avviaCombattimento,
@@ -16,7 +18,9 @@ import {
   terminaCombattimento,
   impostaCondizioniCombattente,
   ottieniSchedaAttiva,
+  rivelaNemici,
 } from "./auth.js";
+import { TAGLIE } from "./mappa-calcoli.js";
 import { tira as tiraDadi } from "./dadi.js";
 import { mostraImmagine, percorsiRitratto, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
@@ -47,7 +51,9 @@ const modificatore = (punteggio) => Math.floor(((punteggio ?? 10) - 10) / 2);
 const conSegno = (n) => (n >= 0 ? `+${n}` : `${n}`);
 
 // registraTiro(chi, tiro): facoltativo, annota i tiri di iniziativa nel registro.
-export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, libreria, avviso, registraTiro = null }) {
+// mappaInTavola(): se c'è una mappa in tavola i nemici nuovi partono nascosti
+// (si piazzano dal vassoio della mappa); senza mappa partono visibili.
+export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, libreria, avviso, registraTiro = null, mappaInTavola = () => false }) {
   const elenco = creaElemento("ol", "lista-combattimento");
   const intestazione = creaElemento("div", "sessione-appunti-intestazione");
   const titolo = creaElemento("h3", null, "Combattimento");
@@ -92,10 +98,16 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
   btnPrecedente.setAttribute("aria-label", "Turno precedente");
   const btnSuccessivo = bottone("Turno successivo ▶", "btn-tabella btn-tabella-evidenza");
   const btnTermina = bottone("Termina", "btn-tabella btn-tabella-pericolo");
+  const btnRivelaTutti = bottone("Rivela tutti");
+  btnRivelaTutti.title = "Rivela ai giocatori tutti i nemici nascosti";
+  // Dove si trova un combattente (i dati più recenti: può essere stato rivelato).
+  const nascosto = (id) => Boolean(combattenti.find((x) => x.id === id)?.nascosto);
 
   let formNemici = null;
   if (isDM) {
-    comandi.append(btnAvvia, btnPrecedente, btnSuccessivo, btnTermina);
+    comandi.append(btnAvvia, btnRivelaTutti, btnPrecedente, btnSuccessivo, btnTermina);
+    btnRivelaTutti.addEventListener("click", () => esegui([btnRivelaTutti], () =>
+      rivelaNemici(campagnaId, combattenti.filter((c) => c.nascosto).map((c) => c.id), true)));
     formNemici = creaFormNemici();
     pannello.append(formNemici);
 
@@ -108,7 +120,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     btnSuccessivo.addEventListener("click", () => esegui([btnSuccessivo, btnPrecedente], () => avanza(1)));
     btnPrecedente.addEventListener("click", () => esegui([btnSuccessivo, btnPrecedente], () => avanza(-1)));
     btnTermina.addEventListener("click", () => {
-      if (!confirm("Terminare il combattimento? L'elenco dei combattenti verrà svuotato.")) return;
+      if (!confirm("Terminare il combattimento? L'elenco dei combattenti verrà svuotato (le pedine sulla mappa restano).")) return;
       esegui([btnTermina], () => terminaCombattimento(campagnaId));
     });
   }
@@ -145,15 +157,18 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
         <label>Bonus iniz.<input type="number" name="bonus" min="-10" max="20" value="0" /></label>
         <label>PF<input type="number" name="pf" min="0" max="9999" value="7" /></label>
         <label>Iniziativa<input type="number" name="iniziativa" min="-20" max="99" placeholder="vuoto = tiro" /></label>
+        <label>Taglia<select name="taglia">${TAGLIE.map((t) => `<option value="${t.chiave}"${t.chiave === "media" ? " selected" : ""}>${t.nome}${t.caselle > 1 ? ` (${t.caselle}×${t.caselle})` : ""}</option>`).join("")}</select></label>
         <label class="campo-largo">Immagine dalla Libreria<select name="immagine"><option value="">Nessuna</option></select></label>
       </div>
       <label class="checkbox-scudo"><input type="checkbox" name="comune" checked /> Stessa iniziativa per tutti</label>
+      <label class="checkbox-scudo"><input type="checkbox" name="nascosti" /> Nascosti finché non li riveli</label>
       <button type="submit" class="btn-tabella azione-aggiungi">Aggiungi</button>
     `;
     const selectImmagine = form.querySelector('select[name="immagine"]');
     // Elenco delle immagini aggiornato a ogni apertura (nemici e PNG prima).
     dettagli.addEventListener("toggle", () => {
       if (!dettagli.open) return;
+      form.querySelector('input[name="nascosti"]').checked = mappaInTavola();
       const scelta = selectImmagine.value;
       selectImmagine.length = 1;
       const peso = (c) => (c.categoria === "nemico" ? 0 : c.categoria === "png" ? 1 : 2);
@@ -182,8 +197,11 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
           iniziativa: numero("iniziativa", null),
           iniziativaComune: dati.get("comune") === "on",
           immagineId: dati.get("immagine") || null,
+          taglia: dati.get("taglia") || "media",
+          nascosti: dati.get("nascosti") === "on",
         });
         form.reset();
+        form.querySelector('input[name="nascosti"]').checked = mappaInTavola();
       });
     });
     dettagli.append(riassunto, form);
@@ -226,7 +244,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       const editor = creaEditorCondizioni({
         condizioni: c.condizioni || [],
         conEsaurimento: false,
-        onCambia: ({ condizioni }) => esegui([], () => impostaCondizioniCombattente(campagnaId, c.id, condizioni)),
+        onCambia: ({ condizioni }) => esegui([], () => impostaCondizioniCombattente(campagnaId, c.id, condizioni, nascosto(c.id))),
       });
       editor.hidden = true;
       apri.addEventListener("click", () => {
@@ -250,7 +268,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       input.addEventListener("change", () => {
         const v = input.value.trim();
         if (v === "") return;
-        esegui([input], () => impostaIniziativa(campagnaId, c.id, Math.trunc(Number(v))));
+        esegui([input], () => impostaIniziativa(campagnaId, c.id, Math.trunc(Number(v)), undefined, nascosto(c.id)));
       });
       const tira = bottone("🎲", "btn-tabella btn-tira");
       tira.title = "Tira d20 + bonus";
@@ -259,7 +277,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
         const attuale = combattenti.find((x) => x.id === c.id);
         const bonus = c.tipo === "pg" && c.uid === uid ? await bonusPersonaggio() : attuale?.bonus || 0;
         const tiro = tiraDadi({ etichetta: "Iniziativa", modificatore: bonus });
-        await impostaIniziativa(campagnaId, c.id, tiro.totale, bonus);
+        await impostaIniziativa(campagnaId, c.id, tiro.totale, bonus, nascosto(c.id));
         avviso(`${c.nome}: ${tiro.dadi[0]} ${conSegno(bonus)} = ${tiro.totale}`);
         registraTiro?.(c.nome, tiro);
       }));
@@ -291,10 +309,16 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
             const indice = ordinati.findIndex((x) => x.id === c.id);
             turnoDopo = altri.length ? altri[indice % altri.length].id : null;
           }
-          return rimuoviCombattente(campagnaId, c.id, turnoDopo);
+          return rimuoviCombattente(campagnaId, c.id, turnoDopo, nascosto(c.id));
         });
       });
-      azioni.append(su, giu, togli);
+      azioni.append(su, giu);
+      if (c.tipo === "nemico") {
+        const rivela = bottone("Rivela", "btn-tabella btn-rivela");
+        rivela.addEventListener("click", () => esegui([rivela], () => rivelaNemici(campagnaId, [c.id], nascosto(c.id))));
+        azioni.append(rivela);
+      }
+      azioni.append(togli);
     }
 
     li.append(posizione, avatar, info, iniziativa);
@@ -358,7 +382,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       const dm = combattenti.find((x) => x.id === c.id)?.dm;
       if (!dm) return;
       const pf = Math.max(-999, Math.min(9999, nuovi));
-      esegui([colpisci, cura, attuali], () => aggiornaPfNemico(campagnaId, c.id, pf, dm.pfMassimi));
+      esegui([colpisci, cura, attuali], () => aggiornaPfNemico(campagnaId, c.id, pf, dm.pfMassimi, nascosto(c.id)));
     };
     attuali.addEventListener("change", () => {
       if (attuali.value.trim() !== "") salva(Math.trunc(Number(attuali.value)));
@@ -397,7 +421,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     const a = gruppo.indexOf(id);
     const b = gruppo.indexOf(vicino.id);
     [gruppo[a], gruppo[b]] = [gruppo[b], gruppo[a]];
-    return impostaSpareggi(campagnaId, gruppo);
+    return impostaSpareggi(campagnaId, gruppo.map((x) => ({ id: x, nascosto: nascosto(x) })));
   }
 
   function aggiornaRiga(li, c, indice) {
@@ -405,6 +429,12 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     li.classList.toggle("di-turno", diTurno);
     li.classList.toggle("mio", c.tipo === "pg" && c.uid === uid);
     li.classList.toggle("a-terra", c.salute === "a terra");
+    li.classList.toggle("nascosto", Boolean(c.nascosto));
+    const rivela = li.querySelector(".btn-rivela");
+    if (rivela) {
+      rivela.textContent = c.nascosto ? "Rivela" : "Nascondi";
+      rivela.title = c.nascosto ? "Mostra ai giocatori (nel tracker e sulla mappa)" : "Nascondi ai giocatori";
+    }
     li.querySelector(".combattente-posizione").textContent = diTurno ? "▶" : String(indice + 1);
     li.querySelector(".combattente-nome").textContent = c.nome;
 
@@ -413,7 +443,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       const r = party().find((x) => x.uid === c.uid);
       sotto = r?.nomeGiocatore ? `Giocatore: ${r.nomeGiocatore}` : "Personaggio";
     } else if (isDM && c.dm) {
-      sotto = `Nemico · ${SALUTE[c.salute] || "Illeso"}`;
+      sotto = `${c.nascosto ? "Nascosto ai giocatori" : "Nemico"} · ${SALUTE[c.salute] || "Illeso"}`;
     } else {
       sotto = SALUTE[c.salute] || "Nemico";
     }
@@ -475,6 +505,7 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       btnSuccessivo.hidden = !attivo;
       btnSuccessivo.textContent = stato.round === 0 ? "Inizia ▶" : "Turno successivo ▶";
       btnTermina.hidden = !attivo;
+      btnRivelaTutti.hidden = !attivo || !combattenti.some((c) => c.nascosto);
       formNemici.hidden = !attivo;
     }
 

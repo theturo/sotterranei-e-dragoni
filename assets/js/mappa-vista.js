@@ -21,6 +21,10 @@ import {
 } from "./mappa-calcoli.js";
 
 const SVG = "http://www.w3.org/2000/svg";
+// Icone fisse (nessun dato degli utenti): artigli per i nemici senza
+// immagine, occhio barrato per le pedine nascoste ai giocatori.
+const ICONA_ARTIGLI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 4 C9 9 9 14 7 20"/><path d="M12 3 C14 9 14 14 12 21"/><path d="M18 4 C20 9 19 14 17 20"/></svg>';
+const ICONA_NASCOSTA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12 C5 7 9 5 12 5 C15 5 19 7 22 12 C19 17 15 19 12 19 C9 19 5 17 2 12 Z"/><circle cx="12" cy="12" r="3"/><line x1="4" y1="20" x2="20" y2="4"/></svg>';
 const SOGLIA_TRASCINAMENTO = 5;
 
 function crea(tag, classe, testo) {
@@ -129,22 +133,23 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
   }
 
   function disegnaPedina(p) {
-    const lato = griglia.lato * 0.86;
-    const centro = centroCasella(griglia, posizioneDi(p));
+    const n = p.caselle || 1;
+    const lato = griglia.lato * n * (n > 1 ? 0.92 : 0.86);
+    const centro = centroCasella(griglia, posizioneDi(p), n);
     const el = crea("div", "pedina-mappa");
     el.dataset.pedina = p.id;
-    el.title = p.nome;
+    el.title = p.nascosta ? `${p.nome} (nascosto ai giocatori)` : p.nome;
     if (puoMuovere(p.id) && interattiva) el.classList.add("mobile");
-    if (p.mia) el.classList.add("mia");
-    if (p.aTerra) el.classList.add("a-terra");
-    if (selezionata === p.id) el.classList.add("selezionata");
-    if (presa?.id === p.id) el.classList.add("presa");
+    for (const [classe, attiva] of [["mia", p.mia], ["a-terra", p.aTerra], ["nemico", p.nemico], ["nascosta", p.nascosta],
+      ["di-turno", p.diTurno], ["selezionata", selezionata === p.id], ["presa", presa?.id === p.id]]) {
+      if (attiva) el.classList.add(classe);
+    }
     Object.assign(el.style, {
       left: `${centro.x - lato / 2}px`,
       top: `${centro.y - lato / 2}px`,
       width: `${lato}px`,
       height: `${lato}px`,
-      fontSize: `${griglia.lato * 0.24}px`,
+      fontSize: `${griglia.lato * 0.24 * Math.min(n, 2)}px`,
     });
     const volto = crea("div", "pedina-volto");
     if (p.ritrattoUrl) {
@@ -153,11 +158,21 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       img.draggable = false;
       img.src = p.ritrattoUrl;
       volto.append(img);
+    } else if (p.nemico) {
+      const artigli = crea("span", "pedina-artigli");
+      artigli.innerHTML = ICONA_ARTIGLI;
+      volto.append(artigli);
     } else {
       volto.textContent = p.iniziali || "?";
       if (p.colore) volto.style.background = p.colore;
     }
     el.append(volto);
+    if (p.nemico && /^\d+$/.test(p.iniziali || "")) el.append(crea("span", "pedina-numero", p.iniziali));
+    if (p.nascosta) {
+      const occhio = crea("span", "pedina-occhio");
+      occhio.innerHTML = ICONA_NASCOSTA;
+      el.append(occhio);
+    }
     if (p.aTerra) {
       el.append(crea("div", "pedina-croce", "✚"), crea("div", "pedina-terra", "A terra"));
     } else if (p.quotaPf != null) {
@@ -192,18 +207,18 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       etichettaMisura.hidden = true;
       return;
     }
-    const da = centroCasella(griglia, presa.da);
-    const a = centroCasella(griglia, presa.a);
+    const da = centroCasella(griglia, presa.da, presa.n);
+    const a = centroCasella(griglia, presa.a, presa.n);
     const { testo, oltre } = testoDistanza(caselleTra(presa.da, presa.a), velocita(presa.id));
     const colore = oltre ? "#e0525f" : "#e8c65a";
     svgMisura.style.display = "";
-    for (const [k, v] of Object.entries({ cx: da.x, cy: da.y, r: griglia.lato * 0.43, stroke: colore })) cerchioPartenza.setAttribute(k, v);
+    for (const [k, v] of Object.entries({ cx: da.x, cy: da.y, r: griglia.lato * presa.n * 0.43, stroke: colore })) cerchioPartenza.setAttribute(k, v);
     for (const [k, v] of Object.entries({ x1: da.x, y1: da.y, x2: a.x, y2: a.y, stroke: colore })) lineaMisura.setAttribute(k, v);
     etichettaMisura.hidden = false;
     etichettaMisura.textContent = testo;
     etichettaMisura.classList.toggle("oltre", oltre);
     etichettaMisura.style.left = `${a.x}px`;
-    etichettaMisura.style.top = `${a.y - griglia.lato * 0.62}px`;
+    etichettaMisura.style.top = `${a.y - griglia.lato * (presa.n / 2 + 0.12)}px`;
   }
 
   function adattaDimensioni() {
@@ -237,9 +252,10 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     const p = id && pedine.find((x) => x.id === id);
     if (p && puntatori.size === 0) {
       evento.preventDefault();
-      const centro = centroCasella(griglia, p);
+      const n = p.caselle || 1;
+      const centro = centroCasella(griglia, p, n);
       presa = {
-        id, puntatore: evento.pointerId, sx, sy, mosso: false, mobile: puoMuovere(id),
+        id, n, puntatore: evento.pointerId, sx, sy, mosso: false, mobile: puoMuovere(id),
         dx: centro.x - punto.x, dy: centro.y - punto.y, da: { c: p.c, r: p.r }, a: { c: p.c, r: p.r },
       };
       finestra.setPointerCapture?.(evento.pointerId);
@@ -268,7 +284,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       const punto = daSchermo(cam, sx, sy);
       const x = Math.min(mappa.larghezza, Math.max(0, punto.x + presa.dx));
       const y = Math.min(mappa.altezza, Math.max(0, punto.y + presa.dy));
-      presa.a = casellaDaCentro(griglia, { x, y });
+      presa.a = casellaDaCentro(griglia, { x, y }, presa.n);
       disegnaPedine();
       disegnaMisura();
       return;
@@ -420,7 +436,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       const { w, h } = dimensioni();
       const { max } = limitiZoom();
       const z = Math.min(max, Math.max(cam.z, zMinimo || 0.9 * (64 / griglia.lato)));
-      cam = camCentrata(w, h, centroCasella(griglia, p), z);
+      cam = camCentrata(w, h, centroCasella(griglia, p, p.caselle || 1), z);
       applicaCamera();
       return true;
     },
@@ -434,6 +450,29 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     casellaAlCentro() {
       const r = this.rettangoloVisibile();
       return casellaDaCentro(griglia, { x: r.x + r.w / 2, y: r.y + r.h / 2 });
+    },
+    // Rettangolo di "caselle" × (caselle × 9/16) caselle attorno a una pedina
+    // (lo schermo del tavolo che segue il turno), o null se non c'è.
+    rettangoloIntorno(id, caselle = 14) {
+      const p = pedine.find((x) => x.id === id);
+      if (!p || !mappa) return null;
+      const centro = centroCasella(griglia, p, p.caselle || 1);
+      const w = caselle * griglia.lato;
+      const h = w * 9 / 16;
+      return { x: centro.x - w / 2, y: centro.y - h / 2, w, h };
+    },
+    // Punto della mappa sotto un punto dello schermo (clientX/Y), o null se
+    // è fuori dalla finestra: per il rilascio dal vassoio dei nemici.
+    puntoDaClient(clientX, clientY) {
+      if (!mappa) return null;
+      const r = finestra.getBoundingClientRect();
+      if (clientX < r.left || clientX > r.right || clientY < r.top || clientY > r.bottom) return null;
+      const { sx, sy } = puntoSchermo({ clientX, clientY });
+      return daSchermo(cam, sx, sy);
+    },
+    // Casella (angolo in alto a sinistra) per una pedina larga "n" centrata nel punto.
+    casellaPerPunto(punto, n = 1) {
+      return aggancia(casellaDaCentro(griglia, punto, n));
     },
     // DM: riquadro tratteggiato di ciò che mostra lo schermo del tavolo.
     impostaCornice(rettangolo) {
