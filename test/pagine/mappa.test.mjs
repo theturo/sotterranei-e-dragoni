@@ -14,6 +14,7 @@ import {
   taratura,
   caselleLibereIntorno,
   righeGriglia,
+  caselleTaglia,
 } from "../../assets/js/mappa-calcoli.js";
 
 const griglia = { lato: 60, ox: 20, oy: 10 };
@@ -66,3 +67,13 @@ test("righe della griglia", () => {
   assert.deepEqual(verticali, [20, 80, 140, 200]);
   assert.deepEqual(orizzontali, [10, 70]);
 });
+
+test("taglie: le creature grandi occupano più caselle e il centro segue", () => {
+  assert.equal(caselleTaglia("media"), 1);
+  assert.equal(caselleTaglia("grande"), 2);
+  assert.equal(caselleTaglia("mastodontica"), 4);
+  assert.equal(caselleTaglia("sconosciuta"), 1);
+  assert.deepEqual(centroCasella(griglia, { c: 2, r: 1 }, 2), { x: 200, y: 130 });
+  assert.deepEqual(casellaDaCentro(griglia, { x: 200, y: 130 }, 2), { c: 2, r: 1 });
+});
+

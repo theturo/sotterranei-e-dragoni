@@ -1368,17 +1368,18 @@ export async function collegaContenutiSessione(campagnaId, sessioneId, daCollega
 // Se era la mappa in tavola, il tavolo resta vuoto; griglia e pedine della
 // mappa se ne vanno con lei.
 export async function eliminaContenuto(campagnaId, immagineId) {
-  const [tavola, pedine] = await Promise.all([
+  const [tavola, pedine, pedineDM] = await Promise.all([
     getDoc(doc(db, "campagne", campagnaId, "stato", "tavola")),
     getDocs(collection(db, "campagne", campagnaId, "mappe", immagineId, "pedine")),
+    getDocs(collection(db, "campagne", campagnaId, "mappe", immagineId, "pedineDM")),
   ]);
   const batch = writeBatch(db);
   batch.delete(doc(db, "campagne", campagnaId, "immagini", immagineId));
   batch.delete(doc(db, "campagne", campagnaId, "immaginiDM", immagineId));
   batch.delete(doc(db, "campagne", campagnaId, "mappe", immagineId));
-  pedine.docs.forEach((d) => batch.delete(d.ref));
+  [...pedine.docs, ...pedineDM.docs].forEach((d) => batch.delete(d.ref));
   if (tavola.exists() && tavola.data().immagineId === immagineId) {
-    batch.set(doc(db, "campagne", campagnaId, "stato", "tavola"), { immagineId: null, inquadratura: null, aggiornatoIl: serverTimestamp() });
+    batch.set(doc(db, "campagne", campagnaId, "stato", "tavola"), { immagineId: null, inquadratura: null, aggiornatoIl: serverTimestamp() }, { merge: true });
   }
   await batch.commit();
 }
@@ -1452,21 +1453,38 @@ export function ascoltaContenutiVisibili(campagnaId, uid, callback, alErrore = (
 //   lo schermo comune; null = tutta la mappa) }
 // campagne/{c}/mappe/{immagineId}: griglia della mappa { lato, ox, oy,
 //   visibile, snap } (lato e scarto in pixel dell'immagine).
-// campagne/{c}/mappe/{immagineId}/pedine/{uid}: { tipo: "pg", uid, c, r }
-//   (colonna e riga della casella, decimali se la pedina non è agganciata).
+// campagne/{c}/mappe/{immagineId}/pedine/{id}: le pedine che vedono tutti:
+//   personaggi { tipo: "pg", uid, c, r } (ID = uid del giocatore) e nemici
+//   { tipo: "nemico", nome, immagineId, taglia, salute, condizioni, c, r }
+//   (ID = quello del combattente nel tracker, se ci è entrato). c e r sono
+//   colonna e riga della casella in alto a sinistra (decimali se la pedina non
+//   è agganciata).
+// campagne/{c}/mappe/{immagineId}/pedineDM/{id}: nemici nascosti, solo per il
+//   DM (stessi campi): passano in "pedine" quando il DM li rivela.
 // I giocatori leggono solo la mappa in tavola, e ne scaricano l'immagine
 // perché compaiono nel suo "inTavolaPer".
 
 const riferimentoTavola = (campagnaId) => doc(db, "campagne", campagnaId, "stato", "tavola");
 const riferimentoMappa = (campagnaId, immagineId) => doc(db, "campagne", campagnaId, "mappe", immagineId);
-const riferimentoPedine = (campagnaId, immagineId) => collection(db, "campagne", campagnaId, "mappe", immagineId, "pedine");
+const riferimentoPedine = (campagnaId, immagineId, nascoste = false) =>
+  collection(db, "campagne", campagnaId, "mappe", immagineId, nascoste ? "pedineDM" : "pedine");
+const riferimentoPedina = (campagnaId, immagineId, id, nascosta = false) => doc(riferimentoPedine(campagnaId, immagineId, nascosta), id);
+
+// Pedine dei nemici (visibili e nascoste) di una mappa, per ID.
+async function documentiPedineNemici(campagnaId, immagineId) {
+  const [visibili, nascoste] = await Promise.all([
+    getDocs(riferimentoPedine(campagnaId, immagineId)),
+    getDocs(riferimentoPedine(campagnaId, immagineId, true)),
+  ]);
+  return new Map([...visibili.docs, ...nascoste.docs].filter((d) => d.data().tipo === "nemico").map((d) => [d.id, d]));
+}
 
 export const GRIGLIA_PREDEFINITA = { lato: 50, ox: 0, oy: 0, visibile: true, snap: true };
 
 export function ascoltaTavola(campagnaId, callback, alErrore = (e) => console.error(e)) {
   return onSnapshot(
     riferimentoTavola(campagnaId),
-    (s) => callback(s.exists() ? { immagineId: null, inquadratura: null, ...s.data() } : { immagineId: null, inquadratura: null }),
+    (s) => callback({ immagineId: null, inquadratura: null, segueTurno: true, ...(s.exists() ? s.data() : {}) }),
     alErrore
   );
 }
@@ -1483,7 +1501,7 @@ export async function impostaMappaInTavola(campagnaId, { nuova, precedente, memb
     batch.update(doc(db, "campagne", campagnaId, "immagini", nuova.id),
       campiVisibilita(nuova.mostrataA || [], nuova.archiviataPer || [], membri));
   }
-  batch.set(riferimentoTavola(campagnaId), { immagineId: nuova?.id ?? null, inquadratura: null, aggiornatoIl: serverTimestamp() });
+  batch.set(riferimentoTavola(campagnaId), { immagineId: nuova?.id ?? null, inquadratura: null, aggiornatoIl: serverTimestamp() }, { merge: true });
   await batch.commit();
 }
 
@@ -1503,12 +1521,24 @@ export function salvaGriglia(campagnaId, immagineId, { lato, ox, oy, visibile, s
   return setDoc(riferimentoMappa(campagnaId, immagineId), { lato, ox, oy, visibile, snap, aggiornatoIl: serverTimestamp() });
 }
 
-export function ascoltaPedine(campagnaId, immagineId, callback, alErrore = (e) => console.error(e)) {
-  return onSnapshot(
-    riferimentoPedine(campagnaId, immagineId),
-    (s) => callback(s.docs.map((d) => ({ id: d.id, ...d.data() }))),
-    alErrore
-  );
+// Il DM riceve anche le pedine nascoste (con "nascosta": true).
+export function ascoltaPedine(campagnaId, immagineId, callback, alErrore = (e) => console.error(e), conNascoste = false) {
+  let visibili = null;
+  let nascoste = conNascoste ? null : [];
+  const aggiorna = () => {
+    if (visibili && nascoste) callback([...visibili, ...nascoste]);
+  };
+  const stop = [onSnapshot(riferimentoPedine(campagnaId, immagineId), (s) => {
+    visibili = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+    aggiorna();
+  }, alErrore)];
+  if (conNascoste) {
+    stop.push(onSnapshot(riferimentoPedine(campagnaId, immagineId, true), (s) => {
+      nascoste = s.docs.map((d) => ({ id: d.id, ...d.data(), nascosta: true }));
+      aggiorna();
+    }, alErrore));
+  }
+  return () => stop.forEach((f) => f());
 }
 
 export function salvaPedina(campagnaId, immagineId, uid, { c, r }) {
@@ -1523,8 +1553,45 @@ export async function salvaPedine(campagnaId, immagineId, posizioni) {
   await batch.commit();
 }
 
-export function rimuoviPedina(campagnaId, immagineId, uid) {
-  return deleteDoc(doc(riferimentoPedine(campagnaId, immagineId), uid));
+export function rimuoviPedina(campagnaId, immagineId, id, nascosta = false) {
+  return deleteDoc(riferimentoPedina(campagnaId, immagineId, id, nascosta));
+}
+
+// Pedina di un nemico (dal vassoio del tracker o messa a mano dal DM).
+// "id": quello del combattente, o nuovo (nuovoIdPedina) per una pedina libera.
+export function nuovoIdPedina(campagnaId, immagineId) {
+  return doc(riferimentoPedine(campagnaId, immagineId)).id;
+}
+
+export function salvaPedinaNemico(campagnaId, immagineId, id, { nome, immagineId: immagine = null, taglia = "media", salute = "illeso", condizioni = [], c, r }, nascosta = true) {
+  return setDoc(riferimentoPedina(campagnaId, immagineId, id, nascosta), {
+    tipo: "nemico",
+    nome: nome.slice(0, 60),
+    immagineId: immagine,
+    taglia,
+    salute,
+    condizioni,
+    c,
+    r,
+    aggiornatoIl: serverTimestamp(),
+  });
+}
+
+// Il DM sposta una pedina di nemico, o ne cambia la taglia.
+export function aggiornaPedinaNemico(campagnaId, immagineId, id, nascosta, campi) {
+  return updateDoc(riferimentoPedina(campagnaId, immagineId, id, nascosta), { ...campi, aggiornatoIl: serverTimestamp() });
+}
+
+// Toglie in un colpo le pedine indicate ([{ id, nascosta }]).
+export async function rimuoviPedine(campagnaId, immagineId, pedine) {
+  const batch = writeBatch(db);
+  pedine.forEach(({ id, nascosta }) => batch.delete(riferimentoPedina(campagnaId, immagineId, id, nascosta)));
+  await batch.commit();
+}
+
+// Il tavolo segue (o no) la pedina di turno durante il combattimento.
+export function impostaSegueTurno(campagnaId, segueTurno) {
+  return updateDoc(riferimentoTavola(campagnaId), { segueTurno, aggiornatoIl: serverTimestamp() });
 }
 
 // ---------- Tracker di combattimento ----------
@@ -1533,10 +1600,35 @@ export function rimuoviPedina(campagnaId, immagineId, uid) {
 //   (tipo "pg" o "nemico", nome, iniziativa, bonus e spareggio per l'ordine,
 //   "salute" vaga dei nemici, immagine facoltativa della Libreria).
 // campagne/{c}/combattentiDM/{id}: PF dei nemici, solo per il DM.
+// campagne/{c}/combattentiNascosti/{id}: nemici non ancora rivelati, solo per
+//   il DM (stessi campi di "combattenti"): i giocatori non li vedono né nel
+//   tracker né sulla mappa finché il DM non li rivela (rivelaNemici, che li
+//   sposta in "combattenti"). Nei comandi "nascosto" dice dove si trovano.
 
 const riferimentoStatoCombattimento = (campagnaId) => doc(db, "campagne", campagnaId, "combattimento", "stato");
-const riferimentoCombattente = (campagnaId, id) => doc(db, "campagne", campagnaId, "combattenti", id);
+const riferimentoCombattente = (campagnaId, id, nascosto = false) =>
+  doc(db, "campagne", campagnaId, nascosto ? "combattentiNascosti" : "combattenti", id);
 const riferimentoCombattenteDM = (campagnaId, id) => doc(db, "campagne", campagnaId, "combattentiDM", id);
+
+// Scritture in più blocchi: ogni scrittura fa verificare alle regole che sia
+// il DM, e una richiesta sola con troppe scritture supera i limiti di
+// valutazione di Firestore. "operazioni": funzioni (batch) => void.
+async function scriviAPezzi(operazioni, perBlocco = 8) {
+  for (let i = 0; i < operazioni.length; i += perBlocco) {
+    const batch = writeBatch(db);
+    operazioni.slice(i, i + perBlocco).forEach((op) => op(batch));
+    await batch.commit();
+  }
+}
+
+// Tutti i combattenti, visibili e nascosti (per svuotare il tracker).
+async function documentiCombattenti(campagnaId) {
+  const [visibili, nascosti] = await Promise.all([
+    getDocs(collection(db, "campagne", campagnaId, "combattenti")),
+    getDocs(collection(db, "campagne", campagnaId, "combattentiNascosti")),
+  ]);
+  return [...visibili.docs, ...nascosti.docs];
+}
 
 export const tiraD20 = () => 1 + Math.floor(Math.random() * 20);
 
@@ -1549,12 +1641,12 @@ export function saluteDaPf(attuali, massimi) {
 
 // Avvia un combattimento con i personaggi indicati ([{ uid, nome }]).
 export async function avviaCombattimento(campagnaId, personaggi) {
-  const esistenti = await getDocs(collection(db, "campagne", campagnaId, "combattenti"));
+  const esistenti = await documentiCombattenti(campagnaId);
+  await scriviAPezzi(esistenti.map((d) => (b) => {
+    b.delete(d.ref);
+    b.delete(riferimentoCombattenteDM(campagnaId, d.id));
+  }), 4);
   const batch = writeBatch(db);
-  esistenti.docs.forEach((d) => {
-    batch.delete(d.ref);
-    batch.delete(riferimentoCombattenteDM(campagnaId, d.id));
-  });
   personaggi.forEach(({ uid, nome }) => {
     batch.set(riferimentoCombattente(campagnaId, `pg-${uid}`), {
       tipo: "pg",
@@ -1572,12 +1664,16 @@ export async function avviaCombattimento(campagnaId, personaggi) {
 
 // Aggiunge uno o più nemici uguali ("Goblin" ×4 → Goblin 1…4, PF propri).
 // Iniziativa: quella indicata, altrimenti d20 + bonus (un tiro per tutti se
-// "comune", altrimenti uno a testa).
-export async function aggiungiNemici(campagnaId, { nome, quantita = 1, bonus = 0, pfMassimi = 0, iniziativa = null, iniziativaComune = true, immagineId = null }) {
+// "comune", altrimenti uno a testa). "nascosti": restano invisibili ai
+// giocatori finché il DM non li rivela.
+export async function aggiungiNemici(campagnaId, {
+  nome, quantita = 1, bonus = 0, pfMassimi = 0, iniziativa = null, iniziativaComune = true, immagineId = null,
+  taglia = "media", nascosti = false,
+}) {
   const batch = writeBatch(db);
   const tiroComune = iniziativa ?? tiraD20() + bonus;
   for (let i = 1; i <= quantita; i += 1) {
-    const riferimento = doc(collection(db, "campagne", campagnaId, "combattenti"));
+    const riferimento = doc(collection(db, "campagne", campagnaId, nascosti ? "combattentiNascosti" : "combattenti"));
     const nomeNemico = quantita > 1 ? `${nome} ${i}` : nome;
     batch.set(riferimento, {
       tipo: "nemico",
@@ -1588,6 +1684,7 @@ export async function aggiungiNemici(campagnaId, { nome, quantita = 1, bonus = 0
       spareggio: 0,
       salute: "illeso",
       immagineId: immagineId || null,
+      taglia,
       creatoIl: serverTimestamp(),
     });
     batch.set(riferimentoCombattenteDM(campagnaId, riferimento.id), { pfAttuali: pfMassimi, pfMassimi, note: null });
@@ -1595,29 +1692,52 @@ export async function aggiungiNemici(campagnaId, { nome, quantita = 1, bonus = 0
   await batch.commit();
 }
 
+// Una pedina messa a mano sulla mappa entra in combattimento: diventa un
+// combattente con lo stesso ID (nascosto se la pedina è nascosta).
+export async function pedinaInCombattimento(campagnaId, pedina, { pfMassimi = 0, bonus = 0 } = {}) {
+  const batch = writeBatch(db);
+  batch.set(riferimentoCombattente(campagnaId, pedina.id, Boolean(pedina.nascosta)), {
+    tipo: "nemico",
+    nome: pedina.nome.slice(0, 60),
+    uid: null,
+    iniziativa: tiraD20() + bonus,
+    bonus,
+    spareggio: 0,
+    salute: pfMassimi > 0 ? "illeso" : pedina.salute || "illeso",
+    immagineId: pedina.immagineId || null,
+    taglia: pedina.taglia || "media",
+    condizioni: pedina.condizioni || [],
+    creatoIl: serverTimestamp(),
+  });
+  batch.set(riferimentoCombattenteDM(campagnaId, pedina.id), { pfAttuali: pfMassimi, pfMassimi, note: null });
+  await batch.commit();
+}
+
 // Iniziativa di un combattente (il giocatore per il proprio, il DM per tutti).
-export async function impostaIniziativa(campagnaId, combattenteId, iniziativa, bonus) {
+export async function impostaIniziativa(campagnaId, combattenteId, iniziativa, bonus, nascosto = false) {
   const campi = { iniziativa };
   if (bonus != null) campi.bonus = bonus;
-  await updateDoc(riferimentoCombattente(campagnaId, combattenteId), campi);
+  await updateDoc(riferimentoCombattente(campagnaId, combattenteId, nascosto), campi);
 }
 
-// Riordina un gruppo di combattenti a pari iniziativa (ID nell'ordine voluto).
-export async function impostaSpareggi(campagnaId, idInOrdine) {
+// Riordina un gruppo di combattenti a pari iniziativa (nell'ordine voluto:
+// [{ id, nascosto }]).
+export async function impostaSpareggi(campagnaId, inOrdine) {
   const batch = writeBatch(db);
-  idInOrdine.forEach((id, indice) => batch.update(riferimentoCombattente(campagnaId, id), { spareggio: idInOrdine.length - indice }));
+  inOrdine.forEach(({ id, nascosto }, indice) =>
+    batch.update(riferimentoCombattente(campagnaId, id, nascosto), { spareggio: inOrdine.length - indice }));
   await batch.commit();
 }
 
-export async function aggiornaPfNemico(campagnaId, combattenteId, pfAttuali, pfMassimi) {
+export async function aggiornaPfNemico(campagnaId, combattenteId, pfAttuali, pfMassimi, nascosto = false) {
   const batch = writeBatch(db);
   batch.update(riferimentoCombattenteDM(campagnaId, combattenteId), { pfAttuali, pfMassimi });
-  batch.update(riferimentoCombattente(campagnaId, combattenteId), { salute: saluteDaPf(pfAttuali, pfMassimi) });
+  batch.update(riferimentoCombattente(campagnaId, combattenteId, nascosto), { salute: saluteDaPf(pfAttuali, pfMassimi) });
   await batch.commit();
 }
 
-export async function impostaCondizioniCombattente(campagnaId, combattenteId, condizioni) {
-  await updateDoc(riferimentoCombattente(campagnaId, combattenteId), { condizioni });
+export async function impostaCondizioniCombattente(campagnaId, combattenteId, condizioni, nascosto = false) {
+  await updateDoc(riferimentoCombattente(campagnaId, combattenteId, nascosto), { condizioni });
 }
 
 export async function impostaTurno(campagnaId, round, turno) {
@@ -1625,21 +1745,32 @@ export async function impostaTurno(campagnaId, round, turno) {
 }
 
 // Toglie un combattente; se era il suo turno, il turno passa a "turnoDopo".
-export async function rimuoviCombattente(campagnaId, combattenteId, turnoDopo) {
+export async function rimuoviCombattente(campagnaId, combattenteId, turnoDopo, nascosto = false) {
   const batch = writeBatch(db);
-  batch.delete(riferimentoCombattente(campagnaId, combattenteId));
+  batch.delete(riferimentoCombattente(campagnaId, combattenteId, nascosto));
   batch.delete(riferimentoCombattenteDM(campagnaId, combattenteId));
   if (turnoDopo !== undefined) batch.update(riferimentoStatoCombattimento(campagnaId), { turno: turnoDopo });
   await batch.commit();
 }
 
+// Le pedine dei nemici restano sulla mappa in tavola: prendono salute e
+// condizioni del loro combattente, che viene tolto con tutto il tracker.
 export async function terminaCombattimento(campagnaId) {
-  const esistenti = await getDocs(collection(db, "campagne", campagnaId, "combattenti"));
+  const [esistenti, tavola] = await Promise.all([
+    documentiCombattenti(campagnaId),
+    getDoc(riferimentoTavola(campagnaId)),
+  ]);
+  const mappaId = tavola.exists() ? tavola.data().immagineId : null;
+  const pedine = mappaId ? await documentiPedineNemici(campagnaId, mappaId) : new Map();
+  // Prima le pedine, poi il tracker: se qualcosa va storto non si perde la
+  // salute dei nemici sulla mappa.
+  await scriviAPezzi(esistenti.filter((d) => pedine.has(d.id)).map((d) => (b) =>
+    b.update(pedine.get(d.id).ref, { salute: d.data().salute || "illeso", condizioni: d.data().condizioni || [], aggiornatoIl: serverTimestamp() })));
+  await scriviAPezzi(esistenti.map((d) => (b) => {
+    b.delete(d.ref);
+    b.delete(riferimentoCombattenteDM(campagnaId, d.id));
+  }), 4);
   const batch = writeBatch(db);
-  esistenti.docs.forEach((d) => {
-    batch.delete(d.ref);
-    batch.delete(riferimentoCombattenteDM(campagnaId, d.id));
-  });
   batch.set(riferimentoStatoCombattimento(campagnaId), { attivo: false, round: 0, turno: null });
   await batch.commit();
 }
@@ -1649,10 +1780,11 @@ export async function terminaCombattimento(campagnaId) {
 export function ascoltaCombattimento(campagnaId, isDM, callback, alErrore = (e) => console.error(e)) {
   let stato = null;
   let combattenti = null;
+  let nascosti = isDM ? null : [];
   let datiDM = isDM ? null : new Map();
   const aggiorna = () => {
-    if (!stato || !combattenti || !datiDM) return;
-    callback({ stato, combattenti: combattenti.map((c) => ({ ...c, dm: datiDM.get(c.id) || null })) });
+    if (!stato || !combattenti || !nascosti || !datiDM) return;
+    callback({ stato, combattenti: [...combattenti, ...nascosti].map((c) => ({ ...c, dm: datiDM.get(c.id) || null })) });
   };
   const stop = [
     onSnapshot(riferimentoStatoCombattimento(campagnaId), (s) => {
@@ -1669,8 +1801,44 @@ export function ascoltaCombattimento(campagnaId, isDM, callback, alErrore = (e) 
       datiDM = new Map(s.docs.map((d) => [d.id, d.data()]));
       aggiorna();
     }, alErrore));
+    stop.push(onSnapshot(collection(db, "campagne", campagnaId, "combattentiNascosti"), (s) => {
+      nascosti = s.docs.map((d) => ({ id: d.id, ...d.data(), nascosto: true }));
+      aggiorna();
+    }, alErrore));
   }
   return () => stop.forEach((f) => f());
+}
+
+// Rivela (o nasconde di nuovo) dei nemici: il combattente passa tra
+// "combattentiNascosti" e "combattenti", la pedina sulla mappa in tavola tra
+// "pedineDM" e "pedine". Nell'ordine di iniziativa dei giocatori il nemico
+// compare (o sparisce) al suo posto.
+// "mappa": la mappa delle pedine (se non indicata, quella in tavola).
+export async function rivelaNemici(campagnaId, ids, rivela = true, mappa = undefined) {
+  let mappaId = mappa;
+  if (mappaId === undefined) {
+    const tavola = await getDoc(riferimentoTavola(campagnaId));
+    mappaId = tavola.exists() ? tavola.data().immagineId : null;
+  }
+  const daNascosti = rivela;
+  // Ogni nemico in un blocco suo: tracker e mappa cambiano insieme.
+  const operazioni = await Promise.all(ids.map(async (id) => {
+    const [combattente, pedina] = await Promise.all([
+      getDoc(riferimentoCombattente(campagnaId, id, daNascosti)),
+      mappaId ? getDoc(riferimentoPedina(campagnaId, mappaId, id, daNascosti)) : null,
+    ]);
+    return (b) => {
+      if (combattente.exists()) {
+        b.delete(combattente.ref);
+        b.set(riferimentoCombattente(campagnaId, id, !rivela), combattente.data());
+      }
+      if (pedina?.exists()) {
+        b.delete(pedina.ref);
+        b.set(riferimentoPedina(campagnaId, mappaId, id, !rivela), { ...pedina.data(), aggiornatoIl: serverTimestamp() });
+      }
+    };
+  }));
+  await scriviAPezzi(operazioni, 2);
 }
 
 // Blocca l'accesso a una pagina finché non si conosce lo stato di autenticazione,

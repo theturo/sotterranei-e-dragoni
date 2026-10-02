@@ -3,8 +3,14 @@
 //   regola la griglia (anche con la taratura a due clic), la mette in tavola,
 //   piazza il party, muove tutte le pedine e con "Mostra qui a tutti" decide
 //   cosa inquadra lo schermo comune (tavolo.html, aperto da "Schermo del tavolo").
+//   Nemici (fase 2): quelli del tracker aspettano nel vassoio «Da piazzare» e
+//   si trascinano sulla mappa; «+ Pedina» ne mette uno a mano (PNG, statue…)
+//   che può entrare in combattimento più tardi. Le pedine nascoste le vede
+//   solo il DM finché non le rivela. Durante il combattimento la pedina di
+//   turno ha un alone, e lo schermo del tavolo può seguirla.
 // - Giocatore: vede la mappa in tavola, si sposta e fa zoom, muove solo la
-//   propria pedina ("Entra in mappa" se non c'è ancora).
+//   propria pedina ("Entra in mappa" se non c'è ancora); al suo turno la mappa
+//   si centra su di lui e compare «Tocca a te!».
 // Dati e permessi: vedi "Mappe della sessione" in auth.js e firestore.rules.
 import {
   ascoltaTavola,
@@ -16,14 +22,23 @@ import {
   salvaPedina,
   salvaPedine,
   rimuoviPedina,
+  rimuoviPedine,
   ottieniScheda,
+  ascoltaCombattimento,
+  salvaPedinaNemico,
+  aggiornaPedinaNemico,
+  nuovoIdPedina,
+  impostaSegueTurno,
+  rivelaNemici,
+  pedinaInCombattimento,
+  aggiornaPfNemico,
 } from "./auth.js";
 import { urlImmagine, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
 import { velocitaRazza } from "./dati-srd.js";
 import { creaVistaMappa } from "./mappa-vista.js";
-import { pedineDaParty, creaCacheRitratti } from "./mappa-pedine.js";
-import { taratura, caselleLibereIntorno, METRI_PER_CASELLA, formattaMetri } from "./mappa-calcoli.js";
+import { costruisciPedine, creaCacheRitratti, creaCacheImmagini, pedinaDiTurno } from "./mappa-pedine.js";
+import { taratura, caselleLibereIntorno, METRI_PER_CASELLA, formattaMetri, TAGLIE, caselleTaglia } from "./mappa-calcoli.js";
 
 // Immagine di una mappa con le sue dimensioni vere (la griglia è in pixel
 // dell'immagine). Le promesse restano in memoria: si scarica una volta sola.
@@ -76,6 +91,9 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   let caricamento = 0;
   const velocita = new Map(); // schedaId -> metri
   const ritratto = creaCacheRitratti(() => ridisegnaPedine());
+  const immagine = creaCacheImmagini(campagnaId, () => ridisegnaPedine());
+  let combattimento = { stato: { attivo: false, round: 0, turno: null }, combattenti: [] };
+  const pedinaSalvata = (id) => pedineSalvate.find((p) => p.id === id);
 
   const vista = creaVistaMappa(area, {
     puoMuovere: (id) => isDM || id === uid,
@@ -84,8 +102,10 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       return r?.schedaId ? velocita.get(r.schedaId) ?? null : null;
     },
     onSposta: async (id, casella) => {
+      const p = pedinaSalvata(id);
       try {
-        await salvaPedina(campagnaId, mappaId, id, casella);
+        if (p?.tipo === "nemico") await aggiornaPedinaNemico(campagnaId, mappaId, id, Boolean(p.nascosta), casella);
+        else await salvaPedina(campagnaId, mappaId, id, casella);
       } catch (errore) {
         console.error(errore);
         avviso("Impossibile spostare la pedina.", true);
@@ -94,6 +114,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     onSeleziona: (id) => {
       selezionata = id;
       aggiornaPiede();
+      aggiornaNemici();
     },
     avviso: (testo) => mostraSuggerimento(testo),
   });
@@ -149,9 +170,12 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   let daCentrare = false;
   function ridisegnaPedine() {
     if (!mappaId) return;
-    vista.impostaPedine(pedineDaParty({ party: party(), pedine: pedineSalvate, mioUid: uid, ritratto }));
+    vista.impostaPedine(costruisciPedine({
+      party: party(), pedine: pedineSalvate, combattimento, mioUid: uid, perDM: isDM, ritratto, immagine,
+    }));
     if (daCentrare && vista.centraSu(uid)) daCentrare = false;
     aggiornaPiede();
+    aggiornaNemici();
   }
 
   async function mostraMappa(id) {
@@ -181,7 +205,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     smettiPedine = ascoltaPedine(campagnaId, id, (elenco) => {
       pedineSalvate = elenco;
       ridisegnaPedine();
-    });
+    }, undefined, isDM);
     try {
       const immagine = await caricaMappa(campagnaId, id);
       if (turno !== caricamento) return;
@@ -309,7 +333,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   rimuovi.addEventListener("click", async () => {
     if (!selezionata) return;
     try {
-      await rimuoviPedina(campagnaId, mappaId, selezionata);
+      await rimuoviPedina(campagnaId, mappaId, selezionata, Boolean(pedinaSalvata(selezionata)?.nascosta));
     } catch (errore) {
       console.error(errore);
       avviso("Impossibile togliere la pedina.", true);
@@ -322,13 +346,295 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     piazza.textContent = mancanti.length === 1 ? `Piazza ${mancanti[0].nomePersonaggio || "il personaggio"}` : "Piazza il party";
     const mio = party().find((r) => r.uid === uid);
     entra.hidden = isDM || !mio?.schedaId || !mancanti.some((r) => r.uid === uid);
-    const nome = selezionata && party().find((r) => r.uid === selezionata)?.nomePersonaggio;
+    const nome = selezionata && (party().find((r) => r.uid === selezionata)?.nomePersonaggio || pedinaSalvata(selezionata)?.nome);
     infoSelezione.hidden = rimuovi.hidden = !isDM || !selezionata;
     infoSelezione.textContent = nome || "";
     apriGriglia.hidden = !isDM || !mappaId;
     scala.hidden = !mappaId;
     centra.hidden = isDM || !pedineSalvate.some((p) => (p.uid || p.id) === uid);
   }
+
+  // ---------- nemici (DM): vassoio, «+ Pedina», pedina selezionata ----------
+  const SALUTE = { illeso: "Illeso", ferito: "Ferito", grave: "Gravemente ferito", "a terra": "A terra" };
+  const ICONA_ARTIGLI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 4 C9 9 9 14 7 20"/><path d="M12 3 C14 9 14 14 12 21"/><path d="M18 4 C20 9 19 14 17 20"/></svg>';
+  const barraNemici = creaElemento("div", "mappa-nemici");
+  barraNemici.hidden = true;
+  const vassoio = creaElemento("div", "mappa-vassoio");
+  const segui = creaElemento("label", "mappa-campo");
+  const inputSegui = creaElemento("input");
+  inputSegui.type = "checkbox";
+  segui.append(inputSegui, document.createTextNode(" Il tavolo segue il turno"));
+  const rivelaTutti = bottone("Rivela tutti");
+  rivelaTutti.title = "Mostra ai giocatori tutte le pedine nascoste di questa mappa";
+  const togliSconfitti = bottone("Togli i nemici sconfitti");
+  const apriNuova = bottone("+ Pedina");
+  apriNuova.title = "Metti a mano una pedina dalla Libreria (PNG, mostri, oggetti)";
+  barraNemici.append(creaElemento("span", "mappa-vassoio-titolo", "Da piazzare"), vassoio,
+    creaElemento("span", "mappa-spazio"), segui, rivelaTutti, togliSconfitti, apriNuova);
+  pannello.insertBefore(barraNemici, area);
+
+  // Modulo «+ Pedina»: immagine dalla Libreria, nome, taglia. La pedina nasce
+  // nascosta al centro della vista, fuori dal tracker.
+  const formNuova = creaElemento("form", "mappa-nuova-pedina");
+  formNuova.hidden = true;
+  const sceltaImmagine = creaElemento("select", "select-dadi");
+  sceltaImmagine.setAttribute("aria-label", "Immagine dalla Libreria");
+  const nomeNuova = creaElemento("input", "input-dadi input-dadi-etichetta");
+  Object.assign(nomeNuova, { type: "text", maxLength: 60, placeholder: "Nome", required: true });
+  nomeNuova.setAttribute("aria-label", "Nome della pedina");
+  const tagliaNuova = creaElemento("select", "select-dadi");
+  tagliaNuova.setAttribute("aria-label", "Taglia");
+  const opzioniTaglia = () => TAGLIE.map((t) => new Option(`${t.nome}${t.caselle > 1 ? ` (${t.caselle}×${t.caselle})` : ""}`, t.chiave));
+  tagliaNuova.replaceChildren(...opzioniTaglia());
+  tagliaNuova.value = "media";
+  const conferma = creaElemento("button", "btn-tabella btn-tabella-evidenza", "Metti sulla mappa (nascosta)");
+  conferma.type = "submit";
+  const annullaNuova = bottone("Annulla");
+  formNuova.append(sceltaImmagine, nomeNuova, tagliaNuova, conferma, annullaNuova);
+  pannello.insertBefore(formNuova, area);
+
+  apriNuova.addEventListener("click", () => {
+    const peso = (c) => (c.categoria === "nemico" ? 0 : c.categoria === "png" ? 1 : 2);
+    const voci = [...libreria()].filter((c) => c.categoria !== "mappa")
+      .sort((a, b) => peso(a) - peso(b) || a.titolo.localeCompare(b.titolo, "it"));
+    sceltaImmagine.replaceChildren(new Option("Nessuna immagine", ""), ...voci.map((c) => new Option(c.titolo, c.id)));
+    formNuova.hidden = !formNuova.hidden;
+    if (!formNuova.hidden) nomeNuova.focus();
+  });
+  sceltaImmagine.addEventListener("change", () => {
+    const c = libreria().find((x) => x.id === sceltaImmagine.value);
+    if (c && !nomeNuova.value.trim()) nomeNuova.value = c.titolo.slice(0, 60);
+  });
+  annullaNuova.addEventListener("click", () => (formNuova.hidden = true));
+  formNuova.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const nome = nomeNuova.value.trim();
+    if (!nome || !griglia) return;
+    const n = caselleTaglia(tagliaNuova.value);
+    const centro = vista.casellaAlCentro();
+    const id = nuovoIdPedina(campagnaId, mappaId);
+    conferma.disabled = true;
+    try {
+      await salvaPedinaNemico(campagnaId, mappaId, id, {
+        nome,
+        immagineId: sceltaImmagine.value || null,
+        taglia: tagliaNuova.value,
+        c: Math.round(centro.c - (n - 1) / 2),
+        r: Math.round(centro.r - (n - 1) / 2),
+      }, true);
+      formNuova.reset();
+      formNuova.hidden = true;
+      selezionata = id;
+      vista.seleziona(id);
+    } catch (errore) {
+      console.error(errore);
+      avviso("Impossibile mettere la pedina.", true);
+    } finally {
+      conferma.disabled = false;
+    }
+  });
+
+  inputSegui.addEventListener("change", () =>
+    impostaSegueTurno(campagnaId, inputSegui.checked).catch((errore) => {
+      console.error(errore);
+      avviso("Impossibile cambiare l'impostazione.", true);
+    }));
+  rivelaTutti.addEventListener("click", () => {
+    const ids = pedineSalvate.filter((p) => p.nascosta).map((p) => p.id);
+    if (ids.length) rivelaNemici(campagnaId, ids, true, mappaId).catch((errore) => {
+      console.error(errore);
+      avviso("Impossibile rivelare i nemici.", true);
+    });
+  });
+  togliSconfitti.addEventListener("click", () => {
+    const sconfitti = pedineNemici().filter((p) => saluteDi(p) === "a terra");
+    if (sconfitti.length) rimuoviPedine(campagnaId, mappaId, sconfitti.map((p) => ({ id: p.id, nascosta: Boolean(p.nascosta) }))).catch((errore) => {
+      console.error(errore);
+      avviso("Impossibile togliere i nemici.", true);
+    });
+  });
+
+  const pedineNemici = () => pedineSalvate.filter((p) => p.tipo === "nemico");
+  const combattenteDi = (id) => combattimento.combattenti.find((c) => c.id === id);
+  const saluteDi = (p) => combattenteDi(p.id)?.salute || p.salute || "illeso";
+
+  // Vassoio: nemici del tracker non ancora sulla mappa, da trascinare.
+  let firmaVassoio = "";
+  function aggiornaVassoio() {
+    const presenti = new Set(pedineSalvate.map((p) => p.id));
+    const daPiazzare = combattimento.combattenti.filter((c) => c.tipo === "nemico" && !presenti.has(c.id));
+    const firma = JSON.stringify(daPiazzare.map((c) => [c.id, c.nome, c.nascosto, c.taglia, c.immagineId]));
+    if (firma === firmaVassoio) return;
+    firmaVassoio = firma;
+    vassoio.replaceChildren(...daPiazzare.map(creaChipVassoio));
+    if (!daPiazzare.length) vassoio.append(creaElemento("span", "mappa-vassoio-vuoto", combattimento.stato.attivo ? "Tutti i nemici sono sulla mappa." : "Nessun combattimento in corso."));
+  }
+
+  function creaChipVassoio(c) {
+    const chip = creaElemento("span", "mappa-chip-vassoio");
+    chip.title = "Trascina sulla mappa";
+    const volto = creaElemento("span", "mappa-mini-volto");
+    const url = immagine(c.immagineId);
+    if (url) {
+      const img = creaElemento("img");
+      img.alt = "";
+      img.src = url;
+      volto.append(img);
+    } else {
+      volto.innerHTML = ICONA_ARTIGLI;
+    }
+    const taglia = TAGLIE.find((t) => t.chiave === (c.taglia || "media"))?.nome || "Media";
+    const testo = creaElemento("span", null, c.nome);
+    testo.append(creaElemento("small", null, ` ${taglia}${c.nascosto ? " · nascosto" : ""}`));
+    chip.append(volto, testo);
+    chip.addEventListener("pointerdown", (evento) => trascinaDalVassoio(evento, c, chip));
+    return chip;
+  }
+
+  function trascinaDalVassoio(evento, c, chip) {
+    if (!mappaId || !griglia) return;
+    evento.preventDefault();
+    const fantasma = chip.querySelector(".mappa-mini-volto").cloneNode(true);
+    fantasma.classList.add("mappa-fantasma");
+    document.body.append(fantasma);
+    const muovi = (e) => {
+      fantasma.style.left = `${e.clientX - 22}px`;
+      fantasma.style.top = `${e.clientY - 22}px`;
+    };
+    muovi(evento);
+    const fine = async (e) => {
+      window.removeEventListener("pointermove", muovi);
+      window.removeEventListener("pointerup", fine);
+      window.removeEventListener("pointercancel", fine);
+      fantasma.remove();
+      const punto = e.type === "pointerup" ? vista.puntoDaClient(e.clientX, e.clientY) : null;
+      if (!punto) return;
+      const casella = vista.casellaPerPunto(punto, caselleTaglia(c.taglia));
+      try {
+        await salvaPedinaNemico(campagnaId, mappaId, c.id, {
+          nome: c.nome, immagineId: c.immagineId || null, taglia: c.taglia || "media",
+          salute: c.salute || "illeso", condizioni: c.condizioni || [], ...casella,
+        }, Boolean(c.nascosto));
+        selezionata = c.id;
+        vista.seleziona(c.id);
+      } catch (errore) {
+        console.error(errore);
+        avviso("Impossibile piazzare il nemico.", true);
+      }
+    };
+    window.addEventListener("pointermove", muovi);
+    window.addEventListener("pointerup", fine);
+    window.addEventListener("pointercancel", fine);
+  }
+
+  // Pedina di nemico selezionata: PF, taglia, rivela, entra in combattimento.
+  const dettagli = creaElemento("div", "mappa-dettagli-nemico");
+  dettagli.hidden = true;
+  pannello.insertBefore(dettagli, piede.nextSibling);
+
+  function aggiornaDettagli() {
+    const p = isDM && selezionata ? pedinaSalvata(selezionata) : null;
+    if (!p || p.tipo !== "nemico") {
+      dettagli.hidden = true;
+      delete dettagli.dataset.firma;
+      return;
+    }
+    const c = combattenteDi(p.id);
+    const firma = JSON.stringify([p, c?.dm, c?.salute, Boolean(c), combattimento.stato.attivo]);
+    if (dettagli.dataset.firma === firma && !dettagli.hidden) return;
+    dettagli.dataset.firma = firma;
+    dettagli.hidden = false;
+    const righe = [creaElemento("strong", null, p.nome)];
+    const salute = SALUTE[saluteDi(p)];
+    if (c?.dm) {
+      const danno = creaElemento("input", "input-dadi mappa-numero");
+      Object.assign(danno, { type: "number", min: 0, placeholder: "±" });
+      danno.setAttribute("aria-label", `Danni o cure per ${p.nome}`);
+      const colpisci = bottone("−");
+      colpisci.title = "Sottrai (danno)";
+      const cura = bottone("+");
+      cura.title = "Aggiungi (cura)";
+      const applica = (segno) => {
+        const quanto = Math.trunc(Number(danno.value));
+        if (!quanto) return;
+        const pf = Math.max(-999, Math.min(9999, c.dm.pfAttuali + segno * quanto));
+        aggiornaPfNemico(campagnaId, c.id, pf, c.dm.pfMassimi, Boolean(c.nascosto)).catch((errore) => {
+          console.error(errore);
+          avviso("Impossibile aggiornare i PF.", true);
+        });
+      };
+      colpisci.addEventListener("click", () => applica(-1));
+      cura.addEventListener("click", () => applica(1));
+      righe.push(creaElemento("span", null, `PF ${c.dm.pfAttuali}/${c.dm.pfMassimi}`), danno, colpisci, cura);
+    }
+    righe.push(creaElemento("span", "mappa-salute-vaga", p.nascosta ? "Nascosto ai giocatori" : `I giocatori vedono «${salute}»`));
+    const taglia = creaElemento("select", "select-dadi");
+    taglia.setAttribute("aria-label", "Taglia");
+    taglia.replaceChildren(...opzioniTaglia());
+    taglia.value = p.taglia || "media";
+    taglia.addEventListener("change", () => aggiornaPedinaNemico(campagnaId, mappaId, p.id, Boolean(p.nascosta), { taglia: taglia.value }).catch((errore) => {
+      console.error(errore);
+      avviso("Impossibile cambiare la taglia.", true);
+    }));
+    const rivela = bottone(p.nascosta ? "Rivela" : "Nascondi", p.nascosta ? "btn-tabella btn-tabella-evidenza" : "btn-tabella");
+    rivela.addEventListener("click", () => rivelaNemici(campagnaId, [p.id], Boolean(p.nascosta), mappaId).catch((errore) => {
+      console.error(errore);
+      avviso("Impossibile cambiare la visibilità.", true);
+    }));
+    righe.push(taglia, rivela);
+    if (!c && combattimento.stato.attivo) {
+      const pf = creaElemento("input", "input-dadi mappa-numero");
+      Object.assign(pf, { type: "number", min: 0, max: 9999, value: 10 });
+      pf.setAttribute("aria-label", "PF massimi");
+      const entraCombattimento = bottone("Entra in combattimento", "btn-tabella btn-tabella-evidenza");
+      entraCombattimento.title = "Aggiunge la pedina al tracker e tira l'iniziativa";
+      entraCombattimento.addEventListener("click", () => {
+        entraCombattimento.disabled = true;
+        pedinaInCombattimento(campagnaId, p, { pfMassimi: Math.max(0, Math.trunc(Number(pf.value)) || 0) }).catch((errore) => {
+          console.error(errore);
+          entraCombattimento.disabled = false;
+          avviso("Impossibile aggiungerla al combattimento.", true);
+        });
+      });
+      righe.push(creaElemento("span", null, "PF"), pf, entraCombattimento);
+    }
+    dettagli.replaceChildren(...righe);
+  }
+
+  function aggiornaNemici() {
+    const inTavolaQui = Boolean(mappaId) && mappaId === tavola.immagineId;
+    barraNemici.hidden = !isDM || !mappaId;
+    if (barraNemici.hidden) {
+      dettagli.hidden = true;
+      return;
+    }
+    aggiornaVassoio();
+    segui.hidden = !inTavolaQui;
+    inputSegui.checked = tavola.segueTurno !== false;
+    rivelaTutti.hidden = !pedineSalvate.some((p) => p.nascosta);
+    togliSconfitti.hidden = !pedineNemici().some((p) => saluteDi(p) === "a terra");
+    aggiornaDettagli();
+  }
+
+  // Giocatore: al proprio turno la mappa si centra su di lui e compare l'avviso.
+  const tocca = creaElemento("div", "mappa-tocca", "Tocca a te!");
+  tocca.hidden = true;
+  sovrapposti.append(tocca);
+  let ultimoTurno = null;
+  function controllaTurno() {
+    if (isDM) return;
+    const mio = pedinaDiTurno(combattimento.stato) === uid;
+    tocca.hidden = !mio || !mappaId;
+    const chiave = `${combattimento.stato.round}:${combattimento.stato.turno}`;
+    if (mio && chiave !== ultimoTurno) vista.centraSu(uid);
+    ultimoTurno = chiave;
+  }
+
+  const smettiCombattimento = ascoltaCombattimento(campagnaId, isDM, (dati) => {
+    combattimento = dati;
+    ridisegnaPedine();
+    controllaTurno();
+  }, (errore) => console.error(errore));
 
   // Pannello della griglia (DM): visibile, aggancio, lato e scarto, taratura.
   const pannelloGriglia = creaElemento("div", "mappa-griglia-pannello");
@@ -493,6 +799,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     area.hidden = !mappaId;
     pannello.hidden = !isDM && !tavola.immagineId;
     aggiornaPiede();
+    aggiornaNemici();
   }
 
   const smettiTavola = ascoltaTavola(campagnaId, (dati) => {
@@ -524,8 +831,11 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       ridisegnaPedine();
       aggiorna();
     },
+    // Per il tracker: i nemici nuovi partono nascosti se c'è una mappa in tavola.
+    haMappaInTavola: () => Boolean(tavola.immagineId),
     stop() {
       smettiTavola();
+      smettiCombattimento();
       smettiGriglia?.();
       smettiPedine?.();
     },
