@@ -2512,6 +2512,7 @@ table.tabella-punteggi select {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 14px;
   margin-bottom: 20px;
   padding: 10px;
@@ -8831,4 +8832,116 @@ table.tabella-punteggi select {
 
 .campagna-pannello a:not(.btn-tabella) {
   color: var(--color-burgundy);
+}
+
+/* ---------- Controllo musica: link YouTube salvati ---------- */
+
+.yt-salva {
+  margin-top: 12px;
+}
+
+.yt-gia-salvato {
+  margin: 0;
+  color: var(--color-emerald);
+  font-size: 0.92rem;
+}
+
+.yt-salva-form {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px dashed var(--color-burgundy);
+  border-radius: 10px;
+}
+
+.yt-salva-form label {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin-bottom: 4px;
+}
+
+.yt-riga,
+.yt-rinomina {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.yt-riga input,
+.yt-rinomina input {
+  flex: 1;
+  min-width: 140px;
+}
+
+.yt-elenco-titolo {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin: 18px 0 4px;
+}
+
+.yt-elenco {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.yt-voce {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+  border-radius: 8px;
+}
+
+.yt-voce.in-onda {
+  background: rgba(47, 107, 79, 0.12);
+}
+
+.yt-voce-nome {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  padding: 2px;
+}
+
+.yt-voce-nome b {
+  display: block;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.yt-voce-nome small {
+  color: var(--color-ink-soft);
+}
+
+.in-onda .yt-voce-nome small {
+  color: var(--color-emerald);
+  font-weight: 600;
+}
+
+.yt-voce-azione {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid rgba(122, 31, 43, 0.5);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-burgundy);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.yt-tolto {
+  justify-content: space-between;
+  font-style: italic;
+  color: var(--color-ink-soft);
 }

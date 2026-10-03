@@ -37,3 +37,21 @@ test("legge lo stato salvato, anche nel formato precedente", () => {
   assert.deepEqual(sorgenteDaStato({ playlistId: "PLabc123456789" }), playlist("PLabc123456789"));
   assert.equal(sorgenteDaStato(null), null);
 });
+
+test("elenco dei link salvati: aggiungi, rinomina, togli, niente doppioni", async () => {
+  const { aggiungiLinkSalvato, rinominaLinkSalvato, togliLinkSalvato, linkSalvatiDa, MASSIMO_LINK_SALVATI } = await import("../../assets/js/youtube.js");
+  let lista = aggiungiLinkSalvato([], playlist("PLabc"), "  Cripta  ");
+  lista = aggiungiLinkSalvato(lista, video("dQw4w9WgXcQ"), "");
+  assert.deepEqual(lista, [{ tipo: "playlist", id: "PLabc", nome: "Cripta" }, { tipo: "video", id: "dQw4w9WgXcQ", nome: "Video" }]);
+  lista = aggiungiLinkSalvato(lista, playlist("PLabc"), "Cripta 2");
+  assert.equal(lista.length, 2);
+  assert.equal(lista[1].nome, "Cripta 2");
+  assert.equal(rinominaLinkSalvato(lista, video("dQw4w9WgXcQ"), "Taverna")[0].nome, "Taverna");
+  assert.equal(rinominaLinkSalvato(lista, video("dQw4w9WgXcQ"), "   "), lista);
+  assert.deepEqual(togliLinkSalvato(lista, playlist("PLabc")).map((x) => x.id), ["dQw4w9WgXcQ"]);
+  assert.deepEqual(linkSalvatiDa({ youtube: [{ tipo: "video", id: "a", nome: "x" }, { tipo: "altro", id: "b", nome: "y" }, null] }), [{ tipo: "video", id: "a", nome: "x" }]);
+  assert.deepEqual(linkSalvatiDa(undefined), []);
+  let molti = [];
+  for (let i = 0; i < MASSIMO_LINK_SALVATI + 5; i += 1) molti = aggiungiLinkSalvato(molti, video(`v${i}`), `n${i}`);
+  assert.equal(molti.length, MASSIMO_LINK_SALVATI);
+});

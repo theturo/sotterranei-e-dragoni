@@ -39,6 +39,9 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Controllo musica: elenco dei link YouTube salvati dal DM (solo suo), con
+  «Salva nell'elenco» e un nome, un tocco per caricarlo e trasmetterlo,
+  rinomina e «togli» con «Annulla».
 - Dashboard ridisegnata: in alto il cruscotto della campagna (sessione in
   evidenza con il pulsante giusto — «Apri la sessione di oggi», «Vai alla
   sessione», «Rispondi alle date» —, party con PF, condizioni e livelli da

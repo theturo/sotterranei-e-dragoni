@@ -232,6 +232,12 @@ describe("Campagne e titolo provvisorio", () => {
   test("un membro NON legge il titolo vero (provvisorio)", () =>
     assertFails(getDoc(doc(come("p1"), "campagne/c1/privato/titolo"))));
   test("il DM legge il titolo vero", () => assertSucceeds(getDoc(doc(come("dm"), "campagne/c1/privato/titolo"))));
+  test("il DM salva i suoi link YouTube nella zona privata", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/privato/musica"), { youtube: [{ tipo: "playlist", id: "PLabc", nome: "Boss finale" }] })));
+  test("un membro NON legge i link YouTube del DM", () =>
+    assertFails(getDoc(doc(come("p1"), "campagne/c1/privato/musica"))));
+  test("un membro NON scrive i link YouTube del DM", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/privato/musica"), { youtube: [] })));
   test("NON si pubblica un titolo mentre è provvisorio", () =>
     assertFails(updateDoc(doc(come("dm"), "campagne/c1"), { titolo: "La Tomba degli Orrori" })));
   test("il reveal pubblica il titolo", () =>

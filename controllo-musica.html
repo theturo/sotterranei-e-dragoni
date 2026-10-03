@@ -107,6 +107,22 @@
             </div>
             <!-- YouTube riproduce solo in player di almeno 200×200 pixel. -->
             <div style="margin-top:12px; max-width:356px;"><div id="yt-player"></div></div>
+            <div id="yt-salva" class="yt-salva" hidden>
+              <button type="button" id="btn-yt-salva" class="btn-tabella">☆ Salva nell'elenco</button>
+              <p id="yt-gia-salvato" class="yt-gia-salvato" hidden>★ Già nel tuo elenco</p>
+              <form id="form-yt-salva" class="yt-salva-form" hidden>
+                <label for="campo-yt-nome">Nome nell'elenco</label>
+                <div class="yt-riga">
+                  <input type="text" id="campo-yt-nome" maxlength="80" />
+                  <button type="submit" class="btn-tabella btn-tabella-evidenza">Salva</button>
+                  <button type="button" id="btn-yt-salva-annulla" class="btn-tabella">Annulla</button>
+                </div>
+              </form>
+            </div>
+            <h4 class="yt-elenco-titolo">I tuoi link</h4>
+            <p class="scheda-testo-libero" style="margin-top:0;">Solo tu vedi questo elenco. Un tocco sul nome carica il link e lo trasmette ai giocatori.</p>
+            <ul id="yt-elenco" class="yt-elenco"></ul>
+            <p id="yt-elenco-vuoto" class="sessione-placeholder" hidden>Nessun link salvato: carica un video o una playlist e premi «Salva nell'elenco».</p>
           </div>
         </div>
       </div>
