@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "3dadcb0d5133";
+const VERSIONE = "72bb8b73295e";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -31,11 +31,14 @@ const FILE = [
   "./assets/icone/icona-maskable-512.png",
   "./assets/js/aree-incantesimi.js",
   "./assets/js/auth.js",
+  "./assets/js/bestiario-calcoli.js",
+  "./assets/js/bestiario-scheda.js",
   "./assets/js/calcoli-scheda.js",
   "./assets/js/calendario.js",
   "./assets/js/combattimento.js",
   "./assets/js/condizioni.js",
   "./assets/js/contenuti.js",
+  "./assets/js/dadi-base.js",
   "./assets/js/dadi.js",
   "./assets/js/dado-caricamento.js",
   "./assets/js/dati-srd.js",
@@ -56,10 +59,12 @@ const FILE = [
   "./assets/js/mappa-vista.js",
   "./assets/js/mappa.js",
   "./assets/js/menu-utente.js",
+  "./assets/js/mostri-srd.js",
   "./assets/js/notifiche-push.js",
   "./assets/js/pagine/admin-utenti.js",
   "./assets/js/pagine/archivio.js",
   "./assets/js/pagine/attesa-approvazione.js",
+  "./assets/js/pagine/bestiario.js",
   "./assets/js/pagine/calendario.js",
   "./assets/js/pagine/campagna.js",
   "./assets/js/pagine/controllo-musica.js",
@@ -89,6 +94,7 @@ const FILE = [
   "./assets/vendor/three-LICENSE.txt",
   "./assets/vendor/three.module.min.js",
   "./attesa-approvazione.html",
+  "./bestiario.html",
   "./calendario.html",
   "./campagna.html",
   "./controllo-musica.html",

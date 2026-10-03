@@ -460,6 +460,13 @@ service cloud.firestore {
         }
       }
 
+      // Bestiario: creature create dal DM (PNG, nemici, personaggi unici con
+      // il loro stato). Solo il DM le legge e le scrive.
+      match /bestiario/{creaturaId} {
+        allow get, list, delete: if isDMdellaCampagna(campagnaId);
+        allow create, update: if isDMdellaCampagna(campagnaId) && creaturaValida();
+      }
+
       // Mappe della sessione. "stato/tavola" dice quale mappa della Libreria è
       // in tavola (cosa inquadra lo schermo comune, se segue il turno); per
       // ogni mappa il DM salva la griglia (mappe/{immagineId}) e le pedine:
@@ -648,6 +655,47 @@ service cloud.firestore {
         && numeroTra(d.misura, 1, 150)
         && numeroTra(d.x, -100000, 100000) && numeroTra(d.y, -100000, 100000)
         && numeroTra(d.angolo, -7, 7)
+        && d.aggiornatoIl == request.time;
+    }
+
+    function testoFacoltativo(d, campo, massimo) {
+      return !(campo in d) || d[campo] == null || (d[campo] is string && d[campo].size() <= massimo);
+    }
+
+    function listaFacoltativa(d, campo, massimo) {
+      return !(campo in d) || (d[campo] is list && d[campo].size() <= massimo);
+    }
+
+    function statoCreaturaValido(st) {
+      return st is map
+        && st.keys().hasOnly(['pfAttuali', 'condizioni', 'risorse', 'equip', 'diario'])
+        && numeroTra(st.pfAttuali, 0, 100000)
+        && condizioniValide(st.condizioni)
+        && st.risorse is list && st.risorse.size() <= 20
+        && st.equip is list && st.equip.size() <= 60
+        && st.diario is list && st.diario.size() <= 50;
+    }
+
+    function creaturaValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['nome', 'taglia', 'tipo', 'sottotipo', 'allineamento', 'ca', 'caValore', 'pf', 'dadiPf', 'velocita',
+          'car', 'ts', 'abilita', 'vulnerabilita', 'resistenze', 'immunita', 'immunitaCondizioni', 'sensi', 'lingue', 'gs', 'pe',
+          'competenza', 'tratti', 'azioni', 'reazioni', 'leggendarie', 'base', 'indole', 'unico', 'note', 'immagineId', 'stato',
+          'aggiornatoIl'])
+        && testoValido(d.nome, 1, 60)
+        && tagliaValida(d.taglia)
+        && testoValido(d.tipo, 1, 40)
+        && testoValido(d.ca, 1, 120) && numeroTra(d.caValore, 0, 40)
+        && numeroTra(d.pf, 1, 10000) && testoValido(d.dadiPf, 1, 30)
+        && d.car is list && d.car.size() == 6
+        && d.indole in ['ostile', 'neutrale', 'alleata']
+        && d.unico is bool
+        && testoFacoltativo(d, 'note', 4000)
+        && (d.get('immagineId', null) == null || (d.immagineId is string && d.immagineId.size() <= 40))
+        && (d.get('base', null) == null || (d.base is string && d.base.size() <= 60))
+        && listaFacoltativa(d, 'tratti', 30) && listaFacoltativa(d, 'azioni', 30)
+        && listaFacoltativa(d, 'reazioni', 10) && listaFacoltativa(d, 'leggendarie', 10)
+        && (d.get('stato', null) == null || statoCreaturaValido(d.stato))
         && d.aggiornatoIl == request.time;
     }
 
