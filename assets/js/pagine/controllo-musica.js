@@ -1,11 +1,14 @@
 // Script della pagina controllo-musica.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagnaCorrente } from "../auth.js";
+import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagnaCorrente, ottieniLinkMusica, salvaLinkMusica } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, escUrl } from "../utils.js";
 import { ICONA_COPERTINA, ICONA_PRECEDENTE, ICONA_PAUSA, ICONA_RIPRODUCI, ICONA_SUCCESSIVO } from "../icone.js";
 import * as Spotify from "../spotify.js";
-import { caricaApiYouTube, interpretaLinkYouTube, sorgenteDaStato, messaggioErroreYouTube } from "../youtube.js";
+import {
+  caricaApiYouTube, interpretaLinkYouTube, sorgenteDaStato, messaggioErroreYouTube,
+  stessoLink, aggiungiLinkSalvato, rinominaLinkSalvato, togliLinkSalvato, linkSalvatiDa,
+} from "../youtube.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -178,6 +181,8 @@ caricaApiYouTube().then((YT) => {
 function carica(sorgente, { avvia }) {
   youtubeCorrente = sorgente;
   mostraMessaggioYouTube("");
+  chiudiSalva();
+  renderElencoLink();
   if (sorgente.tipo === "playlist") {
     avvia ? playerYouTube.loadPlaylist({ list: sorgente.id }) : playerYouTube.cuePlaylist({ list: sorgente.id });
   } else {
@@ -250,6 +255,172 @@ document.getElementById("yt-now-playing").addEventListener("click", (evento) => 
   }
 });
 
+// ---------- Elenco dei link salvati ----------
+// Solo il DM lo vede (privato/musica). Un tocco sul nome carica il link e lo
+// trasmette; ✎ rinomina; × toglie, con "Annulla" per qualche secondo.
+
+let linkSalvati = [];
+let tolto = null; // { voce, indice, timer }
+let rinominaAperta = null;
+
+const elencoLink = document.getElementById("yt-elenco");
+const boxSalva = document.getElementById("yt-salva");
+const formSalva = document.getElementById("form-yt-salva");
+const campoNome = document.getElementById("campo-yt-nome");
+
+async function salvaElenco(nuova, messaggioErrore) {
+  const prima = linkSalvati;
+  linkSalvati = nuova;
+  renderElencoLink();
+  try {
+    await salvaLinkMusica(campagnaIdCorrente, linkSalvati);
+  } catch (errore) {
+    console.error(errore);
+    linkSalvati = prima;
+    renderElencoLink();
+    mostraToast(messaggioErrore, true);
+  }
+}
+
+function chiudiSalva() {
+  formSalva.hidden = true;
+}
+
+function renderElencoLink() {
+  const salvato = linkSalvati.some((x) => stessoLink(x, youtubeCorrente));
+  boxSalva.hidden = !youtubeCorrente;
+  document.getElementById("btn-yt-salva").hidden = salvato || !formSalva.hidden;
+  document.getElementById("yt-gia-salvato").hidden = !salvato;
+  document.getElementById("yt-elenco-vuoto").hidden = linkSalvati.length > 0 || Boolean(tolto);
+
+  const righe = linkSalvati.map((voce) => {
+    const li = document.createElement("li");
+    const inOnda = stessoLink(voce, youtubeCorrente);
+    li.className = `yt-voce${inOnda ? " in-onda" : ""}`;
+    const chiave = `${voce.tipo}:${voce.id}`;
+    if (rinominaAperta === chiave) {
+      li.innerHTML = `
+        <form class="yt-rinomina" data-chiave="${esc(chiave)}">
+          <input type="text" maxlength="80" value="${esc(voce.nome)}" aria-label="Nuovo nome" />
+          <button type="submit" class="btn-tabella btn-tabella-evidenza">OK</button>
+          <button type="button" class="btn-tabella" data-annulla-rinomina>Annulla</button>
+        </form>`;
+      return li;
+    }
+    li.innerHTML = `
+      <button type="button" class="yt-voce-nome" data-suona="${esc(chiave)}" title="Carica e trasmetti">
+        <b>▶ ${esc(voce.nome)}</b>
+        <small>${inOnda ? "● in onda" : voce.tipo === "playlist" ? "Playlist" : "Video"}</small>
+      </button>
+      <button type="button" class="yt-voce-azione" data-rinomina="${esc(chiave)}" aria-label="Rinomina «${esc(voce.nome)}»" title="Rinomina">✎</button>
+      <button type="button" class="yt-voce-azione" data-togli="${esc(chiave)}" aria-label="Togli «${esc(voce.nome)}» dall'elenco" title="Togli dall'elenco">×</button>`;
+    return li;
+  });
+  if (tolto) {
+    const li = document.createElement("li");
+    li.className = "yt-voce yt-tolto";
+    li.innerHTML = `<span>«${esc(tolto.voce.nome)}» tolto dall'elenco.</span> <button type="button" class="btn-tabella" data-ripristina>Annulla</button>`;
+    righe.splice(Math.min(tolto.indice, righe.length), 0, li);
+  }
+  elencoLink.replaceChildren(...righe);
+  const campo = elencoLink.querySelector(".yt-rinomina input");
+  if (campo) {
+    campo.focus();
+    campo.select();
+  }
+}
+
+const daChiave = (chiave) => {
+  const [tipo, ...resto] = chiave.split(":");
+  return { tipo, id: resto.join(":") };
+};
+
+document.getElementById("btn-yt-salva").addEventListener("click", () => {
+  if (!youtubeCorrente) return;
+  const dati = playerYouTubePronto ? playerYouTube.getVideoData?.() : null;
+  // Per le playlist il titolo è quello del brano: meglio lasciarlo scegliere.
+  campoNome.value = youtubeCorrente.tipo === "video" ? (dati?.title || "").slice(0, 80) : "";
+  campoNome.placeholder = youtubeCorrente.tipo === "playlist" ? "Es. Combattimento" : "Es. Taverna";
+  formSalva.hidden = false;
+  renderElencoLink();
+  campoNome.focus();
+});
+
+document.getElementById("btn-yt-salva-annulla").addEventListener("click", () => {
+  chiudiSalva();
+  renderElencoLink();
+});
+
+formSalva.addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  if (!youtubeCorrente) return;
+  chiudiSalva();
+  await salvaElenco(aggiungiLinkSalvato(linkSalvati, youtubeCorrente, campoNome.value), "Impossibile salvare il link.");
+});
+
+elencoLink.addEventListener("click", async (evento) => {
+  const suona = evento.target.closest("[data-suona]");
+  if (suona) {
+    if (!playerYouTubePronto) {
+      mostraMessaggioYouTube("Il player di YouTube non è ancora pronto: riprova tra un istante.");
+      return;
+    }
+    const sorgente = daChiave(suona.dataset.suona);
+    document.getElementById("campo-youtube-link").value = sorgente.tipo === "playlist"
+      ? `https://www.youtube.com/playlist?list=${sorgente.id}`
+      : `https://www.youtube.com/watch?v=${sorgente.id}`;
+    carica(sorgente, { avvia: true });
+    if (sorgenteCorrente !== "youtube") impostaSorgente("youtube");
+    return;
+  }
+  const rinomina = evento.target.closest("[data-rinomina]");
+  if (rinomina) {
+    rinominaAperta = rinomina.dataset.rinomina;
+    renderElencoLink();
+    return;
+  }
+  if (evento.target.closest("[data-annulla-rinomina]")) {
+    rinominaAperta = null;
+    renderElencoLink();
+    return;
+  }
+  const togli = evento.target.closest("[data-togli]");
+  if (togli) {
+    const sorgente = daChiave(togli.dataset.togli);
+    const indice = linkSalvati.findIndex((x) => stessoLink(x, sorgente));
+    if (indice === -1) return;
+    if (tolto) clearTimeout(tolto.timer);
+    tolto = { voce: linkSalvati[indice], indice, timer: setTimeout(() => { tolto = null; renderElencoLink(); }, 6000) };
+    await salvaElenco(togliLinkSalvato(linkSalvati, sorgente), "Impossibile togliere il link.");
+    return;
+  }
+  if (evento.target.closest("[data-ripristina]") && tolto) {
+    clearTimeout(tolto.timer);
+    const { voce, indice } = tolto;
+    tolto = null;
+    const nuova = [...linkSalvati];
+    nuova.splice(Math.min(indice, nuova.length), 0, voce);
+    await salvaElenco(nuova, "Impossibile ripristinare il link.");
+  }
+});
+
+elencoLink.addEventListener("submit", async (evento) => {
+  const form = evento.target.closest(".yt-rinomina");
+  if (!form) return;
+  evento.preventDefault();
+  const sorgente = daChiave(form.dataset.chiave);
+  const nome = form.querySelector("input").value;
+  rinominaAperta = null;
+  await salvaElenco(rinominaLinkSalvato(linkSalvati, sorgente, nome), "Impossibile rinominare il link.");
+});
+
+elencoLink.addEventListener("keydown", (evento) => {
+  if (evento.key === "Escape" && rinominaAperta) {
+    rinominaAperta = null;
+    renderElencoLink();
+  }
+});
+
 // ---------- Avvio pagina ----------
 
 proteggiPaginaDM(async (user, profilo) => {
@@ -293,6 +464,13 @@ proteggiPaginaDM(async (user, profilo) => {
     if (playerYouTubePronto) carica(ultimoYouTube, { avvia: false });
     else youtubeDaRipristinare = ultimoYouTube;
   }
+
+  try {
+    linkSalvati = linkSalvatiDa(await ottieniLinkMusica(campagnaIdCorrente));
+  } catch (errore) {
+    console.error(errore);
+  }
+  renderElencoLink();
 
   await aggiornaSchermataSpotify();
   setInterval(aggiornaSchermataSpotify, 10000);

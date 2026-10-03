@@ -953,6 +953,17 @@ export async function salvaStatoMusica(campagnaId, campi) {
   await setDoc(doc(db, "campagne", campagnaId, "stato", "musica"), campi, { merge: true });
 }
 
+// Link YouTube salvati dal DM (campagne/{c}/privato/musica): solo il DM li
+// legge, così i nomi delle tracce non anticipano nulla ai giocatori.
+export async function ottieniLinkMusica(campagnaId) {
+  const snapshot = await getDoc(doc(db, "campagne", campagnaId, "privato", "musica"));
+  return snapshot.exists() ? snapshot.data() : {};
+}
+
+export async function salvaLinkMusica(campagnaId, youtube) {
+  await setDoc(doc(db, "campagne", campagnaId, "privato", "musica"), { youtube });
+}
+
 // Ascolta in tempo reale lo stato della musica: usata dal pannello "Musica di
 // sessione" in dashboard, così ogni giocatore vede comparire cambi di brano o
 // di sorgente senza dover ricaricare. Restituisce la funzione per interrompere

@@ -70,3 +70,29 @@ export function messaggioErroreYouTube(codice) {
   if (codice === 2) return "Link o ID non valido.";
   return "Impossibile riprodurre questo contenuto.";
 }
+
+// ---------- Elenco dei link salvati dal DM ----------
+// Voci { tipo, id, nome } (al massimo 50). Lo stesso contenuto compare una
+// volta sola: si riconosce da tipo e id.
+export const MASSIMO_LINK_SALVATI = 50;
+export const stessoLink = (a, b) => Boolean(a && b) && a.tipo === b.tipo && a.id === b.id;
+
+export function aggiungiLinkSalvato(lista, sorgente, nome) {
+  const pulito = (nome || "").trim().slice(0, 80) || (sorgente.tipo === "playlist" ? "Playlist" : "Video");
+  const senza = lista.filter((x) => !stessoLink(x, sorgente));
+  return [...senza, { tipo: sorgente.tipo, id: sorgente.id, nome: pulito }].slice(-MASSIMO_LINK_SALVATI);
+}
+
+export function rinominaLinkSalvato(lista, sorgente, nome) {
+  const pulito = (nome || "").trim().slice(0, 80);
+  return pulito ? lista.map((x) => (stessoLink(x, sorgente) ? { ...x, nome: pulito } : x)) : lista;
+}
+
+export const togliLinkSalvato = (lista, sorgente) => lista.filter((x) => !stessoLink(x, sorgente));
+
+// Dati letti da Firestore → elenco pulito (scarta voci malformate).
+export function linkSalvatiDa(dati) {
+  return (Array.isArray(dati?.youtube) ? dati.youtube : [])
+    .filter((x) => x && (x.tipo === "video" || x.tipo === "playlist") && typeof x.id === "string" && typeof x.nome === "string")
+    .slice(-MASSIMO_LINK_SALVATI);
+}
