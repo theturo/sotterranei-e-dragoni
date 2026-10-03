@@ -53,6 +53,7 @@ const SEZIONI_PANNELLI = [
       { chiave: "calendario", titolo: "Calendario", testo: "Le prossime sessioni e le date proposte dal DM: segna quando puoi esserci.", link: "calendario.html" },
       { chiave: "archivio", titolo: "Archivio della campagna", testo: "Mappe, luoghi, personaggi e documenti incontrati durante l'avventura.", link: "archivio.html", soloRuolo: ROLES.PLAYER },
       { chiave: "personaggi", titolo: "I miei personaggi", testo: "Crea uno o più personaggi e scegli quale rendere attivo per la campagna.", link: "i-miei-personaggi.html" },
+      { chiave: "guida", titolo: "Guida e FAQ", testo: "Come funziona il portale: personaggio, sessione, mappa, app e domande frequenti.", link: "guida.html" },
       {
         chiave: "musica-sessione",
         titolo: "Musica di sessione",

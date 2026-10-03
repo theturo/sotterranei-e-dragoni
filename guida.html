@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Content Security Policy: vedi il commento in testa a test/pagine/pagine.test.mjs -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.scdn.co https://*.spotifycdn.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://*.googleapis.com https://www.google.com https://accounts.spotify.com https://api.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com https://recaptcha.google.com https://sotterranei-e-dragoni.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#150d08" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icone/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="assets/icone/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/icone/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="S&amp;D" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <title>Sotterranei &amp; Dragoni — Guida e FAQ</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script type="module" src="assets/js/pwa.js"></script>
+</head>
+<body>
+  <div id="veil" class="loading-veil">
+    <div class="die-stage">
+      <div class="die-shadow"></div>
+      <div class="die-svg-wrap">
+        <svg class="die-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.1" opacity="0.5"/>
+          <text class="num num-20" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">20</text>
+          <text class="num num-7" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">7</text>
+          <text class="num num-3" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">3</text>
+          <text class="num num-14" x="50" y="53" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="21" fill="#e8c65a">14</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="loading-text">Consultando gli antichi registri…</div>
+      <div class="loading-sub">un istante: il destino si sta scrivendo</div>
+    </div>
+  </div>
+
+    <div id="contenuto" style="display:none;">
+    <div class="dashboard-wrap">
+      <div class="dashboard-header">
+        <div>
+          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
+          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
+            Guida e FAQ
+          </h1>
+        </div>
+        <div id="slot-utente" class="slot-utente"></div>
+      </div>
+
+      <div class="guida-barra">
+        <input type="search" id="guida-cerca" class="guida-cerca" placeholder="Cerca nella guida…" aria-label="Cerca nella guida" autocomplete="off" />
+        <label class="guida-tendina">
+          <select id="guida-capitolo" aria-label="Capitolo">
+            <option value="primi-passi">🗝️ Primi passi</option>
+            <option value="personaggio">🛡️ Il tuo personaggio</option>
+            <option value="sessione">📜 In sessione</option>
+            <option value="mappa">🧭 Mappa e strumenti</option>
+            <option value="combattimento">⚔️ Combattimento</option>
+            <option value="calendario">📅 Calendario e archivio</option>
+            <option value="app">📱 App e notifiche</option>
+          </select>
+        </label>
+      </div>
+      <p id="guida-conteggio" class="guida-conteggio">7 capitoli · 10 domande frequenti</p>
+
+      <div class="guida">
+        <nav class="panel-wide guida-indice" aria-label="Capitoli">
+          <p class="guida-indice-titolo">Capitoli</p>
+          <a class="guida-indice-voce" href="#primi-passi" data-capitolo="primi-passi"><span aria-hidden="true">🗝️</span>Primi passi</a>
+          <a class="guida-indice-voce" href="#personaggio" data-capitolo="personaggio"><span aria-hidden="true">🛡️</span>Il tuo personaggio</a>
+          <a class="guida-indice-voce" href="#sessione" data-capitolo="sessione"><span aria-hidden="true">📜</span>In sessione</a>
+          <a class="guida-indice-voce" href="#mappa" data-capitolo="mappa"><span aria-hidden="true">🧭</span>Mappa e strumenti</a>
+          <a class="guida-indice-voce" href="#combattimento" data-capitolo="combattimento"><span aria-hidden="true">⚔️</span>Combattimento</a>
+          <a class="guida-indice-voce" href="#calendario" data-capitolo="calendario"><span aria-hidden="true">📅</span>Calendario e archivio</a>
+          <a class="guida-indice-voce" href="#app" data-capitolo="app"><span aria-hidden="true">📱</span>App e notifiche</a>
+          <a class="guida-indice-voce guida-indice-faq" href="#domande"><span aria-hidden="true">❓</span>Domande frequenti</a>
+        </nav>
+
+        <div class="guida-testo">
+          <section id="primi-passi" class="panel-wide guida-capitolo" data-capitolo="primi-passi" aria-labelledby="titolo-primi-passi">
+            <h2 id="titolo-primi-passi"><span aria-hidden="true">🗝️</span> Primi passi</h2>
+            <p class="guida-intro">Dal primo accesso alla tua campagna.</p>
+            <div class="guida-capitolo-corpo">
+              <ol class="guida-passi">
+                <li><b>Registrati.</b> Dalla pagina di accesso scegli «Crea account»: nome, email e password.</li>
+                <li><b>Conferma l'email.</b> Apri il link che ti arriva per posta (guarda anche nello spam).</li>
+                <li><b>Aspetta l'approvazione.</b> L'amministratore approva il tuo account; poi premi «Controlla di nuovo».</li>
+                <li><b>Entra nella campagna.</b> Il DM ti aggiunge al party: da quel momento la campagna compare nella tua dashboard.</li>
+              </ol>
+              <figure class="guida-schermata">
+                <button type="button" class="guida-schermata-apri" aria-label="Ingrandisci: La dashboard di un giocatore"><img src="assets/img/guida/primi-passi.jpg" alt="La dashboard di un giocatore" loading="lazy" width="360" /></button>
+                <figcaption>La dashboard di un giocatore</figcaption>
+              </figure>
+            </div>
+          </section>
+          <section id="personaggio" class="panel-wide guida-capitolo" data-capitolo="personaggio" aria-labelledby="titolo-personaggio">
+            <h2 id="titolo-personaggio"><span aria-hidden="true">🛡️</span> Il tuo personaggio</h2>
+            <p class="guida-intro">Creazione, scheda e passaggi di livello.</p>
+            <div class="guida-capitolo-corpo">
+              <ol class="guida-passi">
+                <li><b>Crea il personaggio.</b> «I miei personaggi» → «Nuovo personaggio»: nome, razza, classe e punteggi (15, 14, 13, 12, 10, 8).</li>
+                <li><b>Rendilo attivo.</b> Il personaggio attivo è quello che entra in sessione, nel party e in combattimento.</li>
+                <li><b>Segui la guida.</b> Nella scheda un pannello ti accompagna passo per passo: background, abilità, equipaggiamento, incantesimi.</li>
+                <li><b>Sali di livello.</b> Quando il DM lo segnala ricevi un avviso: apri la scheda, tira i PF e scegli i nuovi privilegi.</li>
+                <li><b>Esporta.</b> «Esporta la scheda» la salva in PDF (da stampare) o come backup.</li>
+              </ol>
+              <figure class="guida-schermata">
+                <button type="button" class="guida-schermata-apri" aria-label="Ingrandisci: La scheda di Elara"><img src="assets/img/guida/personaggio.jpg" alt="La scheda di Elara" loading="lazy" width="360" /></button>
+                <figcaption>La scheda di Elara</figcaption>
+              </figure>
+            </div>
+          </section>
+          <section id="sessione" class="panel-wide guida-capitolo" data-capitolo="sessione" aria-labelledby="titolo-sessione">
+            <h2 id="titolo-sessione"><span aria-hidden="true">📜</span> In sessione</h2>
+            <p class="guida-intro">Appunti, dadi, contenuti e riposi.</p>
+            <div class="guida-capitolo-corpo">
+              <ol class="guida-passi">
+                <li><b>Appunti.</b> Scrivi nomi, indizi e promesse: li vede tutto il party e restano nel registro.</li>
+                <li><b>Dadi.</b> Il lanciatore tira qualsiasi combinazione; dalla scheda tiri con un tocco prove, attacchi e incantesimi.</li>
+                <li><b>Mostrati dal DM.</b> Immagini, mappe e documenti che il DM ti mostra compaiono qui; toccali per vederli a tutto schermo.</li>
+                <li><b>Riposi.</b> Al riposo breve ricevi l'invito a spendere i dadi vita; il riposo lungo lo applica il DM.</li>
+              </ol>
+              <figure class="guida-schermata">
+                <button type="button" class="guida-schermata-apri" aria-label="Ingrandisci: Appunti e dadi della sessione"><img src="assets/img/guida/sessione.jpg" alt="Appunti e dadi della sessione" loading="lazy" width="360" /></button>
+                <figcaption>Appunti e dadi della sessione</figcaption>
+              </figure>
+            </div>
+          </section>
+          <section id="mappa" class="panel-wide guida-capitolo" data-capitolo="mappa" aria-labelledby="titolo-mappa">
+            <h2 id="titolo-mappa"><span aria-hidden="true">🧭</span> Mappa e strumenti</h2>
+            <p class="guida-intro">Muoversi e indicare sulla mappa dal telefono.</p>
+            <div class="guida-capitolo-corpo">
+              <ol class="guida-passi">
+                <li><b>La tua pedina.</b> Trascinala: vedi la distanza in metri. «◎ Centra su di me» ti ritrova sulla mappa.</li>
+                <li><b>Righello.</b> Trascina da una casella all'altra: tutti vedono la misura.</li>
+                <li><b>Ping.</b> Tocca un punto per dire «guardate qui!».</li>
+                <li><b>Area.</b> Scegli un tuo incantesimo: forma e misura sono già pronte, le pedine colpite si illuminano.</li>
+              </ol>
+              <figure class="guida-schermata">
+                <button type="button" class="guida-schermata-apri" aria-label="Ingrandisci: La mappa con il righello"><img src="assets/img/guida/mappa.jpg" alt="La mappa con il righello" loading="lazy" width="360" /></button>
+                <figcaption>La mappa con il righello</figcaption>
+              </figure>
+            </div>
+          </section>
+          <section id="combattimento" class="panel-wide guida-capitolo" data-capitolo="combattimento" aria-labelledby="titolo-combattimento">
+            <h2 id="titolo-combattimento"><span aria-hidden="true">⚔️</span> Combattimento</h2>
+            <p class="guida-intro">Iniziativa e turni.</p>
+            <div class="guida-capitolo-corpo">
+              <ol class="guida-passi">
+                <li><b>Iniziativa.</b> Quando il DM avvia il combattimento premi 🎲 sulla tua riga (o scrivi il tuo tiro).</li>
+                <li><b>Il tuo turno.</b> Arriva «Tocca a te!» e la tua riga si illumina.</li>
+                <li><b>Nemici.</b> Dei nemici vedi solo la salute: Illeso, Ferito, Gravemente ferito, A terra. Gli alleati mostrano i PF.</li>
+              </ol>
+              <figure class="guida-schermata">
+                <button type="button" class="guida-schermata-apri" aria-label="Ingrandisci: Il tracker: tocca a te"><img src="assets/img/guida/combattimento.jpg" alt="Il tracker: tocca a te" loading="lazy" width="360" /></button>
+                <figcaption>Il tracker: tocca a te</figcaption>
+              </figure>
+            </div>
+          </section>
+          <section id="calendario" class="panel-wide guida-capitolo" data-capitolo="calendario" aria-labelledby="titolo-calendario">
+            <h2 id="titolo-calendario"><span aria-hidden="true">📅</span> Calendario e archivio</h2>
+            <p class="guida-intro">Date delle sessioni e ricordi della campagna.</p>
+            <div class="guida-capitolo-corpo">
+              <ol class="guida-passi">
+                <li><b>Rispondi alle date.</b> Per ogni data proposta scegli sì, forse o no.</li>
+                <li><b>Nel tuo calendario.</b> «Aggiungi al mio calendario» scarica la sessione per Google o Apple Calendario.</li>
+                <li><b>Archivio.</b> Mappe, lettere e ritratti che il DM ti ha mostrato restano qui dopo la sessione.</li>
+              </ol>
+            </div>
+          </section>
+          <section id="app" class="panel-wide guida-capitolo" data-capitolo="app" aria-labelledby="titolo-app">
+            <h2 id="titolo-app"><span aria-hidden="true">📱</span> App e notifiche</h2>
+            <p class="guida-intro">Il sito sul telefono, come un'app.</p>
+            <div class="guida-capitolo-corpo">
+              <ol class="guida-passi">
+                <li><b>Installa.</b> Premi «Installa» in dashboard o nel pannello ⚙️. Su iPhone: Condividi → «Aggiungi alla schermata Home».</li>
+                <li><b>Notifiche.</b> ⚙️ → «Attiva le notifiche»: sessione iniziata, date proposte, livelli, anche ad app chiusa.</li>
+                <li><b>Aggiornamenti.</b> Quando esce una novità compare «Aggiorna»: premilo.</li>
+              </ol>
+            </div>
+          </section>
+          <p id="guida-nessun-capitolo" class="guida-vuoto" hidden>Nessun capitolo corrisponde: prova con un'altra parola.</p>
+
+          <h2 id="domande" class="guida-faq-titolo"><span aria-hidden="true">❓</span> <span id="guida-faq-etichetta">Domande frequenti</span></h2>
+          <div class="panel-wide guida-faq">
+            <details class="guida-domanda" data-capitolo="primi-passi">
+              <summary>Mi sono registrato ma non vedo nessuna campagna.<span class="guida-domanda-tag">Primi passi</span></summary>
+              <p>Il DM deve aggiungerti ai membri del party. Se sei ancora sulla pagina di attesa, l'amministratore non ha ancora approvato l'account.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="personaggio">
+              <summary>Posso avere più personaggi?<span class="guida-domanda-tag">Il tuo personaggio</span></summary>
+              <p>Sì: creane quanti vuoi in «I miei personaggi», ma solo quello attivo gioca nella campagna.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="personaggio">
+              <summary>Ho sbagliato un punteggio durante la creazione.<span class="guida-domanda-tag">Il tuo personaggio</span></summary>
+              <p>Puoi correggerlo dalla scheda; per i cambi importanti avvisa il DM.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="sessione">
+              <summary>Gli altri vedono i miei tiri?<span class="guida-domanda-tag">In sessione</span></summary>
+              <p>Sì: i tiri finiscono negli appunti della sessione, visibili a tutto il party.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="sessione">
+              <summary>Non riesco a scrivere negli appunti.<span class="guida-domanda-tag">In sessione</span></summary>
+              <p>Si può scrivere solo quando il DM ha aperto la sessione.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="mappa">
+              <summary>Non vedo la mappa.<span class="guida-domanda-tag">Mappa e strumenti</span></summary>
+              <p>Compare solo quando il DM la mette in tavola. Le zone buie sono coperte dalla nebbia: si scoprono man mano.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="mappa">
+              <summary>Posso muovere le pedine degli altri?<span class="guida-domanda-tag">Mappa e strumenti</span></summary>
+              <p>No: ognuno muove solo la propria. Il DM può muoverle tutte.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="combattimento">
+              <summary>Perché non vedo i PF dei nemici?<span class="guida-domanda-tag">Combattimento</span></summary>
+              <p>Li conosce solo il DM: tu vedi una salute indicativa, come al tavolo.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="app">
+              <summary>Le notifiche non arrivano.<span class="guida-domanda-tag">App e notifiche</span></summary>
+              <p>Vanno attivate su ogni dispositivo. Su iPhone serve iOS 16.4 o successivo e l'app aggiunta alla schermata Home.</p>
+            </details>
+            <details class="guida-domanda" data-capitolo="app">
+              <summary>Il sito funziona senza connessione?<span class="guida-domanda-tag">App e notifiche</span></summary>
+              <p>L'app si apre, ma per giocare serve la connessione: senza, mostra la pagina «sei offline».</p>
+            </details>
+            <p id="guida-nessuna-domanda" class="guida-vuoto" hidden>Nessuna domanda corrisponde.</p>
+            <button type="button" id="guida-tutte-domande" class="btn-tabella guida-tutte" hidden>Mostra tutte le domande</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="guida-ingrandita" class="modal-overlay guida-ingrandita" hidden>
+    <button type="button" class="btn-chiudi-modal" aria-label="Chiudi">×</button>
+    <img alt="" />
+  </div>
+
+  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
+
+  <script type="module" src="assets/js/pagine/guida.js"></script>
+</body>
+</html>

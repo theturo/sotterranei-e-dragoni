@@ -82,6 +82,7 @@ const HTML_MODALE = `
           <button id="mu-btn-installa" class="btn-tabella" type="button" hidden>Installa l'app</button>
           <button id="mu-btn-notifiche" class="btn-tabella" type="button" hidden>Attiva le notifiche</button>
           <p id="mu-nota-notifiche" class="impostazioni-nota" hidden></p>
+          <a class="btn-tabella" href="guida.html">Guida e FAQ</a>
           <button id="mu-btn-logout-menu" class="btn-tabella btn-tabella-pericolo solo-telefono" type="button">Esci</button>
         </div>
       </div>
