@@ -76,31 +76,47 @@
       </div>
 
       <div id="pannelli-gestione" hidden>
-        <div class="panel-wide" id="pannello-attiva">
-          <h3 style="margin-top:0;">Campagna su cui stai lavorando</h3>
+        <div class="campagna-schede" role="tablist" aria-label="Sezioni della campagna">
+          <button type="button" role="tab" class="campagna-scheda" id="tab-panoramica" data-tab="panoramica" aria-controls="pannello-panoramica">Panoramica</button>
+          <button type="button" role="tab" class="campagna-scheda" id="tab-giocatori" data-tab="giocatori" aria-controls="pannello-giocatori">Giocatori</button>
+          <button type="button" role="tab" class="campagna-scheda" id="tab-sessioni" data-tab="sessioni" aria-controls="pannello-sessioni">Sessioni</button>
+          <button type="button" role="tab" class="campagna-scheda" id="tab-altre" data-tab="altre" aria-controls="pannello-altre">Altre campagne</button>
+        </div>
+
+        <section class="panel-wide campagna-pannello" id="pannello-panoramica" role="tabpanel" aria-labelledby="tab-panoramica">
           <div id="corpo-campagna-attiva"></div>
-        </div>
+          <div id="numeri-campagna" class="campagna-numeri"></div>
+          <p id="prossima-campagna" class="campagna-prossima"></p>
+          <div id="azioni-campagna-attiva" class="azioni-campagna"></div>
+        </section>
 
-        <div class="panel-wide">
-          <h3 style="margin-top:0;">Membri del party</h3>
+        <section class="panel-wide campagna-pannello" id="pannello-giocatori" role="tabpanel" aria-labelledby="tab-giocatori" hidden>
+          <h3 class="campagna-pannello-titolo">Giocatori <a href="dm-party.html">Party e livelli →</a></h3>
           <p class="card-tagline" style="text-align:left;">
-            Solo i giocatori spuntati vedono questa campagna (personaggi, sessioni, party) nella propria dashboard.
+            Solo chi è nel party vede questa campagna (personaggi, sessioni, party) nella propria dashboard.
           </p>
-          <div id="lista-membri" class="lista-membri-campagna"></div>
+          <ul id="lista-membri" class="campagna-righe"></ul>
           <p id="nessun-giocatore-membri" class="scheda-testo-libero" hidden>Nessun giocatore registrato ancora.</p>
-        </div>
+        </section>
 
-        <div class="panel-wide">
-          <h3 style="margin-top:0;">Sessioni pianificate</h3>
+        <section class="panel-wide campagna-pannello" id="pannello-sessioni" role="tabpanel" aria-labelledby="tab-sessioni" hidden>
+          <h3 class="campagna-pannello-titolo">Sessioni <a href="calendario.html">Calendario →</a></h3>
+          <h4 class="campagna-sottotitolo">In programma</h4>
           <div id="lista-programmate" class="lista-sessioni-programmate"></div>
           <p id="nessuna-programmata" class="scheda-testo-libero" hidden>Nessuna sessione pianificata.</p>
+          <h4 class="campagna-sottotitolo">Proposte aperte</h4>
+          <div id="lista-proposte" class="lista-sessioni-programmate"></div>
+          <p id="nessuna-proposta" class="scheda-testo-libero" hidden>Nessuna proposta di date aperta.</p>
+          <h4 class="campagna-sottotitolo">Giocate</h4>
+          <div id="lista-giocate" class="lista-sessioni-programmate"></div>
+          <p id="nessuna-giocata" class="scheda-testo-libero" hidden>Nessuna sessione giocata ancora.</p>
           <p class="scheda-testo-libero" style="margin-top:12px;">
             Per proporre date ai giocatori o fissare la prossima sessione usa il <a href="calendario.html">Calendario</a>.
           </p>
-        </div>
+        </section>
 
-        <div class="panel-wide">
-          <h3 style="margin-top:0;">Altre campagne</h3>
+        <section class="panel-wide campagna-pannello" id="pannello-altre" role="tabpanel" aria-labelledby="tab-altre" hidden>
+          <h3 class="campagna-pannello-titolo">Altre campagne</h3>
           <p class="card-tagline" style="text-align:left;">Più campagne possono essere attive insieme (gruppi diversi): passi dall'una all'altra con il selettore della campagna in dashboard o nel pannello ⚙️.</p>
           <div id="lista-altre-campagne"></div>
           <p id="nessuna-altra-campagna" class="scheda-testo-libero" hidden>Non hai altre campagne.</p>
@@ -115,7 +131,7 @@
             </label>
             <button type="submit" class="btn-tabella" style="white-space:nowrap;">Crea nuova campagna</button>
           </form>
-        </div>
+        </section>
       </div>
     </div>
   </div>

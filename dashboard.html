@@ -74,8 +74,30 @@
         <button type="button" id="btn-chiudi-invito-notifiche" class="banner-app-chiudi" aria-label="Non ora">×</button>
       </div>
 
-      <div id="griglia-pannelli">
-        <!-- Sezioni e pannelli vengono generati in base al ruolo -->
+      <!-- Cruscotto: la sessione in evidenza, il party (DM) o il proprio
+           personaggio (giocatore), gli avvisi "Da fare" e la musica. -->
+      <section id="cruscotto" class="cruscotto" aria-label="La campagna oggi" hidden>
+        <div id="cruscotto-sessione" class="cruscotto-box cruscotto-sessione"></div>
+        <div id="cruscotto-party" class="cruscotto-box" hidden>
+          <h2 class="cruscotto-titolo">Il party <a href="dm-party.html">Party e livelli →</a></h2>
+          <ul id="cruscotto-lista-party" class="cruscotto-party"></ul>
+        </div>
+        <div id="cruscotto-personaggio" class="cruscotto-box" hidden>
+          <h2 class="cruscotto-titolo">Il tuo personaggio <a id="link-scheda" href="i-miei-personaggi.html">Apri la scheda →</a></h2>
+          <div id="cruscotto-mio-pg"></div>
+        </div>
+        <div id="cruscotto-avvisi" class="cruscotto-box">
+          <div id="cruscotto-musica" hidden>
+            <h2 class="cruscotto-titolo">Musica di sessione</h2>
+            <div id="corpo-musica-giocatore"><p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>
+          </div>
+          <h2 id="titolo-avvisi" class="cruscotto-titolo">Da fare</h2>
+          <ul id="lista-avvisi" class="cruscotto-avvisi"></ul>
+        </div>
+      </section>
+
+      <div id="griglia-pannelli" class="strumenti-gruppi">
+        <!-- Gruppi di strumenti generati in base al ruolo -->
       </div>
     </div>
   </div>

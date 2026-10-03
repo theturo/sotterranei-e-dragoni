@@ -26,8 +26,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Dashboard e pannello di controllo della campagna da ridisegnare**: UI e
-  usabilità della gestione della campagna per il DM.
 - **Notifiche, seconda parte**:
   - avviso "Tocca a te" quando arriva il proprio turno nel tracker di
     combattimento;
@@ -41,6 +39,16 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Dashboard ridisegnata: in alto il cruscotto della campagna (sessione in
+  evidenza con il pulsante giusto — «Apri la sessione di oggi», «Vai alla
+  sessione», «Rispondi alle date» —, party con PF, condizioni e livelli da
+  completare, avvisi «Da fare»); per il giocatore il proprio personaggio,
+  la musica e i suoi avvisi. Sotto gli strumenti raggruppati in Prepara /
+  Gioca / Consulta, compatti e riordinabili dentro ogni gruppo (due per riga
+  sul telefono). Gestione campagna a schede (Panoramica con i numeri,
+  Giocatori con il personaggio attivo, Sessioni in programma, proposte e
+  giocate con il registro, Altre campagne), con l'indirizzo della scheda
+  (campagna.html#sessioni).
 - Guida e FAQ per i giocatori (guida.html), uguale anche per il DM: sette
   capitoli brevi a passi numerati con piccole schermate dal telefono (un tocco
   le ingrandisce) e dieci domande frequenti, con una ricerca che filtra

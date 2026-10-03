@@ -36,7 +36,7 @@ test("guida: le schermate esistono, hanno un testo alternativo e sono leggere", 
 });
 
 test("guida: raggiungibile da dashboard e pannello ⚙️", () => {
-  const dashboard = readFileSync(new URL("assets/js/pagine/dashboard.js", radice), "utf8");
+  const dashboard = readFileSync(new URL("assets/js/cruscotto-calcoli.js", radice), "utf8");
   const menu = readFileSync(new URL("assets/js/menu-utente.js", radice), "utf8");
   assert.match(dashboard, /link: "guida\.html"/);
   assert.match(menu, /href="guida\.html"/);
