@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "e18559959800";
+const VERSIONE = "ab1603735bc9";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -29,6 +29,11 @@ const FILE = [
   "./assets/icone/icona-192.png",
   "./assets/icone/icona-512.png",
   "./assets/icone/icona-maskable-512.png",
+  "./assets/img/guida/combattimento.jpg",
+  "./assets/img/guida/mappa.jpg",
+  "./assets/img/guida/personaggio.jpg",
+  "./assets/img/guida/primi-passi.jpg",
+  "./assets/img/guida/sessione.jpg",
   "./assets/js/aree-incantesimi.js",
   "./assets/js/auth.js",
   "./assets/js/bestiario-calcoli.js",
@@ -74,6 +79,7 @@ const FILE = [
   "./assets/js/pagine/dm-party.js",
   "./assets/js/pagine/glossario-equipaggiamento.js",
   "./assets/js/pagine/glossario-incantesimi.js",
+  "./assets/js/pagine/guida.js",
   "./assets/js/pagine/i-miei-personaggi.js",
   "./assets/js/pagine/index.js",
   "./assets/js/pagine/libreria.js",
@@ -104,6 +110,7 @@ const FILE = [
   "./dm-party.html",
   "./glossario-equipaggiamento.html",
   "./glossario-incantesimi.html",
+  "./guida.html",
   "./i-miei-personaggi.html",
   "./index.html",
   "./libreria.html",

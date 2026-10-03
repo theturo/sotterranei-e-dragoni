@@ -35,24 +35,21 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   - fascia "non disturbare", che rispetti comunque le impostazioni del
     telefono (modalità silenziosa / full immersion).
 
-## Guide
-
-- **Manuale del DM**: documento da mandare al DM con le funzioni delle varie
-  dashboard e pagine (gestione della campagna, Libreria, Sessione con mappe,
-  nebbia e strumenti, tracker di combattimento, schermo del tavolo, Archivio)
-  e le opzioni che il sito offre, spiegate passo per passo.
-- **Guida e FAQ per i giocatori**: versione analoga per i giocatori, ma
-  raggiungibile direttamente dal sito (una pagina dedicata, con un link dal
-  menu): come creare e far crescere il personaggio, cosa si vede in sessione,
-  come usare mappa e strumenti dal telefono, notifiche e app installabile, più
-  le domande frequenti.
-
 ## Altro
 
 - **Corto animato in JavaScript**: da discutere.
 
 ## Già fatto
 
+- Guida e FAQ per i giocatori (guida.html), uguale anche per il DM: sette
+  capitoli brevi a passi numerati con piccole schermate dal telefono (un tocco
+  le ingrandisce) e dieci domande frequenti, con una ricerca che filtra
+  entrambi; sul telefono l'indice è una tendina e sotto ogni capitolo ci sono
+  le sue domande. Si apre dal pannello «Guida e FAQ» della dashboard e dal
+  pannello ⚙️.
+- Manuale del DM: documento condivisibile (Claude Docs) con la prima
+  sessione passo per passo e un capitolo per ogni pagina, con le schermate
+  della campagna di esempio.
 - Bestiario, prima parte: pagina del DM con tutti i 334 mostri del SRD 5.1
   in italiano (blocco statistiche completo, misure in metri), ricerca e
   filtri, tiri a un clic nel registro della sessione (nascosti o visibili),
