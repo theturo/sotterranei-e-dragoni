@@ -182,13 +182,13 @@ proteggiPagina(async (user, profilo) => {
   montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
   const ruolo = profilo?.ruolo || ROLES.PLAYER;
 
-  // Il DM gestisce tutto dalla libreria: qui ci sono solo gli archivi dei giocatori.
-  if (ruolo !== ROLES.PLAYER) {
+  const campagna = await ottieniCampagnaCorrente(user.uid, ruolo);
+  // Il DM gestisce tutto dalla libreria: qui ci sono solo gli archivi dei
+  // giocatori (anche di un DM o admin che gioca nella campagna di un altro).
+  if (campagna ? campagna.mioRuolo === ROLES.DM : ruolo !== ROLES.PLAYER) {
     window.location.href = "libreria.html";
     return;
   }
-
-  const campagna = await ottieniCampagnaCorrente(user.uid, ruolo);
   if (!campagna) {
     document.getElementById("testo-nessuna-campagna").textContent =
       "Non sei ancora membro di una campagna attiva: chiedi al tuo Dungeon Master di aggiungerti.";

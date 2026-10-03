@@ -117,8 +117,13 @@ describe("Registrazione e profili", () => {
     assertFails(updateDoc(doc(come("dm"), "users/p2"), { livello: 5, livelliDaSpendere: 3 })));
   test("il DM NON toglie livelli", () =>
     assertFails(updateDoc(doc(come("dm"), "users/p1"), { livello: increment(-1), livelliDaSpendere: increment(-1) })));
-  test("il DM NON concede livelli all'admin", () =>
-    assertFails(updateDoc(doc(come("dm"), "users/admin"), { livello: increment(1), livelliDaSpendere: increment(1) })));
+  test("il DM concede livelli anche all'admin (che può giocare nella sua campagna)", () =>
+    assertSucceeds(updateDoc(doc(come("dm"), "users/admin"), { livello: increment(1), livelliDaSpendere: increment(1) })));
+  test("il DM NON concede livelli a sé stesso né a un altro DM", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "users/dm2"), { nome: "Altro", email: "dm2@x.it", ruolo: "dm", approvato: true }));
+    await assertFails(updateDoc(doc(come("dm"), "users/dm"), { livello: increment(1), livelliDaSpendere: increment(1) }));
+    await assertFails(updateDoc(doc(come("dm"), "users/dm2"), { livello: increment(1), livelliDaSpendere: increment(1) }));
+  });
   test("il DM imposta il livello di partenza della campagna", () =>
     assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1"), { livelloPartenza: 3 })));
   test("un giocatore NON imposta il livello di partenza", () =>
@@ -944,4 +949,50 @@ describe("Bestiario in combattimento", () => {
   });
   test("i giocatori NON leggono il collegamento alla scheda", () =>
     assertFails(getDoc(doc(come("p1"), "campagne/c1/combattentiDM/varro"))));
+});
+
+describe("Ruolo per campagna: l'admin che gioca nella campagna di un altro", () => {
+  const entraAdmin = () => env.withSecurityRulesDisabled(async (ctx) => {
+    const d = ctx.firestore();
+    await setDoc(doc(d, "campagne/c1"), { titolo: null, titoloProvvisorio: true, dmUid: "dm", membriUid: ["p1", "p2", "admin"], stato: "attiva" });
+    await setDoc(doc(d, "registroSessioni/r1/tiriNascosti/t1"), { autoreUid: "dm", autoreNome: "Master", testo: "Furtività 18", tipo: "tiro", creatoIl: new Date() });
+  });
+  test("fuori dal party l'admin NON legge la campagna", () => assertFails(getDoc(doc(come("admin"), "campagne/c1"))));
+  test("da membro legge la campagna, il party e i contenuti mostrati", async () => {
+    await entraAdmin();
+    await assertSucceeds(getDoc(doc(come("admin"), "campagne/c1")));
+    await assertSucceeds(getDoc(doc(come("admin"), "campagne/c1/combattenti/goblin1")));
+  });
+  test("da membro NON vede nemici nascosti, note, tiri segreti né il titolo vero", async () => {
+    await entraAdmin();
+    await assertFails(getDoc(doc(come("admin"), "campagne/c1/combattentiNascosti/ombra")));
+    await assertFails(getDoc(doc(come("admin"), "campagne/c1/mappe/pubblica/pedineDM/ombra")));
+    await assertFails(getDoc(doc(come("admin"), "campagne/c1/immaginiDM/nascosta")));
+    await assertFails(getDoc(doc(come("admin"), "campagne/c1/combattentiDM/goblin1")));
+    await assertFails(getDoc(doc(come("admin"), "campagne/c1/privato/titolo")));
+    await assertFails(getDoc(doc(come("admin"), "registroSessioni/r1/tiriNascosti/t1")));
+  });
+  test("da membro NON fa il DM: sessioni, stato, membri", async () => {
+    await entraAdmin();
+    await assertFails(updateDoc(doc(come("admin"), "registroSessioni/r1"), { stato: "chiusa" }));
+    await assertFails(setDoc(doc(come("admin"), "campagne/c1/stato/sessione"), { inCorso: false, sessioneAttivaId: null }));
+    await assertFails(updateDoc(doc(come("admin"), "campagne/c1"), { membriUid: ["admin"] }));
+  });
+  test("il DM manda avvisi anche all'admin che gioca", async () => {
+    await entraAdmin();
+    await assertSucceeds(addDoc(collection(come("dm"), "users/admin/notifiche"), { tipo: "sessione_iniziata", letta: false }));
+  });
+  test("l'admin guida la propria campagna come un DM", async () => {
+    await assertSucceeds(setDoc(doc(come("admin"), "campagne/c9"), { titolo: "Altra", titoloProvvisorio: false, dmUid: "admin", membriUid: [], stato: "attiva" }));
+    await assertSucceeds(setDoc(doc(come("admin"), "campagne/c9/privato/titolo"), { titolo: "Altra" }));
+    await assertSucceeds(setDoc(doc(come("admin"), "campagne/c9/stato/sessione"), { inCorso: false, sessioneAttivaId: null }));
+    await assertSucceeds(setDoc(doc(come("admin"), "registroSessioni/a1"), { campagnaId: "c9", numero: 1, stato: "programmata" }));
+    await assertFails(setDoc(doc(come("admin"), "campagne/c8"), { titolo: "Rubata", titoloProvvisorio: false, dmUid: "dm", membriUid: [], stato: "attiva" }));
+  });
+  test("un DM NON scrive le sessioni della campagna di un altro", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "users/dm2"), { nome: "Altro", email: "dm2@x.it", ruolo: "dm", approvato: true }));
+    await assertFails(updateDoc(doc(come("dm2"), "registroSessioni/r1"), { stato: "chiusa" }));
+    await assertFails(setDoc(doc(come("dm2"), "registroSessioni/x1"), { campagnaId: "c1", numero: 9, stato: "programmata" }));
+    await assertFails(getDoc(doc(come("dm2"), "registroSessioni/r1/tiriNascosti/t1")));
+  });
 });

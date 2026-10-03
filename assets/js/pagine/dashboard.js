@@ -33,8 +33,10 @@ const MANIGLIA = '<span class="maniglia-trascina" aria-hidden="true" title="Tras
 // Gruppi di strumenti: Prepara / Gioca / Consulta per il DM (più
 // Amministrazione per l'admin), uno solo per il giocatore. L'ordine dentro
 // ogni gruppo si cambia trascinando (matita nell'intestazione).
-function renderStrumenti(ruolo, ordinePannelli) {
-  const gruppi = ruolo === ROLES.PLAYER ? GRUPPI_GIOCATORE : [...GRUPPI_DM, ...(ruolo === ROLES.ADMIN ? [GRUPPO_ADMIN] : [])];
+// ruolo: quello nella campagna corrente; admin: se l'utente è admin della
+// piattaforma (Gestione utenti resta sempre).
+function renderStrumenti(ruolo, ordinePannelli, admin = false) {
+  const gruppi = [...(ruolo === ROLES.PLAYER ? GRUPPI_GIOCATORE : GRUPPI_DM), ...(admin ? [GRUPPO_ADMIN] : [])];
   griglia.classList.toggle("strumenti-giocatore", ruolo === ROLES.PLAYER);
   griglia.innerHTML = gruppi.map((g) => `
     <section class="gruppo-strumenti" aria-label="${esc(g.titolo)}">
@@ -134,7 +136,7 @@ function disegnaParty(party, membri) {
   }));
 }
 
-async function cruscottoDM(campagna, ruolo) {
+async function cruscottoDM(campagna, admin) {
   document.getElementById("cruscotto-party").hidden = false;
   document.getElementById("titolo-avvisi").textContent = "Da fare";
   const [stato, sessioni, proposte, membri, inAttesa] = await Promise.all([
@@ -142,7 +144,7 @@ async function cruscottoDM(campagna, ruolo) {
     elencaSessioniCampagna(campagna.id),
     elencaProposteAperte(campagna.id),
     elencaMembriCampagna(campagna.id),
-    ruolo === ROLES.ADMIN ? contaUtentiInAttesa() : Promise.resolve(0),
+    admin ? contaUtentiInAttesa() : Promise.resolve(0),
   ]);
   const evidenza = sessioneInEvidenza({ inCorso: stato.inCorso ? stato : null, sessioni, proposte, membri: membri.length });
   const contenutiProssima = evidenza.sessione && evidenza.tipo !== "corso"
@@ -282,9 +284,8 @@ async function cruscottoGiocatore(campagna, uid, profilo) {
   disegnaAvvisi(avvisiGiocatore({ profilo, scheda, daRispondere: calendario.daRispondere }), "Nessun avviso.");
 }
 
-async function montaCruscotto(user, profilo, ruolo) {
+async function montaCruscotto(user, profilo, campagna, ruolo) {
   const sezione = document.getElementById("cruscotto");
-  const campagna = await ottieniCampagnaCorrente(user.uid, ruolo);
   sezione.hidden = false;
   if (!campagna) {
     document.getElementById("cruscotto-avvisi").hidden = true;
@@ -295,7 +296,7 @@ async function montaCruscotto(user, profilo, ruolo) {
     return;
   }
   if (ruolo === ROLES.PLAYER) await cruscottoGiocatore(campagna, user.uid, profilo);
-  else await cruscottoDM(campagna, ruolo);
+  else await cruscottoDM(campagna, profilo?.ruolo === ROLES.ADMIN);
 }
 
 proteggiPagina(async (user, profilo) => {
@@ -304,8 +305,15 @@ proteggiPagina(async (user, profilo) => {
   const ruolo = profilo?.ruolo || ROLES.PLAYER;
 
   document.getElementById("nome-utente").textContent = nome;
-  renderStrumenti(ruolo, profilo?.ordinePannelli);
-  montaCruscotto(user, profilo, ruolo).catch((errore) => console.error(errore));
+  // Cruscotto e strumenti seguono il ruolo nella campagna corrente: DM in
+  // quella che guida, giocatore in quella di un altro (anche da admin).
+  const campagna = await ottieniCampagnaCorrente(user.uid, ruolo).catch((errore) => {
+    console.error(errore);
+    return null;
+  });
+  const ruoloCampagna = campagna ? campagna.mioRuolo : ruolo === ROLES.PLAYER ? ROLES.PLAYER : ROLES.DM;
+  renderStrumenti(ruoloCampagna, profilo?.ordinePannelli, ruolo === ROLES.ADMIN);
+  montaCruscotto(user, profilo, campagna, ruoloCampagna).catch((errore) => console.error(errore));
 
   // Il livello personale è visibile a tutti: anche un DM o un admin possono
   // avere (o volere) un proprio personaggio nella campagna.

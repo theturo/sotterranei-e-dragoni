@@ -42,7 +42,9 @@ service firebase.storage {
     }
 
     function isDMdellaCampagna(campagnaId) {
-      return isAdmin() || (isApprovato() && profilo().ruolo == "dm" && campagna(campagnaId).dmUid == request.auth.uid);
+      // Solo chi guida la campagna (anche un admin): un admin che gioca nella
+      // campagna di un altro è un giocatore come gli altri.
+      return isApprovato() && profilo().ruolo in ["dm", "admin"] && campagna(campagnaId).dmUid == request.auth.uid;
     }
 
     function isNellaCampagna(campagnaId) {

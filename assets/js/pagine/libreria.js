@@ -393,7 +393,7 @@ async function caricaSessioni() {
 proteggiPaginaDM(async (user, profilo) => {
   montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
 
-  const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
+  const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo, { soloDM: true });
   if (!campagna) {
     document.getElementById("nessuna-campagna").hidden = false;
     veil.style.display = "none";

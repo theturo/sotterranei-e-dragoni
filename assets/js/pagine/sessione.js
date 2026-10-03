@@ -822,12 +822,14 @@ proteggiPagina(async (user, profilo) => {
   // Deve coincidere con il nome del profilo: le regole lo verificano.
   nomeCorrente = profilo?.nome ?? null;
   const ruolo = profilo?.ruolo || ROLES.PLAYER;
-  const isDmOAdmin = ruolo === ROLES.DM || ruolo === ROLES.ADMIN;
-  puoModerare = isDmOAdmin;
 
   montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
 
+  // Si è DM solo della campagna che si guida: in quella di un altro (anche da
+  // admin) si gioca come tutti gli altri giocatori.
   const campagna = await ottieniCampagnaCorrente(user.uid, ruolo);
+  const isDmOAdmin = campagna ? campagna.mioRuolo === ROLES.DM : ruolo !== ROLES.PLAYER;
+  puoModerare = isDmOAdmin;
   if (!campagna) {
     document.getElementById("testo-nessuna-campagna").textContent = isDmOAdmin
       ? "Non hai ancora una campagna attiva: creane una dal pannello Gestione campagna."

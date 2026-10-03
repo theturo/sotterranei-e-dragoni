@@ -363,9 +363,13 @@ let campagneAttive = null;
 async function caricaCampagneAttive(uid, ruolo) {
   if (!campagneAttive) {
     // Il DM vede il titolo vero anche delle campagne con titolo provvisorio.
+    // Un DM o admin può anche giocare nella campagna di un altro: le vede tutte.
     campagneAttive = ruolo === ROLES.PLAYER
       ? elencaCampagneAttive(uid, ruolo)
-      : elencaCampagneDMConTitolo(uid).then((tutte) => tutte.filter((c) => c.stato === "attiva"));
+      : Promise.all([elencaCampagneAttive(uid, ruolo), elencaCampagneDMConTitolo(uid)]).then(([attive, mie]) => {
+        const titoli = new Map(mie.map((c) => [c.id, c.titolo]));
+        return attive.map((c) => (titoli.has(c.id) ? { ...c, titolo: titoli.get(c.id) } : c));
+      });
   }
   return campagneAttive;
 }
@@ -373,8 +377,14 @@ async function caricaCampagneAttive(uid, ruolo) {
 export async function riempiSelettoreCampagna(select, uid, ruolo) {
   const [attive, corrente] = await Promise.all([caricaCampagneAttive(uid, ruolo), ottieniCampagnaCorrente(uid, ruolo)]);
   if (attive.length < 2) return false;
+  // Accanto al titolo il proprio ruolo, se si è DM di una e giocatori di un'altra.
+  const misto = new Set(attive.map((c) => c.mioRuolo)).size > 1;
   select.innerHTML = attive
-    .map((c, i) => `<option value="${esc(c.id)}"${c.id === corrente?.id ? " selected" : ""}>${esc(c.titolo || `Campagna ${i + 1} (titolo ancora segreto)`)}</option>`)
+    .map((c, i) => {
+      const titolo = c.titolo || `Campagna ${i + 1} (titolo ancora segreto)`;
+      const ruoloTesto = misto ? ` — ${c.mioRuolo === ROLES.DM ? "DM" : "giocatore"}` : "";
+      return `<option value="${esc(c.id)}"${c.id === corrente?.id ? " selected" : ""}>${esc(titolo + ruoloTesto)}</option>`;
+    })
     .join("");
   select.onchange = () => {
     scegliCampagna(uid, select.value);
