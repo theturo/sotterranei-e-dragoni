@@ -75,7 +75,12 @@ test("ogni nome importato tra moduli locali è davvero esportato", () => {
   const esportiDi = (file) => {
     if (!esportazioni.has(file)) {
       const codice = readFileSync(file, "utf8");
-      esportazioni.set(file, new Set([...codice.matchAll(/export (?:async )?(?:function|const|let|class) (\w+)/g)].map((m) => m[1])));
+      const nomi = [...codice.matchAll(/export (?:async )?(?:function|const|let|class) (\w+)/g)].map((m) => m[1]);
+      // Anche le riesportazioni: export { a, b as c };
+      for (const [, elenco] of codice.matchAll(/export\s*\{([^}]*)\}/g)) {
+        nomi.push(...elenco.split(",").map((n) => n.trim().split(/\s+as\s+/).pop()).filter(Boolean));
+      }
+      esportazioni.set(file, new Set(nomi));
     }
     return esportazioni.get(file);
   };

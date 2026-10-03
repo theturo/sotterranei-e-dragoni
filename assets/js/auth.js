@@ -629,6 +629,14 @@ export async function ottieniStatoSessione(campagnaId) {
   return snapshot.exists() ? snapshot.data() : { inCorso: false, sessioneAttivaId: null };
 }
 
+// La sessione in corso ({ id, numero }), o null se non ce n'è una.
+export async function sessioneInCorso(campagnaId) {
+  const stato = await ottieniStatoSessione(campagnaId);
+  if (!stato.inCorso || !stato.sessioneAttivaId) return null;
+  const sessione = await getDoc(doc(db, "registroSessioni", stato.sessioneAttivaId));
+  return { id: stato.sessioneAttivaId, numero: sessione.exists() ? sessione.data().numero ?? null : null };
+}
+
 // Tutte le sessioni (di ogni stato: programmata/in-corso/chiusa) di una
 // campagna. Il filtro è fatto solo su campagnaId (un'unica clausola "where",
 // nessun indice composito necessario); l'ordinamento per numero è fatto lato
@@ -1685,6 +1693,43 @@ export async function rimuoviAree(campagnaId, immagineId) {
 // Il tavolo segue (o no) la pedina di turno durante il combattimento.
 export function impostaSegueTurno(campagnaId, segueTurno) {
   return updateDoc(riferimentoTavola(campagnaId), { segueTurno, aggiornatoIl: serverTimestamp() });
+}
+
+// ---------- Bestiario ----------
+// campagne/{c}/bestiario/{id}: creature create dal DM (solo per lui): blocco
+// statistiche come i mostri di mostri-srd.js, più base (chiave del mostro SRD
+// di partenza), indole, unico, note, immagineId (Libreria) e, per i personaggi
+// unici, lo stato che continua tra le sessioni { pfAttuali, condizioni,
+// risorse: [{ nome, max, usati }], equip: [testo], diario: [{ sessione, testo }] }.
+const collezioneBestiario = (campagnaId) => collection(db, "campagne", campagnaId, "bestiario");
+
+export function ascoltaBestiario(campagnaId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(collezioneBestiario(campagnaId), (s) => {
+    callback(s.docs.map((d) => {
+      const { aggiornatoIl, ...dati } = d.data();
+      return { ...dati, id: d.id, fonte: "dm" };
+    }));
+  }, alErrore);
+}
+
+const datiCreatura = ({ id, fonte, chiave, ...dati }) => ({ ...dati, aggiornatoIl: serverTimestamp() });
+
+export async function creaCreatura(campagnaId, creatura) {
+  const riferimento = await addDoc(collezioneBestiario(campagnaId), datiCreatura(creatura));
+  return riferimento.id;
+}
+
+export function salvaCreatura(campagnaId, id, creatura) {
+  return setDoc(doc(collezioneBestiario(campagnaId), id), datiCreatura(creatura));
+}
+
+// Solo lo stato di un personaggio unico (PF, condizioni, risorse, oggetti, diario).
+export function salvaStatoCreatura(campagnaId, id, stato) {
+  return updateDoc(doc(collezioneBestiario(campagnaId), id), { stato, aggiornatoIl: serverTimestamp() });
+}
+
+export function eliminaCreatura(campagnaId, id) {
+  return deleteDoc(doc(collezioneBestiario(campagnaId), id));
 }
 
 // ---------- Tracker di combattimento ----------

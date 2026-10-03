@@ -37,6 +37,7 @@ const SEZIONI_PANNELLI = [
     pannelli: [
       { chiave: "sessione", titolo: "Sessione", testo: "Il punto di ritrovo per la sessione in corso: party, appunti condivisi e registro delle sessioni passate.", link: "sessione.html" },
       { chiave: "libreria", titolo: "Libreria dei contenuti", testo: "Carica mappe, luoghi, PNG, nemici e dispense con note e tag privati, collegali alle sessioni e scegli cosa finirà nell'archivio dei giocatori.", link: "libreria.html" },
+      { chiave: "bestiario", titolo: "Bestiario", testo: "Tutti i mostri del SRD in italiano e i tuoi PNG e nemici: schede complete, tiri a un clic e personaggi ricorrenti che ricordano PF, oggetti e storia.", link: "bestiario.html" },
       { chiave: "party", titolo: "Party e livelli", testo: "Vedi il tuo party, segnala una salita di livello e consulta le schede dei giocatori.", link: "dm-party.html" },
       { chiave: "glossario-equip", titolo: "Glossario equipaggiamento", testo: "Cerca armi, armature, oggetti e pacchi del regolamento per verifiche rapide.", link: "glossario-equipaggiamento.html" },
       { chiave: "glossario-incant", titolo: "Glossario incantesimi", testo: "Cerca incantesimi per nome, classe o livello per verifiche rapide al tavolo.", link: "glossario-incantesimi.html" },

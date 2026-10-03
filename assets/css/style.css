@@ -7297,3 +7297,641 @@ table.tabella-punteggi select {
 .mappa-area-voce button:focus-visible {
   background: rgba(201, 162, 39, 0.25);
 }
+
+/* ---------- Bestiario ----------
+   Elenco a sinistra, scheda al centro, tiri a destra (sotto la scheda su
+   schermi medi, tutto in colonna sul telefono). */
+.bestiario {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  grid-template-areas: "elenco scheda" "elenco tiri";
+  grid-template-rows: auto 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.bestiario[hidden] {
+  display: none;
+}
+
+.bestiario > .panel-wide {
+  margin: 0;
+  min-width: 0;
+}
+
+.bestiario-elenco {
+  grid-area: elenco;
+  position: sticky;
+  top: 12px;
+}
+
+.bestiario-dettaglio {
+  grid-area: scheda;
+}
+
+.bestiario-tiri {
+  grid-area: tiri;
+}
+
+@media (max-width: 900px) {
+  .bestiario {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "elenco" "scheda" "tiri";
+  }
+
+  .bestiario-elenco {
+    position: static;
+  }
+}
+
+.bestiario-barra,
+.bestiario-filtri,
+.bestiario-chips,
+.bestiario-azioni,
+.bestiario-aggiungi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.bestiario-barra input {
+  flex: 1;
+  min-width: 140px;
+}
+
+.bestiario-chips,
+.bestiario-filtri {
+  margin-top: 10px;
+}
+
+.bestiario-filtri .select-galleria {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.chip-filtro {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+  border: 1px solid rgba(122, 31, 43, 0.35);
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--color-ink);
+}
+
+.chip-filtro.scelto {
+  border-color: #4a1219;
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.bestiario-conteggio {
+  margin: 10px 0 4px;
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.bestiario-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .bestiario-lista {
+    max-height: 50vh;
+  }
+}
+
+.bestiario-voce {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bestiario-voce:hover,
+.bestiario-voce:focus-visible {
+  background: rgba(122, 31, 43, 0.08);
+}
+
+.bestiario-voce.scelta {
+  border-color: var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.1);
+}
+
+.bestiario-voce-testo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bestiario-voce-testo b {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bestiario-voce-testo small {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.bestiario-avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--color-gold);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--color-parchment);
+  background: radial-gradient(circle at 35% 30%, var(--colore), #1a120b 85%);
+}
+
+.bestiario-avatar.grande {
+  width: 64px;
+  height: 64px;
+  font-size: 1.2rem;
+}
+
+.bestiario-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bestiario-indole {
+  font-size: 0.75rem;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 0 7px;
+  white-space: nowrap;
+}
+
+.bestiario-indole.ostile {
+  color: var(--color-burgundy-bright);
+}
+
+.bestiario-indole.neutrale {
+  color: var(--color-ink-soft);
+}
+
+.bestiario-indole.alleata {
+  color: var(--color-emerald);
+}
+
+.bestiario-fonte {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 1px 5px;
+  background: rgba(122, 31, 43, 0.12);
+  color: var(--color-burgundy);
+}
+
+.bestiario-fonte.dm {
+  background: #4a3a2a;
+  color: var(--color-parchment);
+}
+
+.bestiario-fonte.dm.unico {
+  background: var(--color-burgundy);
+}
+
+.bestiario-testa {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.bestiario-testa h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.bestiario-sottotitolo,
+.bestiario-base {
+  margin: 2px 0 0;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.bestiario-base {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+.bestiario-etichette {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.bestiario-azioni {
+  margin: 12px 0;
+}
+
+.bestiario-note {
+  margin-top: 14px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(122, 31, 43, 0.4);
+  font-style: italic;
+}
+
+.bestiario-licenza {
+  margin: 24px auto 0;
+  max-width: 900px;
+  font-size: 0.8rem;
+  opacity: 0.6;
+  text-align: center;
+}
+
+/* Blocco statistiche */
+.blocco-statistiche {
+  font-size: 0.97rem;
+  line-height: 1.4;
+}
+
+.blocco-statistiche.compatto {
+  font-size: 0.9rem;
+}
+
+.blocco-riga,
+.blocco-voce {
+  margin: 3px 0;
+}
+
+.blocco-riga b,
+.blocco-voce > b {
+  color: var(--color-burgundy);
+  font-weight: 700;
+}
+
+.blocco-filetto {
+  height: 2px;
+  margin: 8px 0;
+  background: linear-gradient(90deg, #a5293a, rgba(165, 41, 58, 0.15));
+}
+
+.blocco-caratteristiche {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  text-align: center;
+}
+
+.blocco-caratteristiche b {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--color-burgundy);
+}
+
+.blocco-sezione {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin: 14px 0 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(165, 41, 58, 0.6);
+}
+
+.blocco-tiro {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  border-radius: 999px;
+  padding: 1px 9px;
+  min-height: 26px;
+  cursor: pointer;
+  border: 1px solid #4a1219;
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+  vertical-align: 1px;
+}
+
+.blocco-tiro:hover,
+.blocco-tiro:focus-visible {
+  background: var(--color-burgundy-bright);
+}
+
+/* Stato dei personaggi unici */
+.bestiario-stato {
+  margin: 4px 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(47, 107, 79, 0.5);
+  background: rgba(47, 107, 79, 0.08);
+}
+
+.bestiario-stato-testa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.bestiario-stato h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-heading);
+  color: var(--color-emerald);
+  font-size: 1rem;
+}
+
+.bestiario-stato h3 small {
+  font-family: var(--font-body);
+  font-style: italic;
+  opacity: 0.6;
+  font-weight: normal;
+}
+
+.bestiario-stato-griglia {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 18px;
+}
+
+.bestiario-stato-campo > b {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-emerald);
+  margin-bottom: 4px;
+}
+
+.bestiario-diario {
+  grid-column: 1 / -1;
+}
+
+.bestiario-pf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bestiario-pf-valore {
+  width: 70px;
+}
+
+.bestiario-mini {
+  min-width: 32px;
+  padding: 2px 8px;
+}
+
+.bestiario-barra-pf {
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.bestiario-barra-pf div {
+  height: 100%;
+}
+
+.bestiario-chips-stato {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.bestiario-chip-cond {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 999px;
+  padding: 0 2px 0 9px;
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+  font-size: 0.85rem;
+}
+
+.bestiario-x {
+  min-width: 26px;
+  min-height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.bestiario-x:hover,
+.bestiario-x:focus-visible {
+  background: rgba(122, 31, 43, 0.2);
+}
+
+.bestiario-vuoto {
+  font-style: italic;
+  opacity: 0.6;
+}
+
+.bestiario-risorsa {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 2px 0;
+}
+
+.bestiario-risorsa span {
+  flex: 1;
+}
+
+.bestiario-pallino {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-burgundy);
+  background: var(--color-burgundy);
+  cursor: pointer;
+}
+
+.bestiario-pallino.usato {
+  background: transparent;
+}
+
+.bestiario-aggiungi {
+  margin-top: 6px;
+  flex-wrap: nowrap;
+}
+
+.bestiario-aggiungi input:not(.bestiario-numero) {
+  flex: 1;
+  min-width: 0;
+}
+
+.bestiario-numero {
+  width: 56px;
+}
+
+.bestiario-equip {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.bestiario-voce-diario {
+  margin: 2px 0;
+  font-size: 0.92rem;
+}
+
+.bestiario-voce-diario b {
+  color: var(--color-burgundy);
+}
+
+/* Modifica */
+.bestiario-modifica h2 {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin-top: 0;
+}
+
+.bestiario-griglia-modifica {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.bestiario-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+.bestiario-campo > span {
+  opacity: 0.75;
+}
+
+.bestiario-campo.largo,
+.bestiario-campo-check.largo {
+  grid-column: 1 / -1;
+}
+
+.bestiario-campo input,
+.bestiario-campo select,
+.bestiario-campo textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bestiario-campo-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.bestiario-car-modifica {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.bestiario-voci {
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: 8px;
+  margin: 0 0 12px;
+  padding: 8px 10px;
+}
+
+.bestiario-voci legend {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  padding: 0 6px;
+}
+
+.bestiario-voce-modifica {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+}
+
+.bestiario-voce-comandi {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.bestiario-tiro-modifica {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px 10px;
+  align-items: end;
+}
+
+.bestiario-errore {
+  color: var(--color-danger);
+  min-height: 1.2em;
+}
+
+/* Tiri */
+.bestiario-tiri h3 {
+  margin-top: 0;
+}
+
+.bestiario-nota {
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.7;
+  margin: 4px 0;
+}
+
+.bestiario-tiri-elenco {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bestiario-tiri-elenco li {
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+  font-size: 0.92rem;
+}
+
+.bestiario-tag {
+  margin-left: 8px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  padding: 0 5px;
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.bestiario-tag.visibile {
+  background: var(--color-emerald);
+}

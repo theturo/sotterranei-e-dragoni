@@ -34,9 +34,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   - scelta dei tipi di avviso da ricevere come push;
   - fascia "non disturbare", che rispetti comunque le impostazioni del
     telefono (modalità silenziosa / full immersion).
-- **Creazione di PNG e nemici per il DM**: schede rapide, con la possibilità di
-  partire dai mostri del materiale gratuito di Wizards of the Coast (SRD 5.1,
-  licenza Creative Commons), come già fatto per incantesimi ed equipaggiamento.
+- **Bestiario, seconda parte (combattimento)**: «Dal bestiario» in «Aggiungi
+  nemici» del tracker (nome, iniziativa, PF, taglia e indole già compilati),
+  scheda con i tiri aperta dal tracker o toccando la pedina, alleati con il
+  bordo verde e i PF visibili ai giocatori, personaggi unici che entrano in
+  combattimento con il loro stato e lo riportano sulla scheda alla fine.
 
 ## Guide
 
@@ -56,6 +58,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Bestiario, prima parte: pagina del DM con tutti i 334 mostri del SRD 5.1
+  in italiano (blocco statistiche completo, misure in metri), ricerca e
+  filtri, tiri a un clic nel registro della sessione (nascosti o visibili),
+  creature del DM nuove o «Usa come base», indole, personaggi unici con
+  stato che continua tra le sessioni (PF, condizioni, risorse,
+  equipaggiamento, diario delle apparizioni).
 - Mappe della sessione, fase 1: pannello Mappa nella Sessione (sopra gli
   appunti), mappe della Libreria fino a 4096 px, griglia per mappa (anche
   con la taratura a due clic), mappa in tavola e mappe in preparazione,

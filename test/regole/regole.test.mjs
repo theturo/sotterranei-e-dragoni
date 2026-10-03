@@ -881,3 +881,38 @@ describe("Strumenti della mappa: righello, ping e aree", () => {
     await assertSucceeds(deleteDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/aree/a2")));
   });
 });
+
+describe("Bestiario del DM", () => {
+  const creatura = (extra = {}) => ({
+    nome: "Capitano Varro", taglia: "media", tipo: "umanoide", allineamento: "qualsiasi allineamento", ca: "17 (corazza a strisce)",
+    caValore: 17, pf: 58, dadiPf: "9d8+18", velocita: "9 m", car: [16, 13, 14, 10, 11, 10], sensi: "Percezione passiva 12", lingue: "Comune",
+    gs: "3", pe: 700, tratti: [], azioni: [{ nome: "Spada Lunga", testo: "Colpisce.", colpire: 5, danni: [{ dadi: "1d8+3", tipo: "taglienti" }] }],
+    base: "veteran", indole: "alleata", unico: true, note: "Capitano della guardia.", immagineId: null,
+    stato: { pfAttuali: 41, condizioni: ["avvelenato"], risorse: [{ nome: "Grido", max: 1, usati: 1 }], equip: ["Spada lunga"], diario: [] },
+    aggiornatoIl: serverTimestamp(), ...extra,
+  });
+  test("il DM crea, aggiorna ed elimina una creatura", async () => {
+    const rif = doc(come("dm"), "campagne/c1/bestiario/varro");
+    await assertSucceeds(setDoc(rif, creatura()));
+    await assertSucceeds(updateDoc(rif, { stato: { pfAttuali: 31, condizioni: [], risorse: [], equip: [], diario: [{ sessione: "Sessione 12", testo: "Ferito." }] }, aggiornatoIl: serverTimestamp() }));
+    await assertSucceeds(getDocs(collection(come("dm"), "campagne/c1/bestiario")));
+    await assertSucceeds(deleteDoc(rif));
+  });
+  test("una creatura con campi sbagliati NON passa", async () => {
+    const rif = doc(come("dm"), "campagne/c1/bestiario/x");
+    await assertFails(setDoc(rif, creatura({ indole: "amica" })));
+    await assertFails(setDoc(rif, creatura({ taglia: "gigantesca" })));
+    await assertFails(setDoc(rif, creatura({ car: [10, 10] })));
+    await assertFails(setDoc(rif, creatura({ nome: "" })));
+    await assertFails(setDoc(rif, creatura({ extra: 1 })));
+    await assertFails(setDoc(rif, creatura({ stato: { pfAttuali: 3, condizioni: ["ubriaco"], risorse: [], equip: [], diario: [] } })));
+  });
+  test("i giocatori NON vedono né scrivono il bestiario", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "campagne/c1/bestiario/segreto"), creatura());
+    });
+    await assertFails(getDoc(doc(come("p1"), "campagne/c1/bestiario/segreto")));
+    await assertFails(getDocs(collection(come("p1"), "campagne/c1/bestiario")));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/bestiario/mio"), creatura()));
+  });
+});
