@@ -38,6 +38,18 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   partire dai mostri del materiale gratuito di Wizards of the Coast (SRD 5.1,
   licenza Creative Commons), come già fatto per incantesimi ed equipaggiamento.
 
+## Guide
+
+- **Manuale del DM**: documento da mandare al DM con le funzioni delle varie
+  dashboard e pagine (gestione della campagna, Libreria, Sessione con mappe,
+  nebbia e strumenti, tracker di combattimento, schermo del tavolo, Archivio)
+  e le opzioni che il sito offre, spiegate passo per passo.
+- **Guida e FAQ per i giocatori**: versione analoga per i giocatori, ma
+  raggiungibile direttamente dal sito (una pagina dedicata, con un link dal
+  menu): come creare e far crescere il personaggio, cosa si vede in sessione,
+  come usare mappa e strumenti dal telefono, notifiche e app installabile, più
+  le domande frequenti.
+
 ## Altro
 
 - **Corto animato in JavaScript**: da discutere.
