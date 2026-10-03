@@ -189,7 +189,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     if (puoMuovere(p.id) && interattiva) el.classList.add("mobile");
     for (const [classe, attiva] of [["mia", p.mia], ["a-terra", p.aTerra], ["nemico", p.nemico], ["nascosta", p.nascosta],
       ["di-turno", p.diTurno], ["nella-nebbia", p.nellaNebbia], ["selezionata", selezionata === p.id], ["presa", presa?.id === p.id],
-      ["colpita", colpite.has(p.id)]]) {
+      ["colpita", colpite.has(p.id)], ["alleato", p.alleato]]) {
       if (attiva) el.classList.add(classe);
     }
     Object.assign(el.style, {

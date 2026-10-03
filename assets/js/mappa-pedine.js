@@ -99,7 +99,10 @@ export function costruisciPedine({
     .map(({ p, sotto }) => {
       const c = combattenti.get(p.id);
       const salute = c?.salute || p.salute || "illeso";
-      const pf = perDM && c?.dm?.pfMassimi > 0 ? c.dm.pfAttuali / c.dm.pfMassimi : null;
+      const alleato = Boolean(c?.alleato || p.alleato);
+      // PF veri: al DM sempre, a tutti per gli alleati.
+      const pf = perDM && c?.dm?.pfMassimi > 0 ? c.dm.pfAttuali / c.dm.pfMassimi
+        : alleato && c?.pf?.massimi > 0 ? c.pf.attuali / c.pf.massimi : null;
       return {
         id: p.id,
         c: p.c,
@@ -112,6 +115,7 @@ export function costruisciPedine({
         aTerra: salute === "a terra",
         condizioni: bolliniCondizioni(c?.condizioni || p.condizioni || []),
         nemico: true,
+        alleato,
         nascosta: Boolean(p.nascosta),
         nellaNebbia: sotto,
         inTracker: Boolean(c),

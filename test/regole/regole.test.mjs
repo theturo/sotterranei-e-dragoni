@@ -916,3 +916,26 @@ describe("Bestiario del DM", () => {
     await assertFails(setDoc(doc(come("p1"), "campagne/c1/bestiario/mio"), creatura()));
   });
 });
+
+describe("Bestiario in combattimento", () => {
+  const nemico = (extra = {}) => ({ tipo: "nemico", nome: "Capitano Varro", uid: null, iniziativa: 12, bonus: 1, spareggio: 0, salute: "illeso", ...extra });
+  test("il DM aggiunge un alleato con i PF visibili e il collegamento alla scheda", async () => {
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/combattenti/varro"), nemico({ alleato: true, pf: { attuali: 41, massimi: 58 }, condizioni: ["avvelenato"] })));
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/combattentiDM/varro"), { pfAttuali: 41, pfMassimi: 58, note: null, creatura: { fonte: "dm", id: "abc" } }));
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/combattentiDM/goblin"), { pfAttuali: 7, pfMassimi: 7, note: null, creatura: { fonte: "srd", id: "goblin" } }));
+    await assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/combattenti/varro")));
+  });
+  test("dati sbagliati NON passano", async () => {
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/combattenti/x"), nemico({ alleato: "sì" })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/combattenti/x"), nemico({ pf: { attuali: 1, massimi: 2, extra: 3 } })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/combattentiDM/x"), { pfAttuali: 7, pfMassimi: 7, note: null, creatura: { fonte: "web", id: "x" } }));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/combattentiDM/x"), { pfAttuali: 7, pfMassimi: 7, note: null, creatura: { fonte: "dm", id: "x", altro: 1 } }));
+  });
+  test("pedina di un alleato sulla mappa", async () => {
+    const pedina = (extra = {}) => ({ tipo: "nemico", nome: "Varro", immagineId: null, taglia: "media", salute: "illeso", condizioni: [], c: 3, r: 4, aggiornatoIl: serverTimestamp(), ...extra });
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedine/varro"), pedina({ alleato: true })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedine/varro2"), pedina({ alleato: 1 })));
+  });
+  test("i giocatori NON leggono il collegamento alla scheda", () =>
+    assertFails(getDoc(doc(come("p1"), "campagne/c1/combattentiDM/varro"))));
+});

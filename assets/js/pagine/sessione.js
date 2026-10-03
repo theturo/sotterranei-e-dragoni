@@ -873,6 +873,7 @@ proteggiPagina(async (user, profilo) => {
     // I tiri di iniziativa del DM (per i nemici) restano nascosti.
     registraTiro: (chi, tiro) => registraTiro(chi, tiro, isDmOAdmin),
     mappaInTavola: () => pannelloMappa?.haMappaInTavola() ?? false,
+    nomeUtente: () => nomeCorrente,
   });
 
   pannelloMappa = montaMappa({
@@ -884,6 +885,7 @@ proteggiPagina(async (user, profilo) => {
     libreria: () => contenuti,
     membri: () => membriCampagna.map((m) => m.uid),
     membriUid: () => campagna.membriUid || [],
+    nomeUtente: () => nomeCorrente,
     avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
   });
 

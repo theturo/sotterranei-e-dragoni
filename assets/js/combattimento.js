@@ -6,6 +6,10 @@
 // solo una salute vaga (i PF restano al DM, vedi firestore.rules).
 // I nemici possono entrare nascosti: i giocatori non li vedono finché il DM
 // non li rivela (dal tracker o dalla mappa), e allora compaiono al loro posto.
+// Dal bestiario: «Aggiungi nemici» compila nome, iniziativa, PF, taglia e
+// immagine dalla creatura scelta; la riga ha «📜» per aprirne la scheda con i
+// tiri. Gli alleati hanno il bordo verde e tutti ne vedono i PF; i personaggi
+// unici entrano con il loro stato, una volta sola (vedi terminaCombattimento).
 import {
   ascoltaCombattimento,
   avviaCombattimento,
@@ -19,7 +23,11 @@ import {
   impostaCondizioniCombattente,
   ottieniSchedaAttiva,
   rivelaNemici,
+  ascoltaBestiario,
+  creatureInCombattimento,
 } from "./auth.js";
+import { apriSchedaCreatura, caricaMostriSrd } from "./bestiario-finestra.js";
+import { bonusIniziativa } from "./bestiario-calcoli.js";
 import { TAGLIE } from "./mappa-calcoli.js";
 import { tira as tiraDadi } from "./dadi.js";
 import { mostraImmagine, percorsiRitratto, percorsiImmagineCampagna } from "./immagini.js";
@@ -53,7 +61,9 @@ const conSegno = (n) => (n >= 0 ? `+${n}` : `${n}`);
 // registraTiro(chi, tiro): facoltativo, annota i tiri di iniziativa nel registro.
 // mappaInTavola(): se c'è una mappa in tavola i nemici nuovi partono nascosti
 // (si piazzano dal vassoio della mappa); senza mappa partono visibili.
-export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, libreria, avviso, registraTiro = null, mappaInTavola = () => false }) {
+export function montaCombattimento({
+  pannello, campagnaId, uid, isDM, party, libreria, avviso, registraTiro = null, mappaInTavola = () => false, nomeUtente = () => null,
+}) {
   const elenco = creaElemento("ol", "lista-combattimento");
   const intestazione = creaElemento("div", "sessione-appunti-intestazione");
   const titolo = creaElemento("h3", null, "Combattimento");
@@ -104,7 +114,10 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
   const nascosto = (id) => Boolean(combattenti.find((x) => x.id === id)?.nascosto);
 
   let formNemici = null;
+  let mieCreature = [];
+  let smettiBestiario = () => {};
   if (isDM) {
+    smettiBestiario = ascoltaBestiario(campagnaId, (elenco) => (mieCreature = elenco), (errore) => console.error(errore));
     comandi.append(btnAvvia, btnRivelaTutti, btnPrecedente, btnSuccessivo, btnTermina);
     btnRivelaTutti.addEventListener("click", () => esegui([btnRivelaTutti], () =>
       rivelaNemici(campagnaId, combattenti.filter((c) => c.nascosto).map((c) => c.id), true)));
@@ -151,6 +164,9 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     const riassunto = creaElemento("summary", null, "Aggiungi nemici");
     const form = document.createElement("form");
     form.innerHTML = `
+      <label class="campo-bestiario">Dal bestiario<input type="search" name="bestiario" list="bestiario-${campagnaId}" placeholder="Cerca un mostro o una tua creatura…" autocomplete="off" /></label>
+      <datalist id="bestiario-${campagnaId}"></datalist>
+      <p class="nota-bestiario" hidden></p>
       <div class="griglia-form-nemici">
         <label>Nome<input type="text" name="nome" maxlength="50" required placeholder="Es. Goblin" /></label>
         <label>Quanti<input type="number" name="quantita" min="1" max="20" value="1" required /></label>
@@ -165,10 +181,61 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       <button type="submit" class="btn-tabella azione-aggiungi">Aggiungi</button>
     `;
     const selectImmagine = form.querySelector('select[name="immagine"]');
+    const cercaBestiario = form.querySelector('input[name="bestiario"]');
+    const elencoBestiario = form.querySelector("datalist");
+    const notaBestiario = form.querySelector(".nota-bestiario");
+    const invia = form.querySelector('button[type="submit"]');
+    let srd = [];
+    let scelta = null; // creatura del bestiario scelta (o null: a mano)
+    let giaInCombattimento = new Set();
+    const etichettaVoce = (c) => (c.fonte === "dm" ? `${c.nome} (tua${c.unico ? ", unica" : ""})` : `${c.nome} (SRD, GS ${c.gs})`);
+    const voci = () => [...mieCreature, ...srd];
+    function riempiBestiario() {
+      elencoBestiario.replaceChildren(...voci().map((c) => new Option(etichettaVoce(c), etichettaVoce(c))));
+    }
+    function applicaScelta() {
+      const testo = cercaBestiario.value.trim();
+      scelta = voci().find((c) => etichettaVoce(c) === testo) || null;
+      const campo = (nome) => form.elements[nome];
+      campo("quantita").disabled = false;
+      invia.disabled = false;
+      notaBestiario.hidden = !scelta;
+      if (!scelta) return;
+      const unico = scelta.fonte === "dm" && scelta.unico;
+      const stato = unico ? scelta.stato : null;
+      campo("nome").value = scelta.nome.slice(0, 50);
+      campo("bonus").value = String(bonusIniziativa(scelta));
+      campo("pf").value = String(scelta.pf);
+      campo("taglia").value = scelta.taglia || "media";
+      if (scelta.immagineId && [...selectImmagine.options].some((o) => o.value === scelta.immagineId)) selectImmagine.value = scelta.immagineId;
+      if (scelta.indole === "alleata") campo("nascosti").checked = false;
+      if (unico) {
+        campo("quantita").value = "1";
+        campo("quantita").disabled = true;
+      }
+      const parti = [];
+      if (scelta.indole === "alleata") parti.push("Alleato: bordo verde, i giocatori vedono i PF.");
+      if (unico) parti.push(`Personaggio unico: entra con ${stato?.pfAttuali ?? scelta.pf}/${scelta.pf} PF${stato?.condizioni?.length ? " e le sue condizioni" : ""}.`);
+      if (unico && giaInCombattimento.has(scelta.id)) {
+        parti.push("È già in combattimento.");
+        invia.disabled = true;
+      }
+      notaBestiario.textContent = parti.join(" ") || `PF ${scelta.pf} (media), iniziativa ${conSegno(bonusIniziativa(scelta))} dalla Destrezza.`;
+    }
+    cercaBestiario.addEventListener("input", applicaScelta);
     // Elenco delle immagini aggiornato a ogni apertura (nemici e PNG prima).
     dettagli.addEventListener("toggle", () => {
       if (!dettagli.open) return;
       form.querySelector('input[name="nascosti"]').checked = mappaInTavola();
+      riempiBestiario();
+      caricaMostriSrd().then((m) => {
+        srd = m;
+        riempiBestiario();
+      }).catch((errore) => console.error(errore));
+      creatureInCombattimento(campagnaId).then((ids) => {
+        giaInCombattimento = ids;
+        applicaScelta();
+      }).catch((errore) => console.error(errore));
       const scelta = selectImmagine.value;
       selectImmagine.length = 1;
       const peso = (c) => (c.categoria === "nemico" ? 0 : c.categoria === "png" ? 1 : 2);
@@ -187,19 +254,34 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
         return v === "" ? predefinito : Math.trunc(Number(v));
       };
       const pf = Math.max(0, numero("pf", 0));
-      const invia = form.querySelector('button[type="submit"]');
+      const unico = scelta?.fonte === "dm" && scelta.unico;
+      const daBestiario = scelta
+        ? {
+          creatura: { fonte: scelta.fonte, id: scelta.fonte === "srd" ? scelta.chiave : scelta.id },
+          alleato: scelta.indole === "alleata",
+          ...(unico ? {
+            pfAttuali: Math.min(pf, scelta.stato?.pfAttuali ?? pf),
+            condizioni: scelta.stato?.condizioni || [],
+          } : {}),
+        }
+        : {};
       esegui([invia], async () => {
         await aggiungiNemici(campagnaId, {
+          ...daBestiario,
           nome,
-          quantita: Math.min(20, Math.max(1, numero("quantita", 1))),
+          quantita: unico ? 1 : Math.min(20, Math.max(1, numero("quantita", 1))),
           bonus: numero("bonus", 0),
           pfMassimi: pf,
           iniziativa: numero("iniziativa", null),
           iniziativaComune: dati.get("comune") === "on",
           immagineId: dati.get("immagine") || null,
           taglia: dati.get("taglia") || "media",
-          nascosti: dati.get("nascosti") === "on",
+          nascosti: dati.get("nascosti") === "on" && !daBestiario.alleato,
         });
+        if (unico) giaInCombattimento.add(scelta.id);
+        scelta = null;
+        notaBestiario.hidden = true;
+        form.elements.quantita.disabled = false;
         form.reset();
         form.querySelector('input[name="nascosti"]').checked = mappaInTavola();
       });
@@ -314,6 +396,20 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       });
       azioni.append(su, giu);
       if (c.tipo === "nemico") {
+        const scheda = bottone("📜", "btn-tabella btn-scheda-creatura");
+        scheda.title = "Scheda dal bestiario";
+        scheda.setAttribute("aria-label", `Scheda di ${c.nome}`);
+        scheda.hidden = true;
+        scheda.addEventListener("click", () => {
+          const attuale = combattenti.find((x) => x.id === c.id);
+          apriSchedaCreatura({
+            campagnaId, rif: attuale?.dm?.creatura, nome: attuale?.nome || c.nome, utente: { uid, nome: nomeUtente() }, avviso,
+          }).catch((errore) => {
+            console.error(errore);
+            avviso("Impossibile aprire la scheda.", true);
+          });
+        });
+        azioni.append(scheda);
         const rivela = bottone("Rivela", "btn-tabella btn-rivela");
         rivela.addEventListener("click", () => esegui([rivela], () => rivelaNemici(campagnaId, [c.id], nascosto(c.id))));
         azioni.append(rivela);
@@ -382,7 +478,8 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
       const dm = combattenti.find((x) => x.id === c.id)?.dm;
       if (!dm) return;
       const pf = Math.max(-999, Math.min(9999, nuovi));
-      esegui([colpisci, cura, attuali], () => aggiornaPfNemico(campagnaId, c.id, pf, dm.pfMassimi, nascosto(c.id)));
+      const alleato = Boolean(combattenti.find((x) => x.id === c.id)?.alleato);
+      esegui([colpisci, cura, attuali], () => aggiornaPfNemico(campagnaId, c.id, pf, dm.pfMassimi, nascosto(c.id), alleato));
     };
     attuali.addEventListener("change", () => {
       if (attuali.value.trim() !== "") salva(Math.trunc(Number(attuali.value)));
@@ -430,6 +527,9 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     li.classList.toggle("mio", c.tipo === "pg" && c.uid === uid);
     li.classList.toggle("a-terra", c.salute === "a terra");
     li.classList.toggle("nascosto", Boolean(c.nascosto));
+    li.classList.toggle("alleato", Boolean(c.alleato));
+    const scheda = li.querySelector(".btn-scheda-creatura");
+    if (scheda) scheda.hidden = !c.dm?.creatura;
     const rivela = li.querySelector(".btn-rivela");
     if (rivela) {
       rivela.textContent = c.nascosto ? "Rivela" : "Nascondi";
@@ -442,6 +542,8 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
     if (c.tipo === "pg") {
       const r = party().find((x) => x.uid === c.uid);
       sotto = r?.nomeGiocatore ? `Giocatore: ${r.nomeGiocatore}` : "Personaggio";
+    } else if (c.alleato) {
+      sotto = c.pf ? `Alleato · PF ${c.pf.attuali}/${c.pf.massimi}` : "Alleato";
     } else if (isDM && c.dm) {
       sotto = `${c.nascosto ? "Nascosto ai giocatori" : "Nemico"} · ${SALUTE[c.salute] || "Illeso"}`;
     } else {
@@ -547,7 +649,10 @@ export function montaCombattimento({ pannello, campagnaId, uid, isDM, party, lib
 
   // "ridisegna": quando cambia il party (PF, condizioni, ritratti).
   return {
-    stop,
+    stop: () => {
+      stop();
+      smettiBestiario();
+    },
     ridisegna: () => {
       if (datiRicevuti) render();
     },

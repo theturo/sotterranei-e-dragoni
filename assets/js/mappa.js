@@ -58,6 +58,7 @@ import {
   centroCasellaDiPunto, verticePiuVicino, caselleArea, pedineInCaselle,
 } from "./mappa-calcoli.js";
 import { creaStrumentiCondivisi } from "./mappa-strumenti.js";
+import { apriSchedaCreatura } from "./bestiario-finestra.js";
 import { areeDellaScheda, FORME_AREA, MISURE_AREA } from "./aree-incantesimi.js";
 
 // Immagine di una mappa con le sue dimensioni vere (la griglia è in pixel
@@ -82,7 +83,7 @@ const arrotonda = (n) => Math.round(n * 10) / 10;
 
 // "membri": uid dei membri per mettere la mappa in tavola (solo DM);
 // "membriUid": uid dei membri dalla campagna (per i colori degli strumenti).
-export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, membri, membriUid, avviso }) {
+export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, membri, membriUid, avviso, nomeUtente = () => null }) {
   const intestazione = creaElemento("div", "sessione-appunti-intestazione mappa-intestazione");
   const titolo = creaElemento("h3", null, "Mappa");
   const nomeMappa = creaElemento("span", "mappa-nome");
@@ -572,7 +573,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       try {
         await salvaPedinaNemico(campagnaId, mappaId, c.id, {
           nome: c.nome, immagineId: c.immagineId || null, taglia: c.taglia || "media",
-          salute: c.salute || "illeso", condizioni: c.condizioni || [], ...casella,
+          salute: c.salute || "illeso", condizioni: c.condizioni || [], alleato: Boolean(c.alleato), ...casella,
         }, Boolean(c.nascosto));
         selezionata = c.id;
         vista.seleziona(c.id);
@@ -617,7 +618,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
         const quanto = Math.trunc(Number(danno.value));
         if (!quanto) return;
         const pf = Math.max(-999, Math.min(9999, c.dm.pfAttuali + segno * quanto));
-        aggiornaPfNemico(campagnaId, c.id, pf, c.dm.pfMassimi, Boolean(c.nascosto)).catch((errore) => {
+        aggiornaPfNemico(campagnaId, c.id, pf, c.dm.pfMassimi, Boolean(c.nascosto), Boolean(c.alleato)).catch((errore) => {
           console.error(errore);
           avviso("Impossibile aggiornare i PF.", true);
         });
@@ -625,8 +626,20 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       colpisci.addEventListener("click", () => applica(-1));
       cura.addEventListener("click", () => applica(1));
       righe.push(creaElemento("span", null, `PF ${c.dm.pfAttuali}/${c.dm.pfMassimi}`), danno, colpisci, cura);
+      if (c.dm.creatura) {
+        const scheda = bottone("📜 Scheda");
+        scheda.title = "Scheda dal bestiario, con i tiri";
+        scheda.addEventListener("click", () => apriSchedaCreatura({
+          campagnaId, rif: c.dm.creatura, nome: c.nome, utente: { uid, nome: nomeUtente() }, avviso,
+        }).catch((errore) => {
+          console.error(errore);
+          avviso("Impossibile aprire la scheda.", true);
+        }));
+        righe.push(scheda);
+      }
     }
-    righe.push(creaElemento("span", "mappa-salute-vaga", p.nascosta ? "Nascosto ai giocatori" : `I giocatori vedono «${salute}»`));
+    righe.push(creaElemento("span", "mappa-salute-vaga", p.nascosta ? "Nascosto ai giocatori"
+      : c?.alleato ? "Alleato: i giocatori vedono i PF" : `I giocatori vedono «${salute}»`));
     const taglia = creaElemento("select", "select-dadi");
     taglia.setAttribute("aria-label", "Taglia");
     taglia.replaceChildren(...opzioniTaglia());
