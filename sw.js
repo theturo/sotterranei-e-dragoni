@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "4be932a73f70";
+const VERSIONE = "3dadcb0d5133";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -29,6 +29,7 @@ const FILE = [
   "./assets/icone/icona-192.png",
   "./assets/icone/icona-512.png",
   "./assets/icone/icona-maskable-512.png",
+  "./assets/js/aree-incantesimi.js",
   "./assets/js/auth.js",
   "./assets/js/calcoli-scheda.js",
   "./assets/js/calendario.js",
@@ -51,6 +52,7 @@ const FILE = [
   "./assets/js/intro.js",
   "./assets/js/mappa-calcoli.js",
   "./assets/js/mappa-pedine.js",
+  "./assets/js/mappa-strumenti.js",
   "./assets/js/mappa-vista.js",
   "./assets/js/mappa.js",
   "./assets/js/menu-utente.js",

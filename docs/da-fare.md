@@ -37,10 +37,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - **Creazione di PNG e nemici per il DM**: schede rapide, con la possibilità di
   partire dai mostri del materiale gratuito di Wizards of the Coast (SRD 5.1,
   licenza Creative Commons), come già fatto per incantesimi ed equipaggiamento.
-- **Mappe della sessione, fasi successive** (ogni fase con la sua bozza nella
-  tela prima del codice):
-  - fase 4, strumenti: righello e distanze, ping, aree degli incantesimi
-    (cono, sfera, cubo, linea).
 
 ## Altro
 
@@ -64,6 +60,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   annulla, svela/copri tutto, torcia attorno ai PG, "Vedi come i giocatori");
   velo per il DM, buio sfumato per i giocatori; i nemici sotto la nebbia
   spariscono per i giocatori.
+- Mappe della sessione, fase 4: strumenti per tutti, ognuno col suo colore
+  (oro per il DM). Righello che gli altri vedono mentre si misura, ping con
+  onda e suono (quello del DM centra telefoni e tavolo), aree degli
+  incantesimi (sfera, cono, cubo, linea) dai propri incantesimi del SRD o a
+  mano, con le caselle e le pedine colpite evidenziate; restano finché le
+  toglie chi le ha messe o il DM.
 
 - Dispense del DM da "sbloccare" per i giocatori: Libreria dei contenuti,
   contenuti mostrati in sessione e Archivio dei giocatori (su Firebase Storage,

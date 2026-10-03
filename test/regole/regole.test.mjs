@@ -833,3 +833,51 @@ describe("Nebbia di guerra", () => {
     assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/nebbia/stato"), nebbia({ attiva: false }))));
 });
 
+
+describe("Strumenti della mappa: righello, ping e aree", () => {
+  const strumenti = (extra = {}) => ({ righello: { x1: 10, y1: 20.5, x2: 300, y2: 40 }, ping: null, aggiornatoIl: serverTimestamp(), ...extra });
+  const area = (autoreUid, extra = {}) => ({
+    autoreUid, nome: "Palla di Fuoco", forma: "sfera", misura: 6, x: 500, y: 400, angolo: 0, aggiornatoIl: serverTimestamp(), ...extra,
+  });
+  test("un giocatore misura e fa un ping sulla mappa in tavola", async () => {
+    await assertSucceeds(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/strumenti/p1"), strumenti()));
+    await assertSucceeds(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/strumenti/p1"),
+      { righello: null, ping: { x: 4, y: 5, n: 1727950000000 }, aggiornatoIl: serverTimestamp() }, { merge: true }));
+    await assertSucceeds(getDocs(collection(come("p2"), "campagne/c1/mappe/pubblica/strumenti")));
+  });
+  test("un giocatore NON scrive il righello di un altro né su una mappa in preparazione", async () => {
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/strumenti/p2"), strumenti()));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/nascosta/strumenti/p1"), strumenti()));
+    await assertFails(getDocs(collection(come("p1"), "campagne/c1/mappe/nascosta/strumenti")));
+    await assertFails(setDoc(doc(come("vecchio"), "campagne/c1/mappe/pubblica/strumenti/vecchio"), strumenti()));
+  });
+  test("strumenti con campi sbagliati NON passano", async () => {
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/strumenti/p1"), strumenti({ extra: 1 })));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/strumenti/p1"), strumenti({ righello: { x1: 1, y1: 2 } })));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/strumenti/p1"), strumenti({ ping: { x: 1, y: 2, n: "a" } })));
+  });
+  test("il DM usa gli strumenti anche sulla mappa in preparazione", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta/strumenti/dm"), strumenti())));
+
+  test("un giocatore mette un'area a proprio nome e la toglie", async () => {
+    const rif = doc(come("p1"), "campagne/c1/mappe/pubblica/aree/a1");
+    await assertSucceeds(setDoc(rif, area("p1")));
+    await assertSucceeds(getDocs(collection(come("p2"), "campagne/c1/mappe/pubblica/aree")));
+    await assertSucceeds(deleteDoc(rif));
+  });
+  test("un giocatore NON mette aree a nome d'altri o sbagliate", async () => {
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/aree/a1"), area("p2")));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/aree/a1"), area("p1", { forma: "stella" })));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/aree/a1"), area("p1", { misura: 500 })));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/aree/a1"), area("p1", { nome: "" })));
+    await assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/nascosta/aree/a1"), area("p1")));
+  });
+  test("un giocatore NON toglie né modifica l'area di un altro; il DM la toglie", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "campagne/c1/mappe/pubblica/aree/a2"), area("p2"));
+    });
+    await assertFails(deleteDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/aree/a2")));
+    await assertFails(updateDoc(doc(come("p2"), "campagne/c1/mappe/pubblica/aree/a2"), { x: 10 }));
+    await assertSucceeds(deleteDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/aree/a2")));
+  });
+});

@@ -4,7 +4,9 @@
 // durante il combattimento, se il DM lo lascia attivo, segue la pedina di turno.
 // Si apre dall'account del DM ma mostra solo ciò che vedono i giocatori: niente
 // nemici nascosti, niente PF dei nemici, nebbia di guerra nera (con i nemici
-// che ci stanno sotto). Non ha comandi di gioco.
+// che ci stanno sotto). Non ha comandi di gioco. Mostra anche gli strumenti di
+// tutti (righelli in corso, ping, aree degli incantesimi); il ping del DM
+// porta l'inquadratura sul punto.
 import {
   proteggiPaginaDM, ottieniCampagnaCorrente, ascoltaTavola, ascoltaGriglia, ascoltaPedine, ascoltaRiepiloghiParty,
   ascoltaCombattimento, ascoltaNebbia,
@@ -13,6 +15,7 @@ import { dimensioniNebbia, adattaNebbia } from "../mappa-calcoli.js";
 import { creaVistaMappa } from "../mappa-vista.js";
 import { costruisciPedine, creaCacheRitratti, creaCacheImmagini, pedinaDiTurno } from "../mappa-pedine.js";
 import { caricaMappa } from "../mappa.js";
+import { creaStrumentiCondivisi } from "../mappa-strumenti.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -60,6 +63,15 @@ proteggiPaginaDM(async (user, profilo) => {
   let nebbiaSalvata = null;
   let nebbia = null;
   let tavola = { inquadratura: null, segueTurno: true };
+  const condivisi = creaStrumentiCondivisi({
+    vista,
+    campagnaId: campagna.id,
+    membri: () => campagna.membriUid || [],
+    griglia: () => griglia,
+    onPing: ({ x, y, delDM }) => {
+      if (delDM) vista.centraPunto({ x, y });
+    },
+  });
   // Lettura come un giocatore (false): solo i combattenti già rivelati.
   let combattimento = { stato: { attivo: false }, combattenti: [] };
   const ritratto = creaCacheRitratti(() => disegnaPedine());
@@ -107,6 +119,7 @@ proteggiPaginaDM(async (user, profilo) => {
     smettiGriglia = smettiPedine = smettiNebbia = null;
     pedine = [];
     griglia = dimensioniMappa = nebbiaSalvata = nebbia = null;
+    condivisi.cambiaMappa(mappaId || null);
     const turno = ++caricamento;
     if (!mappaId) {
       vista.impostaMappa(null, "In attesa che il Dungeon Master metta una mappa in tavola…");
@@ -117,6 +130,7 @@ proteggiPaginaDM(async (user, profilo) => {
       griglia = g;
       vista.impostaGriglia(g);
       ricalcolaNebbia();
+      condivisi.ridisegna();
     });
     smettiNebbia = ascoltaNebbia(campagna.id, mappaId, (n) => {
       nebbiaSalvata = n;

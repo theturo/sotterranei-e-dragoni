@@ -883,6 +883,7 @@ proteggiPagina(async (user, profilo) => {
     party: () => ultimoParty,
     libreria: () => contenuti,
     membri: () => membriCampagna.map((m) => m.uid),
+    membriUid: () => campagna.membriUid || [],
     avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
   });
 
