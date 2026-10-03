@@ -189,11 +189,15 @@ export async function ricaricaUtente(user) {
 // Restituisce il roster dei soli giocatori (solo DM/admin, vedi firestore.rules).
 // Nota: l'ordinamento è fatto lato client (e non con orderBy in query) per
 // evitare di richiedere un indice composito Firestore per ruolo+nome.
-export async function elencaGiocatori() {
-  const riferimento = query(collection(db, "users"), where("ruolo", "==", ROLES.PLAYER));
+// Chi il DM può mettere nel party: i giocatori e anche gli admin (un admin
+// della piattaforma può giocare nella campagna di un altro), approvati, tranne
+// il DM stesso.
+export async function elencaGiocatori(escludiUid = null) {
+  const riferimento = query(collection(db, "users"), where("ruolo", "in", [ROLES.PLAYER, ROLES.ADMIN]));
   const snapshot = await getDocs(riferimento);
   return snapshot.docs
     .map((documento) => ({ uid: documento.id, ...documento.data() }))
+    .filter((u) => u.uid !== escludiUid && u.approvato !== false)
     .sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
 }
 
@@ -332,18 +336,27 @@ export async function aggiornaTitoloCampagna(campagnaId, { titolo, titoloProvvis
   await batch.commit();
 }
 
-// Campagne attive dell'utente: per DM e admin quelle che guidano, per un
-// giocatore quelle di cui è membro. Più vecchia prima. Il filtro per stato è
-// fatto lato client (niente indice composito: sono pochissime).
-export async function elencaCampagneAttive(uid, ruolo) {
-  const riferimento =
-    ruolo === ROLES.PLAYER
-      ? query(collection(db, "campagne"), where("membriUid", "array-contains", uid))
-      : query(collection(db, "campagne"), where("dmUid", "==", uid));
-  const snapshot = await getDocs(riferimento);
-  return snapshot.docs
-    .filter((documento) => documento.data().stato === "attiva")
-    .map((documento) => ({ id: documento.id, ...documento.data() }))
+// Il ruolo dipende dalla campagna, non dal profilo: si è DM di quelle che si
+// guidano e giocatori di quelle di cui si è membri (un admin o un DM può
+// giocare nella campagna di un altro).
+export const ruoloNellaCampagna = (campagna, uid) => (campagna?.dmUid === uid ? ROLES.DM : ROLES.PLAYER);
+
+// Campagne attive dell'utente, ognuna con "mioRuolo": per DM e admin quelle
+// che guidano più quelle in cui giocano, per un giocatore quelle di cui è
+// membro. "soloDM": solo quelle che guida (pagine riservate al DM). Più
+// vecchia prima. Il filtro per stato è fatto lato client (niente indice
+// composito: sono pochissime).
+export async function elencaCampagneAttive(uid, ruolo, { soloDM = false } = {}) {
+  const query1 = query(collection(db, "campagne"), where("dmUid", "==", uid));
+  const query2 = query(collection(db, "campagne"), where("membriUid", "array-contains", uid));
+  const interrogazioni = ruolo === ROLES.PLAYER ? [query2] : soloDM ? [query1] : [query1, query2];
+  const risultati = await Promise.all(interrogazioni.map((q) => getDocs(q)));
+  const viste = new Map();
+  risultati.flatMap((r) => r.docs).forEach((documento) => {
+    if (documento.data().stato === "attiva") viste.set(documento.id, { id: documento.id, ...documento.data() });
+  });
+  return [...viste.values()]
+    .map((c) => ({ ...c, mioRuolo: ruoloNellaCampagna(c, uid) }))
     .sort((a, b) => (a.creataIl?.toMillis?.() ?? 0) - (b.creataIl?.toMillis?.() ?? 0));
 }
 
@@ -368,8 +381,8 @@ export function scegliCampagna(uid, campagnaId) {
 // La campagna corrente: quella scelta, se è ancora attiva, altrimenti la
 // prima attiva. null se non ce n'è (prima configurazione, giocatore non
 // ancora invitato a nessuna campagna).
-export async function ottieniCampagnaCorrente(uid, ruolo) {
-  const attive = await elencaCampagneAttive(uid, ruolo);
+export async function ottieniCampagnaCorrente(uid, ruolo, opzioni = {}) {
+  const attive = await elencaCampagneAttive(uid, ruolo, opzioni);
   const scelta = campagnaScelta(uid);
   return attive.find((c) => c.id === scelta) || attive[0] || null;
 }

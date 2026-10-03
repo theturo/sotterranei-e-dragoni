@@ -39,6 +39,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Ruolo per campagna: si è DM della campagna che si guida e giocatori di
+  quelle di cui si è membri, anche da admin o da DM (selettore della campagna
+  con «DM»/«giocatore»; dashboard, sessione, calendario e archivio si
+  adattano). Le regole danno i poteri del DM solo a chi guida la campagna:
+  un admin che gioca non vede nemici nascosti, note o tiri segreti.
 - Controllo musica: elenco dei link YouTube salvati dal DM (solo suo), con
   «Salva nell'elenco» e un nome, un tocco per caricarlo e trasmetterlo,
   rinomina e «togli» con «Annulla».

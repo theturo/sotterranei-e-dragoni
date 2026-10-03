@@ -134,15 +134,19 @@ service cloud.firestore {
       return getAfter(/databases/$(database)/documents/campagne/$(campagnaId)).data;
     }
 
+    // Il ruolo nella campagna non dipende dal profilo: si è DM solo della
+    // campagna che si guida (dmUid). Un admin che gioca nella campagna di un
+    // altro è un giocatore come gli altri: niente nemici nascosti, tiri
+    // segreti o note del DM.
     function isDMdellaCampagna(campagnaId) {
-      return isAdmin() || (isDM() && datiCampagna(campagnaId).dmUid == request.auth.uid);
+      return isDMoAdmin() && datiCampagna(campagnaId).dmUid == request.auth.uid;
     }
 
     function isNellaCampagna(campagnaId) {
-      return isAdmin() || (isApprovato() && (
+      return isApprovato() && (
         datiCampagna(campagnaId).dmUid == request.auth.uid ||
         request.auth.uid in datiCampagna(campagnaId).membriUid
-      ));
+      );
     }
 
     // ---------- Utenti ----------
@@ -170,7 +174,8 @@ service cloud.firestore {
       allow update: if isAutenticato() && (
         (request.auth.uid == uid && aggiornamentoProprioProfiloValido()) ||
         isAdmin() ||
-        (isDM() && resource.data.ruolo == "player" && passaggioLivelloDM())
+        // Il DM concede livelli ai giocatori (anche a un admin che gioca).
+        (isDM() && resource.data.ruolo in ["player", "admin"] && uid != request.auth.uid && passaggioLivelloDM())
       );
 
       allow delete: if isAdmin();
@@ -199,7 +204,7 @@ service cloud.firestore {
 
       match /notifiche/{notificaId} {
         allow read: if isAutenticato() && (request.auth.uid == uid || isAdmin());
-        allow create: if isAdmin() || (isDM() && ruoloUtente(uid) == "player");
+        allow create: if isAdmin() || (isDM() && ruoloUtente(uid) in ["player", "admin"]);
         allow update: if isAutenticato() && request.auth.uid == uid &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letta']);
         allow delete: if isAdmin();
@@ -342,20 +347,16 @@ service cloud.firestore {
     }
 
     match /campagne/{campagnaId} {
-      allow get, list: if isAdmin() || (isApprovato() && (
+      allow get, list: if isApprovato() && (
         resource.data.dmUid == request.auth.uid || request.auth.uid in resource.data.membriUid
-      ));
-
-      allow create: if titoloPubblicoCoerente() && (
-        isAdmin() || (isDM() && request.resource.data.dmUid == request.auth.uid)
       );
 
-      allow update: if titoloPubblicoCoerente() && (
-        isAdmin() || (
-          isDM() && resource.data.dmUid == request.auth.uid
-          && request.resource.data.dmUid == resource.data.dmUid
-        )
-      );
+      allow create: if titoloPubblicoCoerente()
+        && isDMoAdmin() && request.resource.data.dmUid == request.auth.uid;
+
+      allow update: if titoloPubblicoCoerente()
+        && isDMoAdmin() && resource.data.dmUid == request.auth.uid
+        && request.resource.data.dmUid == resource.data.dmUid;
 
       allow delete: if isAdmin();
 
@@ -378,7 +379,7 @@ service cloud.firestore {
       match /privato/{docId} {
         allow get: if isDMdellaCampagna(campagnaId);
         // getAfter: la campagna può nascere nella stessa scrittura atomica.
-        allow write: if isAdmin() || (isDM() && datiCampagnaDopo(campagnaId).dmUid == request.auth.uid);
+        allow write: if isDMoAdmin() && datiCampagnaDopo(campagnaId).dmUid == request.auth.uid;
       }
 
       // Libreria dei contenuti della campagna (mappe, luoghi, PNG, nemici,
@@ -820,11 +821,13 @@ service cloud.firestore {
     match /registroSessioni/{sessioneId} {
       allow get, list: if isApprovato();
 
-      allow create, update: if isDMoAdmin();
+      // Solo il DM della campagna della sessione (le sessioni di prima delle
+      // campagne ricevono la loro con la migrazione).
+      allow create: if isDMdellaCampagna(request.resource.data.get('campagnaId', 'nessuna'));
+      allow update: if isDMdellaCampagna(resource.data.get('campagnaId', request.resource.data.get('campagnaId', 'nessuna')));
       // Il DM della campagna può eliminare anche le sessioni già giocate (es.
       // quelle di prova): appunti e tiri si eliminano a parte, qui sotto.
       allow delete: if isAdmin()
-        || (isDM() && resource.data.get('stato', null) == "programmata")
         || isDMdellaCampagna(resource.data.get('campagnaId', 'nessuna'));
 
       match /appunti/{appuntoId} {
@@ -840,14 +843,14 @@ service cloud.firestore {
           && request.resource.data.creatoIl == request.time
           && get(/databases/$(database)/documents/registroSessioni/$(sessioneId)).data.get('stato', 'in-corso') == "in-corso";
 
-        // Nessuna modifica; eliminazione solo per moderazione.
-        allow delete: if isDMoAdmin();
+        // Nessuna modifica; eliminazione solo per moderazione del DM.
+        allow delete: if isDMdellaSessione(sessioneId);
       }
 
-      // Tiri nascosti del DM: visibili solo a DM e admin.
+      // Tiri nascosti del DM: visibili solo al DM della campagna.
       match /tiriNascosti/{tiroId} {
-        allow get, list, delete: if isDMoAdmin();
-        allow create: if isDMoAdmin()
+        allow get, list, delete: if isDMdellaSessione(sessioneId);
+        allow create: if isDMdellaSessione(sessioneId)
           && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'tipo', 'tiro', 'creatoIl'])
           && request.resource.data.autoreUid == request.auth.uid
           && testoValido(request.resource.data.testo, 1, 2000)
@@ -855,6 +858,10 @@ service cloud.firestore {
           && tiroValido(request.resource.data)
           && request.resource.data.creatoIl == request.time;
       }
+    }
+
+    function isDMdellaSessione(sessioneId) {
+      return isDMdellaCampagna(get(/databases/$(database)/documents/registroSessioni/$(sessioneId)).data.get('campagnaId', 'nessuna'));
     }
 
     // Dettagli di un tiro di dadi negli appunti (solo per tipo "tiro").

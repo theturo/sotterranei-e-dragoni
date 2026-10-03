@@ -41,7 +41,7 @@ document.addEventListener("pointermove", mostraComandi);
 mostraComandi();
 
 proteggiPaginaDM(async (user, profilo) => {
-  const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
+  const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo, { soloDM: true });
   veil.style.display = "none";
   contenuto.style.display = "block";
   const vista = creaVistaMappa(document.getElementById("tavolo-mappa"), { interattiva: false });

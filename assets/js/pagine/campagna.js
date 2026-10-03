@@ -202,7 +202,7 @@ async function renderMembri() {
   }
 
   try {
-    const [giocatori, party] = await Promise.all([elencaGiocatori(), elencaRiepiloghiParty(campagnaAttiva.id)]);
+    const [giocatori, party] = await Promise.all([elencaGiocatori(uidCorrente), elencaRiepiloghiParty(campagnaAttiva.id)]);
     if (giocatori.length === 0) {
       vuoto.hidden = false;
       vuoto.textContent = "Nessun giocatore registrato ancora.";
@@ -395,7 +395,7 @@ document.getElementById("form-benvenuto").addEventListener("submit", async (even
     const id = await creaCampagna(uidCorrente, { titolo, titoloProvvisorio: provvisorio });
     await impostaCampagnaAttiva(uidCorrente, id);
     if (migra) {
-      const giocatori = await elencaGiocatori();
+      const giocatori = await elencaGiocatori(uidCorrente);
       await Promise.all(giocatori.map((g) => aggiungiMembroCampagna(id, g.uid)));
       await migraDatiEsistenti(id);
     }

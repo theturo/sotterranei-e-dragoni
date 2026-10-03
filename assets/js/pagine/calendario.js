@@ -397,10 +397,11 @@ proteggiPagina(async (user, profilo) => {
   uidCorrente = user.uid;
   nomeCorrente = profilo?.nome ?? null;
   const ruolo = profilo?.ruolo || ROLES.PLAYER;
-  isDM = ruolo === ROLES.DM || ruolo === ROLES.ADMIN;
   montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
 
   campagna = await ottieniCampagnaCorrente(user.uid, ruolo).catch(() => null);
+  // DM solo della campagna che guida: in quella di un altro si risponde alle date.
+  isDM = campagna ? campagna.mioRuolo === ROLES.DM : ruolo !== ROLES.PLAYER;
   if (!campagna) {
     document.getElementById("testo-nessuna-campagna").textContent = isDM
       ? "Non hai ancora una campagna attiva: creane una dal pannello Gestione campagna."

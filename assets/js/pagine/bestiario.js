@@ -685,7 +685,7 @@ function pulisci(m) {
 proteggiPaginaDM(async (user, profilo) => {
   montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
   utente = { uid: user.uid, nome: profilo?.nome || "DM" };
-  const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
+  const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo, { soloDM: true });
   veil.style.display = "none";
   contenuto.style.display = "block";
   if (!campagna) {
