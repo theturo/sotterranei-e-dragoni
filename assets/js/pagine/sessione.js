@@ -861,6 +861,8 @@ proteggiPagina(async (user, profilo) => {
   }
 
   await Promise.all([caricaParty(), avviaContenuti(isDmOAdmin)]);
+  // sessione.html#registro (dalla Gestione campagna) apre subito il registro.
+  if (location.hash === "#registro") document.getElementById("btn-apri-registro").click();
   avviaAscoltoRiposo();
   trackerCombattimento = montaCombattimento({
     pannello: document.getElementById("pannello-combattimento"),

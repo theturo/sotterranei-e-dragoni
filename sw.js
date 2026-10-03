@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "ab1603735bc9";
+const VERSIONE = "4cbfcab2bebe";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -44,6 +44,7 @@ const FILE = [
   "./assets/js/combattimento.js",
   "./assets/js/condizioni.js",
   "./assets/js/contenuti.js",
+  "./assets/js/cruscotto-calcoli.js",
   "./assets/js/dadi-base.js",
   "./assets/js/dadi.js",
   "./assets/js/dado-caricamento.js",

@@ -18,7 +18,13 @@ import {
   migraDatiEsistenti,
   ascoltaLibreriaDM,
   collegaContenutiSessione,
+  elencaSessioniCampagna,
+  elencaProposteAperte,
+  elencaRiepiloghiParty,
+  ascoltaBestiario,
 } from "../auth.js";
+import { formattaDataOra, distanzaGiorni, etichettaSessione } from "../calendario.js";
+import { CLASSI } from "../dati-srd.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
 import { scegliContenuti } from "../contenuti.js";
@@ -33,6 +39,8 @@ let campagnaAttiva = null;
 // Libreria dei contenuti della campagna attiva (per collegarli alle sessioni).
 let libreria = [];
 let smettiLibreria = null;
+let smettiBestiario = null;
+let creatureDM = 0;
 
 const collegatiA = (sessioneId) => libreria.filter((c) => c.riservati.sessioniCollegate.includes(sessioneId));
 
@@ -44,6 +52,12 @@ function ascoltaLibreria() {
   smettiLibreria = ascoltaLibreriaDM(campagnaAttiva.id, (elenco) => {
     libreria = elenco;
     aggiornaConteggiContenuti();
+    renderNumeri();
+  });
+  smettiBestiario?.();
+  smettiBestiario = ascoltaBestiario(campagnaAttiva.id, (elenco) => {
+    creatureDM = elenco.length;
+    renderNumeri();
   });
 }
 
@@ -83,8 +97,8 @@ async function ricaricaTutto() {
   if (nessunaCampagna) return;
 
   renderCampagnaAttiva();
-  await renderMembri();
-  await renderProgrammate();
+  await Promise.all([renderMembri(), renderProgrammate(), renderSessioni()]);
+  renderNumeri();
   renderAltreCampagne();
 }
 
@@ -93,12 +107,14 @@ function renderCampagnaAttiva() {
   if (!campagnaAttiva) {
     corpo.innerHTML = `
       <p class="scheda-testo-libero">
-        Nessuna campagna attiva al momento: scegline una da "Altre campagne" più sotto, oppure creane una nuova.
+        Nessuna campagna attiva al momento: scegline una dalla scheda "Altre campagne", oppure creane una nuova.
       </p>
     `;
+    document.getElementById("azioni-campagna-attiva").innerHTML = "";
     return;
   }
   corpo.innerHTML = `
+    <h3 class="campagna-pannello-titolo">${esc(campagnaAttiva.titolo)} <span class="campagna-stato">${campagnaAttiva.titoloProvvisorio ? "Attiva · titolo provvisorio" : "Attiva"}</span></h3>
     <form id="form-titolo-campagna" class="field-riga" style="align-items:flex-end;">
       <div class="field" style="flex:1; margin-bottom:0;">
         <label for="campo-titolo-attiva">Titolo</label>
@@ -110,10 +126,10 @@ function renderCampagnaAttiva() {
       <input type="checkbox" id="campo-provvisorio-attiva" ${campagnaAttiva.titoloProvvisorio ? "checked" : ""} />
       Titolo provvisorio (non ancora rivelato ai giocatori)
     </label>
-    <div class="azioni-campagna">
-      <button type="button" id="btn-pausa-campagna" class="btn-tabella">Metti in pausa</button>
-      <button type="button" id="btn-concludi-campagna" class="btn-tabella btn-tabella-pericolo">Concludi questa campagna</button>
-    </div>
+  `;
+  document.getElementById("azioni-campagna-attiva").innerHTML = `
+    <button type="button" id="btn-pausa-campagna" class="btn-tabella">Metti in pausa</button>
+    <button type="button" id="btn-concludi-campagna" class="btn-tabella btn-tabella-pericolo">Concludi questa campagna</button>
   `;
 
   document.getElementById("form-titolo-campagna").addEventListener("submit", async (evento) => {
@@ -186,26 +202,115 @@ async function renderMembri() {
   }
 
   try {
-    const giocatori = await elencaGiocatori();
+    const [giocatori, party] = await Promise.all([elencaGiocatori(), elencaRiepiloghiParty(campagnaAttiva.id)]);
     if (giocatori.length === 0) {
       vuoto.hidden = false;
       vuoto.textContent = "Nessun giocatore registrato ancora.";
       return;
     }
     vuoto.hidden = true;
+    const riepiloghi = new Map(party.map((p) => [p.uid, p]));
     const membriUid = campagnaAttiva.membriUid || [];
-    giocatori.forEach((giocatore) => {
-      const label = document.createElement("label");
-      label.className = "checkbox-scudo";
-      label.innerHTML = `
-        <input type="checkbox" data-membro="${esc(giocatore.uid)}" ${membriUid.includes(giocatore.uid) ? "checked" : ""} />
-        ${esc(giocatore.nome || giocatore.email) || "—"}
+    // Prima chi è nel party, poi gli altri.
+    const ordinati = [...giocatori].sort((a, b) => Number(membriUid.includes(b.uid)) - Number(membriUid.includes(a.uid)));
+    ordinati.forEach((giocatore) => {
+      const dentro = membriUid.includes(giocatore.uid);
+      const pg = riepiloghi.get(giocatore.uid);
+      const sotto = !dentro
+        ? "non fa parte del party"
+        : pg?.schedaId
+          ? `${pg.nomePersonaggio || "—"} · ${CLASSI[pg.classe]?.nome || "—"} ${pg.livello || 1}`
+          : "nessun personaggio attivo";
+      const li = document.createElement("li");
+      li.className = `campagna-riga${dentro ? "" : " fuori"}`;
+      li.innerHTML = `
+        <div>
+          <strong>${esc(giocatore.nome || giocatore.email) || "—"}</strong>
+          <div class="party-sessione-sub">${esc(sotto)}</div>
+        </div>
+        <button type="button" class="btn-tabella${dentro ? "" : " btn-tabella-evidenza"}" data-membro="${esc(giocatore.uid)}" data-dentro="${dentro ? "1" : ""}"
+          aria-label="${dentro ? "Togli dal party" : "Aggiungi al party"}: ${esc(giocatore.nome || giocatore.email)}">${dentro ? "✓ Nel party · togli" : "+ Aggiungi al party"}</button>
       `;
-      lista.appendChild(label);
+      lista.appendChild(li);
     });
   } catch (errore) {
     console.error(errore);
     mostraToast("Impossibile caricare i giocatori.", true);
+  }
+}
+
+// Numeri della Panoramica e prossima sessione.
+let sessioniCampagna = [];
+function renderNumeri() {
+  const contenitore = document.getElementById("numeri-campagna");
+  const prossima = document.getElementById("prossima-campagna");
+  if (!campagnaAttiva) {
+    contenitore.innerHTML = "";
+    prossima.textContent = "";
+    return;
+  }
+  const giocate = sessioniCampagna.filter((s) => s.stato === "chiusa").length;
+  const numeri = [
+    [giocate, giocate === 1 ? "sessione giocata" : "sessioni giocate"],
+    [(campagnaAttiva.membriUid || []).length, (campagnaAttiva.membriUid || []).length === 1 ? "giocatore" : "giocatori"],
+    [libreria.length, libreria.length === 1 ? "contenuto in libreria" : "contenuti in libreria"],
+    [creatureDM, creatureDM === 1 ? "creatura tua" : "creature tue"],
+  ];
+  contenitore.innerHTML = numeri.map(([n, t]) => `<div class="campagna-numero"><b>${esc(n)}</b><span>${esc(t)}</span></div>`).join("");
+  const programmata = sessioniCampagna
+    .filter((s) => s.stato === "programmata" && s.dataProgrammata)
+    .sort((a, b) => a.dataProgrammata.localeCompare(b.dataProgrammata))[0];
+  const inCorso = sessioniCampagna.find((s) => s.stato === "in-corso");
+  prossima.innerHTML = inCorso
+    ? `In corso: <b>${esc(etichettaSessione(inCorso))}</b> · <a href="sessione.html">vai alla sessione</a>`
+    : programmata
+      ? `Prossima: <b>${esc(etichettaSessione(programmata))}</b>, ${esc(formattaDataOra(programmata.dataProgrammata, programmata.oraProgrammata))} (${esc(distanzaGiorni(programmata.dataProgrammata))}).`
+      : `Nessuna sessione in programma: <a href="calendario.html">organizzala dal Calendario</a>.`;
+}
+
+// Proposte aperte e sessioni giocate (scheda Sessioni).
+async function renderSessioni() {
+  const listaProposte = document.getElementById("lista-proposte");
+  const listaGiocate = document.getElementById("lista-giocate");
+  listaProposte.innerHTML = "";
+  listaGiocate.innerHTML = "";
+  if (!campagnaAttiva) return;
+  try {
+    const [sessioni, proposte] = await Promise.all([elencaSessioniCampagna(campagnaAttiva.id), elencaProposteAperte(campagnaAttiva.id)]);
+    sessioniCampagna = sessioni;
+    const membri = (campagnaAttiva.membriUid || []).length;
+    document.getElementById("nessuna-proposta").hidden = proposte.length > 0;
+    proposte.forEach((p) => {
+      const riga = document.createElement("div");
+      riga.className = "sessione-programmata-riga";
+      const date = p.opzioni?.length || 0;
+      riga.innerHTML = `
+        <div>
+          <strong>${p.titolo ? `«${esc(p.titolo)}»` : "Date proposte"}</strong>
+          <div class="party-sessione-sub">${esc(date === 1 ? "1 data" : `${date} date`)} · hanno risposto ${esc(p.risposte.length)} su ${esc(membri)}</div>
+        </div>
+        <div class="azioni-riga"><a class="btn-tabella" href="calendario.html">Apri nel calendario</a></div>
+      `;
+      listaProposte.appendChild(riga);
+    });
+    const giocate = sessioni.filter((s) => s.stato !== "programmata").sort((a, b) => (b.numero || 0) - (a.numero || 0));
+    document.getElementById("nessuna-giocata").hidden = giocate.length > 0;
+    giocate.forEach((s) => {
+      const quando = s.apertaIl?.toDate?.() || (s.dataProgrammata ? new Date(`${s.dataProgrammata}T12:00`) : null);
+      const riga = document.createElement("div");
+      riga.className = "sessione-programmata-riga";
+      riga.innerHTML = `
+        <div>
+          <strong>${esc(etichettaSessione(s))}</strong>
+          <div class="party-sessione-sub">${quando ? esc(quando.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })) : ""}${s.stato === "in-corso" ? " · in corso" : ""}</div>
+        </div>
+        <div class="azioni-riga"><a class="btn-tabella" href="sessione.html#registro">Registro</a></div>
+      `;
+      listaGiocate.appendChild(riga);
+    });
+  } catch (errore) {
+    console.error(errore);
+    mostraToast("Impossibile caricare le sessioni.", true);
   }
 }
 
@@ -304,25 +409,25 @@ document.getElementById("form-benvenuto").addEventListener("submit", async (even
   }
 });
 
-document.getElementById("lista-membri").addEventListener("change", async (evento) => {
-  const checkbox = evento.target.closest("[data-membro]");
-  if (!checkbox || !campagnaAttiva) return;
-  checkbox.disabled = true;
+document.getElementById("lista-membri").addEventListener("click", async (evento) => {
+  const bottone = evento.target.closest("[data-membro]");
+  if (!bottone || !campagnaAttiva) return;
+  const uid = bottone.dataset.membro;
+  const dentro = Boolean(bottone.dataset.dentro);
+  if (dentro && !confirm("Togliere questo giocatore dal party? Non vedrà più la campagna (la sua scheda resta).")) return;
+  bottone.disabled = true;
   try {
-    if (checkbox.checked) {
-      await aggiungiMembroCampagna(campagnaAttiva.id, checkbox.dataset.membro);
-    } else {
-      await rimuoviMembroCampagna(campagnaAttiva.id, checkbox.dataset.membro);
-    }
-    campagnaAttiva.membriUid = checkbox.checked
-      ? [...(campagnaAttiva.membriUid || []), checkbox.dataset.membro]
-      : (campagnaAttiva.membriUid || []).filter((uid) => uid !== checkbox.dataset.membro);
+    if (dentro) await rimuoviMembroCampagna(campagnaAttiva.id, uid);
+    else await aggiungiMembroCampagna(campagnaAttiva.id, uid);
+    campagnaAttiva.membriUid = dentro
+      ? (campagnaAttiva.membriUid || []).filter((x) => x !== uid)
+      : [...(campagnaAttiva.membriUid || []), uid];
+    await renderMembri();
+    renderNumeri();
   } catch (errore) {
     console.error(errore);
     mostraToast("Impossibile aggiornare i membri.", true);
-    checkbox.checked = !checkbox.checked;
-  } finally {
-    checkbox.disabled = false;
+    bottone.disabled = false;
   }
 });
 
@@ -422,6 +527,34 @@ document.getElementById("lista-altre-campagne").addEventListener("click", async 
     bottone.disabled = false;
   }
 });
+
+// Schede della pagina (Panoramica, Giocatori, Sessioni, Altre campagne):
+// la scelta resta nell'indirizzo (campagna.html#sessioni).
+const SCHEDE = ["panoramica", "giocatori", "sessioni", "altre"];
+function mostraScheda(nome, metti = false) {
+  const scelta = SCHEDE.includes(nome) ? nome : "panoramica";
+  for (const s of SCHEDE) {
+    const tab = document.getElementById(`tab-${s}`);
+    tab.setAttribute("aria-selected", String(s === scelta));
+    tab.tabIndex = s === scelta ? 0 : -1;
+    tab.classList.toggle("scelta", s === scelta);
+    document.getElementById(`pannello-${s}`).hidden = s !== scelta;
+  }
+  if (metti) history.replaceState(null, "", `#${scelta}`);
+}
+document.querySelector(".campagna-schede").addEventListener("click", (evento) => {
+  const tab = evento.target.closest("[data-tab]");
+  if (tab) mostraScheda(tab.dataset.tab, true);
+});
+document.querySelector(".campagna-schede").addEventListener("keydown", (evento) => {
+  if (evento.key !== "ArrowRight" && evento.key !== "ArrowLeft") return;
+  const attuale = SCHEDE.indexOf(document.querySelector(".campagna-scheda.scelta")?.dataset.tab);
+  const prossima = SCHEDE[(attuale + (evento.key === "ArrowRight" ? 1 : SCHEDE.length - 1)) % SCHEDE.length];
+  mostraScheda(prossima, true);
+  document.getElementById(`tab-${prossima}`).focus();
+});
+window.addEventListener("hashchange", () => mostraScheda(location.hash.slice(1)));
+mostraScheda(location.hash.slice(1));
 
 proteggiPaginaDM(async (user, profilo) => {
   uidCorrente = user.uid;

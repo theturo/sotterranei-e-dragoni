@@ -1270,6 +1270,17 @@ export async function riepilogoCalendario(campagnaId, uid) {
   return { sessioni, aperte: aperte.length, daRispondere: mie.filter((m) => !m.exists()).length };
 }
 
+// Proposte aperte di una campagna, con chi ha già risposto ({ ..., risposte: [uid] }),
+// dalla più vecchia. Per il cruscotto della dashboard e la Gestione campagna.
+export async function elencaProposteAperte(campagnaId) {
+  const proposte = await getDocs(collezioneProposte(campagnaId));
+  const aperte = proposte.docs.filter((d) => d.data().stato === "aperta");
+  const risposte = await Promise.all(aperte.map((d) => getDocs(collection(d.ref, "risposte"))));
+  return aperte
+    .map((d, i) => ({ id: d.id, ...d.data(), risposte: risposte[i].docs.map((r) => r.id) }))
+    .sort((a, b) => (a.creataIl?.toMillis?.() ?? 0) - (b.creataIl?.toMillis?.() ?? 0));
+}
+
 export async function annullaProposta(campagnaId, propostaId) {
   await updateDoc(doc(collezioneProposte(campagnaId), propostaId), { stato: "annullata" });
 }
@@ -1430,6 +1441,12 @@ function unisciContenuti(pubblici, riservati) {
   return pubblici
     .map((p) => ({ ...p, riservati: riservati.get(p.id) || { note: null, tag: [], archivio: false, sessioniCollegate: [] } }))
     .sort((a, b) => (b.caricataIl?.toMillis?.() ?? Infinity) - (a.caricataIl?.toMillis?.() ?? Infinity));
+}
+
+// DM: quanti contenuti della libreria sono collegati a una sessione.
+export async function contaContenutiCollegati(campagnaId, sessioneId) {
+  const snapshot = await getDocs(query(collection(db, "campagne", campagnaId, "immaginiDM"), where("sessioniCollegate", "array-contains", sessioneId)));
+  return snapshot.size;
 }
 
 // DM: tutta la libreria, con i dati riservati, in tempo reale.
