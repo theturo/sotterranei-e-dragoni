@@ -7935,3 +7935,82 @@ table.tabella-punteggi select {
 .bestiario-tag.visibile {
   background: var(--color-emerald);
 }
+
+/* ---------- Bestiario in combattimento ----------
+   Alleati: bordo verde (tracker e pedina). Finestra della scheda dal
+   tracker o dalla pedina. */
+.riga-combattente.alleato {
+  border-left: 4px solid var(--color-emerald);
+}
+
+.pedina-mappa.nemico.alleato .pedina-volto {
+  border-color: #3fae7a;
+  background: radial-gradient(circle at 35% 30%, #2f6b4f, #0f2a1d);
+}
+
+.campo-bestiario {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.campo-bestiario input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nota-bestiario {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--color-emerald);
+}
+
+.nota-bestiario[hidden] {
+  display: none;
+}
+
+.btn-scheda-creatura[hidden] {
+  display: none;
+}
+
+.modal-card.finestra-creatura {
+  max-width: 680px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  text-align: left;
+  padding: 18px 20px;
+}
+
+.finestra-creatura-testa {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.finestra-creatura-testa h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.finestra-creatura-corpo {
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .modal-card.finestra-creatura {
+    padding: 14px 12px;
+  }
+}
+
+.modal-card.finestra-creatura p.blocco-riga,
+.modal-card.finestra-creatura p.blocco-voce {
+  margin: 3px 0;
+}
+
+.modal-card.finestra-creatura .bestiario-sottotitolo {
+  margin: 2px 0 8px;
+}

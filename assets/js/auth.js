@@ -2,6 +2,7 @@
 import { auth, db } from "./firebase-config.js";
 import { eliminaImmagine, percorsiRitratto } from "./immagini.js";
 import { codificaCelle, decodificaCelle } from "./mappa-calcoli.js";
+import { etichettaDiario } from "./bestiario-calcoli.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -1587,7 +1588,7 @@ export function nuovoIdPedina(campagnaId, immagineId) {
   return doc(riferimentoPedine(campagnaId, immagineId)).id;
 }
 
-export function salvaPedinaNemico(campagnaId, immagineId, id, { nome, immagineId: immagine = null, taglia = "media", salute = "illeso", condizioni = [], c, r }, nascosta = true) {
+export function salvaPedinaNemico(campagnaId, immagineId, id, { nome, immagineId: immagine = null, taglia = "media", salute = "illeso", condizioni = [], c, r, alleato = false }, nascosta = true) {
   return setDoc(riferimentoPedina(campagnaId, immagineId, id, nascosta), {
     tipo: "nemico",
     nome: nome.slice(0, 60),
@@ -1597,6 +1598,7 @@ export function salvaPedinaNemico(campagnaId, immagineId, id, { nome, immagineId
     condizioni,
     c,
     r,
+    ...(alleato ? { alleato: true } : {}),
     aggiornatoIl: serverTimestamp(),
   });
 }
@@ -1728,6 +1730,13 @@ export function salvaStatoCreatura(campagnaId, id, stato) {
   return updateDoc(doc(collezioneBestiario(campagnaId), id), { stato, aggiornatoIl: serverTimestamp() });
 }
 
+export async function ottieniCreatura(campagnaId, id) {
+  const s = await getDoc(doc(collezioneBestiario(campagnaId), id));
+  if (!s.exists()) return null;
+  const { aggiornatoIl, ...dati } = s.data();
+  return { ...dati, id: s.id, fonte: "dm" };
+}
+
 export function eliminaCreatura(campagnaId, id) {
   return deleteDoc(doc(collezioneBestiario(campagnaId), id));
 }
@@ -1804,9 +1813,12 @@ export async function avviaCombattimento(campagnaId, personaggi) {
 // Iniziativa: quella indicata, altrimenti d20 + bonus (un tiro per tutti se
 // "comune", altrimenti uno a testa). "nascosti": restano invisibili ai
 // giocatori finché il DM non li rivela.
+// Dal bestiario: "creatura" ({ fonte: "srd" | "dm", id }) collega i nemici
+// alla scheda (solo il DM lo sa), "alleato" mostra a tutti i PF veri,
+// "pfAttuali" e "condizioni" sono lo stato di un personaggio unico.
 export async function aggiungiNemici(campagnaId, {
   nome, quantita = 1, bonus = 0, pfMassimi = 0, iniziativa = null, iniziativaComune = true, immagineId = null,
-  taglia = "media", nascosti = false,
+  taglia = "media", nascosti = false, alleato = false, creatura = null, pfAttuali = null, condizioni = [],
 }) {
   const batch = writeBatch(db);
   const tiroComune = iniziativa ?? tiraD20() + bonus;
@@ -1823,11 +1835,27 @@ export async function aggiungiNemici(campagnaId, {
       salute: "illeso",
       immagineId: immagineId || null,
       taglia,
+      ...(condizioni.length ? { condizioni } : {}),
+      ...(alleato ? { alleato: true, pf: { attuali: pfAttuali ?? pfMassimi, massimi: pfMassimi } } : {}),
       creatoIl: serverTimestamp(),
     });
-    batch.set(riferimentoCombattenteDM(campagnaId, riferimento.id), { pfAttuali: pfMassimi, pfMassimi, note: null });
+    batch.set(riferimentoCombattenteDM(campagnaId, riferimento.id), {
+      pfAttuali: pfAttuali ?? pfMassimi, pfMassimi, note: null, ...(creatura ? { creatura } : {}),
+    });
   }
   await batch.commit();
+}
+
+export async function combattimentoAttivo(campagnaId) {
+  const s = await getDoc(riferimentoStatoCombattimento(campagnaId));
+  return s.exists() && s.data().attivo === true;
+}
+
+// ID delle creature del bestiario del DM già in combattimento (i personaggi
+// unici non si aggiungono due volte).
+export async function creatureInCombattimento(campagnaId) {
+  const s = await getDocs(collection(db, "campagne", campagnaId, "combattentiDM"));
+  return new Set(s.docs.map((d) => d.data().creatura).filter((c) => c?.fonte === "dm").map((c) => c.id));
 }
 
 // Una pedina messa a mano sulla mappa entra in combattimento: diventa un
@@ -1867,10 +1895,14 @@ export async function impostaSpareggi(campagnaId, inOrdine) {
   await batch.commit();
 }
 
-export async function aggiornaPfNemico(campagnaId, combattenteId, pfAttuali, pfMassimi, nascosto = false) {
+// Gli alleati mostrano a tutti anche i PF veri.
+export async function aggiornaPfNemico(campagnaId, combattenteId, pfAttuali, pfMassimi, nascosto = false, alleato = false) {
   const batch = writeBatch(db);
   batch.update(riferimentoCombattenteDM(campagnaId, combattenteId), { pfAttuali, pfMassimi });
-  batch.update(riferimentoCombattente(campagnaId, combattenteId, nascosto), { salute: saluteDaPf(pfAttuali, pfMassimi) });
+  batch.update(riferimentoCombattente(campagnaId, combattenteId, nascosto), {
+    salute: saluteDaPf(pfAttuali, pfMassimi),
+    ...(alleato ? { pf: { attuali: pfAttuali, massimi: pfMassimi } } : {}),
+  });
   await batch.commit();
 }
 
@@ -1894,10 +1926,12 @@ export async function rimuoviCombattente(campagnaId, combattenteId, turnoDopo, n
 // Le pedine dei nemici restano sulla mappa in tavola: prendono salute e
 // condizioni del loro combattente, che viene tolto con tutto il tracker.
 export async function terminaCombattimento(campagnaId) {
-  const [esistenti, tavola] = await Promise.all([
+  const [esistenti, tavola, datiDM] = await Promise.all([
     documentiCombattenti(campagnaId),
     getDoc(riferimentoTavola(campagnaId)),
+    getDocs(collection(db, "campagne", campagnaId, "combattentiDM")),
   ]);
+  await riportaStatoUnici(campagnaId, esistenti, datiDM.docs);
   const mappaId = tavola.exists() ? tavola.data().immagineId : null;
   const pedine = mappaId ? await documentiPedineNemici(campagnaId, mappaId) : new Map();
   // Prima le pedine, poi il tracker: se qualcosa va storto non si perde la
@@ -1911,6 +1945,30 @@ export async function terminaCombattimento(campagnaId) {
   const batch = writeBatch(db);
   batch.set(riferimentoStatoCombattimento(campagnaId), { attivo: false, round: 0, turno: null });
   await batch.commit();
+}
+
+// I personaggi unici del bestiario riportano sulla scheda PF e condizioni di
+// fine combattimento, con una voce nel diario.
+async function riportaStatoUnici(campagnaId, combattenti, datiDM) {
+  const perId = new Map(combattenti.map((d) => [d.id, d.data()]));
+  const unici = datiDM.filter((d) => d.data().creatura?.fonte === "dm" && perId.has(d.id));
+  if (!unici.length) return;
+  const sessione = await sessioneInCorso(campagnaId).catch(() => null);
+  const etichetta = etichettaDiario(sessione?.numero ?? null);
+  await Promise.all(unici.map(async (d) => {
+    const { creatura, pfAttuali, pfMassimi } = d.data();
+    const riferimento = doc(db, "campagne", campagnaId, "bestiario", creatura.id);
+    const scheda = await getDoc(riferimento);
+    if (!scheda.exists() || !scheda.data().unico) return;
+    const stato = { pfAttuali: pfMassimi, condizioni: [], risorse: [], equip: [], diario: [], ...(scheda.data().stato || {}) };
+    const condizioni = perId.get(d.id).condizioni || [];
+    const pf = Math.max(0, Math.min(scheda.data().pf, pfAttuali));
+    const testo = `Combattimento: termina con ${pf}/${scheda.data().pf} PF${condizioni.length ? ` (${condizioni.join(", ")})` : ""}.`;
+    await updateDoc(riferimento, {
+      stato: { ...stato, pfAttuali: pf, condizioni, diario: [...stato.diario, { sessione: etichetta, testo }].slice(-50) },
+      aggiornatoIl: serverTimestamp(),
+    });
+  }));
 }
 
 // Ascolta il combattimento in tempo reale: callback({ stato, combattenti }),

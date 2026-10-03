@@ -34,11 +34,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   - scelta dei tipi di avviso da ricevere come push;
   - fascia "non disturbare", che rispetti comunque le impostazioni del
     telefono (modalità silenziosa / full immersion).
-- **Bestiario, seconda parte (combattimento)**: «Dal bestiario» in «Aggiungi
-  nemici» del tracker (nome, iniziativa, PF, taglia e indole già compilati),
-  scheda con i tiri aperta dal tracker o toccando la pedina, alleati con il
-  bordo verde e i PF visibili ai giocatori, personaggi unici che entrano in
-  combattimento con il loro stato e lo riportano sulla scheda alla fine.
 
 ## Guide
 
@@ -64,6 +59,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   creature del DM nuove o «Usa come base», indole, personaggi unici con
   stato che continua tra le sessioni (PF, condizioni, risorse,
   equipaggiamento, diario delle apparizioni).
+- Bestiario, seconda parte: «Dal bestiario» in «Aggiungi nemici» del tracker
+  (nome, iniziativa, PF, taglia e immagine già compilati) e «Aggiungi al
+  combattimento» dalla pagina Bestiario; scheda con i tiri aperta dal tracker
+  (📜) o dalla pedina; alleati con il bordo verde e i PF visibili a tutti;
+  personaggi unici che entrano con il loro stato, una volta sola, e a fine
+  combattimento riportano PF e condizioni sulla scheda con una voce nel diario.
 - Mappe della sessione, fase 1: pannello Mappa nella Sessione (sopra gli
   appunti), mappe della Libreria fino a 4096 px, griglia per mappa (anche
   con la taratura a due clic), mappa in tavola e mappe in preparazione,

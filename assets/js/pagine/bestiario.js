@@ -8,10 +8,12 @@
 //   creatura, modifica di tutto il blocco, indole (ostile, neutrale, alleata)
 //   e personaggi unici con uno stato che continua tra le sessioni (PF,
 //   condizioni, risorse, equipaggiamento, diario delle apparizioni).
+// - «Aggiungi al combattimento»: la creatura entra nel tracker della Sessione
+//   (se c'è un combattimento), collegata alla sua scheda.
 // Dati e permessi: "Bestiario" in auth.js e firestore.rules.
 import {
   proteggiPaginaDM, ottieniCampagnaCorrente, ascoltaBestiario, creaCreatura, salvaCreatura, salvaStatoCreatura, eliminaCreatura,
-  ascoltaLibreriaDM, sessioneInCorso, aggiungiTiro,
+  ascoltaLibreriaDM, sessioneInCorso, aggiungiTiro, aggiungiNemici, combattimentoAttivo, creatureInCombattimento,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { creaElemento } from "../contenuti.js";
@@ -22,7 +24,7 @@ import { MOSTRI } from "../mostri-srd.js";
 import { creaBloccoStatistiche } from "../bestiario-scheda.js";
 import {
   INDOLI, TAGLIE_CREATURA, TIPI_CREATURA, CARATTERISTICHE, FASCE_GS, descrizioneTipo, tiraAzione, filtraCreature, copiaCreatura,
-  creaturaVuota, danniDaTesto, testoDaDanni, statoIniziale, riposoLungo, cambiaUsi, etichettaDiario,
+  creaturaVuota, danniDaTesto, testoDaDanni, statoIniziale, riposoLungo, cambiaUsi, etichettaDiario, bonusIniziativa,
 } from "../bestiario-calcoli.js";
 
 const veil = document.getElementById("veil");
@@ -218,7 +220,10 @@ function disegnaDettaglio() {
   const usa = bottone("Usa come base");
   usa.title = "Crea una copia modificabile di questa creatura";
   usa.addEventListener("click", () => apriModifica(copiaCreatura(c), true));
-  azioni.append(usa);
+  const combatti = bottone("Aggiungi al combattimento", "btn-tabella btn-tabella-evidenza");
+  combatti.title = "Entra nel tracker della Sessione (nascosta ai giocatori, se non è alleata)";
+  combatti.addEventListener("click", () => aggiungiAlCombattimento(c, combatti));
+  azioni.append(usa, combatti);
 
   const parti = [testa, azioni];
   if (c.fonte === "dm" && c.unico) parti.push(pannelloStato(c));
@@ -229,6 +234,39 @@ function disegnaDettaglio() {
     parti.push(note);
   }
   dettaglio.replaceChildren(...parti);
+}
+
+async function aggiungiAlCombattimento(c, pulsante) {
+  pulsante.disabled = true;
+  try {
+    if (!(await combattimentoAttivo(campagnaId))) {
+      mostraToast("Nessun combattimento in corso: avvialo dalla pagina Sessione.", true);
+      return;
+    }
+    const unico = c.fonte === "dm" && c.unico;
+    if (unico && (await creatureInCombattimento(campagnaId)).has(c.id)) {
+      mostraToast(`«${c.nome}» è già in combattimento.`, true);
+      return;
+    }
+    const alleato = c.indole === "alleata";
+    await aggiungiNemici(campagnaId, {
+      nome: c.nome.slice(0, 50),
+      bonus: bonusIniziativa(c),
+      pfMassimi: c.pf,
+      immagineId: c.immagineId || null,
+      taglia: c.taglia || "media",
+      nascosti: !alleato,
+      alleato,
+      creatura: { fonte: c.fonte, id: c.fonte === "srd" ? c.chiave : c.id },
+      ...(unico ? { pfAttuali: Math.min(c.pf, c.stato?.pfAttuali ?? c.pf), condizioni: c.stato?.condizioni || [] } : {}),
+    });
+    mostraToast(`«${c.nome}» è nel tracker${alleato ? "" : " (nascosta ai giocatori)"}.`);
+  } catch (errore) {
+    console.error(errore);
+    mostraToast("Impossibile aggiungerla al combattimento.", true);
+  } finally {
+    pulsante.disabled = false;
+  }
 }
 
 // ---------- stato dei personaggi unici ----------

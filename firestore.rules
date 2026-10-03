@@ -610,7 +610,8 @@ service cloud.firestore {
     function pedinaNemicoValida() {
       let d = request.resource.data;
       return d.tipo == 'nemico'
-        && d.keys().hasOnly(['tipo', 'nome', 'immagineId', 'taglia', 'salute', 'condizioni', 'c', 'r', 'aggiornatoIl'])
+        && d.keys().hasOnly(['tipo', 'nome', 'immagineId', 'taglia', 'salute', 'condizioni', 'c', 'r', 'alleato', 'aggiornatoIl'])
+        && d.get('alleato', false) is bool
         && testoValido(d.nome, 1, 60)
         && (d.immagineId == null || (d.immagineId is string && d.immagineId.size() <= 40))
         && tagliaValida(d.taglia)
@@ -742,8 +743,11 @@ service cloud.firestore {
     function combattenteValido() {
       let d = request.resource.data;
       return d.keys().hasOnly(['tipo', 'nome', 'uid', 'iniziativa', 'bonus', 'spareggio', 'salute', 'immagineId',
-          'condizioni', 'taglia', 'creatoIl'])
+          'condizioni', 'taglia', 'alleato', 'pf', 'creatoIl'])
         && condizioniValide(d.get('condizioni', []))
+        && d.get('alleato', false) is bool
+        && (d.get('pf', null) == null || (d.pf is map && d.pf.keys().hasOnly(['attuali', 'massimi'])
+          && interoTra(d.pf.attuali, -999, 9999) && interoTra(d.pf.massimi, 0, 9999)))
         && tagliaValida(d.get('taglia', 'media'))
         && d.tipo in ['pg', 'nemico']
         && testoValido(d.nome, 1, 60)
@@ -757,7 +761,10 @@ service cloud.firestore {
 
     function combattenteDMValido() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['pfAttuali', 'pfMassimi', 'note'])
+      let creatura = d.get('creatura', null);
+      return d.keys().hasOnly(['pfAttuali', 'pfMassimi', 'note', 'creatura'])
+        && (creatura == null || (creatura is map && creatura.keys().hasOnly(['fonte', 'id'])
+          && creatura.fonte in ['srd', 'dm'] && creatura.id is string && creatura.id.size() <= 60))
         && interoTra(d.pfAttuali, -999, 9999)
         && interoTra(d.pfMassimi, 0, 9999)
         && testoOpzionale(d.get('note', null), 500);
