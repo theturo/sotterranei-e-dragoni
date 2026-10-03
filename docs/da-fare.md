@@ -39,8 +39,6 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   licenza Creative Commons), come già fatto per incantesimi ed equipaggiamento.
 - **Mappe della sessione, fasi successive** (ogni fase con la sua bozza nella
   tela prima del codice):
-  - fase 3, nebbia di guerra: il DM svela e copre a mano (pennello o
-    rettangoli, a caselle con la griglia), lui ci vede attraverso;
   - fase 4, strumenti: righello e distanze, ping, aree degli incantesimi
     (cono, sfera, cubo, linea).
 
@@ -61,6 +59,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   dall'ordine di iniziativa dei giocatori), taglie fino a 4×4, salute vaga per
   i giocatori, "A terra" a 0 PF, alone sul turno, schermo del tavolo che segue
   chi è di turno, "Tocca a te!" sul telefono.
+- Mappe della sessione, fase 3: nebbia di guerra a caselle per ogni mappa,
+  disegnata in diretta dal DM (pennello 1×1 o 3×3, rettangolo, svela/copri,
+  annulla, svela/copri tutto, torcia attorno ai PG, "Vedi come i giocatori");
+  velo per il DM, buio sfumato per i giocatori; i nemici sotto la nebbia
+  spariscono per i giocatori.
 
 - Dispense del DM da "sbloccare" per i giocatori: Libreria dei contenuti,
   contenuti mostrati in sessione e Archivio dei giocatori (su Firebase Storage,

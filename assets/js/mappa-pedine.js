@@ -4,7 +4,7 @@
 // pedine. Condiviso da pagina Sessione e schermo del tavolo.
 import { CONDIZIONI } from "./dati-srd.js";
 import { urlImmagine, percorsiRitratto, percorsiImmagineCampagna } from "./immagini.js";
-import { caselleTaglia } from "./mappa-calcoli.js";
+import { caselleTaglia, pedinaSottoNebbia } from "./mappa-calcoli.js";
 
 const NOMI_CONDIZIONI = new Map(CONDIZIONI.map((c) => [c.chiave, c.nome]));
 
@@ -81,14 +81,22 @@ export function pedinaDiTurno(stato) {
 
 // Pedine da disegnare: personaggi (di membri con un personaggio attivo nel
 // party) e nemici. "combattimento": { stato, combattenti } del tracker;
-// "perDM": PF veri e pedine nascoste.
-export function costruisciPedine({ party, pedine, combattimento = null, mioUid = null, perDM = false, ritratto = () => null, immagine = () => null }) {
+// "perDM": PF veri e pedine nascoste. "nebbia": i nemici sotto la nebbia non
+// li vedono i giocatori (il DM sì, segnati); i personaggi si vedono sempre.
+// "comeGiocatori": il DM guarda la mappa come la vedono i giocatori.
+export function costruisciPedine({
+  party, pedine, combattimento = null, mioUid = null, perDM = false, ritratto = () => null, immagine = () => null,
+  nebbia = null, comeGiocatori = false,
+}) {
+  const vedeTutto = perDM && !comeGiocatori;
   const turno = pedinaDiTurno(combattimento?.stato);
   const combattenti = new Map((combattimento?.combattenti || []).map((c) => [c.id, c]));
   const giocatori = pedineDaParty({ party, pedine: pedine.filter((p) => p.tipo !== "nemico"), mioUid, ritratto });
   const nemici = pedine
-    .filter((p) => p.tipo === "nemico" && (perDM || !p.nascosta))
-    .map((p) => {
+    .filter((p) => p.tipo === "nemico")
+    .map((p) => ({ p, sotto: pedinaSottoNebbia(nebbia, p, caselleTaglia(p.taglia)) }))
+    .filter(({ p, sotto }) => vedeTutto || (!p.nascosta && !sotto))
+    .map(({ p, sotto }) => {
       const c = combattenti.get(p.id);
       const salute = c?.salute || p.salute || "illeso";
       const pf = perDM && c?.dm?.pfMassimi > 0 ? c.dm.pfAttuali / c.dm.pfMassimi : null;
@@ -105,6 +113,7 @@ export function costruisciPedine({ party, pedine, combattimento = null, mioUid =
         condizioni: bolliniCondizioni(c?.condizioni || p.condizioni || []),
         nemico: true,
         nascosta: Boolean(p.nascosta),
+        nellaNebbia: sotto,
         inTracker: Boolean(c),
       };
     });

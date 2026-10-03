@@ -3,11 +3,13 @@
 // segue l'inquadratura scelta dal DM ("Mostra qui a tutti" nella Sessione);
 // durante il combattimento, se il DM lo lascia attivo, segue la pedina di turno.
 // Si apre dall'account del DM ma mostra solo ciò che vedono i giocatori: niente
-// nemici nascosti, niente PF dei nemici. Non ha comandi di gioco.
+// nemici nascosti, niente PF dei nemici, nebbia di guerra nera (con i nemici
+// che ci stanno sotto). Non ha comandi di gioco.
 import {
   proteggiPaginaDM, ottieniCampagnaCorrente, ascoltaTavola, ascoltaGriglia, ascoltaPedine, ascoltaRiepiloghiParty,
-  ascoltaCombattimento,
+  ascoltaCombattimento, ascoltaNebbia,
 } from "../auth.js";
+import { dimensioniNebbia, adattaNebbia } from "../mappa-calcoli.js";
 import { creaVistaMappa } from "../mappa-vista.js";
 import { costruisciPedine, creaCacheRitratti, creaCacheImmagini, pedinaDiTurno } from "../mappa-pedine.js";
 import { caricaMappa } from "../mappa.js";
@@ -51,16 +53,28 @@ proteggiPaginaDM(async (user, profilo) => {
   let mappaId; // undefined finché non arriva il primo stato del tavolo
   let smettiGriglia = null;
   let smettiPedine = null;
+  let smettiNebbia = null;
   let caricamento = 0;
+  let griglia = null;
+  let dimensioniMappa = null;
+  let nebbiaSalvata = null;
+  let nebbia = null;
   let tavola = { inquadratura: null, segueTurno: true };
   // Lettura come un giocatore (false): solo i combattenti già rivelati.
   let combattimento = { stato: { attivo: false }, combattenti: [] };
   const ritratto = creaCacheRitratti(() => disegnaPedine());
   const immagine = creaCacheImmagini(campagna.id, () => disegnaPedine());
   const disegnaPedine = () => {
-    vista.impostaPedine(costruisciPedine({ party, pedine, combattimento, ritratto, immagine }));
+    vista.impostaPedine(costruisciPedine({ party, pedine, combattimento, ritratto, immagine, nebbia }));
+    vista.impostaNebbia(nebbia, "buio");
     inquadra();
   };
+  function ricalcolaNebbia() {
+    nebbia = nebbiaSalvata && griglia && dimensioniMappa
+      ? adattaNebbia(nebbiaSalvata, dimensioniNebbia(griglia, dimensioniMappa.larghezza, dimensioniMappa.altezza))
+      : null;
+    disegnaPedine();
+  }
   // Pedina di turno (se visibile e se il DM lo vuole), altrimenti l'inquadratura del DM.
   let ultimaInquadratura = "";
   function inquadra() {
@@ -89,15 +103,25 @@ proteggiPaginaDM(async (user, profilo) => {
     mappaId = tavola.immagineId;
     smettiGriglia?.();
     smettiPedine?.();
-    smettiGriglia = smettiPedine = null;
+    smettiNebbia?.();
+    smettiGriglia = smettiPedine = smettiNebbia = null;
     pedine = [];
+    griglia = dimensioniMappa = nebbiaSalvata = nebbia = null;
     const turno = ++caricamento;
     if (!mappaId) {
       vista.impostaMappa(null, "In attesa che il Dungeon Master metta una mappa in tavola…");
       return;
     }
     vista.impostaMappa(null, "Caricamento della mappa…");
-    smettiGriglia = ascoltaGriglia(campagna.id, mappaId, (griglia) => vista.impostaGriglia(griglia));
+    smettiGriglia = ascoltaGriglia(campagna.id, mappaId, (g) => {
+      griglia = g;
+      vista.impostaGriglia(g);
+      ricalcolaNebbia();
+    });
+    smettiNebbia = ascoltaNebbia(campagna.id, mappaId, (n) => {
+      nebbiaSalvata = n;
+      ricalcolaNebbia();
+    });
     smettiPedine = ascoltaPedine(campagna.id, mappaId, (elenco) => {
       pedine = elenco;
       disegnaPedine();
@@ -106,8 +130,9 @@ proteggiPaginaDM(async (user, profilo) => {
       const datiMappa = await caricaMappa(campagna.id, mappaId);
       if (turno !== caricamento) return;
       vista.impostaMappa(datiMappa);
+      dimensioniMappa = { larghezza: datiMappa.larghezza, altezza: datiMappa.altezza };
       ultimaInquadratura = "";
-      inquadra();
+      ricalcolaNebbia();
     } catch (errore) {
       console.error(errore);
       if (turno === caricamento) vista.impostaMappa(null, "Impossibile caricare l'immagine della mappa.");

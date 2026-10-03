@@ -129,3 +129,145 @@ export function righeGriglia(griglia, larghezza, altezza) {
 }
 
 export const coloreSalute = (quota) => (quota > 0.5 ? "#3f8f5a" : quota > 0.25 ? "#c98a27" : "#b8323f");
+
+// ---------- Nebbia di guerra ----------
+// La nebbia copre caselle della griglia della mappa: { attiva, c0, r0,
+// colonne, righe, celle } con "celle" un Uint8Array (1 = coperta) riga per
+// riga, a partire dalla casella (c0, r0). c0/r0 valgono -1 quando lo scarto
+// della griglia lascia una casella parziale sul bordo sinistro/alto.
+
+export function dimensioniNebbia(griglia, larghezza, altezza) {
+  const c0 = griglia.ox > 0 ? -1 : 0;
+  const r0 = griglia.oy > 0 ? -1 : 0;
+  return {
+    c0,
+    r0,
+    colonne: Math.max(1, Math.ceil((larghezza - griglia.ox) / griglia.lato) - c0),
+    righe: Math.max(1, Math.ceil((altezza - griglia.oy) / griglia.lato) - r0),
+  };
+}
+
+export function creaNebbia(dimensioni, coperta = true, attiva = true) {
+  return { attiva, ...dimensioni, celle: new Uint8Array(dimensioni.colonne * dimensioni.righe).fill(coperta ? 1 : 0) };
+}
+
+// Riporta una nebbia salvata sulle dimensioni attuali (la griglia può essere
+// stata ritarata): le caselle in comune restano, le nuove sono coperte.
+export function adattaNebbia(salvata, dimensioni) {
+  const uguali = salvata.c0 === dimensioni.c0 && salvata.r0 === dimensioni.r0
+    && salvata.colonne === dimensioni.colonne && salvata.righe === dimensioni.righe;
+  if (uguali) return salvata;
+  const nuova = creaNebbia(dimensioni, true, salvata.attiva);
+  for (let j = 0; j < nuova.righe; j += 1) {
+    for (let i = 0; i < nuova.colonne; i += 1) {
+      const c = i + nuova.c0;
+      const r = j + nuova.r0;
+      const si = c - salvata.c0;
+      const sj = r - salvata.r0;
+      if (si >= 0 && sj >= 0 && si < salvata.colonne && sj < salvata.righe) {
+        nuova.celle[j * nuova.colonne + i] = salvata.celle[sj * salvata.colonne + si];
+      }
+    }
+  }
+  return nuova;
+}
+
+export function cellaCoperta(nebbia, c, r) {
+  if (!nebbia?.attiva) return false;
+  const i = c - nebbia.c0;
+  const j = r - nebbia.r0;
+  if (i < 0 || j < 0 || i >= nebbia.colonne || j >= nebbia.righe) return true;
+  return nebbia.celle[j * nebbia.colonne + i] === 1;
+}
+
+// Nuova nebbia con le caselle indicate ([[c, r], …]) coperte o svelate.
+export function cambiaCelle(nebbia, caselle, coperta) {
+  const celle = nebbia.celle.slice();
+  for (const [c, r] of caselle) {
+    const i = c - nebbia.c0;
+    const j = r - nebbia.r0;
+    if (i >= 0 && j >= 0 && i < nebbia.colonne && j < nebbia.righe) celle[j * nebbia.colonne + i] = coperta ? 1 : 0;
+  }
+  return { ...nebbia, celle };
+}
+
+export const casellaDiPunto = (griglia, { x, y }) => ({
+  c: Math.floor((x - griglia.ox) / griglia.lato),
+  r: Math.floor((y - griglia.oy) / griglia.lato),
+});
+
+export function casellePennello({ c, r }, lato = 1) {
+  const m = Math.floor(lato / 2);
+  const caselle = [];
+  for (let dr = -m; dr <= m; dr += 1) for (let dc = -m; dc <= m; dc += 1) caselle.push([c + dc, r + dr]);
+  return caselle;
+}
+
+export function caselleRettangolo(a, b) {
+  const caselle = [];
+  for (let r = Math.min(a.r, b.r); r <= Math.max(a.r, b.r); r += 1) {
+    for (let c = Math.min(a.c, b.c); c <= Math.max(a.c, b.c); c += 1) caselle.push([c, r]);
+  }
+  return caselle;
+}
+
+// Caselle entro "raggio" caselle dal centro (una torcia).
+export function caselleCerchio({ c, r }, raggio) {
+  const caselle = [];
+  for (let dr = -raggio; dr <= raggio; dr += 1) {
+    for (let dc = -raggio; dc <= raggio; dc += 1) if (dc * dc + dr * dr <= raggio * raggio + 0.5) caselle.push([c + dc, r + dr]);
+  }
+  return caselle;
+}
+
+// Casella al centro di una pedina larga "n": decide se è sotto la nebbia.
+export const pedinaSottoNebbia = (nebbia, { c, r }, n = 1) =>
+  cellaCoperta(nebbia, Math.floor(c + n / 2), Math.floor(r + n / 2));
+
+// Strisce orizzontali di caselle coperte, in pixel della mappa (meno
+// rettangoli da disegnare). "margine" allarga di poco per non lasciare fessure.
+export function strisceNebbia(nebbia, griglia, margine = 1) {
+  const strisce = [];
+  if (!nebbia?.attiva) return strisce;
+  const L = griglia.lato;
+  for (let j = 0; j < nebbia.righe; j += 1) {
+    let inizio = null;
+    for (let i = 0; i <= nebbia.colonne; i += 1) {
+      const coperta = i < nebbia.colonne && nebbia.celle[j * nebbia.colonne + i] === 1;
+      if (coperta && inizio === null) inizio = i;
+      if (!coperta && inizio !== null) {
+        strisce.push({
+          x: griglia.ox + (inizio + nebbia.c0) * L - margine,
+          y: griglia.oy + (j + nebbia.r0) * L - margine,
+          w: (i - inizio) * L + 2 * margine,
+          h: L + 2 * margine,
+        });
+        inizio = null;
+      }
+    }
+  }
+  return strisce;
+}
+
+// Codifica compatta per Firestore: un bit per casella, in base64.
+export function codificaCelle(celle) {
+  const byte = new Uint8Array(Math.ceil(celle.length / 8));
+  celle.forEach((v, i) => {
+    if (v) byte[i >> 3] |= 1 << (i & 7);
+  });
+  let testo = "";
+  byte.forEach((b) => (testo += String.fromCharCode(b)));
+  return btoa(testo);
+}
+
+export function decodificaCelle(testo, quante) {
+  const celle = new Uint8Array(quante);
+  let byte;
+  try {
+    byte = atob(testo || "");
+  } catch {
+    return celle.fill(1);
+  }
+  for (let i = 0; i < quante; i += 1) celle[i] = (byte.charCodeAt(i >> 3) >> (i & 7)) & 1;
+  return celle;
+}

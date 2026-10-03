@@ -77,3 +77,32 @@ test("taglie: le creature grandi occupano più caselle e il centro segue", () =>
   assert.deepEqual(casellaDaCentro(griglia, { x: 200, y: 130 }, 2), { c: 2, r: 1 });
 });
 
+
+test("nebbia: dimensioni, codifica e ritorno", async () => {
+  const { dimensioniNebbia, creaNebbia, codificaCelle, decodificaCelle, cambiaCelle, cellaCoperta } = await import("../../assets/js/mappa-calcoli.js");
+  const dim = dimensioniNebbia({ lato: 60, ox: 20, oy: 10 }, 1080, 720);
+  assert.deepEqual(dim, { c0: -1, r0: -1, colonne: 19, righe: 13 });
+  const nebbia = cambiaCelle(creaNebbia(dim), [[0, 0], [3, 4], [-1, -1]], false);
+  const ritorno = decodificaCelle(codificaCelle(nebbia.celle), nebbia.celle.length);
+  assert.deepEqual([...ritorno], [...nebbia.celle]);
+  assert.equal(cellaCoperta(nebbia, 3, 4), false);
+  assert.equal(cellaCoperta(nebbia, 3, 5), true);
+  assert.equal(cellaCoperta(nebbia, 99, 0), true, "fuori dalla mappa conta come coperta");
+  assert.equal(cellaCoperta({ ...nebbia, attiva: false }, 3, 5), false, "nebbia spenta: tutto visibile");
+  assert.equal(decodificaCelle("@@non valida@@", 4).every((v) => v === 1), true);
+});
+
+test("nebbia: pennello, rettangolo, torcia e pedine sotto la nebbia", async () => {
+  const { creaNebbia, cambiaCelle, casellePennello, caselleRettangolo, caselleCerchio, pedinaSottoNebbia, strisceNebbia } = await import("../../assets/js/mappa-calcoli.js");
+  assert.equal(casellePennello({ c: 5, r: 5 }, 3).length, 9);
+  assert.equal(caselleRettangolo({ c: 4, r: 2 }, { c: 1, r: 3 }).length, 8);
+  assert.ok(caselleCerchio({ c: 0, r: 0 }, 6).some(([c, r]) => c === 6 && r === 0));
+  assert.ok(!caselleCerchio({ c: 0, r: 0 }, 6).some(([c, r]) => c === 6 && r === 6));
+  const nebbia = cambiaCelle(creaNebbia({ c0: 0, r0: 0, colonne: 10, righe: 10 }), caselleRettangolo({ c: 0, r: 0 }, { c: 4, r: 9 }), false);
+  assert.equal(pedinaSottoNebbia(nebbia, { c: 2, r: 2 }), false);
+  assert.equal(pedinaSottoNebbia(nebbia, { c: 6, r: 2 }), true);
+  assert.equal(pedinaSottoNebbia(nebbia, { c: 4, r: 2 }, 2), true, "Grande: conta la casella al centro");
+  const strisce = strisceNebbia(nebbia, { lato: 50, ox: 0, oy: 0 }, 0);
+  assert.equal(strisce.length, 10);
+  assert.deepEqual(strisce[0], { x: 250, y: 0, w: 250, h: 50 });
+});

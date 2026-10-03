@@ -6401,6 +6401,7 @@ table.tabella-punteggi select {
 
 .mappa-immagine,
 .mappa-griglia,
+.mappa-nebbia,
 .mappa-misura {
   position: absolute;
   left: 0;
@@ -7063,3 +7064,48 @@ table.tabella-punteggi select {
   opacity: 0.6;
   border-style: dashed;
 }
+
+/* ---------- Mappa, fase 3: nebbia di guerra ---------- */
+/* I nemici sotto la nebbia: il DM li vede con un contorno tratteggiato
+   (i giocatori non li vedono affatto). */
+.pedina-mappa.nella-nebbia {
+  outline: 0.12em dashed rgba(230, 211, 163, 0.65);
+  outline-offset: 0.25em;
+}
+
+.mappa-nebbia-anteprima {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px dashed var(--color-gold-bright);
+  background: rgba(232, 198, 90, 0.15);
+  pointer-events: none;
+}
+
+.mappa-nebbia-anteprima.copri {
+  border-color: #9aa0c8;
+  background: rgba(18, 16, 30, 0.35);
+}
+
+.mappa-nebbia-anteprima[hidden],
+.mappa-nebbia-pannello[hidden] {
+  display: none;
+}
+
+.mappa-nebbia-pannello {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.mappa-gruppo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
