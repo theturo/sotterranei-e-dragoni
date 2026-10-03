@@ -1955,6 +1955,24 @@ export async function impostaTurno(campagnaId, round, turno) {
   await updateDoc(riferimentoStatoCombattimento(campagnaId), { round, turno });
 }
 
+// "Tocca a te": il DM avvisa il giocatore il cui personaggio è di turno. La
+// Cloud Function lo manda come push (secondo le sue preferenze) e lo toglie
+// subito: non resta nella campanella. Mai bloccante.
+export async function avvisaTurno(uid, { nome, round }) {
+  try {
+    await addDoc(collection(db, "users", uid, "notifiche"), {
+      tipo: "turno", nome: String(nome || "").slice(0, 60), round: round || null, letta: false, creataIl: serverTimestamp(),
+    });
+  } catch (errore) {
+    console.error(errore);
+  }
+}
+
+// Preferenze delle push (pannello ⚙️ → Notifiche), sul proprio profilo.
+export async function salvaPreferenzeNotifiche(uid, preferenze) {
+  await updateDoc(doc(db, "users", uid), { preferenzeNotifiche: preferenze });
+}
+
 // Toglie un combattente; se era il suo turno, il turno passa a "turnoDopo".
 export async function rimuoviCombattente(campagnaId, combattenteId, turnoDopo, nascosto = false) {
   const batch = writeBatch(db);

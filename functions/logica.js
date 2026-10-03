@@ -110,9 +110,67 @@ export function messaggioPush(notifica) {
         testo: `Sessione ${breve(notifica.numero, 6)}${titolo ? ` — ${titolo}` : ""}: raggiungi il tavolo.`,
         url: "sessione.html",
       };
+    // Il DM passa il turno al personaggio: niente push se la Sessione è già
+    // aperta davanti al giocatore (lo decide il service worker, "nascondiSe").
+    case "turno":
+      return {
+        titolo: "Tocca a te!",
+        testo: `${breve(notifica.nome || "Il tuo personaggio", 40)}, è il tuo turno${notifica.round ? ` (round ${breve(notifica.round, 4)})` : ""}.`,
+        url: "sessione.html",
+        nascondiSe: "sessione.html",
+      };
     default:
       return null;
   }
+}
+
+// Gruppi di avvisi che ognuno accende o spegne per le push (pannello ⚙️ →
+// Notifiche); la campanella li mostra comunque tutti.
+export const CATEGORIA_PUSH = {
+  sessione_iniziata: "sessione",
+  proposta_sessione: "date",
+  sessione_confermata: "date",
+  livello_su: "livello",
+  turno: "turno",
+};
+
+// Minuti dalla mezzanotte di "adesso" nel fuso orario indicato (quello del
+// telefono, salvato con le preferenze).
+export function minutiLocali(adesso, fuso = "Europe/Rome") {
+  let parti;
+  try {
+    parti = new Intl.DateTimeFormat("it-IT", { timeZone: fuso, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(adesso);
+  } catch {
+    parti = new Intl.DateTimeFormat("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(adesso);
+  }
+  const valore = (tipo) => Number(parti.find((p) => p.type === tipo)?.value || 0);
+  return (valore("hour") % 24) * 60 + valore("minute");
+}
+
+const minutiDa = (testo) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(testo || ""));
+  return m && Number(m[1]) < 24 && Number(m[2]) < 60 ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+
+// Se la fascia "non disturbare" copre questo momento (anche a cavallo della
+// mezzanotte, es. 23:00–08:00).
+export function inSilenzio(silenzio, adesso, fuso) {
+  if (!silenzio?.attivo) return false;
+  const da = minutiDa(silenzio.da);
+  const a = minutiDa(silenzio.a);
+  if (da === null || a === null || da === a) return false;
+  const ora = minutiLocali(adesso, fuso);
+  return da < a ? ora >= da && ora < a : ora >= da || ora < a;
+}
+
+// Se la push di questo tipo si può mandare, secondo le preferenze del profilo
+// ({ tipi: { sessione, date, livello, turno }, silenzio: { attivo, da, a },
+// fuso }). Senza preferenze: tutto acceso, nessuna pausa.
+export function pushConsentita(tipo, preferenze, adesso = new Date()) {
+  const categoria = CATEGORIA_PUSH[tipo];
+  if (categoria && preferenze?.tipi?.[categoria] === false) return { consentita: false, motivo: "tipo spento" };
+  if (inSilenzio(preferenze?.silenzio, adesso, preferenze?.fuso)) return { consentita: false, motivo: "non disturbare" };
+  return { consentita: true, motivo: null };
 }
 
 // Quanti dispositivi al massimo per utente ricevono la notifica (i più recenti).

@@ -110,3 +110,32 @@ test("eliminazione utente: solo un admin, mai il proprio account", () => {
   assert.match(motivoRifiutoEliminazione({}, "u1", { ruolo: "admin" }), /senza autore/);
   assert.match(motivoRifiutoEliminazione({ richiestaDa: "x" }, "u1", undefined), /solo un admin/);
 });
+
+test("push «Tocca a te»: testo, pagina e niente push con la Sessione già davanti", async () => {
+  const { messaggioPush } = await import("../logica.js");
+  const m = messaggioPush({ tipo: "turno", nome: "Kael", round: 2 });
+  assert.deepEqual(m, { titolo: "Tocca a te!", testo: "Kael, è il tuo turno (round 2).", url: "sessione.html", nascondiSe: "sessione.html" });
+  assert.equal(messaggioPush({ tipo: "turno" }).testo, "Il tuo personaggio, è il tuo turno.");
+});
+
+test("preferenze: tipi spenti e fascia «non disturbare» (anche a cavallo della mezzanotte)", async () => {
+  const { pushConsentita, inSilenzio, minutiLocali } = await import("../logica.js");
+  // 21:40 e 23:30 ora di Roma (in ottobre UTC+2).
+  const sera = new Date("2026-10-03T19:40:00Z");
+  const notte = new Date("2026-10-03T21:30:00Z");
+  const mattina = new Date("2026-10-04T05:30:00Z"); // 7:30 a Roma
+  assert.equal(minutiLocali(sera, "Europe/Rome"), 21 * 60 + 40);
+  assert.equal(minutiLocali(sera, "Fuso/Inventato"), 21 * 60 + 40);
+  const silenzio = { attivo: true, da: "23:00", a: "08:00" };
+  assert.equal(inSilenzio(silenzio, sera, "Europe/Rome"), false);
+  assert.equal(inSilenzio(silenzio, notte, "Europe/Rome"), true);
+  assert.equal(inSilenzio(silenzio, mattina, "Europe/Rome"), true);
+  assert.equal(inSilenzio({ attivo: true, da: "13:00", a: "15:00" }, new Date("2026-10-03T12:00:00Z"), "Europe/Rome"), true);
+  assert.equal(inSilenzio({ ...silenzio, attivo: false }, notte, "Europe/Rome"), false);
+  assert.equal(inSilenzio({ attivo: true, da: "boh", a: "08:00" }, notte, "Europe/Rome"), false);
+  assert.deepEqual(pushConsentita("turno", undefined, notte), { consentita: true, motivo: null });
+  assert.deepEqual(pushConsentita("turno", { tipi: { turno: false } }, sera), { consentita: false, motivo: "tipo spento" });
+  assert.deepEqual(pushConsentita("proposta_sessione", { tipi: { turno: false } }, sera), { consentita: true, motivo: null });
+  assert.deepEqual(pushConsentita("sessione_confermata", { tipi: { date: false } }, sera).motivo, "tipo spento");
+  assert.deepEqual(pushConsentita("livello_su", { silenzio, fuso: "Europe/Rome" }, notte), { consentita: false, motivo: "non disturbare" });
+});

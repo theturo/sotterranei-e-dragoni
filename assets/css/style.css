@@ -8945,3 +8945,104 @@ table.tabella-punteggi select {
   font-style: italic;
   color: var(--color-ink-soft);
 }
+
+/* ---------- Pannello ⚙️ → Notifiche ---------- */
+
+.preferenza-riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+  cursor: pointer;
+}
+
+.preferenza-riga > span,
+.preferenza-riga > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.preferenza-riga b {
+  display: block;
+  font-size: 1rem;
+}
+
+.preferenza-riga small {
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+}
+
+.preferenze-titolo {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+  margin: 16px 0 2px;
+}
+
+input.interruttore {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+  border-radius: 13px;
+  background: #b9a98a;
+  position: relative;
+  cursor: pointer;
+  margin: 0;
+  transition: background 0.15s;
+}
+
+input.interruttore::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.15s;
+}
+
+input.interruttore:checked {
+  background: var(--color-emerald);
+}
+
+input.interruttore:checked::after {
+  left: 23px;
+}
+
+input.interruttore:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.preferenze-orari {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.preferenze-orari input {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 4px 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  input.interruttore,
+  input.interruttore::after {
+    transition: none;
+  }
+}
+
+#mu-modal-impostazioni .modal-card {
+  max-height: 92vh;
+  overflow-y: auto;
+}
