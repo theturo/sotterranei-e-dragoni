@@ -15,14 +15,16 @@ const TIPI = [...new Set([...leggi("assets/js/auth.js")
   .matchAll(/(?:"notifiche"\), \{|notificaMembri\(campagnaId, \{)\s*tipo: "([a-z_]+)"/g)].map((m) => m[1]))];
 
 test("i tipi di notifica del sito sono quelli attesi", () => {
-  assert.deepEqual(TIPI.sort(), ["livello_su", "proposta_sessione", "sessione_confermata", "sessione_iniziata"]);
+  assert.deepEqual(TIPI.sort(), ["livello_su", "proposta_sessione", "sessione_confermata", "sessione_iniziata", "turno"]);
 });
 
 test("ogni tipo ha il testo della campanella e il messaggio push", () => {
   const menu = leggi("assets/js/menu-utente.js");
+  // "turno" («Tocca a te») è solo una push: la campanella lo scarta.
+  assert.match(menu, /n\.tipo !== "turno"/);
   for (const tipo of TIPI) {
-    assert.match(menu, new RegExp(`notifica\\.tipo === "${tipo}"`), `${tipo}: manca il testo nella campanella`);
-    const messaggio = messaggioPush({ tipo, numero: 1, date: 2, data: "2026-10-03", livelloPrecedente: 1, livelloNuovo: 2 });
+    if (tipo !== "turno") assert.match(menu, new RegExp(`notifica\\.tipo === "${tipo}"`), `${tipo}: manca il testo nella campanella`);
+    const messaggio = messaggioPush({ tipo, numero: 1, date: 2, data: "2026-10-03", livelloPrecedente: 1, livelloNuovo: 2, nome: "Kael", round: 1 });
     assert.ok(messaggio, `${tipo}: manca il messaggio push`);
     assert.ok(existsSync(join(RADICE, messaggio.url)), `${tipo}: la pagina ${messaggio.url} non esiste`);
   }

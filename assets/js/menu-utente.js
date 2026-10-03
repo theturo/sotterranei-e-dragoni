@@ -16,6 +16,7 @@ import {
   elencaCampagneAttive,
   elencaCampagneDMConTitolo,
   scegliCampagna,
+  salvaPreferenzeNotifiche,
 } from "./auth.js";
 import { esc } from "./utils.js";
 import { ICONA_HOME, ICONA_MODIFICA, ICONA_SESSIONE, ICONA_CALENDARIO, ICONA_SI } from "./icone.js";
@@ -80,8 +81,7 @@ const HTML_MODALE = `
           <button class="btn-tabella" data-apri="password" type="button">Cambia password</button>
           <button class="btn-tabella" data-apri="email" type="button">Cambia email</button>
           <button id="mu-btn-installa" class="btn-tabella" type="button" hidden>Installa l'app</button>
-          <button id="mu-btn-notifiche" class="btn-tabella" type="button" hidden>Attiva le notifiche</button>
-          <p id="mu-nota-notifiche" class="impostazioni-nota" hidden></p>
+          <button class="btn-tabella" data-apri="notifiche" type="button">Notifiche</button>
           <a class="btn-tabella" href="guida.html">Guida e FAQ</a>
           <button id="mu-btn-logout-menu" class="btn-tabella btn-tabella-pericolo solo-telefono" type="button">Esci</button>
         </div>
@@ -97,6 +97,32 @@ const HTML_MODALE = `
         <div class="impostazioni-azioni">
           <button type="button" class="btn btn-ghost" data-indietro>Indietro</button>
           <button type="submit" class="btn azione-salva" id="mu-btn-salva-password">Salva</button>
+        </div>
+      </form>
+
+      <form id="mu-form-notifiche" class="impostazioni-schermata" hidden novalidate>
+        <h2>Notifiche</h2>
+        <div class="preferenza-riga">
+          <div><b>Notifiche push</b><small id="mu-stato-push">Su questo dispositivo</small></div>
+          <button id="mu-btn-notifiche" class="btn-tabella" type="button" hidden>Attiva le notifiche</button>
+        </div>
+        <p id="mu-nota-notifiche" class="impostazioni-nota" hidden></p>
+        <h3 class="preferenze-titolo">Cosa ricevere</h3>
+        <label class="preferenza-riga"><span><b>Sessione iniziata</b><small>Quando il DM apre la sessione</small></span><input type="checkbox" class="interruttore" data-tipo="sessione" /></label>
+        <label class="preferenza-riga"><span><b>Date e sessioni</b><small>Date proposte e sessione confermata</small></span><input type="checkbox" class="interruttore" data-tipo="date" /></label>
+        <label class="preferenza-riga"><span><b>Passaggi di livello</b><small>Quando il DM ti fa salire di livello</small></span><input type="checkbox" class="interruttore" data-tipo="livello" /></label>
+        <label class="preferenza-riga"><span><b>Tocca a te</b><small>Quando arriva il turno del tuo personaggio in combattimento</small></span><input type="checkbox" class="interruttore" data-tipo="turno" /></label>
+        <h3 class="preferenze-titolo">Non disturbare</h3>
+        <label class="preferenza-riga"><span><b>Pausa notturna</b><small>Nessuna push in questa fascia; gli avvisi restano nella campanella</small></span><input type="checkbox" class="interruttore" id="mu-silenzio" /></label>
+        <div class="preferenze-orari" id="mu-orari-silenzio">
+          <label>dalle <input type="time" id="mu-silenzio-da" value="23:00" /></label>
+          <label>alle <input type="time" id="mu-silenzio-a" value="08:00" /></label>
+        </div>
+        <p class="impostazioni-nota">Le scelte valgono per le push su tutti i tuoi dispositivi; la campanella mostra comunque tutto. Il silenzioso e la full immersion del telefono valgono sempre.</p>
+        <div id="mu-messaggio-notifiche" class="message"></div>
+        <div class="impostazioni-azioni">
+          <button type="button" class="btn btn-ghost" data-indietro>Indietro</button>
+          <button type="submit" class="btn" id="mu-btn-salva-notifiche">Salva</button>
         </div>
       </form>
 
@@ -153,7 +179,9 @@ function aggiornaBadgeNonLette(count) {
   }
 }
 
-function renderNotifiche(notifiche, uid) {
+function renderNotifiche(tutte, uid) {
+  // "Tocca a te" è solo una push: non resta nella campanella.
+  const notifiche = tutte.filter((n) => n.tipo !== "turno");
   const lista = document.getElementById("mu-lista-notifiche");
   const vuoto = document.getElementById("mu-nessuna-notifica");
 
@@ -315,6 +343,54 @@ function inizializzaImpostazioni() {
   });
 }
 
+// Preferenze delle push (pannello ⚙️ → Notifiche): tipi accesi o spenti e
+// fascia "non disturbare". Le applica la Cloud Function inviaNotificaPush.
+function inizializzaPreferenzeNotifiche(uid, preferenze = {}) {
+  const form = document.getElementById("mu-form-notifiche");
+  const messaggio = document.getElementById("mu-messaggio-notifiche");
+  const silenzio = document.getElementById("mu-silenzio");
+  const orari = document.getElementById("mu-orari-silenzio");
+  const caselle = [...form.querySelectorAll("[data-tipo]")];
+  const riempi = (p) => {
+    caselle.forEach((c) => (c.checked = p?.tipi?.[c.dataset.tipo] !== false));
+    silenzio.checked = Boolean(p?.silenzio?.attivo);
+    document.getElementById("mu-silenzio-da").value = p?.silenzio?.da || "23:00";
+    document.getElementById("mu-silenzio-a").value = p?.silenzio?.a || "08:00";
+    orari.hidden = !silenzio.checked;
+  };
+  riempi(preferenze);
+  silenzio.onchange = () => (orari.hidden = !silenzio.checked);
+  form.onsubmit = async (evento) => {
+    evento.preventDefault();
+    const nuove = {
+      tipi: Object.fromEntries(caselle.map((c) => [c.dataset.tipo, c.checked])),
+      silenzio: {
+        attivo: silenzio.checked,
+        da: document.getElementById("mu-silenzio-da").value || "23:00",
+        a: document.getElementById("mu-silenzio-a").value || "08:00",
+      },
+      fuso: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Rome",
+    };
+    const bottone = document.getElementById("mu-btn-salva-notifiche");
+    bottone.disabled = true;
+    try {
+      await salvaPreferenzeNotifiche(uid, nuove);
+      preferenze = nuove;
+      mostraMessaggio(messaggio, "Preferenze salvate.", "success");
+    } catch (errore) {
+      console.error(errore);
+      mostraMessaggio(messaggio, "Impossibile salvare le preferenze: riprova.", "error");
+    } finally {
+      bottone.disabled = false;
+    }
+  };
+  // Tornando indietro senza salvare si ritrovano le scelte salvate.
+  form.querySelector("[data-indietro]").addEventListener("click", () => {
+    riempi(preferenze);
+    nascondiMessaggio(messaggio);
+  });
+}
+
 // Notifiche push nel pannello ⚙️: un pulsante per attivarle o spegnerle su
 // questo dispositivo, oppure una nota se non si possono avere (vedi
 // notifiche-push.js).
@@ -459,6 +535,7 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
   quandoCambiaInstallazione(aggiornaInstalla);
   btnInstalla.onclick = installaApp;
   inizializzaNotifichePush(user.uid);
+  inizializzaPreferenzeNotifiche(user.uid, profilo?.preferenzeNotifiche);
 
   const btnModificaOrdine = document.getElementById("mu-btn-modifica-ordine");
   if (onModificaOrdine) {
