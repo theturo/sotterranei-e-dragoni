@@ -8,6 +8,9 @@
 //   che può entrare in combattimento più tardi. Le pedine nascoste le vede
 //   solo il DM finché non le rivela. Durante il combattimento la pedina di
 //   turno ha un alone, e lo schermo del tavolo può seguirla.
+//   Nebbia di guerra (fase 3, «Nebbia…»): il DM svela e copre a caselle, con
+//   pennello o rettangolo, in diretta; la vede come un velo, i giocatori come
+//   buio. I nemici sotto la nebbia spariscono per i giocatori.
 // - Giocatore: vede la mappa in tavola, si sposta e fa zoom, muove solo la
 //   propria pedina ("Entra in mappa" se non c'è ancora); al suo turno la mappa
 //   si centra su di lui e compare «Tocca a te!».
@@ -32,13 +35,18 @@ import {
   rivelaNemici,
   pedinaInCombattimento,
   aggiornaPfNemico,
+  ascoltaNebbia,
+  salvaNebbia,
 } from "./auth.js";
 import { urlImmagine, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
 import { velocitaRazza } from "./dati-srd.js";
 import { creaVistaMappa } from "./mappa-vista.js";
 import { costruisciPedine, creaCacheRitratti, creaCacheImmagini, pedinaDiTurno } from "./mappa-pedine.js";
-import { taratura, caselleLibereIntorno, METRI_PER_CASELLA, formattaMetri, TAGLIE, caselleTaglia } from "./mappa-calcoli.js";
+import {
+  taratura, caselleLibereIntorno, METRI_PER_CASELLA, formattaMetri, TAGLIE, caselleTaglia,
+  dimensioniNebbia, creaNebbia, adattaNebbia, cambiaCelle, casellePennello, caselleRettangolo, caselleCerchio,
+} from "./mappa-calcoli.js";
 
 // Immagine di una mappa con le sue dimensioni vere (la griglia è in pixel
 // dell'immagine). Le promesse restano in memoria: si scarica una volta sola.
@@ -89,6 +97,11 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   let smettiGriglia = null;
   let smettiPedine = null;
   let caricamento = 0;
+  let smettiNebbia = null;
+  let nebbiaSalvata = null; // come arriva da Firestore
+  let nebbia = null; // quella mostrata (adattata alla griglia, con le modifiche in corso)
+  let dimensioniMappa = null; // { larghezza, altezza } dell'immagine
+  let comeGiocatori = false;
   const velocita = new Map(); // schedaId -> metri
   const ritratto = creaCacheRitratti(() => ridisegnaPedine());
   const immagine = creaCacheImmagini(campagnaId, () => ridisegnaPedine());
@@ -172,7 +185,9 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     if (!mappaId) return;
     vista.impostaPedine(costruisciPedine({
       party: party(), pedine: pedineSalvate, combattimento, mioUid: uid, perDM: isDM, ritratto, immagine,
+      nebbia, comeGiocatori,
     }));
+    vista.impostaNebbia(nebbia, isDM && !comeGiocatori ? "velo" : "buio");
     if (daCentrare && vista.centraSu(uid)) daCentrare = false;
     aggiornaPiede();
     aggiornaNemici();
@@ -182,9 +197,12 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     if (id === mappaId) return;
     smettiGriglia?.();
     smettiPedine?.();
-    smettiGriglia = smettiPedine = null;
+    smettiNebbia?.();
+    smettiGriglia = smettiPedine = smettiNebbia = null;
     mappaId = id;
     griglia = null;
+    nebbiaSalvata = nebbia = dimensioniMappa = null;
+    storiaNebbia.length = 0;
     pedineSalvate = [];
     selezionata = null;
     daCentrare = !isDM;
@@ -201,6 +219,12 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       griglia = g;
       vista.impostaGriglia(g);
       aggiornaPannelloGriglia();
+      ricalcolaNebbia();
+    });
+    smettiNebbia = ascoltaNebbia(campagnaId, id, (n) => {
+      nebbiaSalvata = n;
+      // Durante un tratto conta quello che il DM sta disegnando.
+      if (!tracciando) ricalcolaNebbia();
     });
     smettiPedine = ascoltaPedine(campagnaId, id, (elenco) => {
       pedineSalvate = elenco;
@@ -210,7 +234,8 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       const immagine = await caricaMappa(campagnaId, id);
       if (turno !== caricamento) return;
       vista.impostaMappa(immagine);
-      ridisegnaPedine();
+      dimensioniMappa = { larghezza: immagine.larghezza, altezza: immagine.altezza };
+      ricalcolaNebbia();
     } catch (errore) {
       console.error(errore);
       if (turno === caricamento) vista.impostaMappa(null, "Impossibile caricare l'immagine della mappa.");
@@ -349,7 +374,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     const nome = selezionata && (party().find((r) => r.uid === selezionata)?.nomePersonaggio || pedinaSalvata(selezionata)?.nome);
     infoSelezione.hidden = rimuovi.hidden = !isDM || !selezionata;
     infoSelezione.textContent = nome || "";
-    apriGriglia.hidden = !isDM || !mappaId;
+    apriGriglia.hidden = apriNebbia.hidden = !isDM || !mappaId;
     scala.hidden = !mappaId;
     centra.hidden = isDM || !pedineSalvate.some((p) => (p.uid || p.id) === uid);
   }
@@ -636,6 +661,223 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     controllaTurno();
   }, (errore) => console.error(errore));
 
+  // ---------- nebbia di guerra ----------
+  const dimensioniNebbiaAttuali = () =>
+    griglia && dimensioniMappa ? dimensioniNebbia(griglia, dimensioniMappa.larghezza, dimensioniMappa.altezza) : null;
+
+  function ricalcolaNebbia() {
+    const dim = dimensioniNebbiaAttuali();
+    nebbia = nebbiaSalvata && dim ? adattaNebbia(nebbiaSalvata, dim) : null;
+    ridisegnaPedine();
+    aggiornaPannelloNebbia();
+  }
+
+  // Salvataggio in diretta: al più ogni 300 ms durante un tratto, e alla fine.
+  let timerNebbia = null;
+  let tracciando = false;
+  function salvaNebbiaOra() {
+    clearTimeout(timerNebbia);
+    timerNebbia = null;
+    if (!nebbia || !mappaId) return;
+    salvaNebbia(campagnaId, mappaId, nebbia).catch((errore) => {
+      console.error(errore);
+      avviso("Impossibile salvare la nebbia.", true);
+    });
+  }
+  function salvaNebbiaPresto() {
+    if (!timerNebbia) timerNebbia = setTimeout(salvaNebbiaOra, 300);
+  }
+
+  const storiaNebbia = [];
+  function memorizzaNebbia() {
+    if (!nebbia) return;
+    storiaNebbia.push({ attiva: nebbia.attiva, celle: nebbia.celle.slice() });
+    if (storiaNebbia.length > 30) storiaNebbia.shift();
+  }
+
+  function modificaNebbia(nuova, salva = salvaNebbiaOra) {
+    nebbia = nuova;
+    ridisegnaPedine();
+    aggiornaPannelloNebbia();
+    salva();
+  }
+
+  let strumento = "mano"; // mano, pennello1, pennello3, rettangolo
+  let copri = false;
+  const pannelloNebbia = creaElemento("div", "mappa-nebbia-pannello");
+  pannelloNebbia.hidden = true;
+  const apriNebbia = bottone("Nebbia…");
+  apriNebbia.setAttribute("aria-expanded", "false");
+  piede.append(apriNebbia);
+
+  const etichettaAttiva = creaElemento("label", "mappa-campo");
+  const inputAttiva = creaElemento("input");
+  inputAttiva.type = "checkbox";
+  etichettaAttiva.append(inputAttiva, document.createTextNode(" Nebbia di guerra"));
+  const gruppo = (voci) => {
+    const g = creaElemento("span", "mappa-gruppo");
+    g.setAttribute("role", "group");
+    voci.forEach(([chiave, testo]) => {
+      const b = bottone(testo, "btn-tabella");
+      b.dataset.voce = chiave;
+      g.append(b);
+    });
+    return g;
+  };
+  const strumenti = gruppo([["mano", "Mano"], ["pennello1", "Pennello 1×1"], ["pennello3", "Pennello 3×3"], ["rettangolo", "Rettangolo"]]);
+  strumenti.setAttribute("aria-label", "Strumento");
+  const effetti = gruppo([["svela", "Svela"], ["copri", "Copri"]]);
+  effetti.setAttribute("aria-label", "Effetto");
+  const annullaNebbia = bottone("Annulla");
+  const svelaTutto = bottone("Svela tutto");
+  const copriTutto = bottone("Copri tutto");
+  const torcia = bottone("Svela attorno ai PG");
+  const raggio = creaElemento("select", "select-dadi");
+  raggio.setAttribute("aria-label", "Raggio attorno ai personaggi");
+  raggio.replaceChildren(...[3, 6, 9].map((n) => new Option(`${n} caselle (${formattaMetri(n * METRI_PER_CASELLA)} m)`, String(n))));
+  raggio.value = "6";
+  const etichettaCome = creaElemento("label", "mappa-campo");
+  const inputCome = creaElemento("input");
+  inputCome.type = "checkbox";
+  etichettaCome.append(inputCome, document.createTextNode(" Vedi come i giocatori"));
+  const aiutoNebbia = creaElemento("p", "mappa-aiuto");
+  pannelloNebbia.append(etichettaAttiva, strumenti, effetti, annullaNebbia, svelaTutto, copriTutto, torcia, raggio, etichettaCome, aiutoNebbia);
+  pannello.append(pannelloNebbia);
+
+  function aggiornaPannelloNebbia() {
+    if (!isDM) return;
+    const attiva = Boolean(nebbia?.attiva);
+    inputAttiva.checked = attiva;
+    inputAttiva.disabled = !dimensioniNebbiaAttuali();
+    for (const b of strumenti.querySelectorAll("button")) {
+      b.classList.toggle("btn-tabella-evidenza", b.dataset.voce === strumento);
+      b.setAttribute("aria-pressed", String(b.dataset.voce === strumento));
+      b.disabled = !attiva && b.dataset.voce !== "mano";
+    }
+    for (const b of effetti.querySelectorAll("button")) {
+      const scelto = (b.dataset.voce === "copri") === copri;
+      b.classList.toggle("btn-tabella-evidenza", scelto);
+      b.setAttribute("aria-pressed", String(scelto));
+      b.disabled = !attiva;
+    }
+    annullaNebbia.disabled = storiaNebbia.length === 0;
+    svelaTutto.disabled = copriTutto.disabled = torcia.disabled = !attiva;
+    inputCome.checked = comeGiocatori;
+    aiutoNebbia.textContent = !attiva
+      ? "Nebbia spenta: i giocatori vedono tutta la mappa. Accendila per partire con la mappa tutta coperta."
+      : strumento === "mano"
+        ? "Mano: trascina lo sfondo per spostarti e le pedine per muoverle. Scegli un pennello o il rettangolo per disegnare la nebbia."
+        : strumento === "rettangolo"
+          ? `Rettangolo: trascina da un angolo all'altro per ${copri ? "coprire una zona" : "svelare una stanza"}.`
+          : `Pennello: trascina sulla mappa per ${copri ? "coprire" : "svelare"}. I giocatori vedono subito.`;
+    if (strumento !== "mano" && !attiva) scegliStrumento("mano");
+  }
+
+  function scegliStrumento(nuovo) {
+    strumento = nuovo;
+    if (nuovo === "mano") {
+      vista.modoNebbia(null);
+      vista.anteprimaRettangolo(null);
+    } else {
+      annullaTaratura();
+      vista.modoNebbia(nuovo === "rettangolo" ? gestoriRettangolo() : gestoriPennello(nuovo === "pennello3" ? 3 : 1));
+    }
+    aggiornaPannelloNebbia();
+  }
+
+  function gestoriPennello(lato) {
+    const dipingi = (casella) => modificaNebbia(cambiaCelle(nebbia, casellePennello(casella, lato), copri), salvaNebbiaPresto);
+    return {
+      inizio(casella) {
+        if (!nebbia) return;
+        tracciando = true;
+        memorizzaNebbia();
+        dipingi(casella);
+      },
+      muovi(casella) {
+        if (nebbia) dipingi(casella);
+      },
+      fine() {
+        tracciando = false;
+        salvaNebbiaOra();
+      },
+    };
+  }
+
+  function gestoriRettangolo() {
+    let inizio = null;
+    return {
+      inizio(casella) {
+        inizio = casella;
+        vista.anteprimaRettangolo(casella, casella, copri);
+      },
+      muovi(casella) {
+        if (inizio) vista.anteprimaRettangolo(inizio, casella, copri);
+      },
+      fine(casella) {
+        vista.anteprimaRettangolo(null);
+        if (!inizio || !nebbia) return;
+        memorizzaNebbia();
+        modificaNebbia(cambiaCelle(nebbia, caselleRettangolo(inizio, casella), copri));
+        inizio = null;
+      },
+    };
+  }
+
+  apriNebbia.addEventListener("click", () => {
+    pannelloNebbia.hidden = !pannelloNebbia.hidden;
+    apriNebbia.setAttribute("aria-expanded", String(!pannelloNebbia.hidden));
+    if (pannelloNebbia.hidden) scegliStrumento("mano");
+    else aggiornaPannelloNebbia();
+  });
+  strumenti.addEventListener("click", (evento) => {
+    const voce = evento.target.closest("button")?.dataset.voce;
+    if (voce) scegliStrumento(voce);
+  });
+  effetti.addEventListener("click", (evento) => {
+    const voce = evento.target.closest("button")?.dataset.voce;
+    if (!voce) return;
+    copri = voce === "copri";
+    if (strumento !== "mano") scegliStrumento(strumento);
+    else aggiornaPannelloNebbia();
+  });
+  inputAttiva.addEventListener("change", () => {
+    const dim = dimensioniNebbiaAttuali();
+    if (!dim) return;
+    memorizzaNebbia();
+    // Prima accensione: mappa tutta coperta; poi si conserva quanto svelato.
+    modificaNebbia(nebbia ? { ...nebbia, attiva: inputAttiva.checked } : creaNebbia(dim, true, inputAttiva.checked));
+  });
+  annullaNebbia.addEventListener("click", () => {
+    const precedente = storiaNebbia.pop();
+    if (precedente && nebbia) modificaNebbia({ ...nebbia, ...precedente });
+  });
+  svelaTutto.addEventListener("click", () => {
+    if (!nebbia) return;
+    memorizzaNebbia();
+    modificaNebbia({ ...nebbia, celle: nebbia.celle.slice().fill(0) });
+  });
+  copriTutto.addEventListener("click", () => {
+    if (!nebbia) return;
+    memorizzaNebbia();
+    modificaNebbia({ ...nebbia, celle: nebbia.celle.slice().fill(1) });
+  });
+  torcia.addEventListener("click", () => {
+    if (!nebbia) return;
+    const r = Number(raggio.value) || 6;
+    const caselle = pedineSalvate.filter((p) => p.tipo !== "nemico").flatMap((p) => caselleCerchio({ c: Math.round(p.c), r: Math.round(p.r) }, r));
+    if (!caselle.length) {
+      mostraSuggerimento("Nessun personaggio sulla mappa.");
+      return;
+    }
+    memorizzaNebbia();
+    modificaNebbia(cambiaCelle(nebbia, caselle, false));
+  });
+  inputCome.addEventListener("change", () => {
+    comeGiocatori = inputCome.checked;
+    ridisegnaPedine();
+  });
+
   // Pannello della griglia (DM): visibile, aggancio, lato e scarto, taratura.
   const pannelloGriglia = creaElemento("div", "mappa-griglia-pannello");
   pannelloGriglia.hidden = true;
@@ -688,6 +930,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     griglia = { ...griglia, ...modifiche };
     griglia.ox = Math.min(griglia.ox, griglia.lato);
     griglia.oy = Math.min(griglia.oy, griglia.lato);
+    ricalcolaNebbia();
     vista.impostaGriglia(griglia);
     aggiornaPannelloGriglia();
     clearTimeout(timerSalva);
@@ -836,6 +1079,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     stop() {
       smettiTavola();
       smettiCombattimento();
+      smettiNebbia?.();
       smettiGriglia?.();
       smettiPedine?.();
     },

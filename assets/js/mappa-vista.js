@@ -4,6 +4,9 @@
 // Sessione (DM e giocatori) e dallo schermo del tavolo (tavolo.html, solo
 // visione). Mentre si trascina una pedina compare la distanza percorsa
 // rispetto alla velocità; al rilascio "onSposta" salva la nuova casella.
+// Sopra la griglia c'è la nebbia di guerra: velo grigio per il DM, buio con
+// il bordo sfumato per i giocatori (impostaNebbia); il DM la disegna con
+// modoNebbia (pennello o rettangolo, a caselle).
 import {
   camAdatta,
   camPerRettangolo,
@@ -18,7 +21,11 @@ import {
   testoDistanza,
   righeGriglia,
   coloreSalute,
+  strisceNebbia,
+  casellaDiPunto,
 } from "./mappa-calcoli.js";
+
+let contatoreViste = 0;
 
 const SVG = "http://www.w3.org/2000/svg";
 // Icone fisse (nessun dato degli utenti): artigli per i nemici senza
@@ -76,8 +83,25 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
   svgMisura.style.display = "none";
   const etichettaMisura = crea("div", "mappa-etichetta-misura");
   etichettaMisura.hidden = true;
+  // Nebbia: ID unici per filtro e motivo (più viste nella stessa pagina).
+  const idVista = ++contatoreViste;
+  const svgNebbia = creaSvg("svg", { class: "mappa-nebbia", "aria-hidden": "true" });
+  const defs = creaSvg("defs");
+  const sfuma = creaSvg("filter", { id: `nebbia-sfuma-${idVista}`, x: "-5%", y: "-5%", width: "110%", height: "110%" });
+  const sfocatura = creaSvg("feGaussianBlur", { stdDeviation: "16" });
+  sfuma.append(sfocatura);
+  const motivo = creaSvg("pattern", { id: `nebbia-velo-${idVista}`, width: "14", height: "14", patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+  motivo.append(
+    creaSvg("rect", { width: "14", height: "14", fill: "rgba(18, 16, 30, 0.55)" }),
+    creaSvg("line", { x1: "0", y1: "0", x2: "0", y2: "14", stroke: "rgba(200, 200, 230, 0.18)", "stroke-width": "3" }),
+  );
+  defs.append(sfuma, motivo);
+  const gruppoNebbia = creaSvg("g");
+  svgNebbia.append(defs, gruppoNebbia);
+  const anteprimaNebbia = crea("div", "mappa-nebbia-anteprima");
+  anteprimaNebbia.hidden = true;
   const strato = crea("div", "mappa-pedine");
-  mondo.append(immagine, svgGriglia, cornice, svgMisura, strato, etichettaMisura);
+  mondo.append(immagine, svgGriglia, svgNebbia, cornice, svgMisura, strato, anteprimaNebbia, etichettaMisura);
   const vuoto = crea("div", "mappa-vuota");
   vuoto.hidden = true;
   finestra.append(mondo, vuoto);
@@ -92,6 +116,10 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
   let segueRettangolo = false;
   let presa = null; // trascinamento di una pedina in corso
   let taraturaCallback = null;
+  let nebbia = null;
+  let modoNebbiaVisto = "buio"; // "velo" (DM) o "buio" (giocatori)
+  let disegnoNebbia = null; // { inizio, muovi, fine } quando il DM disegna
+  let tratto = null;
   const puntatori = new Map();
 
   const dimensioni = () => ({ w: finestra.clientWidth || 1, h: finestra.clientHeight || 1 });
@@ -141,7 +169,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     el.title = p.nascosta ? `${p.nome} (nascosto ai giocatori)` : p.nome;
     if (puoMuovere(p.id) && interattiva) el.classList.add("mobile");
     for (const [classe, attiva] of [["mia", p.mia], ["a-terra", p.aTerra], ["nemico", p.nemico], ["nascosta", p.nascosta],
-      ["di-turno", p.diTurno], ["selezionata", selezionata === p.id], ["presa", presa?.id === p.id]]) {
+      ["di-turno", p.diTurno], ["nella-nebbia", p.nellaNebbia], ["selezionata", selezionata === p.id], ["presa", presa?.id === p.id]]) {
       if (attiva) el.classList.add(classe);
     }
     Object.assign(el.style, {
@@ -221,8 +249,23 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     etichettaMisura.style.top = `${a.y - griglia.lato * (presa.n / 2 + 0.12)}px`;
   }
 
+  function disegnaNebbia() {
+    gruppoNebbia.replaceChildren();
+    if (!mappa || !nebbia?.attiva) return;
+    const velo = modoNebbiaVisto === "velo";
+    gruppoNebbia.setAttribute("filter", velo ? "" : `url(#nebbia-sfuma-${idVista})`);
+    gruppoNebbia.setAttribute("fill", velo ? `url(#nebbia-velo-${idVista})` : "#050302");
+    sfocatura.setAttribute("stdDeviation", String(griglia.lato * 0.32));
+    strisceNebbia(nebbia, griglia).forEach(({ x, y, w, h }) => gruppoNebbia.append(creaSvg("rect", { x, y, width: w, height: h })));
+  }
+
   function adattaDimensioni() {
     if (!mappa) return;
+    for (const svg of [svgNebbia]) {
+      svg.setAttribute("width", mappa.larghezza);
+      svg.setAttribute("height", mappa.altezza);
+      svg.setAttribute("viewBox", `0 0 ${mappa.larghezza} ${mappa.altezza}`);
+    }
     svgGriglia.setAttribute("width", mappa.larghezza);
     svgGriglia.setAttribute("height", mappa.altezza);
     svgGriglia.setAttribute("viewBox", `0 0 ${mappa.larghezza} ${mappa.altezza}`);
@@ -248,6 +291,14 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       taraturaCallback(punto);
       return;
     }
+    if (disegnoNebbia && puntatori.size === 0) {
+      evento.preventDefault();
+      const casella = casellaDiPunto(griglia, punto);
+      tratto = { puntatore: evento.pointerId, ultima: casella };
+      finestra.setPointerCapture?.(evento.pointerId);
+      disegnoNebbia.inizio(casella);
+      return;
+    }
     const id = evento.target.closest?.("[data-pedina]")?.dataset.pedina;
     const p = id && pedine.find((x) => x.id === id);
     if (p && puntatori.size === 0) {
@@ -267,6 +318,14 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
 
   function muovi(evento) {
     const { sx, sy } = puntoSchermo(evento);
+    if (tratto && evento.pointerId === tratto.puntatore) {
+      const casella = casellaDiPunto(griglia, daSchermo(cam, sx, sy));
+      if (casella.c !== tratto.ultima.c || casella.r !== tratto.ultima.r) {
+        tratto.ultima = casella;
+        disegnoNebbia?.muovi(casella);
+      }
+      return;
+    }
     if (presa && evento.pointerId === presa.puntatore) {
       if (!presa.mosso && Math.hypot(sx - presa.sx, sy - presa.sy) < SOGLIA_TRASCINAMENTO) return;
       if (!presa.mobile) {
@@ -310,6 +369,12 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
   }
 
   function su(evento) {
+    if (tratto && evento.pointerId === tratto.puntatore) {
+      const finito = tratto;
+      tratto = null;
+      disegnoNebbia?.fine(finito.ultima);
+      return;
+    }
     if (presa && evento.pointerId === presa.puntatore) {
       const finita = presa;
       presa = null;
@@ -387,6 +452,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       if (immagine.getAttribute("src") !== dati.url) immagine.src = dati.url;
       adattaDimensioni();
       disegnaGriglia();
+      disegnaNebbia();
       disegnaPedine();
       if (nuova) {
         selezionata = null;
@@ -401,6 +467,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     impostaGriglia(nuova) {
       griglia = { ...griglia, ...nuova };
       disegnaGriglia();
+      disegnaNebbia();
       disegnaPedine();
       disegnaMisura();
     },
@@ -484,6 +551,34 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
         width: `${rettangolo.w}px`,
         height: `${rettangolo.h}px`,
       });
+    },
+    // Nebbia da disegnare (null = nessuna) e come mostrarla: "velo" per il
+    // DM (ci vede attraverso), "buio" per i giocatori.
+    impostaNebbia(nuova, modo = "buio") {
+      nebbia = nuova;
+      modoNebbiaVisto = modo;
+      disegnaNebbia();
+    },
+    // Disegno della nebbia (DM): con { inizio, muovi, fine } i tocchi sulla
+    // mappa arrivano come caselle invece di spostare la vista; null per smettere.
+    modoNebbia(gestori) {
+      disegnoNebbia = gestori;
+      tratto = null;
+      finestra.classList.toggle("in-taratura", Boolean(gestori) || Boolean(taraturaCallback));
+    },
+    // Riquadro del rettangolo che il DM sta tracciando (null per toglierlo).
+    anteprimaRettangolo(a, b, copri = false) {
+      anteprimaNebbia.hidden = !a;
+      if (!a) return;
+      const L = griglia.lato;
+      Object.assign(anteprimaNebbia.style, {
+        left: `${griglia.ox + Math.min(a.c, b.c) * L}px`,
+        top: `${griglia.oy + Math.min(a.r, b.r) * L}px`,
+        width: `${(Math.abs(b.c - a.c) + 1) * L}px`,
+        height: `${(Math.abs(b.r - a.r) + 1) * L}px`,
+        borderWidth: `${2 / cam.z}px`,
+      });
+      anteprimaNebbia.classList.toggle("copri", copri);
     },
     // Taratura: i prossimi tocchi arrivano a "callback" (null per smettere).
     modoTaratura(callback) {

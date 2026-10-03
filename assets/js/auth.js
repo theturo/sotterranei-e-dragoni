@@ -1,6 +1,7 @@
 // Funzioni condivise di autenticazione e gestione ruoli.
 import { auth, db } from "./firebase-config.js";
 import { eliminaImmagine, percorsiRitratto } from "./immagini.js";
+import { codificaCelle, decodificaCelle } from "./mappa-calcoli.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -1377,6 +1378,7 @@ export async function eliminaContenuto(campagnaId, immagineId) {
   batch.delete(doc(db, "campagne", campagnaId, "immagini", immagineId));
   batch.delete(doc(db, "campagne", campagnaId, "immaginiDM", immagineId));
   batch.delete(doc(db, "campagne", campagnaId, "mappe", immagineId));
+  batch.delete(doc(db, "campagne", campagnaId, "mappe", immagineId, "nebbia", "stato"));
   [...pedine.docs, ...pedineDM.docs].forEach((d) => batch.delete(d.ref));
   if (tavola.exists() && tavola.data().immagineId === immagineId) {
     batch.set(doc(db, "campagne", campagnaId, "stato", "tavola"), { immagineId: null, inquadratura: null, aggiornatoIl: serverTimestamp() }, { merge: true });
@@ -1461,6 +1463,9 @@ export function ascoltaContenutiVisibili(campagnaId, uid, callback, alErrore = (
 //   è agganciata).
 // campagne/{c}/mappe/{immagineId}/pedineDM/{id}: nemici nascosti, solo per il
 //   DM (stessi campi): passano in "pedine" quando il DM li rivela.
+// campagne/{c}/mappe/{immagineId}/nebbia/stato: nebbia di guerra { attiva, c0,
+//   r0, colonne, righe, celle } (celle: un bit per casella, in base64; vedi
+//   "Nebbia di guerra" in mappa-calcoli.js). Assente = nebbia mai usata.
 // I giocatori leggono solo la mappa in tavola, e ne scaricano l'immagine
 // perché compaiono nel suo "inTavolaPer".
 
@@ -1587,6 +1592,30 @@ export async function rimuoviPedine(campagnaId, immagineId, pedine) {
   const batch = writeBatch(db);
   pedine.forEach(({ id, nascosta }) => batch.delete(riferimentoPedina(campagnaId, immagineId, id, nascosta)));
   await batch.commit();
+}
+
+const riferimentoNebbia = (campagnaId, immagineId) => doc(db, "campagne", campagnaId, "mappe", immagineId, "nebbia", "stato");
+
+// callback(nebbia | null), con "celle" già decodificate.
+export function ascoltaNebbia(campagnaId, immagineId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(riferimentoNebbia(campagnaId, immagineId), (s) => {
+    if (!s.exists()) {
+      callback(null);
+      return;
+    }
+    const d = s.data();
+    callback({
+      attiva: d.attiva === true,
+      c0: d.c0, r0: d.r0, colonne: d.colonne, righe: d.righe,
+      celle: decodificaCelle(d.celle, d.colonne * d.righe),
+    });
+  }, alErrore);
+}
+
+export function salvaNebbia(campagnaId, immagineId, { attiva, c0, r0, colonne, righe, celle }) {
+  return setDoc(riferimentoNebbia(campagnaId, immagineId), {
+    attiva: Boolean(attiva), c0, r0, colonne, righe, celle: codificaCelle(celle), aggiornatoIl: serverTimestamp(),
+  });
 }
 
 // Il tavolo segue (o no) la pedina di turno durante il combattimento.

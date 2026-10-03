@@ -486,6 +486,14 @@ service cloud.firestore {
           allow get, list, delete: if isDMdellaCampagna(campagnaId);
           allow create, update: if isDMdellaCampagna(campagnaId) && pedinaNemicoValida();
         }
+
+        // Nebbia di guerra della mappa (un documento "stato"): la scrive il
+        // DM, la leggono i membri quando la mappa è in tavola.
+        match /nebbia/{docId} {
+          allow get: if isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId);
+          allow delete: if isDMdellaCampagna(campagnaId);
+          allow create, update: if isDMdellaCampagna(campagnaId) && docId == 'stato' && nebbiaValida();
+        }
       }
 
       // Riepilogo pubblico della scheda attiva di un membro.
@@ -584,6 +592,15 @@ service cloud.firestore {
         && condizioniValide(d.condizioni)
         && numeroTra(d.c, -50, 2000) && numeroTra(d.r, -50, 2000)
         && d.aggiornatoIl == request.time;
+    }
+
+    function nebbiaValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['attiva', 'c0', 'r0', 'colonne', 'righe', 'celle', 'aggiornatoIl'])
+        && d.attiva is bool
+        && d.c0 in [-1, 0] && d.r0 in [-1, 0]
+        && interoTra(d.colonne, 1, 500) && interoTra(d.righe, 1, 500)
+        && d.celle is string && d.celle.size() <= 50000;
     }
 
     function tagliaValida(taglia) {

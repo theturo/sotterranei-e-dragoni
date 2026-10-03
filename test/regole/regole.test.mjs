@@ -812,3 +812,24 @@ describe("Nemici nascosti e pedine dei nemici", () => {
   });
 });
 
+describe("Nebbia di guerra", () => {
+  const nebbia = (extra = {}) => ({ attiva: true, c0: 0, r0: -1, colonne: 24, righe: 17, celle: "AAAA//8=", aggiornatoIl: serverTimestamp(), ...extra });
+  test("il DM salva la nebbia di una mappa", () =>
+    assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta/nebbia/stato"), nebbia())));
+  test("il DM NON salva una nebbia con campi sbagliati", async () => {
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta/nebbia/stato"), nebbia({ c0: 3 })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta/nebbia/stato"), nebbia({ extra: 1 })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/nascosta/nebbia/altro"), nebbia()));
+  });
+  test("un membro legge la nebbia della mappa in tavola, non delle altre", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "campagne/c1/mappe/pubblica/nebbia/stato"), nebbia());
+      await setDoc(doc(ctx.firestore(), "campagne/c1/mappe/nascosta/nebbia/stato"), nebbia());
+    });
+    await assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/nebbia/stato")));
+    await assertFails(getDoc(doc(come("p1"), "campagne/c1/mappe/nascosta/nebbia/stato")));
+  });
+  test("un giocatore NON cambia la nebbia", () =>
+    assertFails(setDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/nebbia/stato"), nebbia({ attiva: false }))));
+});
+
