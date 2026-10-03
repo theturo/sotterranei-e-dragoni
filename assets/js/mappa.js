@@ -11,6 +11,11 @@
 //   Nebbia di guerra (fase 3, «Nebbia…»): il DM svela e copre a caselle, con
 //   pennello o rettangolo, in diretta; la vede come un velo, i giocatori come
 //   buio. I nemici sotto la nebbia spariscono per i giocatori.
+// - Tutti (fase 4, barra «Strumenti»): righello (gli altri lo vedono mentre si
+//   misura), ping (onda e suono; quello del DM porta tutti sul punto) e aree
+//   degli incantesimi (dai propri incantesimi o a mano; il DM sempre a mano),
+//   con le caselle colpite secondo la regola su griglia: restano finché le
+//   toglie chi le ha messe o il DM.
 // - Giocatore: vede la mappa in tavola, si sposta e fa zoom, muove solo la
 //   propria pedina ("Entra in mappa" se non c'è ancora); al suo turno la mappa
 //   si centra su di lui e compare «Tocca a te!».
@@ -37,6 +42,10 @@ import {
   aggiornaPfNemico,
   ascoltaNebbia,
   salvaNebbia,
+  salvaStrumenti,
+  creaArea,
+  rimuoviArea,
+  rimuoviAree,
 } from "./auth.js";
 import { urlImmagine, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
@@ -46,7 +55,10 @@ import { costruisciPedine, creaCacheRitratti, creaCacheImmagini, pedinaDiTurno }
 import {
   taratura, caselleLibereIntorno, METRI_PER_CASELLA, formattaMetri, TAGLIE, caselleTaglia,
   dimensioniNebbia, creaNebbia, adattaNebbia, cambiaCelle, casellePennello, caselleRettangolo, caselleCerchio,
+  centroCasellaDiPunto, verticePiuVicino, caselleArea, pedineInCaselle,
 } from "./mappa-calcoli.js";
+import { creaStrumentiCondivisi } from "./mappa-strumenti.js";
+import { areeDellaScheda, FORME_AREA, MISURE_AREA } from "./aree-incantesimi.js";
 
 // Immagine di una mappa con le sue dimensioni vere (la griglia è in pixel
 // dell'immagine). Le promesse restano in memoria: si scarica una volta sola.
@@ -68,7 +80,9 @@ export function caricaMappa(campagnaId, immagineId) {
 
 const arrotonda = (n) => Math.round(n * 10) / 10;
 
-export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, membri, avviso }) {
+// "membri": uid dei membri per mettere la mappa in tavola (solo DM);
+// "membriUid": uid dei membri dalla campagna (per i colori degli strumenti).
+export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, membri, membriUid, avviso }) {
   const intestazione = creaElemento("div", "sessione-appunti-intestazione mappa-intestazione");
   const titolo = creaElemento("h3", null, "Mappa");
   const nomeMappa = creaElemento("span", "mappa-nome");
@@ -133,6 +147,22 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   });
   area.append(sovrapposti);
 
+  // Strumenti di tutti: righelli, ping e aree della mappa mostrata.
+  const condivisi = creaStrumentiCondivisi({
+    vista,
+    campagnaId,
+    mioUid: uid,
+    membri: membriUid,
+    griglia: () => griglia,
+    onPing: ({ x, y, delDM }) => {
+      // Il ping del DM porta i giocatori sul punto.
+      if (isDM || !delDM) return;
+      vista.centraPunto({ x, y });
+      mostraSuggerimento("Il DM indica un punto della mappa.");
+    },
+    onAree: () => aggiornaElencoAree(),
+  });
+
   const suggerimento = creaElemento("div", "mappa-suggerimento");
   suggerimento.hidden = true;
   sovrapposti.append(suggerimento);
@@ -181,12 +211,14 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   // Giocatore: all'apertura di una mappa la vista parte centrata sulla sua
   // pedina (appena ci sono sia l'immagine sia le pedine).
   let daCentrare = false;
+  let pedineMostrate = [];
   function ridisegnaPedine() {
     if (!mappaId) return;
-    vista.impostaPedine(costruisciPedine({
+    pedineMostrate = costruisciPedine({
       party: party(), pedine: pedineSalvate, combattimento, mioUid: uid, perDM: isDM, ritratto, immagine,
       nebbia, comeGiocatori,
-    }));
+    });
+    vista.impostaPedine(pedineMostrate);
     vista.impostaNebbia(nebbia, isDM && !comeGiocatori ? "velo" : "buio");
     if (daCentrare && vista.centraSu(uid)) daCentrare = false;
     aggiornaPiede();
@@ -201,6 +233,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     smettiGriglia = smettiPedine = smettiNebbia = null;
     mappaId = id;
     griglia = null;
+    condivisi.cambiaMappa(id);
     nebbiaSalvata = nebbia = dimensioniMappa = null;
     storiaNebbia.length = 0;
     pedineSalvate = [];
@@ -220,6 +253,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       vista.impostaGriglia(g);
       aggiornaPannelloGriglia();
       ricalcolaNebbia();
+      condivisi.ridisegna();
     });
     smettiNebbia = ascoltaNebbia(campagnaId, id, (n) => {
       nebbiaSalvata = n;
@@ -775,6 +809,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
 
   function scegliStrumento(nuovo) {
     strumento = nuovo;
+    if (nuovo !== "mano" && strumentoMappa !== "mano") scegliStrumentoMappa("mano");
     if (nuovo === "mano") {
       vista.modoNebbia(null);
       vista.anteprimaRettangolo(null);
@@ -932,6 +967,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     griglia.oy = Math.min(griglia.oy, griglia.lato);
     ricalcolaNebbia();
     vista.impostaGriglia(griglia);
+    condivisi.ridisegna();
     aggiornaPannelloGriglia();
     clearTimeout(timerSalva);
     const id = mappaId;
@@ -1004,6 +1040,240 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     if (evento.key === "Escape" && primoPunto !== null) annullaTaratura();
   });
 
+  // ---------- strumenti di tutti: righello, ping, aree ----------
+  let strumentoMappa = "mano"; // mano, righello, ping, area
+  const barraStrumenti = creaElemento("div", "mappa-strumenti-barra");
+  barraStrumenti.hidden = true;
+  const gruppoStrumenti = gruppo([["mano", "Mano"], ["righello", "Righello"], ["ping", "Ping"], ["area", "Area"]]);
+  gruppoStrumenti.setAttribute("aria-label", "Strumenti della mappa");
+  const opzioniArea = creaElemento("span", "mappa-area-opzioni");
+  opzioniArea.hidden = true;
+  const sceltaIncantesimo = creaElemento("select", "select-dadi");
+  sceltaIncantesimo.setAttribute("aria-label", "Incantesimo");
+  const sceltaForma = creaElemento("select", "select-dadi");
+  sceltaForma.setAttribute("aria-label", "Forma dell'area");
+  sceltaForma.replaceChildren(...FORME_AREA.map((f) => new Option(f.nome, f.chiave)));
+  const sceltaMisura = creaElemento("select", "select-dadi");
+  sceltaMisura.setAttribute("aria-label", "Misura dell'area");
+  sceltaMisura.replaceChildren(...MISURE_AREA.map((m) => new Option(`${formattaMetri(m)} m`, String(m))));
+  sceltaMisura.value = "6";
+  opzioniArea.append(sceltaIncantesimo, sceltaForma, sceltaMisura);
+  const mioColore = creaElemento("span", "mappa-campo");
+  const aiutoStrumenti = creaElemento("p", "mappa-aiuto");
+  barraStrumenti.append(gruppoStrumenti, opzioniArea, creaElemento("span", "mappa-spazio"), mioColore, aiutoStrumenti);
+  const elencoAree = creaElemento("div", "mappa-aree-elenco");
+  elencoAree.hidden = true;
+  pannello.insertBefore(barraStrumenti, area);
+  pannello.insertBefore(elencoAree, area);
+
+  // Incantesimi con un'area del proprio personaggio (giocatori).
+  let mieAree = [];
+  let schedaAree = null;
+  async function caricaMieAree() {
+    if (isDM) return;
+    const schedaId = party().find((r) => r.uid === uid)?.schedaId || null;
+    if (schedaId === schedaAree) return;
+    schedaAree = schedaId;
+    mieAree = [];
+    if (schedaId) {
+      try {
+        mieAree = areeDellaScheda(await ottieniScheda(schedaId));
+      } catch (errore) {
+        console.error(errore);
+      }
+    }
+    aggiornaSceltaIncantesimo();
+  }
+  function aggiornaSceltaIncantesimo() {
+    const prima = sceltaIncantesimo.value;
+    sceltaIncantesimo.replaceChildren(
+      ...mieAree.map((i) => new Option(`${i.nome} (${FORME_AREA.find((f) => f.chiave === i.forma)?.nome.toLowerCase()} ${formattaMetri(i.misura)} m)`, i.chiave)),
+      new Option("A mano…", ""),
+    );
+    // Si parte dal primo incantesimo, finché il giocatore non sceglie altro.
+    const tenuta = mieAree.some((i) => i.chiave === prima) || (prima === "" && sceltaIncantesimo.dataset.scelto);
+    sceltaIncantesimo.value = tenuta ? prima : mieAree[0]?.chiave || "";
+    aggiornaBarraStrumenti();
+  }
+
+  const nomeForma = (forma) => FORME_AREA.find((f) => f.chiave === forma)?.nome || forma;
+  function areaScelta() {
+    const incantesimo = !isDM && mieAree.find((i) => i.chiave === sceltaIncantesimo.value);
+    if (incantesimo) return { nome: incantesimo.nome, forma: incantesimo.forma, misura: incantesimo.misura };
+    const misura = Number(sceltaMisura.value) || 6;
+    return { nome: `${nomeForma(sceltaForma.value)} ${formattaMetri(misura)} m`, forma: sceltaForma.value, misura };
+  }
+
+  const AIUTI_STRUMENTI = {
+    mano: "Mano: trascina lo sfondo per spostarti e la tua pedina per muoverla.",
+    righello: "Righello: trascina da una casella all'altra. Tutti vedono la misura finché tieni premuto.",
+    ping: "Ping: tocca un punto per dire «guardate qui!».",
+    area: "Area: premi su un incrocio della griglia e trascina per orientarla (la sfera si sposta). Le caselle colpite si illuminano per tutti.",
+  };
+  function aggiornaBarraStrumenti() {
+    barraStrumenti.hidden = !mappaId;
+    for (const b of gruppoStrumenti.querySelectorAll("button")) {
+      const scelto = b.dataset.voce === strumentoMappa;
+      b.classList.toggle("btn-tabella-evidenza", scelto);
+      b.setAttribute("aria-pressed", String(scelto));
+    }
+    opzioniArea.hidden = strumentoMappa !== "area";
+    sceltaIncantesimo.hidden = isDM;
+    const aMano = isDM || !sceltaIncantesimo.value;
+    sceltaForma.hidden = sceltaMisura.hidden = !aMano;
+    const pallino = creaElemento("span", "mappa-colore");
+    pallino.style.setProperty("--colore", condivisi.colore(uid));
+    mioColore.replaceChildren(pallino, document.createTextNode("Il tuo colore"));
+    aiutoStrumenti.textContent = AIUTI_STRUMENTI[strumentoMappa];
+  }
+
+  function scegliStrumentoMappa(nuovo) {
+    strumentoMappa = nuovo;
+    if (nuovo !== "mano") {
+      if (strumento !== "mano") scegliStrumento("mano");
+      annullaTaratura();
+    }
+    vista.modoPunti(nuovo === "righello" ? gestoriRighello() : nuovo === "ping" ? gestoriPing() : nuovo === "area" ? gestoriArea() : null);
+    aggiornaBarraStrumenti();
+  }
+
+  const tondo = (n) => Math.round(n * 10) / 10;
+  function errore(testo) {
+    return (e) => {
+      console.error(e);
+      avviso(testo, true);
+    };
+  }
+
+  // Righello: da centro a centro delle caselle; gli altri lo ricevono al più
+  // ogni 150 ms mentre si trascina, e sparisce al rilascio.
+  let righelloInCorso = null;
+  let timerRighello = null;
+  function inviaRighello() {
+    clearTimeout(timerRighello);
+    timerRighello = null;
+    if (!mappaId) return;
+    salvaStrumenti(campagnaId, mappaId, uid, { righello: righelloInCorso }).catch(errore("Impossibile condividere il righello."));
+  }
+  function gestoriRighello() {
+    const centro = (p) => {
+      const c = centroCasellaDiPunto(griglia, p);
+      return { x: tondo(c.x), y: tondo(c.y) };
+    };
+    return {
+      inizio(p) {
+        if (!griglia) return;
+        const da = centro(p);
+        righelloInCorso = { x1: da.x, y1: da.y, x2: da.x, y2: da.y };
+        condivisi.impostaMioRighello(righelloInCorso);
+        inviaRighello();
+      },
+      muovi(p) {
+        if (!righelloInCorso) return;
+        const a = centro(p);
+        if (a.x === righelloInCorso.x2 && a.y === righelloInCorso.y2) return;
+        righelloInCorso = { ...righelloInCorso, x2: a.x, y2: a.y };
+        condivisi.impostaMioRighello(righelloInCorso);
+        if (!timerRighello) timerRighello = setTimeout(inviaRighello, 150);
+      },
+      fine() {
+        if (!righelloInCorso) return;
+        righelloInCorso = null;
+        condivisi.impostaMioRighello(null);
+        inviaRighello();
+      },
+    };
+  }
+  window.addEventListener("pagehide", () => {
+    if (righelloInCorso) {
+      righelloInCorso = null;
+      inviaRighello();
+    }
+  });
+
+  function gestoriPing() {
+    return {
+      inizio(p) {
+        if (!mappaId) return;
+        const punto = { x: tondo(p.x), y: tondo(p.y) };
+        condivisi.mioPing(punto);
+        salvaStrumenti(campagnaId, mappaId, uid, { ping: { ...punto, n: Date.now() } }).catch(errore("Impossibile inviare il ping."));
+      },
+      muovi() {},
+      fine() {},
+    };
+  }
+
+  // Area: origine su un incrocio della griglia; trascinando si orienta (o si
+  // sposta, la sfera). Al rilascio si salva e la vedono tutti.
+  function gestoriArea() {
+    let bozza = null;
+    const vertice = (p) => {
+      const v = verticePiuVicino(griglia, p);
+      return { x: tondo(v.x), y: tondo(v.y) };
+    };
+    return {
+      inizio(p) {
+        if (!griglia) return;
+        bozza = { ...areaScelta(), ...vertice(p), angolo: 0 };
+        condivisi.impostaBozza(bozza);
+      },
+      muovi(p) {
+        if (!bozza) return;
+        if (bozza.forma === "sfera") bozza = { ...bozza, ...vertice(p) };
+        else if (Math.hypot(p.x - bozza.x, p.y - bozza.y) > griglia.lato * 0.3) {
+          bozza = { ...bozza, angolo: Math.round(Math.atan2(p.y - bozza.y, p.x - bozza.x) * 1000) / 1000 };
+        }
+        condivisi.impostaBozza(bozza);
+      },
+      fine(_p, annullato) {
+        const finita = bozza;
+        bozza = null;
+        if (!finita || annullato || !mappaId) {
+          condivisi.impostaBozza(null);
+          return;
+        }
+        const dentro = pedineInCaselle(pedineMostrate, caselleArea(finita, griglia)).map((x) => x.nome);
+        creaArea(campagnaId, mappaId, uid, finita).catch(errore("Impossibile mettere l'area sulla mappa."));
+        condivisi.impostaBozza(null);
+        mostraSuggerimento(dentro.length ? `${finita.nome}: dentro ${dentro.join(", ")}.` : `${finita.nome}: nessuno dentro.`, 3000);
+      },
+    };
+  }
+
+  gruppoStrumenti.addEventListener("click", (evento) => {
+    const voce = evento.target.closest("button")?.dataset.voce;
+    if (voce) scegliStrumentoMappa(voce);
+  });
+  sceltaIncantesimo.addEventListener("change", () => (sceltaIncantesimo.dataset.scelto = "1"));
+  for (const s of [sceltaIncantesimo, sceltaForma, sceltaMisura]) s.addEventListener("change", aggiornaBarraStrumenti);
+
+  // Elenco delle aree sulla mappa: chi le ha messe (o il DM) le toglie.
+  const togliTutte = bottone("Togli tutte", "btn-tabella btn-tabella-pericolo");
+  togliTutte.addEventListener("click", () => {
+    if (mappaId) rimuoviAree(campagnaId, mappaId).catch(errore("Impossibile togliere le aree."));
+  });
+  function aggiornaElencoAree() {
+    const aree = condivisi.aree();
+    elencoAree.hidden = !mappaId || aree.length === 0;
+    const voci = aree.map((a) => {
+      const voce = creaElemento("span", "mappa-area-voce");
+      voce.style.setProperty("--colore", condivisi.colore(a.autoreUid));
+      const pallino = creaElemento("span", "mappa-colore");
+      pallino.style.setProperty("--colore", condivisi.colore(a.autoreUid));
+      voce.append(pallino, document.createTextNode(a.nome));
+      if (isDM || a.autoreUid === uid) {
+        const x = bottone("×", "");
+        x.setAttribute("aria-label", `Togli ${a.nome}`);
+        x.addEventListener("click", () => rimuoviArea(campagnaId, mappaId, a.id).catch(errore("Impossibile togliere l'area.")));
+        voce.append(x);
+      }
+      return voce;
+    });
+    elencoAree.replaceChildren(creaElemento("span", "mappa-vassoio-titolo", "Aree"), ...voci);
+    if (isDM && aree.length > 1) elencoAree.append(togliTutte);
+  }
+
   // ---------- aggiornamento generale ----------
   function aggiornaScelta() {
     const mappe = mappeLibreria();
@@ -1043,6 +1313,8 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
     pannello.hidden = !isDM && !tavola.immagineId;
     aggiornaPiede();
     aggiornaNemici();
+    aggiornaBarraStrumenti();
+    aggiornaElencoAree();
   }
 
   const smettiTavola = ascoltaTavola(campagnaId, (dati) => {
@@ -1065,13 +1337,16 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   });
 
   caricaVelocita();
+  caricaMieAree();
   aggiorna();
 
   return {
     // Chiamato quando cambiano party o Libreria.
     ridisegna() {
       caricaVelocita();
+      caricaMieAree();
       ridisegnaPedine();
+      condivisi.ridisegna();
       aggiorna();
     },
     // Per il tracker: i nemici nuovi partono nascosti se c'è una mappa in tavola.
@@ -1082,6 +1357,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       smettiNebbia?.();
       smettiGriglia?.();
       smettiPedine?.();
+      condivisi.stop();
     },
   };
 }

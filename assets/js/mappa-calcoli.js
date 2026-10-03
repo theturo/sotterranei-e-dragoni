@@ -271,3 +271,87 @@ export function decodificaCelle(testo, quante) {
   for (let i = 0; i < quante; i += 1) celle[i] = (byte.charCodeAt(i >> 3) >> (i & 7)) & 1;
   return celle;
 }
+
+// ---------- Strumenti: righello e aree degli incantesimi ----------
+// Area: { forma: "sfera" | "cono" | "cubo" | "linea", misura (metri), x, y
+// (origine, in pixel della mappa), angolo (radianti, direzione) }. Regola su
+// griglia: una casella è colpita se il suo centro è dentro la forma. Sfera:
+// raggio dall'origine. Cono: largo in ogni punto quanto è distante
+// dall'origine. Linea: larga una casella. Cubo: un angolo nell'origine, verso
+// il quadrante della direzione.
+
+export const pixelDaMetri = (metri, griglia) => (metri / METRI_PER_CASELLA) * griglia.lato;
+
+export const verticePiuVicino = (griglia, { x, y }) => ({
+  x: griglia.ox + Math.round((x - griglia.ox) / griglia.lato) * griglia.lato,
+  y: griglia.oy + Math.round((y - griglia.oy) / griglia.lato) * griglia.lato,
+});
+
+export const centroCasellaDiPunto = (griglia, punto) => centroCasella(griglia, casellaDiPunto(griglia, punto));
+
+export function puntoInArea(area, griglia, px, py) {
+  const R = pixelDaMetri(area.misura, griglia);
+  const dx = px - area.x;
+  const dy = py - area.y;
+  const tolleranza = 0.5;
+  if (area.forma === "sfera") return dx * dx + dy * dy <= R * R + tolleranza;
+  const ux = Math.cos(area.angolo || 0);
+  const uy = Math.sin(area.angolo || 0);
+  if (area.forma === "cubo") {
+    const sx = ux >= 0 ? 1 : -1;
+    const sy = uy >= 0 ? 1 : -1;
+    return dx * sx >= 0 && dx * sx <= R && dy * sy >= 0 && dy * sy <= R;
+  }
+  const lungo = dx * ux + dy * uy;
+  const largo = -dx * uy + dy * ux;
+  if (area.forma === "cono") return lungo > 0 && lungo <= R + tolleranza && Math.abs(largo) <= lungo / 2 + tolleranza;
+  return lungo >= 0 && lungo <= R + tolleranza && Math.abs(largo) <= griglia.lato / 2;
+}
+
+// Caselle colpite da un'area ([{ c, r }]).
+export function caselleArea(area, griglia) {
+  const R = pixelDaMetri(area.misura, griglia) + griglia.lato;
+  const da = casellaDiPunto(griglia, { x: area.x - R, y: area.y - R });
+  const a = casellaDiPunto(griglia, { x: area.x + R, y: area.y + R });
+  const caselle = [];
+  for (let r = da.r; r <= a.r; r += 1) {
+    for (let c = da.c; c <= a.c; c += 1) {
+      const centro = centroCasella(griglia, { c, r });
+      if (puntoInArea(area, griglia, centro.x, centro.y)) caselle.push({ c, r });
+    }
+  }
+  return caselle;
+}
+
+// Contorno da disegnare: { cerchio: { cx, cy, r } } oppure { punti: [[x, y], …] }.
+export function contornoArea(area, griglia) {
+  const R = pixelDaMetri(area.misura, griglia);
+  if (area.forma === "sfera") return { cerchio: { cx: area.x, cy: area.y, r: R } };
+  const ux = Math.cos(area.angolo || 0);
+  const uy = Math.sin(area.angolo || 0);
+  const p = (lungo, largo) => [area.x + lungo * ux - largo * uy, area.y + lungo * uy + largo * ux];
+  if (area.forma === "cono") return { punti: [p(0, 0), p(R, R / 2), p(R, -R / 2)] };
+  if (area.forma === "linea") {
+    const m = griglia.lato / 2;
+    return { punti: [p(0, m), p(R, m), p(R, -m), p(0, -m)] };
+  }
+  const sx = ux >= 0 ? 1 : -1;
+  const sy = uy >= 0 ? 1 : -1;
+  return { punti: [[area.x, area.y], [area.x + R * sx, area.y], [area.x + R * sx, area.y + R * sy], [area.x, area.y + R * sy]] };
+}
+
+// Pedine dentro un insieme di caselle (una pedina grande basta che ne tocchi una).
+export function pedineInCaselle(pedine, caselle) {
+  const colpite = new Set(caselle.map(({ c, r }) => `${c},${r}`));
+  return pedine.filter((p) => {
+    const n = p.caselle || 1;
+    const c0 = Math.round(p.c);
+    const r0 = Math.round(p.r);
+    for (let dr = 0; dr < n; dr += 1) for (let dc = 0; dc < n; dc += 1) if (colpite.has(`${c0 + dc},${r0 + dr}`)) return true;
+    return false;
+  });
+}
+
+// Righello: metri tra le caselle di due punti (la diagonale vale una casella).
+export const metriTraPunti = (griglia, da, a) =>
+  caselleTra(casellaDiPunto(griglia, da), casellaDiPunto(griglia, a)) * METRI_PER_CASELLA;

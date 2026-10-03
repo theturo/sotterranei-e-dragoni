@@ -1384,6 +1384,11 @@ export async function eliminaContenuto(campagnaId, immagineId) {
     batch.set(doc(db, "campagne", campagnaId, "stato", "tavola"), { immagineId: null, inquadratura: null, aggiornatoIl: serverTimestamp() }, { merge: true });
   }
   await batch.commit();
+  const [aree, strumenti] = await Promise.all([
+    getDocs(collection(db, "campagne", campagnaId, "mappe", immagineId, "aree")),
+    getDocs(collection(db, "campagne", campagnaId, "mappe", immagineId, "strumenti")),
+  ]);
+  await scriviAPezzi([...aree.docs, ...strumenti.docs].map((d) => (b) => b.delete(d.ref)));
 }
 
 // Fine sessione: ciò che è stato mostrato smette di essere visibile "dal vivo";
@@ -1466,6 +1471,12 @@ export function ascoltaContenutiVisibili(campagnaId, uid, callback, alErrore = (
 // campagne/{c}/mappe/{immagineId}/nebbia/stato: nebbia di guerra { attiva, c0,
 //   r0, colonne, righe, celle } (celle: un bit per casella, in base64; vedi
 //   "Nebbia di guerra" in mappa-calcoli.js). Assente = nebbia mai usata.
+// campagne/{c}/mappe/{immagineId}/strumenti/{uid}: righello e ping di ognuno
+//   { righello: { x1, y1, x2, y2 } | null, ping: { x, y, n } | null } (in
+//   pixel della mappa); ognuno scrive solo il proprio.
+// campagne/{c}/mappe/{immagineId}/aree/{id}: aree degli incantesimi { autoreUid,
+//   nome, forma, misura (metri), x, y, angolo }: restano finché le toglie chi
+//   le ha messe o il DM.
 // I giocatori leggono solo la mappa in tavola, e ne scaricano l'immagine
 // perché compaiono nel suo "inTavolaPer".
 
@@ -1616,6 +1627,59 @@ export function salvaNebbia(campagnaId, immagineId, { attiva, c0, r0, colonne, r
   return setDoc(riferimentoNebbia(campagnaId, immagineId), {
     attiva: Boolean(attiva), c0, r0, colonne, righe, celle: codificaCelle(celle), aggiornatoIl: serverTimestamp(),
   });
+}
+
+// ---------- Strumenti della mappa (fase 4) ----------
+const riferimentoStrumenti = (campagnaId, immagineId, uid) =>
+  doc(db, "campagne", campagnaId, "mappe", immagineId, "strumenti", uid);
+const collezioneAree = (campagnaId, immagineId) => collection(db, "campagne", campagnaId, "mappe", immagineId, "aree");
+
+// callback([{ uid, righello, ping, aggiornatoIl (millisecondi) }]).
+export function ascoltaStrumenti(campagnaId, immagineId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(collection(db, "campagne", campagnaId, "mappe", immagineId, "strumenti"), (s) => {
+    callback(s.docs.map((d) => {
+      const dati = d.data();
+      return {
+        uid: d.id,
+        righello: dati.righello || null,
+        ping: dati.ping || null,
+        aggiornatoIl: dati.aggiornatoIl?.toMillis?.() ?? Date.now(),
+      };
+    }));
+  }, alErrore);
+}
+
+// Righello in corso ({ x1, y1, x2, y2 } in pixel della mappa) o null quando
+// si smette di misurare; il ping ({ x, y, n }) resta finché non ne arriva un
+// altro (gli altri lo vedono quando cambia "n").
+export function salvaStrumenti(campagnaId, immagineId, uid, modifiche) {
+  return setDoc(riferimentoStrumenti(campagnaId, immagineId, uid), { ...modifiche, aggiornatoIl: serverTimestamp() }, { merge: true });
+}
+
+// callback([{ id, autoreUid, nome, forma, misura, x, y, angolo }]).
+export function ascoltaAree(campagnaId, immagineId, callback, alErrore = (e) => console.error(e)) {
+  return onSnapshot(collezioneAree(campagnaId, immagineId), (s) => {
+    callback(s.docs.map((d) => {
+      const { autoreUid, nome, forma, misura, x, y, angolo } = d.data();
+      return { id: d.id, autoreUid, nome, forma, misura, x, y, angolo };
+    }));
+  }, alErrore);
+}
+
+export function creaArea(campagnaId, immagineId, uid, { nome, forma, misura, x, y, angolo }) {
+  return addDoc(collezioneAree(campagnaId, immagineId), {
+    autoreUid: uid, nome, forma, misura, x, y, angolo, aggiornatoIl: serverTimestamp(),
+  });
+}
+
+export function rimuoviArea(campagnaId, immagineId, id) {
+  return deleteDoc(doc(collezioneAree(campagnaId, immagineId), id));
+}
+
+// DM: toglie tutte le aree della mappa.
+export async function rimuoviAree(campagnaId, immagineId) {
+  const aree = await getDocs(collezioneAree(campagnaId, immagineId));
+  await scriviAPezzi(aree.docs.map((d) => (b) => b.delete(d.ref)));
 }
 
 // Il tavolo segue (o no) la pedina di turno durante il combattimento.

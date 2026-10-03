@@ -494,6 +494,25 @@ service cloud.firestore {
           allow delete: if isDMdellaCampagna(campagnaId);
           allow create, update: if isDMdellaCampagna(campagnaId) && docId == 'stato' && nebbiaValida();
         }
+
+        // Strumenti dal vivo (righello e ping): un documento per persona, che
+        // scrive solo lei; li vedono il DM e i membri quando la mappa è in tavola.
+        match /strumenti/{uid} {
+          allow get, list: if isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId);
+          allow create, update: if uid == request.auth.uid && strumentiValidi()
+            && (isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId));
+          allow delete: if isDMdellaCampagna(campagnaId) || uid == request.auth.uid;
+        }
+
+        // Aree degli incantesimi: le mette chiunque sia al tavolo (a proprio
+        // nome), le toglie chi le ha messe o il DM.
+        match /aree/{areaId} {
+          allow get, list: if isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId);
+          allow create: if areaValida()
+            && (isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId));
+          allow delete: if isDMdellaCampagna(campagnaId)
+            || (resource.data.autoreUid == request.auth.uid && isNellaCampagna(campagnaId));
+        }
       }
 
       // Riepilogo pubblico della scheda attiva di un membro.
@@ -601,6 +620,35 @@ service cloud.firestore {
         && d.c0 in [-1, 0] && d.r0 in [-1, 0]
         && interoTra(d.colonne, 1, 500) && interoTra(d.righe, 1, 500)
         && d.celle is string && d.celle.size() <= 50000;
+    }
+
+    function mappaConCampi(p, campi) {
+      return p is map && p.keys().hasOnly(campi) && p.keys().hasAll(campi);
+    }
+
+    function strumentiValidi() {
+      let d = request.resource.data;
+      let r = d.get('righello', null);
+      let p = d.get('ping', null);
+      return d.keys().hasOnly(['righello', 'ping', 'aggiornatoIl'])
+        && d.aggiornatoIl == request.time
+        && (r == null || (mappaConCampi(r, ['x1', 'y1', 'x2', 'y2'])
+          && numeroTra(r.x1, -100000, 100000) && numeroTra(r.y1, -100000, 100000)
+          && numeroTra(r.x2, -100000, 100000) && numeroTra(r.y2, -100000, 100000)))
+        && (p == null || (mappaConCampi(p, ['x', 'y', 'n'])
+          && numeroTra(p.x, -100000, 100000) && numeroTra(p.y, -100000, 100000) && p.n is int));
+    }
+
+    function areaValida() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['autoreUid', 'nome', 'forma', 'misura', 'x', 'y', 'angolo', 'aggiornatoIl'])
+        && d.autoreUid == request.auth.uid
+        && testoValido(d.nome, 1, 60)
+        && d.forma in ['sfera', 'cono', 'cubo', 'linea']
+        && numeroTra(d.misura, 1, 150)
+        && numeroTra(d.x, -100000, 100000) && numeroTra(d.y, -100000, 100000)
+        && numeroTra(d.angolo, -7, 7)
+        && d.aggiornatoIl == request.time;
     }
 
     function tagliaValida(taglia) {

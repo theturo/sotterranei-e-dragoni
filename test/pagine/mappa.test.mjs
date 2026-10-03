@@ -106,3 +106,37 @@ test("nebbia: pennello, rettangolo, torcia e pedine sotto la nebbia", async () =
   assert.equal(strisce.length, 10);
   assert.deepEqual(strisce[0], { x: 250, y: 0, w: 250, h: 50 });
 });
+
+test("aree degli incantesimi su griglia (regole 5e)", async () => {
+  const { caselleArea, contornoArea, pedineInCaselle, verticePiuVicino, metriTraPunti } = await import("../../assets/js/mappa-calcoli.js");
+  const g = { lato: 50, ox: 0, oy: 0 };
+  // Sfera di 6 m (4 caselle) dal vertice (500, 400): il cerchio delle caselle.
+  const sfera = caselleArea({ forma: "sfera", misura: 6, x: 500, y: 400 }, g);
+  assert.equal(sfera.length, 52);
+  assert.ok(sfera.some(({ c, r }) => c === 9 && r === 7) && !sfera.some(({ c, r }) => c === 6 && r === 4));
+  // Cono di 4,5 m verso destra: largo quanto è lungo, a ventaglio (1, 1, 3 caselle).
+  const cono = caselleArea({ forma: "cono", misura: 4.5, x: 0, y: 25, angolo: 0 }, g);
+  assert.deepEqual(cono.map(({ c, r }) => `${c},${r}`).sort(), ["0,0", "1,0", "2,-1", "2,0", "2,1"].sort());
+  // Linea di 30 m verso il basso: 20 caselle in colonna.
+  assert.equal(caselleArea({ forma: "linea", misura: 30, x: 25, y: 0, angolo: Math.PI / 2 }, g).length, 20);
+  // Cubo di 6 m verso l'alto a sinistra: 4×4.
+  const cubo = caselleArea({ forma: "cubo", misura: 6, x: 400, y: 400, angolo: -2.4 }, g);
+  assert.equal(cubo.length, 16);
+  assert.ok(cubo.every(({ c, r }) => c >= 4 && c <= 7 && r >= 4 && r <= 7));
+  assert.equal(contornoArea({ forma: "cono", misura: 4.5, x: 0, y: 0, angolo: 0 }, g).punti.length, 3);
+  assert.equal(pedineInCaselle([{ id: "a", c: 8, r: 8 }, { id: "b", c: 3, r: 3, caselle: 2 }], cubo).map((p) => p.id).join(), "b");
+  assert.deepEqual(verticePiuVicino({ lato: 60, ox: 20, oy: 10 }, { x: 95, y: 30 }), { x: 80, y: 10 });
+  assert.equal(metriTraPunti(g, { x: 10, y: 10 }, { x: 160, y: 60 }), 4.5);
+});
+
+test("aree degli incantesimi: catalogo e scheda", async () => {
+  const { AREE_INCANTESIMI, areeDellaScheda } = await import("../../assets/js/aree-incantesimi.js");
+  const { ottieniIncantesimo } = await import("../../assets/js/incantesimi-srd.js");
+  for (const [chiave, { forma, misura }] of Object.entries(AREE_INCANTESIMI)) {
+    assert.ok(ottieniIncantesimo(chiave), `${chiave} non è nel catalogo`);
+    assert.ok(["sfera", "cono", "cubo", "linea"].includes(forma) && misura > 0 && misura <= 150);
+  }
+  const aree = areeDellaScheda({ incantesimiConosciuti: ["palla_di_fuoco", "dardo_incantato", "mani_brucianti"], incantesimiPreparati: ["palla_di_fuoco"] });
+  assert.deepEqual(aree.map((a) => `${a.chiave}:${a.forma}:${a.misura}`), ["mani_brucianti:cono:4.5", "palla_di_fuoco:sfera:6"]);
+  assert.deepEqual(areeDellaScheda(null), []);
+});

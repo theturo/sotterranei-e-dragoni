@@ -6380,7 +6380,8 @@ table.tabella-punteggi select {
   cursor: default;
 }
 
-.mappa-finestra.in-taratura {
+.mappa-finestra.in-taratura,
+.mappa-finestra.in-strumento {
   cursor: crosshair;
 }
 
@@ -6402,6 +6403,7 @@ table.tabella-punteggi select {
 .mappa-immagine,
 .mappa-griglia,
 .mappa-nebbia,
+.mappa-strumenti,
 .mappa-misura {
   position: absolute;
   left: 0;
@@ -7109,3 +7111,189 @@ table.tabella-punteggi select {
   gap: 4px;
 }
 
+
+/* ---------- Strumenti della mappa (fase 4) ----------
+   Ognuno ha il suo colore (--colore): oro per il DM. Aree degli incantesimi
+   con le caselle colpite, righelli in corso, onde dei ping. */
+.mappa-strumenti .area {
+  fill: none;
+  stroke: var(--colore);
+}
+
+.mappa-strumenti .area-casella {
+  fill: var(--colore);
+  fill-opacity: 0.26;
+  stroke: var(--colore);
+  stroke-opacity: 0.55;
+  stroke-width: calc(var(--tratto, 2px) * 0.5);
+}
+
+.mappa-strumenti .area-contorno {
+  fill: var(--colore);
+  fill-opacity: 0.08;
+  stroke-width: var(--tratto, 2px);
+}
+
+.mappa-strumenti .area.bozza .area-contorno {
+  stroke-dasharray: 6 4;
+}
+
+.mappa-strumenti .area-origine {
+  fill: var(--colore);
+  stroke: none;
+}
+
+.mappa-strumenti .righello line {
+  stroke: var(--colore);
+  stroke-width: var(--tratto, 2px);
+}
+
+.mappa-strumenti .righello circle {
+  fill: var(--colore);
+}
+
+.mappa-ping,
+.mappa-etichette-strumenti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mappa-etichette-strumenti {
+  z-index: 7;
+}
+
+.mappa-etichetta-righello,
+.mappa-etichetta-area {
+  position: absolute;
+  background: rgba(21, 13, 8, 0.92);
+  border: 1px solid var(--color-gold-bright);
+  color: var(--color-parchment);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  padding: 0.15em 0.6em;
+  border-radius: 0.4em;
+  white-space: nowrap;
+}
+
+.mappa-etichetta-righello {
+  transform: translate(-50%, calc(-100% - 0.7em));
+}
+
+.mappa-etichetta-area {
+  transform: translate(0.4em, 0.4em);
+  font-size: 0.85em;
+  opacity: 0.92;
+}
+
+.mappa-onda {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.mappa-onda span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 0.25em solid var(--colore);
+  box-shadow: 0 0 0.8em var(--colore);
+  opacity: 0;
+  animation: onda-ping 1.6s ease-out forwards;
+}
+
+.mappa-onda span:nth-child(2) {
+  animation-delay: 0.35s;
+}
+
+.mappa-onda span:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
+@keyframes onda-ping {
+  0% { opacity: 1; transform: scale(0.1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mappa-onda span {
+    animation: onda-ping-ferma 2.4s linear forwards;
+  }
+  @keyframes onda-ping-ferma {
+    0%, 80% { opacity: 1; transform: scale(0.5); }
+    100% { opacity: 0; transform: scale(0.5); }
+  }
+}
+
+/* Pedine dentro un'area: anello acceso. */
+.pedina-mappa.colpita {
+  outline: 0.14em solid #ff9b54;
+  outline-offset: 0.18em;
+  box-shadow: 0 0 0.9em rgba(255, 155, 84, 0.85);
+}
+
+.mappa-strumenti-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 8px;
+}
+
+.mappa-strumenti-barra[hidden],
+.mappa-area-opzioni[hidden],
+.mappa-aree-elenco[hidden] {
+  display: none;
+}
+
+.mappa-colore {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  background: var(--colore);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+  vertical-align: -0.05em;
+  margin-right: 0.35em;
+}
+
+.mappa-area-opzioni {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.mappa-aree-elenco {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+.mappa-area-voce {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--colore);
+  background: rgba(21, 13, 8, 0.35);
+}
+
+.mappa-area-voce button {
+  min-width: 28px;
+  min-height: 28px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.1em;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.mappa-area-voce button:hover,
+.mappa-area-voce button:focus-visible {
+  background: rgba(201, 162, 39, 0.25);
+}

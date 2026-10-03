@@ -6,7 +6,10 @@
 // rispetto alla velocità; al rilascio "onSposta" salva la nuova casella.
 // Sopra la griglia c'è la nebbia di guerra: velo grigio per il DM, buio con
 // il bordo sfumato per i giocatori (impostaNebbia); il DM la disegna con
-// modoNebbia (pennello o rettangolo, a caselle).
+// modoNebbia (pennello o rettangolo, a caselle). Sopra la nebbia gli strumenti
+// di tutti (fase 4): aree degli incantesimi con le caselle colpite, righelli
+// in corso e onde dei ping (impostaStrumenti, ping); con modoPunti i tocchi
+// arrivano come punti della mappa invece di spostare la vista.
 import {
   camAdatta,
   camPerRettangolo,
@@ -23,6 +26,9 @@ import {
   coloreSalute,
   strisceNebbia,
   casellaDiPunto,
+  caselleArea,
+  contornoArea,
+  pedineInCaselle,
 } from "./mappa-calcoli.js";
 
 let contatoreViste = 0;
@@ -100,8 +106,15 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
   svgNebbia.append(defs, gruppoNebbia);
   const anteprimaNebbia = crea("div", "mappa-nebbia-anteprima");
   anteprimaNebbia.hidden = true;
+  // Strumenti: aree e righelli (SVG), onde dei ping, etichette sopra le pedine.
+  const svgStrumenti = creaSvg("svg", { class: "mappa-strumenti", "aria-hidden": "true" });
+  const gruppoAree = creaSvg("g");
+  const gruppoRighelli = creaSvg("g");
+  svgStrumenti.append(gruppoAree, gruppoRighelli);
+  const stratoPing = crea("div", "mappa-ping");
+  const stratoEtichette = crea("div", "mappa-etichette-strumenti");
   const strato = crea("div", "mappa-pedine");
-  mondo.append(immagine, svgGriglia, svgNebbia, cornice, svgMisura, strato, anteprimaNebbia, etichettaMisura);
+  mondo.append(immagine, svgGriglia, svgNebbia, svgStrumenti, stratoPing, cornice, svgMisura, strato, anteprimaNebbia, etichettaMisura, stratoEtichette);
   const vuoto = crea("div", "mappa-vuota");
   vuoto.hidden = true;
   finestra.append(mondo, vuoto);
@@ -120,6 +133,9 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
   let modoNebbiaVisto = "buio"; // "velo" (DM) o "buio" (giocatori)
   let disegnoNebbia = null; // { inizio, muovi, fine } quando il DM disegna
   let tratto = null;
+  let gestoriPunti = null; // { inizio, muovi, fine } con punti della mappa (strumenti)
+  let strumenti = { aree: [], righelli: [] };
+  let colpite = new Set(); // ID delle pedine dentro un'area
   const puntatori = new Map();
 
   const dimensioni = () => ({ w: finestra.clientWidth || 1, h: finestra.clientHeight || 1 });
@@ -146,6 +162,9 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     cornice.style.borderWidth = `${2 / cam.z}px`;
     cornice.firstChild.style.fontSize = `${11 / cam.z}px`;
     cornice.firstChild.style.padding = `${2 / cam.z}px ${7 / cam.z}px`;
+    svgStrumenti.style.setProperty("--tratto", `${2.5 / cam.z}px`);
+    stratoEtichette.style.fontSize = `${12 / cam.z}px`;
+    disegnaRighelli();
   }
 
   function disegnaGriglia() {
@@ -169,7 +188,8 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     el.title = p.nascosta ? `${p.nome} (nascosto ai giocatori)` : p.nome;
     if (puoMuovere(p.id) && interattiva) el.classList.add("mobile");
     for (const [classe, attiva] of [["mia", p.mia], ["a-terra", p.aTerra], ["nemico", p.nemico], ["nascosta", p.nascosta],
-      ["di-turno", p.diTurno], ["nella-nebbia", p.nellaNebbia], ["selezionata", selezionata === p.id], ["presa", presa?.id === p.id]]) {
+      ["di-turno", p.diTurno], ["nella-nebbia", p.nellaNebbia], ["selezionata", selezionata === p.id], ["presa", presa?.id === p.id],
+      ["colpita", colpite.has(p.id)]]) {
       if (attiva) el.classList.add(classe);
     }
     Object.assign(el.style, {
@@ -259,9 +279,69 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     strisceNebbia(nebbia, griglia).forEach(({ x, y, w, h }) => gruppoNebbia.append(creaSvg("rect", { x, y, width: w, height: h })));
   }
 
+  // Aree: caselle colpite e contorno nel colore di chi le ha messe; le pedine
+  // dentro un'area sono "colpite". Righelli: linea tratteggiata e misura.
+  function disegnaAree() {
+    gruppoAree.replaceChildren();
+    const etichette = [];
+    const tutteColpite = [];
+    if (mappa) {
+      strumenti.aree.forEach((a) => {
+        const g = creaSvg("g", { class: a.bozza ? "area bozza" : "area", style: `--colore: ${a.colore}` });
+        const caselle = caselleArea(a, griglia);
+        tutteColpite.push(...caselle);
+        caselle.forEach(({ c, r }) => g.append(creaSvg("rect", {
+          class: "area-casella", x: griglia.ox + c * griglia.lato, y: griglia.oy + r * griglia.lato, width: griglia.lato, height: griglia.lato,
+        })));
+        const contorno = contornoArea(a, griglia);
+        g.append(contorno.cerchio
+          ? creaSvg("circle", { class: "area-contorno", cx: contorno.cerchio.cx, cy: contorno.cerchio.cy, r: contorno.cerchio.r })
+          : creaSvg("polygon", { class: "area-contorno", points: contorno.punti.map((p) => p.join(",")).join(" ") }));
+        g.append(creaSvg("circle", { class: "area-origine", cx: a.x, cy: a.y, r: griglia.lato * 0.1 }));
+        gruppoAree.append(g);
+        if (a.nome) {
+          const e = crea("div", "mappa-etichetta-area", a.nome);
+          e.style.left = `${a.x}px`;
+          e.style.top = `${a.y}px`;
+          e.style.borderColor = a.colore;
+          etichette.push(e);
+        }
+      });
+    }
+    colpite = new Set(pedineInCaselle(pedine, tutteColpite).map((p) => p.id));
+    stratoEtichette.querySelectorAll(".mappa-etichetta-area").forEach((e) => e.remove());
+    stratoEtichette.append(...etichette);
+  }
+
+  function disegnaRighelli() {
+    gruppoRighelli.replaceChildren();
+    stratoEtichette.querySelectorAll(".mappa-etichetta-righello").forEach((e) => e.remove());
+    if (!mappa) return;
+    strumenti.righelli.forEach((r) => {
+      const g = creaSvg("g", { class: "righello", style: `--colore: ${r.colore}` });
+      g.append(
+        creaSvg("line", { x1: r.x1, y1: r.y1, x2: r.x2, y2: r.y2, "stroke-dasharray": `${8 / cam.z} ${6 / cam.z}` }),
+        creaSvg("circle", { cx: r.x1, cy: r.y1, r: 5 / cam.z }),
+        creaSvg("circle", { cx: r.x2, cy: r.y2, r: 5 / cam.z }),
+      );
+      gruppoRighelli.append(g);
+      const e = crea("div", "mappa-etichetta-righello", r.testo);
+      e.style.left = `${r.x2}px`;
+      e.style.top = `${r.y2}px`;
+      e.style.borderColor = r.colore;
+      stratoEtichette.append(e);
+    });
+  }
+
+  function disegnaStrumenti() {
+    disegnaAree();
+    disegnaRighelli();
+    disegnaPedine();
+  }
+
   function adattaDimensioni() {
     if (!mappa) return;
-    for (const svg of [svgNebbia]) {
+    for (const svg of [svgNebbia, svgStrumenti]) {
       svg.setAttribute("width", mappa.larghezza);
       svg.setAttribute("height", mappa.altezza);
       svg.setAttribute("viewBox", `0 0 ${mappa.larghezza} ${mappa.altezza}`);
@@ -291,6 +371,13 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       taraturaCallback(punto);
       return;
     }
+    if (gestoriPunti && puntatori.size === 0) {
+      evento.preventDefault();
+      tratto = { puntatore: evento.pointerId, punti: true, ultimo: punto };
+      finestra.setPointerCapture?.(evento.pointerId);
+      gestoriPunti.inizio(punto);
+      return;
+    }
     if (disegnoNebbia && puntatori.size === 0) {
       evento.preventDefault();
       const casella = casellaDiPunto(griglia, punto);
@@ -318,6 +405,11 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
 
   function muovi(evento) {
     const { sx, sy } = puntoSchermo(evento);
+    if (tratto?.punti && evento.pointerId === tratto.puntatore) {
+      tratto.ultimo = daSchermo(cam, sx, sy);
+      gestoriPunti?.muovi(tratto.ultimo);
+      return;
+    }
     if (tratto && evento.pointerId === tratto.puntatore) {
       const casella = casellaDiPunto(griglia, daSchermo(cam, sx, sy));
       if (casella.c !== tratto.ultima.c || casella.r !== tratto.ultima.r) {
@@ -372,7 +464,8 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     if (tratto && evento.pointerId === tratto.puntatore) {
       const finito = tratto;
       tratto = null;
-      disegnoNebbia?.fine(finito.ultima);
+      if (finito.punti) gestoriPunti?.fine(finito.ultimo, evento.type === "pointercancel");
+      else disegnoNebbia?.fine(finito.ultima);
       return;
     }
     if (presa && evento.pointerId === presa.puntatore) {
@@ -453,7 +546,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       adattaDimensioni();
       disegnaGriglia();
       disegnaNebbia();
-      disegnaPedine();
+      disegnaStrumenti();
       if (nuova) {
         selezionata = null;
         if (segueRettangolo) mostraRettangolo(rettangoloFisso);
@@ -468,7 +561,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       griglia = { ...griglia, ...nuova };
       disegnaGriglia();
       disegnaNebbia();
-      disegnaPedine();
+      disegnaStrumenti();
       disegnaMisura();
     },
     impostaPedine(elenco) {
@@ -477,6 +570,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
         selezionata = null;
         onSeleziona(null);
       }
+      disegnaAree();
       disegnaPedine();
     },
     seleziona(id) {
@@ -579,6 +673,37 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
         borderWidth: `${2 / cam.z}px`,
       });
       anteprimaNebbia.classList.toggle("copri", copri);
+    },
+    // Strumenti di tutti: { aree: [{ forma, misura, x, y, angolo, colore,
+    // nome, bozza }], righelli: [{ x1, y1, x2, y2, colore, testo }] }.
+    impostaStrumenti(nuovi) {
+      strumenti = { aree: nuovi.aree || [], righelli: nuovi.righelli || [] };
+      disegnaStrumenti();
+    },
+    // Onda di un ping nel punto (in pixel della mappa), poi sparisce.
+    ping({ x, y }, colore) {
+      if (!mappa) return;
+      const onda = crea("div", "mappa-onda");
+      Object.assign(onda.style, { left: `${x}px`, top: `${y}px`, width: `${griglia.lato * 3}px`, height: `${griglia.lato * 3}px` });
+      onda.style.setProperty("--colore", colore);
+      onda.append(crea("span"), crea("span"), crea("span"));
+      stratoPing.append(onda);
+      setTimeout(() => onda.remove(), 2600);
+    },
+    // Porta il punto al centro della vista, senza cambiare lo zoom.
+    centraPunto({ x, y }) {
+      if (!mappa) return;
+      daAdattare = false;
+      const { w, h } = dimensioni();
+      cam = camCentrata(w, h, { x, y }, cam.z);
+      applicaCamera();
+    },
+    // Strumenti (DM e giocatori): con { inizio, muovi, fine(punto, annullato) }
+    // i tocchi arrivano come punti della mappa; null per tornare alla mano.
+    modoPunti(gestori) {
+      gestoriPunti = gestori;
+      tratto = null;
+      finestra.classList.toggle("in-strumento", Boolean(gestori));
     },
     // Taratura: i prossimi tocchi arrivano a "callback" (null per smettere).
     modoTaratura(callback) {
