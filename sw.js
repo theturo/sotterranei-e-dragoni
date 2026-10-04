@@ -17,7 +17,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "d5f82d1f8c6f";
+const VERSIONE = "513ac4d1aa26";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
   "./archivio.html": "cacd8a002a1f",
@@ -28,7 +28,7 @@ const FILE = {
   "./assets/css/gioco.css": "bd5c1ef4b3ca",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "ffcf341dfab4",
-  "./assets/css/sessione.css": "7ba877439dfc",
+  "./assets/css/sessione.css": "6fff6a6a827e",
   "./assets/fonts/cinzel-700.woff2": "8efa224fe70f",
   "./assets/fonts/cinzel-OFL.txt": "f5a242cf68ad",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
@@ -56,6 +56,7 @@ const FILE = {
   "./assets/js/calcoli-scheda.js": "660e3a9ce65d",
   "./assets/js/calendario.js": "e6cf8e5bd2ed",
   "./assets/js/combattimento.js": "d1bab596ac0e",
+  "./assets/js/comparsa-contenuti.js": "204ee44fd37c",
   "./assets/js/condizioni.js": "7798031d4694",
   "./assets/js/contenuti.js": "bc0640a2e0f3",
   "./assets/js/cruscotto-calcoli.js": "610babaca0d6",
@@ -116,7 +117,7 @@ const FILE = {
   "./assets/js/pagine/offline.js": "66f6add61755",
   "./assets/js/pagine/register.js": "d351cfe15864",
   "./assets/js/pagine/scheda-personaggio.js": "6a7478f13afb",
-  "./assets/js/pagine/sessione.js": "ab28b9fd0e6d",
+  "./assets/js/pagine/sessione.js": "26f6b70e4cb7",
   "./assets/js/pagine/tavolo.js": "f38a46e915a7",
   "./assets/js/pagine/verifica-email.js": "9160b11d3edd",
   "./assets/js/pdf-scheda.js": "ab909d461890",

@@ -55,6 +55,7 @@ import {
 import { montaCombattimento } from "../combattimento.js";
 import { montaMappa } from "../mappa.js";
 import { montaSchedaRapida } from "../scheda-rapida.js";
+import { montaComparsaContenuti } from "../comparsa-contenuti.js";
 import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   apriRiposoBreve,
@@ -701,8 +702,11 @@ function rigaContenutoDM(c) {
 function rigaContenutoGiocatore(c) {
   const li = creaElemento("li", "riga-contenuto-sessione riga-contenuto-giocatore");
   const info = creaElemento("div", "riga-contenuto-info");
+  // Testata: titolo e, per i contenuti appena mostrati, il sigillo «Nuovo».
+  const testata = creaElemento("div", "riga-contenuto-testata");
+  testata.append(creaElemento("div", "riga-contenuto-titolo", c.titolo));
   info.append(
-    creaElemento("div", "riga-contenuto-titolo", c.titolo),
+    testata,
     creaElemento("div", "party-sessione-sub", CATEGORIE[c.categoria] || "Altro")
   );
   if (c.descrizione) info.append(creaElemento("div", "riga-contenuto-descrizione", c.descrizione));
@@ -737,9 +741,14 @@ function renderContenuti() {
     link.hidden = false;
     link.href = "archivio.html";
     link.textContent = "Archivio";
+    // Prima dei dati non si disegna nulla: i contenuti già mostrati non
+    // devono sembrare nuovi (sigillo «Nuovo», toast).
+    if (!contenutiRicevuti) return;
     elenco = contenuti.filter((c) => (c.mostrataA || []).includes(uidCorrente));
     vuoto.querySelector("p").textContent = "Nulla da mostrare al momento.";
-    lista.replaceChildren(...elenco.map(rigaContenutoGiocatore));
+    // Le righe nuove si aprono con lo svelamento, quelle tolte si chiudono (comparsa-contenuti.js).
+    comparsaContenuti ??= montaComparsaContenuti({ lista, vuoto });
+    comparsaContenuti.aggiorna(elenco, rigaContenutoGiocatore, (c) => JSON.stringify([c.titolo, c.categoria, c.descrizione || ""]));
     // Avviso quando il DM mostra qualcosa di nuovo.
     const idOra = new Set(elenco.map((c) => c.id));
     if (contenutiGiaVisti) {
@@ -748,9 +757,12 @@ function renderContenuti() {
     }
     contenutiGiaVisti = idOra;
     chiudiLightboxSeSparito(idOra);
+    return;
   }
   vuoto.hidden = elenco.length > 0;
 }
+let comparsaContenuti = null;
+let contenutiRicevuti = false;
 
 const mostraAvvisoContenuto = (testo, errore = false) => mostraToast(testo, errore, 4000);
 
@@ -770,6 +782,7 @@ async function avviaContenuti(isDmOAdmin) {
   } else {
     ascoltaContenutiVisibili(campagnaIdCorrente, uidCorrente, (elenco) => {
       contenuti = elenco;
+      contenutiRicevuti = true;
       renderContenuti();
     }, alErrore);
   }

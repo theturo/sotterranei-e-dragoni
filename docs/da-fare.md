@@ -15,9 +15,8 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - **Stemma per l'intestazione** (❌ scartato, drago da rifare).
 - **Animazioni in JavaScript** (da valutare insieme): fatti il dado di
   caricamento, il tiro dei PF e il cambio turno nel tracker; l'annuncio di
-  livello resta in CSS (scelta della tela). La comparsa dei contenuti in
-  sessione è in revisione nella tela. Da valutare: eventuali risorse
-  aggiuntive (sprite, suoni, particelle).
+  livello resta in CSS (scelta della tela). Da valutare: eventuali risorse
+  aggiuntive (sprite, particelle).
 
 ## Funzioni per il tavolo
 
@@ -29,6 +28,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Comparsa dei contenuti nella Sessione del giocatore (effetto scenico della
+  tela): la riga si apre, la miniatura si svela da sfocata a nitida con un
+  riflesso, il titolo si scrive, la riga si accende d'oro; il sigillo
+  «Nuovo» resta finché il giocatore non apre il contenuto. Quando il DM
+  nasconde, la riga si chiude sfumando. Corretto anche il toast «Il DM ti
+  mostra» che all'apertura della pagina usciva per contenuti già mostrati.
 - Cambio turno animato nel tracker: per tutti una cornice dorata scorre
   sulla riga di turno con il ▶, il sottotitolo cambia in dissolvenza e il
   numero del round si illumina; per il giocatore di turno la cornice arriva
