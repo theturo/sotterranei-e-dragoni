@@ -2,13 +2,10 @@
 // giocatore e destinato all'archivio, disponibili dopo la sessione in cui sono
 // comparsi. Solo consultazione; le regole garantiscono che ognuno legga solo
 // il proprio archivio.
-import {
-  proteggiPagina,
-  ROLES,
-  ottieniCampagnaCorrente,
-  elencaSessioniCampagna,
-  ascoltaContenutiVisibili,
-} from "../auth.js";
+import { proteggiPagina, ROLES } from "../auth.js";
+import { ottieniCampagnaCorrente } from "../dati/campagne.js";
+import { elencaSessioniCampagna } from "../dati/sessioni.js";
+import { ascoltaContenutiVisibili } from "../dati/libreria.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import {
   CATEGORIE,

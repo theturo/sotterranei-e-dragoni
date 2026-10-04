@@ -3,17 +3,16 @@
 // privati, li collega alle sessioni e decide se sono destinati all'archivio
 // dei giocatori. I giocatori li vedono solo quando il DM li mostra in sessione
 // (pagina Sessione) e poi, se destinati all'archivio, nella pagina Archivio.
+import { proteggiPaginaDM } from "../auth.js";
+import { ottieniCampagnaCorrente, elencaMembriCampagna } from "../dati/campagne.js";
+import { elencaSessioniCampagna } from "../dati/sessioni.js";
 import {
-  proteggiPaginaDM,
-  ottieniCampagnaCorrente,
-  elencaMembriCampagna,
-  elencaSessioniCampagna,
   nuovoIdImmagine,
   creaContenuto,
   aggiornaContenuto,
   eliminaContenuto,
   ascoltaLibreriaDM,
-} from "../auth.js";
+} from "../dati/libreria.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import {
   TIPI_ACCETTATI,

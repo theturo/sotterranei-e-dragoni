@@ -3,15 +3,16 @@
 // Function, functions/logica.js); il service worker le mostra e le apre.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { RADICE } from "../../strumenti/aggiorna-sw.mjs";
 import { messaggioPush } from "../../functions/logica.js";
 
 const leggi = (percorso) => readFileSync(join(RADICE, percorso), "utf8");
 
-// Tipi scritti dal sito in auth.js: addDoc(... "notifiche"), { tipo } e notificaMembri(..., { tipo }).
-const TIPI = [...new Set([...leggi("assets/js/auth.js")
+// Tipi scritti dal sito nei moduli dei dati: addDoc(... "notifiche"), { tipo } e notificaMembri(..., { tipo }).
+const DATI = readdirSync(join(RADICE, "assets/js/dati")).map((f) => leggi(`assets/js/dati/${f}`)).join("\n");
+const TIPI = [...new Set([...DATI
   .matchAll(/(?:"notifiche"\), \{|notificaMembri\(campagnaId, \{)\s*tipo: "([a-z_]+)"/g)].map((m) => m[1]))];
 
 test("i tipi di notifica del sito sono quelli attesi", () => {

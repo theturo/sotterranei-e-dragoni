@@ -2,11 +2,15 @@
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 // In alto il cruscotto della campagna (sessione in evidenza, party o proprio
 // personaggio, avvisi "Da fare"), sotto gli strumenti raggruppati.
-import {
-  proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente, contaUtentiInAttesa, riepilogoCalendario,
-  ottieniStatoSessione, elencaSessioniCampagna, elencaProposteAperte, elencaMembriCampagna, ascoltaRiepiloghiParty,
-  contaContenutiCollegati, ottieniSchedaAttiva, apriSessione, elencaCreditiCampagna, creditiLivello, migraCreditiProfilo,
-} from "../auth.js";
+import { proteggiPagina, ROLES } from "../auth.js";
+import { salvaOrdinePannelli, contaUtentiInAttesa } from "../dati/utenti.js";
+import { elencaCreditiCampagna, creditiLivello, migraCreditiProfilo } from "../dati/livelli.js";
+import { ottieniCampagnaCorrente, elencaMembriCampagna } from "../dati/campagne.js";
+import { ottieniSchedaAttiva } from "../dati/schede.js";
+import { ascoltaRiepiloghiParty } from "../dati/party.js";
+import { ottieniStatoSessione, elencaSessioniCampagna, apriSessione } from "../dati/sessioni.js";
+import { riepilogoCalendario, elencaProposteAperte } from "../dati/calendario.js";
+import { contaContenutiCollegati } from "../dati/libreria.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { montaMenuUtente, riempiSelettoreCampagna } from "../menu-utente.js";
 import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "../pwa.js";

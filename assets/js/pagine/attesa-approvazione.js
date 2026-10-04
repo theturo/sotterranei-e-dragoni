@@ -1,11 +1,7 @@
 // Script della pagina attesa-approvazione.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import {
-  proteggiPaginaSenzaVerifica,
-  ottieniProfiloUtente,
-  profiloApprovato,
-  esciUtente,
-} from "../auth.js";
+import { proteggiPaginaSenzaVerifica, profiloApprovato, esciUtente } from "../auth.js";
+import { ottieniProfiloUtente } from "../dati/utenti.js";
 import { mostraAttesa } from "../utils.js";
 
 const messaggio = document.getElementById("messaggio");

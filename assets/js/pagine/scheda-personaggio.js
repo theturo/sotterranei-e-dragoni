@@ -1,29 +1,21 @@
 // Script della pagina scheda-personaggio.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
+import { proteggiPagina } from "../auth.js";
+import { applicaPassaggioLivello, ascoltaCreditiLivello, migraCreditiProfilo } from "../dati/livelli.js";
+import { ottieniCampagna, ottieniCampagnaCorrente } from "../dati/campagne.js";
 import {
-  proteggiPagina,
-  ottieniCampagna,
-  ottieniCampagnaCorrente,
   ottieniScheda,
   ottieniSchedaAttiva,
   aggiornaHp,
   aggiornaTiriSalvezzaMorte,
   aggiornaInventario,
   aggiornaScheda,
-  applicaPassaggioLivello,
-  ascoltaCreditiLivello,
-  migraCreditiProfilo,
   impostaRitratto,
-  aggiornaCondizioniScheda,
   ascoltaScheda,
-  applicaRiposoScheda,
-  annotaRiposo,
-  ascoltaRiposo,
-  segnaRiposoConcluso,
-  aggiornaUsiPrivilegi,
-  annotaTiro,
-  iniziativaNelTracker,
-} from "../auth.js";
+} from "../dati/schede.js";
+import { aggiornaCondizioniScheda, applicaRiposoScheda, aggiornaUsiPrivilegi } from "../dati/party.js";
+import { annotaRiposo, ascoltaRiposo, segnaRiposoConcluso, annotaTiro } from "../dati/sessioni.js";
+import { iniziativaNelTracker } from "../dati/combattimento.js";
 import { apriTiro, testoTiro, leggiFormula } from "../dadi.js";
 import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {

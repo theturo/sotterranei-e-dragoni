@@ -1,7 +1,8 @@
 // Script della pagina campagna.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
+import { proteggiPaginaDM } from "../auth.js";
+import { elencaGiocatori } from "../dati/utenti.js";
 import {
-  proteggiPaginaDM,
   elencaCampagneDMConTitolo,
   creaCampagna,
   aggiornaCampagna,
@@ -12,17 +13,13 @@ import {
   scegliCampagna,
   aggiungiMembroCampagna,
   rimuoviMembroCampagna,
-  elencaGiocatori,
-  elencaSessioniProgrammate,
-  eliminaSessioneProgrammata,
   migraDatiEsistenti,
-  ascoltaLibreriaDM,
-  collegaContenutiSessione,
-  elencaSessioniCampagna,
-  elencaProposteAperte,
-  elencaRiepiloghiParty,
-  ascoltaBestiario,
-} from "../auth.js";
+} from "../dati/campagne.js";
+import { elencaRiepiloghiParty } from "../dati/party.js";
+import { elencaSessioniProgrammate, eliminaSessioneProgrammata, elencaSessioniCampagna } from "../dati/sessioni.js";
+import { elencaProposteAperte } from "../dati/calendario.js";
+import { ascoltaLibreriaDM, collegaContenutiSessione } from "../dati/libreria.js";
+import { ascoltaBestiario } from "../dati/bestiario.js";
 import { formattaDataOra, distanzaGiorni, etichettaSessione, dataBreveIso } from "../calendario.js";
 import { CLASSI } from "../dati-srd.js";
 import { montaMenuUtente } from "../menu-utente.js";

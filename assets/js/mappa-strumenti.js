@@ -3,7 +3,7 @@
 // incantesimi della mappa mostrata, ognuno nel colore di chi li usa (oro per
 // il DM). Il proprio righello e la propria area in preparazione si vedono
 // subito, senza aspettare Firestore.
-import { ascoltaStrumenti, ascoltaAree } from "./auth.js";
+import { ascoltaStrumenti, ascoltaAree } from "./dati/mappa.js";
 import { metriTraPunti, formattaMetri } from "./mappa-calcoli.js";
 
 export const COLORE_DM = "#e8c65a";

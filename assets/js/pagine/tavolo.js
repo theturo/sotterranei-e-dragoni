@@ -7,10 +7,11 @@
 // che ci stanno sotto). Non ha comandi di gioco. Mostra anche gli strumenti di
 // tutti (righelli in corso, ping, aree degli incantesimi); il ping del DM
 // porta l'inquadratura sul punto.
-import {
-  proteggiPaginaDM, ottieniCampagnaCorrente, ascoltaTavola, ascoltaGriglia, ascoltaPedine, ascoltaRiepiloghiParty,
-  ascoltaCombattimento, ascoltaNebbia,
-} from "../auth.js";
+import { proteggiPaginaDM } from "../auth.js";
+import { ottieniCampagnaCorrente } from "../dati/campagne.js";
+import { ascoltaRiepiloghiParty } from "../dati/party.js";
+import { ascoltaTavola, ascoltaGriglia, ascoltaPedine, ascoltaNebbia } from "../dati/mappa.js";
+import { ascoltaCombattimento } from "../dati/combattimento.js";
 import { dimensioniNebbia, adattaNebbia } from "../mappa-calcoli.js";
 import { creaVistaMappa } from "../mappa-vista.js";
 import { costruisciPedine, creaCacheRitratti, creaCacheImmagini, pedinaDiTurno } from "../mappa-pedine.js";

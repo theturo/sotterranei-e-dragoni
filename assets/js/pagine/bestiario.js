@@ -11,10 +11,18 @@
 // - «Aggiungi al combattimento»: la creatura entra nel tracker della Sessione
 //   (se c'è un combattimento), collegata alla sua scheda.
 // Dati e permessi: "Bestiario" in auth.js e firestore.rules.
+import { proteggiPaginaDM } from "../auth.js";
+import { ottieniCampagnaCorrente } from "../dati/campagne.js";
+import { sessioneInCorso, aggiungiTiro } from "../dati/sessioni.js";
+import { ascoltaLibreriaDM } from "../dati/libreria.js";
 import {
-  proteggiPaginaDM, ottieniCampagnaCorrente, ascoltaBestiario, creaCreatura, salvaCreatura, salvaStatoCreatura, eliminaCreatura,
-  ascoltaLibreriaDM, sessioneInCorso, aggiungiTiro, aggiungiNemici, combattimentoAttivo, creatureInCombattimento,
-} from "../auth.js";
+  ascoltaBestiario,
+  creaCreatura,
+  salvaCreatura,
+  salvaStatoCreatura,
+  eliminaCreatura,
+} from "../dati/bestiario.js";
+import { aggiungiNemici, combattimentoAttivo, creatureInCombattimento } from "../dati/combattimento.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { creaElemento } from "../contenuti.js";
 import { elementoIcona } from "../icone.js";

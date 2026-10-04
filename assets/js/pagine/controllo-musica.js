@@ -1,6 +1,8 @@
 // Script della pagina controllo-musica.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagnaCorrente, ottieniLinkMusica, salvaLinkMusica } from "../auth.js";
+import { proteggiPaginaDM } from "../auth.js";
+import { ottieniCampagnaCorrente } from "../dati/campagne.js";
+import { ottieniStatoMusica, salvaStatoMusica, ottieniLinkMusica, salvaLinkMusica } from "../dati/musica.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, escUrl, mostraToast } from "../utils.js";
 import { ICONA_COPERTINA, ICONA_PRECEDENTE, ICONA_PAUSA, ICONA_RIPRODUCI, ICONA_SUCCESSIVO, icona } from "../icone.js";

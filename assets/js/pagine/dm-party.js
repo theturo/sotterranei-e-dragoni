@@ -1,15 +1,9 @@
 // Script della pagina dm-party.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import {
-  proteggiPaginaDM,
-  ottieniCampagnaCorrente,
-  elencaMembriCampagna,
-  ottieniSchedaAttiva,
-  impostaLivelloPartenza,
-  concediLivelli,
-  annullaLivello,
-  ascoltaCreditiCampagna,
-} from "../auth.js";
+import { proteggiPaginaDM } from "../auth.js";
+import { impostaLivelloPartenza, concediLivelli, annullaLivello, ascoltaCreditiCampagna } from "../dati/livelli.js";
+import { ottieniCampagnaCorrente, elencaMembriCampagna } from "../dati/campagne.js";
+import { ottieniSchedaAttiva } from "../dati/schede.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, mostraToast } from "../utils.js";
 import { CLASSI, nomeRazzaCompleto } from "../dati-srd.js";

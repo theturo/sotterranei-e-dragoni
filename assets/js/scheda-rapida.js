@@ -6,7 +6,9 @@
 // finiscono negli appunti; PF, slot e usi si salvano sulla scheda e nel party.
 // Il DM vede «Schede del party», sceglie un personaggio e lo guarda in sola
 // lettura. Creazione, equipaggiamento e livelli restano nella scheda completa.
-import { ascoltaScheda, aggiornaHp, aggiornaScheda, aggiornaUsiPrivilegi, iniziativaNelTracker } from "./auth.js";
+import { ascoltaScheda, aggiornaHp, aggiornaScheda } from "./dati/schede.js";
+import { aggiornaUsiPrivilegi } from "./dati/party.js";
+import { iniziativaNelTracker } from "./dati/combattimento.js";
 import { apriTiro } from "./dadi.js";
 import { datiSchedaRapida, tiroIncantesimo, livelliDiLancio } from "./calcoli-scheda.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK, applicaVariazionePf, formattaModificatore } from "./dati-srd.js";

@@ -1,6 +1,8 @@
 // Script della pagina crea-personaggio.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import { proteggiPagina, ottieniCampagnaCorrente, creaScheda } from "../auth.js";
+import { proteggiPagina } from "../auth.js";
+import { ottieniCampagnaCorrente } from "../dati/campagne.js";
+import { creaScheda } from "../dati/schede.js";
 import { esc, mostraAttesa } from "../utils.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import {

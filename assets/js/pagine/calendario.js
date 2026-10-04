@@ -3,15 +3,16 @@
 // proposte di date con le disponibilità dei giocatori (sì/forse/no). Il DM
 // propone date, fissa una data, conferma una proposta e, il giorno della
 // sessione, la apre da qui.
+import { proteggiPagina, ROLES } from "../auth.js";
+import { ottieniCampagnaCorrente } from "../dati/campagne.js";
+import { elencaRiepiloghiParty } from "../dati/party.js";
 import {
-  proteggiPagina,
-  ROLES,
-  ottieniCampagnaCorrente,
   elencaSessioniCampagna,
   ottieniStatoSessione,
   apriSessione,
   eliminaSessioneProgrammata,
-  elencaRiepiloghiParty,
+} from "../dati/sessioni.js";
+import {
   ascoltaProposte,
   ascoltaRisposte,
   rispondiProposta,
@@ -19,7 +20,7 @@ import {
   confermaProposta,
   annullaProposta,
   fissaSessione,
-} from "../auth.js";
+} from "../dati/calendario.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { creaElemento } from "../contenuti.js";
 import { ICONA_SI, ICONA_FORSE, ICONA_NO } from "../icone.js";
