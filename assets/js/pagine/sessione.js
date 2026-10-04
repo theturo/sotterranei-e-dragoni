@@ -52,6 +52,7 @@ import {
 } from "../contenuti.js";
 import { montaCombattimento } from "../combattimento.js";
 import { montaMappa } from "../mappa.js";
+import { montaSchedaRapida } from "../scheda-rapida.js";
 import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   apriRiposoBreve,
@@ -227,6 +228,7 @@ const firmeParty = new Map();
 const statoAperto = new Set();
 let trackerCombattimento = null;
 let pannelloMappa = null;
+let schedaRapida = null;
 
 function firma(riepilogo) {
   const { aggiornatoIl, ...dati } = riepilogo;
@@ -259,6 +261,7 @@ function renderParty(party) {
   });
   trackerCombattimento?.ridisegna();
   pannelloMappa?.ridisegna();
+  schedaRapida?.ridisegna();
   renderBannerRiposo();
 }
 
@@ -892,6 +895,16 @@ proteggiPagina(async (user, profilo) => {
     nomeUtente: () => nomeCorrente,
     avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
   });
+
+  // «La mia scheda» (per il DM «Schede del party», in sola lettura).
+  schedaRapida = montaSchedaRapida({
+    campagnaId: campagnaIdCorrente,
+    uid: uidCorrente,
+    isDM: isDmOAdmin,
+    party: () => ultimoParty,
+    registraTiro: (chi, tiro) => registraTiro(chi, tiro),
+  });
+  schedaRapida.ridisegna();
 
   veil.style.display = "none";
   contenuto.style.display = "block";

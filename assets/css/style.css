@@ -9046,3 +9046,470 @@ input.interruttore:focus-visible {
   max-height: 92vh;
   overflow-y: auto;
 }
+
+/* ---------- Scheda rapida nella Sessione (scheda-rapida.js) ---------- */
+/* Bottone fisso «La mia scheda» e pannello a destra (sul computer la mappa
+   resta visibile); sul telefono il pannello occupa lo schermo. Sotto le
+   finestre modali (200): la finestra dei dadi si apre sopra la scheda. */
+
+.btn-scheda-rapida {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 150;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  box-shadow: 0 4px 0 #4a1219, var(--shadow-deep);
+}
+
+.btn-scheda-rapida svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.scheda-rapida {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 150;
+  width: min(440px, 100vw);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  overflow: hidden;
+  animation: scheda-rapida-entra 0.22s ease-out;
+}
+
+.scheda-rapida[hidden] {
+  display: none;
+}
+
+@keyframes scheda-rapida-entra {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.scheda-rapida-testa {
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.2);
+}
+
+.scheda-rapida-maniglia {
+  display: none;
+}
+
+.scheda-rapida-titolo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scheda-rapida-nomi {
+  flex: 1;
+  min-width: 0;
+}
+
+.scheda-rapida-nomi h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.scheda-rapida-sotto {
+  font-size: 0.92rem;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-chiudi {
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 1rem;
+  align-self: flex-start;
+}
+
+.scheda-rapida-personaggi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.scheda-rapida-personaggi .btn-tabella[aria-pressed="true"] {
+  background: var(--color-burgundy);
+  border-color: #4a1219;
+  color: var(--color-parchment);
+}
+
+.scheda-rapida-numeri {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.scheda-rapida-numero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 2px;
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+button.scheda-rapida-numero {
+  cursor: pointer;
+}
+
+button.scheda-rapida-numero:hover,
+button.scheda-rapida-numero:focus-visible {
+  border-color: var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.06);
+}
+
+.scheda-rapida-numero b {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+}
+
+.scheda-rapida-numero small {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-pf {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scheda-rapida-pf-riga {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scheda-rapida-pf-riga .barra-pf {
+  flex: 1;
+  height: 9px;
+  margin-top: 0;
+}
+
+.scheda-rapida-pf-valore {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.scheda-rapida-schede {
+  display: flex;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.2);
+  background: rgba(122, 31, 43, 0.05);
+}
+
+.scheda-rapida-schede:empty {
+  display: none;
+}
+
+.scheda-rapida-scheda {
+  flex: 1;
+  padding: 10px 4px 8px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.scheda-rapida-scheda:hover {
+  color: var(--color-burgundy);
+}
+
+.scheda-rapida-scheda.scelta {
+  color: var(--color-burgundy);
+  font-weight: 700;
+  border-bottom-color: var(--color-gold);
+}
+
+.scheda-rapida-corpo {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 20px 18px;
+}
+
+.scheda-rapida-sezione {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+  margin: 18px 0 6px;
+}
+
+.scheda-rapida-sezione:first-child {
+  margin-top: 0;
+}
+
+.scheda-rapida-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scheda-rapida-lista .inventario-riga {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scheda-rapida-lista .inventario-nome small {
+  display: block;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-lista .btn-tiro {
+  margin-left: 0;
+}
+
+.scheda-rapida-bonus {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  padding: 1px 8px;
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: 999px;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-prove {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+}
+
+.scheda-rapida-prova {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  border: none;
+  border-bottom: 1px dotted rgba(122, 31, 43, 0.3);
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+}
+
+button.scheda-rapida-prova {
+  cursor: pointer;
+}
+
+button.scheda-rapida-prova:hover,
+button.scheda-rapida-prova:focus-visible {
+  background: rgba(122, 31, 43, 0.06);
+}
+
+.scheda-rapida-prova-nome {
+  flex: 1;
+  min-width: 0;
+}
+
+.scheda-rapida-prova b {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+}
+
+.scheda-rapida-caratteristiche {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scheda-rapida-caratteristica {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 2px 8px;
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+button.scheda-rapida-caratteristica {
+  cursor: pointer;
+}
+
+button.scheda-rapida-caratteristica:hover,
+button.scheda-rapida-caratteristica:focus-visible {
+  border-color: var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.06);
+}
+
+.scheda-rapida-caratteristica small {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-caratteristica b {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+}
+
+.scheda-rapida-nota,
+.scheda-rapida-vuoto {
+  margin: 10px 0 0;
+  font-size: 0.95rem;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-vuoto {
+  font-style: italic;
+}
+
+.scheda-rapida-statistiche {
+  margin-top: 0;
+}
+
+.scheda-rapida-slot button.pallino {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+}
+
+.scheda-rapida-slot button.pallino.competente {
+  background: var(--color-burgundy);
+}
+
+.scheda-rapida-privilegio .inventario-nome {
+  min-width: 55%;
+}
+
+.scheda-rapida .scheda-rapida-esito {
+  margin: 0 20px 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-gold);
+  background: var(--color-ink);
+  color: var(--color-parchment);
+  font-size: 0.92rem;
+}
+
+.scheda-rapida .scheda-rapida-esito.errore {
+  border-color: var(--color-danger);
+}
+
+.scheda-rapida-piede {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px 14px;
+  border-top: 1px solid rgba(122, 31, 43, 0.2);
+}
+
+.scheda-rapida-piede p {
+  flex: 1;
+  margin: 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+  .btn-scheda-rapida {
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+
+  .scheda-rapida {
+    left: 0;
+    width: 100vw;
+    border: none;
+    border-radius: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation-name: scheda-rapida-sale;
+  }
+
+  @keyframes scheda-rapida-sale {
+    from { transform: translateY(60px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
+  .scheda-rapida-testa {
+    padding: 8px 16px 12px;
+    touch-action: none;
+  }
+
+  .scheda-rapida-maniglia {
+    display: block;
+    width: 44px;
+    height: 5px;
+    margin: 0 auto 10px;
+    border-radius: 3px;
+    background: rgba(122, 31, 43, 0.3);
+  }
+
+  .scheda-rapida-corpo {
+    padding: 12px 16px 16px;
+  }
+
+  .scheda-rapida-schede {
+    padding: 0 6px;
+  }
+
+  .scheda-rapida-scheda {
+    font-size: 0.78rem;
+    min-height: 44px;
+  }
+
+  .scheda-rapida-prove {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scheda-rapida-prova {
+    min-height: 44px;
+  }
+
+  .scheda-rapida-piede {
+    padding: 10px 16px 12px;
+  }
+
+  /* Con la scheda aperta la pagina sotto non scorre. */
+  body.scheda-rapida-aperta {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scheda-rapida {
+    animation: none;
+  }
+}
+
+/* Spazio in fondo alla Sessione: il bottone fisso non copre l'ultimo pannello. */
+body:has(.btn-scheda-rapida:not([hidden])) .dashboard-wrap {
+  padding-bottom: 72px;
+}

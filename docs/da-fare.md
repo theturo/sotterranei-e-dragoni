@@ -149,6 +149,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   in ⚙️ → Notifiche si sceglie quali push ricevere (sessione, date, livello,
   turno) e una fascia "non disturbare" in cui le push sono in pausa (gli
   avvisi restano nella campanella).
+- Scheda rapida in Sessione: il bottone fisso «La mia scheda» apre la scheda
+  del proprio personaggio per il gioco (Combattimento, Prove, Magia,
+  Privilegi): tiri con la finestra dei dadi e negli appunti, PF, slot e usi
+  salvati su scheda e party. Sul computer è un pannello a destra che lascia
+  la mappa visibile, sul telefono occupa lo schermo. Il DM vede «Schede del
+  party» in sola lettura.
 - Pulizia e campagne: il DM elimina dal registro una o più sessioni (anche
   già giocate, con appunti e tiri; il contatore riparte dal numero più alto
   rimasto); l'admin elimina un utente da Gestione utenti (Cloud Function
