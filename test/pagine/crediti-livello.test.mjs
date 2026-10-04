@@ -12,14 +12,14 @@ test("il vecchio contatore del profilo compare solo nella migrazione", () => {
   for (const file of [...pagine, "assets/js/cruscotto-calcoli.js", "assets/js/menu-utente.js"]) {
     assert.doesNotMatch(leggi(file), /livelliDaSpendere/, file);
   }
-  const auth = leggi("assets/js/auth.js");
-  assert.doesNotMatch(auth, /segnalaLivelloSu/);
-  assert.match(auth, /export async function migraCreditiProfilo/);
+  const dati = readdirSync(new URL("../../assets/js/dati/", import.meta.url)).map((f) => leggi(`assets/js/dati/${f}`)).join("\n");
+  assert.doesNotMatch(dati + leggi("assets/js/auth.js"), /segnalaLivelloSu/);
+  assert.match(leggi("assets/js/dati/livelli.js"), /export async function migraCreditiProfilo/);
 });
 
 test("la spesa del credito è atomica e segnata con la scheda", () => {
-  const auth = leggi("assets/js/auth.js");
-  const spesa = auth.slice(auth.indexOf("export async function applicaPassaggioLivello"), auth.indexOf("export async function migraCreditiProfilo"));
+  const livelli = leggi("assets/js/dati/livelli.js");
+  const spesa = livelli.slice(livelli.indexOf("export async function applicaPassaggioLivello"), livelli.indexOf("export async function migraCreditiProfilo"));
   assert.match(spesa, /writeBatch\(db\)/);
   assert.match(spesa, /riferimentoCrediti\(scheda\.campagnaId, scheda\.proprietarioUid\)/);
   assert.match(spesa, /daSpendere: increment\(-1\), schedaId: scheda\.id/);

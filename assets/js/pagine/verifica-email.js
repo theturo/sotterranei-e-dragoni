@@ -1,11 +1,6 @@
 // Script della pagina verifica-email.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import {
-  proteggiPaginaSenzaVerifica,
-  ricaricaUtente,
-  inviaEmailVerifica,
-  esciUtente,
-} from "../auth.js";
+import { proteggiPaginaSenzaVerifica, ricaricaUtente, inviaEmailVerifica, esciUtente } from "../auth.js";
 import { mostraAttesa } from "../utils.js";
 
 const messaggio = document.getElementById("messaggio");

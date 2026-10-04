@@ -10,6 +10,8 @@
 // immagine dalla creatura scelta; la riga ha l'icona «scheda» per aprirne la scheda con i
 // tiri. Gli alleati hanno il bordo verde e tutti ne vedono i PF; i personaggi
 // unici entrano con il loro stato, una volta sola (vedi terminaCombattimento).
+import { ottieniSchedaAttiva } from "./dati/schede.js";
+import { ascoltaBestiario } from "./dati/bestiario.js";
 import {
   ascoltaCombattimento,
   avviaCombattimento,
@@ -21,12 +23,10 @@ import {
   rimuoviCombattente,
   terminaCombattimento,
   impostaCondizioniCombattente,
-  ottieniSchedaAttiva,
   rivelaNemici,
-  ascoltaBestiario,
   creatureInCombattimento,
   avvisaTurno,
-} from "./auth.js";
+} from "./dati/combattimento.js";
 import { apriSchedaCreatura, caricaMostriSrd } from "./bestiario-finestra.js";
 import { bonusIniziativa } from "./bestiario-calcoli.js";
 import { TAGLIE } from "./mappa-calcoli.js";

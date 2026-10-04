@@ -5,7 +5,7 @@
 //   contenuto, brano e play/pausa decisi dal DM; volume e muto restano locali.
 //   Il player parte muto (i browser bloccano l'audio automatico): il giocatore
 //   lo attiva con il pulsante.
-import { ascoltaStatoMusica } from "./auth.js";
+import { ascoltaStatoMusica } from "./dati/musica.js";
 import { esc, escUrl } from "./utils.js";
 import { ICONA_NOTA, ICONA_COPERTINA, ICONA_RIPRODUCI, icona } from "./icone.js";
 import { caricaApiYouTube, sorgenteDaStato, messaggioErroreYouTube } from "./youtube.js";

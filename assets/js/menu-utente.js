@@ -2,22 +2,15 @@
 // e uscita. Ogni pagina autenticata chiama montaMenuUtente() passando il proprio
 // contenitore (un elemento vuoto nell'intestazione) e i dati di user/profilo già
 // ottenuti da proteggiPagina.
+import { esciUtente, cambiaPassword, cambiaEmail, traduciErrore, ETICHETTE_RUOLO, ROLES } from "./auth.js";
+import { elencaNotifiche, segnaNotificaLetta, salvaPreferenzeNotifiche } from "./dati/utenti.js";
 import {
-  esciUtente,
-  elencaNotifiche,
-  segnaNotificaLetta,
-  cambiaPassword,
-  cambiaEmail,
-  traduciErrore,
-  ETICHETTE_RUOLO,
-  ROLES,
-  ottieniStatoSessione,
   ottieniCampagnaCorrente,
   elencaCampagneAttive,
   elencaCampagneDMConTitolo,
   scegliCampagna,
-  salvaPreferenzeNotifiche,
-} from "./auth.js";
+} from "./dati/campagne.js";
+import { ottieniStatoSessione } from "./dati/sessioni.js";
 import { esc } from "./utils.js";
 import { ICONA_HOME, ICONA_MODIFICA, ICONA_SESSIONE, ICONA_CALENDARIO, ICONA_SI } from "./icone.js";
 import { formattaDataOra, dataOraBreve } from "./calendario.js";

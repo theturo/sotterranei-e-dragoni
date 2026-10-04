@@ -1,15 +1,9 @@
 // Script della pagina i-miei-personaggi.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import {
-  proteggiPagina,
-  ottieniCampagnaCorrente,
-  elencaSchedePersonaggio,
-  impostaSchedaAttiva,
-  eliminaScheda,
-  riordinaSchede,
-  creditiLivello,
-  migraCreditiProfilo,
-} from "../auth.js";
+import { proteggiPagina } from "../auth.js";
+import { creditiLivello, migraCreditiProfilo } from "../dati/livelli.js";
+import { ottieniCampagnaCorrente } from "../dati/campagne.js";
+import { elencaSchedePersonaggio, impostaSchedaAttiva, eliminaScheda, riordinaSchede } from "../dati/schede.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, mostraToast } from "../utils.js";
 import { icona } from "../icone.js";

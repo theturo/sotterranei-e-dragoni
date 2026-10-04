@@ -20,6 +20,7 @@
 //   propria pedina ("Entra in mappa" se non c'è ancora); al suo turno la mappa
 //   si centra su di lui e compare «Tocca a te!».
 // Dati e permessi: vedi "Mappe della sessione" in auth.js e firestore.rules.
+import { ottieniScheda } from "./dati/schede.js";
 import {
   ascoltaTavola,
   impostaMappaInTavola,
@@ -31,22 +32,18 @@ import {
   salvaPedine,
   rimuoviPedina,
   rimuoviPedine,
-  ottieniScheda,
-  ascoltaCombattimento,
   salvaPedinaNemico,
   aggiornaPedinaNemico,
   nuovoIdPedina,
   impostaSegueTurno,
-  rivelaNemici,
-  pedinaInCombattimento,
-  aggiornaPfNemico,
   ascoltaNebbia,
   salvaNebbia,
   salvaStrumenti,
   creaArea,
   rimuoviArea,
   rimuoviAree,
-} from "./auth.js";
+} from "./dati/mappa.js";
+import { ascoltaCombattimento, rivelaNemici, pedinaInCombattimento, aggiornaPfNemico } from "./dati/combattimento.js";
 import { urlImmagine, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
 import { icona } from "./icone.js";

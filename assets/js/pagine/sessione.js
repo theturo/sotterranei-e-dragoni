@@ -1,9 +1,17 @@
 // Script della pagina sessione.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
+import { proteggiPagina, ROLES } from "../auth.js";
+import { ottieniCampagnaCorrente, elencaMembriCampagna } from "../dati/campagne.js";
+import { ottieniScheda } from "../dati/schede.js";
 import {
-  proteggiPagina,
-  ROLES,
-  ottieniCampagnaCorrente,
+  rigeneraRiepiloghiParty,
+  sincronizzaMioRiepilogo,
+  ascoltaRiepiloghiParty,
+  aggiornaStatoPersonaggio,
+  applicaRiposoScheda,
+  applicaRiposoPersonaggi,
+} from "../dati/party.js";
+import {
   ottieniStatoSessione,
   apriSessione,
   chiudiSessione,
@@ -13,19 +21,7 @@ import {
   eliminaSessioni,
   elencaAppuntiSessione,
   elencaSessioniProgrammate,
-  rigeneraRiepiloghiParty,
-  sincronizzaMioRiepilogo,
   eliminaAppunto,
-  elencaMembriCampagna,
-  ascoltaLibreriaDM,
-  ascoltaContenutiVisibili,
-  mostraContenuto,
-  collegaContenutiSessione,
-  ascoltaRiepiloghiParty,
-  aggiornaStatoPersonaggio,
-  ottieniScheda,
-  applicaRiposoScheda,
-  applicaRiposoPersonaggi,
   avviaRiposoBreve,
   terminaRiposoBreve,
   segnaRiposoConcluso,
@@ -33,7 +29,13 @@ import {
   annotaRiposo,
   aggiungiTiro,
   ascoltaTiriNascosti,
-} from "../auth.js";
+} from "../dati/sessioni.js";
+import {
+  ascoltaLibreriaDM,
+  ascoltaContenutiVisibili,
+  mostraContenuto,
+  collegaContenutiSessione,
+} from "../dati/libreria.js";
 import { tira, testoTiro } from "../dadi.js";
 import { oggiIso, formattaDataOra, etichettaSessione, dataBreve, oraBreve } from "../calendario.js";
 import { montaMenuUtente } from "../menu-utente.js";

@@ -3,7 +3,8 @@
 // nel registro della sessione in corso, nascosti ai giocatori a meno che il DM
 // non li renda visibili (la scelta vale anche nella pagina Bestiario).
 // I mostri del SRD si caricano solo quando servono (il file è grande).
-import { ottieniCreatura, sessioneInCorso, aggiungiTiro } from "./auth.js";
+import { sessioneInCorso, aggiungiTiro } from "./dati/sessioni.js";
+import { ottieniCreatura } from "./dati/bestiario.js";
 import { creaElemento } from "./contenuti.js";
 import { elementoIcona } from "./icone.js";
 import { creaBloccoStatistiche } from "./bestiario-scheda.js";

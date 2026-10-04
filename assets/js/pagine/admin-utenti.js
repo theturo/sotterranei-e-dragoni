@@ -1,16 +1,13 @@
 // Script della pagina admin-utenti.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
+import { proteggiPaginaAdmin, inviaResetPassword, profiloApprovato, ETICHETTE_RUOLO } from "../auth.js";
 import {
-  proteggiPaginaAdmin,
   elencaUtenti,
   richiediEliminazioneUtente,
   ascoltaRichiestaEliminazione,
   aggiornaRuoloUtente,
-  inviaResetPassword,
   approvaUtente,
-  profiloApprovato,
-  ETICHETTE_RUOLO,
-} from "../auth.js";
+} from "../dati/utenti.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, mostraAttesa, mostraToast } from "../utils.js";
 import { dataBreve } from "../calendario.js";
