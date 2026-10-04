@@ -4447,6 +4447,17 @@ table.tabella-punteggi select {
   display: block;
 }
 
+/* Dado vita in 3D (dado-pf.js): l'ottaedro si muove da solo, niente
+   animazione CSS. */
+.vassoio-dado.dado-3d {
+  bottom: auto;
+  top: 0;
+  width: 100px;
+  height: 100px;
+  margin-left: -50px;
+  transform: none;
+}
+
 .vassoio-tiro.in-lancio .vassoio-dado {
   animation: vassoio-lancio 3.4s cubic-bezier(.45, .05, .55, .95) 1 forwards;
 }

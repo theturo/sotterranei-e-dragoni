@@ -12,11 +12,9 @@ indicativo. Si aggiorna man mano che si completano.
 La tela di design "Grafica di Base e Caricamento" è la fonte di verità: si
 integra solo ciò che è segnato ✅, con una pull request per lotto.
 
-- **Tiro dei PF in 3D vero (JS)** (✅ approvato nella tela): ottaedro al
-  posto dell'illusione CSS nel passaggio di livello.
 - **Stemma per l'intestazione** (❌ scartato, drago da rifare).
 - **Animazioni in JavaScript** (da valutare insieme): fatto il dado di
-  caricamento, approvato il tiro dei PF; l'annuncio di livello resta in CSS
+  caricamento e il tiro dei PF; l'annuncio di livello resta in CSS
   (scelta della tela). Il cambio turno nel tracker è in sviluppo nella tela
   (due proposte, in attesa). Da valutare: comparsa dei contenuti in sessione,
   eventuali risorse aggiuntive (sprite, suoni, particelle).
@@ -158,6 +156,9 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   me», «Scheda», croce della pedina a terra e bussola quando non c'è una
   mappa), capitoli e segni della guida, tiri e tag del Bestiario, elenco
   YouTube e audio del widget musica. Registro in assets/js/icone.js (icona()).
+- Tiro dei PF in 3D vero (JS) nel passaggio di livello: un ottaedro che
+  rotola e si ferma con il risultato davanti (dado-pf.js), al posto
+  dell'animazione CSS; con «riduci animazioni» compare già fermo.
 - Pulizia e campagne: il DM elimina dal registro una o più sessioni (anche
   già giocate, con appunti e tiri; il contatore riparte dal numero più alto
   rimasto); l'admin elimina un utente da Gestione utenti (Cloud Function
