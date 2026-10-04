@@ -5,7 +5,7 @@
 import {
   proteggiPagina, salvaOrdinePannelli, ROLES, ottieniCampagnaCorrente, contaUtentiInAttesa, riepilogoCalendario,
   ottieniStatoSessione, elencaSessioniCampagna, elencaProposteAperte, elencaMembriCampagna, ascoltaRiepiloghiParty,
-  contaContenutiCollegati, ottieniSchedaAttiva, apriSessione,
+  contaContenutiCollegati, ottieniSchedaAttiva, apriSessione, elencaCreditiCampagna, creditiLivello, migraCreditiProfilo,
 } from "../auth.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { montaMenuUtente, riempiSelettoreCampagna } from "../menu-utente.js";
@@ -117,9 +117,9 @@ function barra(hp) {
   return contenitore;
 }
 
-function disegnaParty(party, membri) {
+// livelli: Map uid → livelli concessi in questa campagna e non ancora spesi.
+function disegnaParty(party, livelli) {
   const lista = document.getElementById("cruscotto-lista-party");
-  const livelli = new Map(membri.map((m) => [m.uid, m.livelliDaSpendere || 0]));
   if (!party.length) {
     lista.replaceChildren(creaElemento("li", "cruscotto-vuoto", "Nessun giocatore nel party: aggiungili da Gestione campagna."));
     return;
@@ -143,12 +143,13 @@ function disegnaParty(party, membri) {
 async function cruscottoDM(campagna, admin) {
   document.getElementById("cruscotto-party").hidden = false;
   document.getElementById("titolo-avvisi").textContent = "Da fare";
-  const [stato, sessioni, proposte, membri, inAttesa] = await Promise.all([
+  const [stato, sessioni, proposte, membri, inAttesa, crediti] = await Promise.all([
     ottieniStatoSessione(campagna.id),
     elencaSessioniCampagna(campagna.id),
     elencaProposteAperte(campagna.id),
     elencaMembriCampagna(campagna.id),
     admin ? contaUtentiInAttesa() : Promise.resolve(0),
+    elencaCreditiCampagna(campagna.id).catch(() => new Map()),
   ]);
   const evidenza = sessioneInEvidenza({ inCorso: stato.inCorso ? stato : null, sessioni, proposte, membri: membri.length });
   const contenutiProssima = evidenza.sessione && evidenza.tipo !== "corso"
@@ -209,8 +210,8 @@ async function cruscottoDM(campagna, admin) {
     const conRiepilogo = new Set(delParty.map((p) => p.uid));
     const senza = membri.filter((m) => !conRiepilogo.has(m.uid)).map((m) => ({ uid: m.uid, nomeGiocatore: m.nome, schedaId: null }));
     const tutti = [...delParty, ...senza].sort((a, b) => (a.nomeGiocatore || "").localeCompare(b.nomeGiocatore || ""));
-    disegnaParty(tutti, membri);
-    disegnaAvvisi(avvisiDM({ membri, party: tutti, proposte, evidenza, contenutiProssima, inAttesa }), "Tutto in ordine: nulla da fare per ora.");
+    disegnaParty(tutti, crediti);
+    disegnaAvvisi(avvisiDM({ membri, crediti, party: tutti, proposte, evidenza, contenutiProssima, inAttesa }), "Tutto in ordine: nulla da fare per ora.");
   });
 }
 
@@ -254,11 +255,20 @@ async function cruscottoGiocatore(campagna, uid, profilo) {
   document.getElementById("cruscotto-musica").hidden = false;
   document.getElementById("titolo-avvisi").textContent = "Avvisi";
   montaWidgetMusica(document.getElementById("corpo-musica-giocatore"), campagna.id);
-  const [stato, calendario, scheda] = await Promise.all([
+  await migraCreditiProfilo({ uid, ...profilo }).catch((errore) => console.error(errore));
+  const [stato, calendario, scheda, crediti] = await Promise.all([
     ottieniStatoSessione(campagna.id),
     riepilogoCalendario(campagna.id, uid),
     ottieniSchedaAttiva(uid, campagna.id),
+    creditiLivello(campagna.id, uid).catch(() => 0),
   ]);
+  // Il livello mostrato accanto al nome è quello del personaggio attivo in
+  // questa campagna.
+  if (scheda) {
+    const badgeLivello = document.getElementById("badge-livello");
+    badgeLivello.textContent = `Livello ${scheda.livello || 1}`;
+    badgeLivello.style.display = "inline-block";
+  }
   const evidenza = sessioneInEvidenza({ inCorso: stato.inCorso ? stato : null, sessioni: calendario.sessioni });
   if (evidenza.tipo === "corso") {
     disegnaSessione({
@@ -285,7 +295,7 @@ async function cruscottoGiocatore(campagna, uid, profilo) {
     });
   }
   disegnaMioPersonaggio(scheda, uid);
-  disegnaAvvisi(avvisiGiocatore({ profilo, scheda, daRispondere: calendario.daRispondere }), "Nessun avviso.");
+  disegnaAvvisi(avvisiGiocatore({ crediti, scheda, daRispondere: calendario.daRispondere }), "Nessun avviso.");
 }
 
 async function montaCruscotto(user, profilo, campagna, ruolo) {
@@ -319,12 +329,6 @@ proteggiPagina(async (user, profilo) => {
   renderStrumenti(ruoloCampagna, profilo?.ordinePannelli, ruolo === ROLES.ADMIN);
   montaCruscotto(user, profilo, campagna, ruoloCampagna).catch((errore) => console.error(errore));
 
-  // Il livello personale è visibile a tutti: anche un DM o un admin possono
-  // avere (o volere) un proprio personaggio nella campagna.
-  const badgeLivello = document.getElementById("badge-livello");
-  badgeLivello.textContent = `Livello ${profilo?.livello ?? 1}`;
-  badgeLivello.style.display = "inline-block";
-
   const notifiche = await montaMenuUtente({
     contenitore: document.getElementById("slot-utente"),
     user,
@@ -339,10 +343,11 @@ proteggiPagina(async (user, profilo) => {
   const livelliNonLetti = notifiche.filter((n) => !n.letta && n.tipo === "livello_su");
   if (livelliNonLetti.length > 0) {
     const ultima = livelliNonLetti[0];
+    const dove = ultima.campagnaTitolo ? ` in «${ultima.campagnaTitolo}»` : "";
     let testo =
-      `Il tuo Dungeon Master ti ha fatto salire dal livello ${ultima.livelloPrecedente} ` +
-      `al livello ${ultima.livelloNuovo}. Potrai spendere i punti guadagnati non appena ` +
-      `sarà pronta la scheda personaggio.`;
+      `Il tuo Dungeon Master ti ha fatto salire${dove} dal livello ${ultima.livelloPrecedente} ` +
+      `al livello ${ultima.livelloNuovo}. Completa il passaggio dalla scheda del tuo ` +
+      `personaggio attivo in quella campagna.`;
     if (livelliNonLetti.length > 1) {
       testo += ` Hai ${livelliNonLetti.length} notifiche di livello non lette: consultale dalla campanella.`;
     }

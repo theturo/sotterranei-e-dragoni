@@ -32,9 +32,9 @@ test("strumenti e avvisi della dashboard usano nomi di icone", () => {
   const voci = [...GRUPPI_DM, GRUPPO_ADMIN, ...GRUPPI_GIOCATORE].flatMap((g) => g.voci);
   for (const v of voci) assert.ok(icona(v.icona), `${v.chiave}: «${v.icona}»`);
   const avvisi = [
-    ...avvisiDM({ membri: [{ uid: "a", nome: "Pia", livelliDaSpendere: 1 }, { uid: "b", nome: "Ugo" }], party: [{ uid: "a", schedaId: "s", livello: 2 }],
+    ...avvisiDM({ membri: [{ uid: "a", nome: "Pia" }, { uid: "b", nome: "Ugo" }], crediti: new Map([["a", 1]]), party: [{ uid: "a", schedaId: "s", livello: 2 }],
       proposte: [{ risposte: [] }], evidenza: { tipo: "oggi", titolo: "Sessione 4" }, contenutiProssima: 0, inAttesa: 1 }),
-    ...avvisiGiocatore({ profilo: { livelliDaSpendere: 1 }, scheda: { id: "s", livello: 2 }, daRispondere: 2 }),
+    ...avvisiGiocatore({ crediti: 1, scheda: { id: "s", livello: 2 }, daRispondere: 2 }),
     ...avvisiGiocatore({ scheda: null }),
   ];
   for (const a of avvisi) assert.ok(icona(a.icona), `avviso «${a.testo}»: «${a.icona}»`);

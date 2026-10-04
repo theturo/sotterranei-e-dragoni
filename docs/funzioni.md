@@ -5,7 +5,7 @@ Le funzioni (`functions/`) sono quattro:
 | Funzione | Cosa fa | Si attiva |
 |---|---|---|
 | `notificaNuovoIscritto` | Invia un'email all'admin quando qualcuno si registra ed è in attesa di approvazione (massimo 10 email all'ora, contro le registrazioni in massa) | alla creazione di un documento in `users` |
-| `inviaNotificaPush` | Manda ogni avviso della campanella (passaggio di livello, date proposte, sessione confermata, sessione iniziata) come **notifica push** ai dispositivi su cui l'utente le ha attivate; toglie i dispositivi il cui token non vale più | alla creazione di un documento in `users/{uid}/notifiche` |
+| `inviaNotificaPush` | Manda ogni avviso della campanella (livello concesso o annullato, date proposte, sessione confermata, sessione iniziata) come **notifica push** ai dispositivi su cui l'utente le ha attivate; toglie i dispositivi il cui token non vale più | alla creazione di un documento in `users/{uid}/notifiche` |
 | `eliminaUtente` | Esegue l'eliminazione di un utente chiesta dall'admin in Gestione utenti: account di accesso, profilo con notifiche e dispositivi, personaggi con i ritratti, posto tra i membri e nel party delle campagne. Gli appunti scritti in sessione restano, firmati con il nome | alla creazione di un documento in `richiesteEliminazione` |
 | `bloccaSpeseOltreSoglia` | Se la spesa del mese raggiunge la soglia (predefinita: 10), **scollega la fatturazione** dal progetto | a ogni avviso del budget, via Pub/Sub |
 

@@ -23,7 +23,8 @@ before(async () => {
 after(() => env.cleanup());
 
 // Dati di partenza: admin, DM, due giocatori approvati (p1 con un credito di
-// livello), un profilo "vecchio" senza campo approvato, un iscritto in attesa.
+// livello nella campagna c1 e un vecchio credito nel profilo), un profilo
+// "vecchio" senza campo approvato, un iscritto in attesa.
 beforeEach(async () => {
   await env.clearFirestore();
   await env.withSecurityRulesDisabled(async (ctx) => {
@@ -37,6 +38,7 @@ beforeEach(async () => {
     await set("users/attesa", { nome: "Nuovo", email: "n@x.it", ruolo: "player", livello: 1, livelliDaSpendere: 0, approvato: false });
     await set("campagne/c1", { titolo: null, titoloProvvisorio: true, dmUid: "dm", membriUid: ["p1", "p2"], stato: "attiva" });
     await set("campagne/c1/privato/titolo", { titolo: "La Tomba degli Orrori" });
+    await set("campagne/c1/livelli/p1", { daSpendere: 1 });
     // Contenuti: nascosto, mostrato ora a tutti, nell'archivio solo di p1.
     const contenuto = (mostrataA = [], archiviataPer = []) => ({
       titolo: "Mappa", descrizione: null, categoria: "mappa", larghezza: 800, altezza: 600,
@@ -109,21 +111,10 @@ describe("Registrazione e profili", () => {
     assertSucceeds(updateDoc(doc(come("p2"), "users/p2"), { "ordinePannelli.player": ["a", "b"] })));
   test("l'admin approva un iscritto", () =>
     assertSucceeds(updateDoc(doc(come("admin"), "users/attesa"), { approvato: true })));
-  test("il DM segnala un passaggio di livello (+1)", () =>
-    assertSucceeds(updateDoc(doc(come("dm"), "users/p2"), { livello: increment(1), livelliDaSpendere: increment(1) })));
-  test("il DM concede più livelli in un colpo (livello di partenza)", () =>
-    assertSucceeds(updateDoc(doc(come("dm"), "users/p2"), { livello: increment(2), livelliDaSpendere: increment(2) })));
-  test("il DM NON concede livelli e crediti diversi", () =>
-    assertFails(updateDoc(doc(come("dm"), "users/p2"), { livello: 5, livelliDaSpendere: 3 })));
-  test("il DM NON toglie livelli", () =>
-    assertFails(updateDoc(doc(come("dm"), "users/p1"), { livello: increment(-1), livelliDaSpendere: increment(-1) })));
-  test("il DM concede livelli anche all'admin (che può giocare nella sua campagna)", () =>
-    assertSucceeds(updateDoc(doc(come("dm"), "users/admin"), { livello: increment(1), livelliDaSpendere: increment(1) })));
-  test("il DM NON concede livelli a sé stesso né a un altro DM", async () => {
-    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "users/dm2"), { nome: "Altro", email: "dm2@x.it", ruolo: "dm", approvato: true }));
-    await assertFails(updateDoc(doc(come("dm"), "users/dm"), { livello: increment(1), livelliDaSpendere: increment(1) }));
-    await assertFails(updateDoc(doc(come("dm"), "users/dm2"), { livello: increment(1), livelliDaSpendere: increment(1) }));
-  });
+  test("un giocatore azzera i vecchi crediti del profilo", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "users/p1"), { livelliDaSpendere: 0 })));
+  test("il DM NON tocca più livello e crediti del profilo", () =>
+    assertFails(updateDoc(doc(come("dm"), "users/p2"), { livello: increment(1), livelliDaSpendere: increment(1) })));
   test("il DM imposta il livello di partenza della campagna", () =>
     assertSucceeds(updateDoc(doc(come("dm"), "campagne/c1"), { livelloPartenza: 3 })));
   test("un giocatore NON imposta il livello di partenza", () =>
@@ -179,28 +170,38 @@ describe("Schede personaggio", () => {
     assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), { "hp.attuali": 5 })));
   test("NON si alza il livello senza spendere un credito", () =>
     assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { livello: 2 })));
-  test("si sale di livello spendendo un credito nella stessa scrittura", () => {
-    const d = come("p1");
+  const saliDiLivello = (uid, schedaId, livello, { campagna = "c1", credito = -1, segnaScheda = schedaId } = {}) => {
+    const d = come(uid);
     const batch = writeBatch(d);
-    batch.update(doc(d, "personaggi/s1"), { livello: 2 });
-    batch.update(doc(d, "users/p1"), { livelliDaSpendere: increment(-1) });
-    return assertSucceeds(batch.commit());
+    batch.update(doc(d, `personaggi/${schedaId}`), { livello });
+    batch.update(doc(d, `campagne/${campagna}/livelli/${uid}`), {
+      daSpendere: increment(credito), schedaId: segnaScheda, aggiornatoIl: serverTimestamp(),
+    });
+    return batch.commit();
+  };
+  test("si sale di livello spendendo un credito della campagna nella stessa scrittura", () =>
+    assertSucceeds(saliDiLivello("p1", "s1", 2)));
+  test("NON si sale di 2 livelli con un credito solo", () => assertFails(saliDiLivello("p1", "s1", 3)));
+  test("NON si spende un credito che non si ha", () => assertFails(saliDiLivello("p2", "s2", 2)));
+  test("NON si sale di livello senza scalare il credito", () =>
+    assertFails(saliDiLivello("p1", "s1", 2, { credito: 0 })));
+  test("NON si segna la spesa su un'altra scheda", () =>
+    assertFails(saliDiLivello("p1", "s1", 2, { segnaScheda: "s2" })));
+  test("NON sale di livello una scheda non attiva", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "personaggi/s3"),
+      { proprietarioUid: "p1", campagnaId: "c1", attiva: false, nome: "Riserva", livello: 1 }));
+    await assertFails(saliDiLivello("p1", "s3", 2));
   });
-  test("NON si sale di 2 livelli con un credito solo", () => {
-    const d = come("p1");
-    const batch = writeBatch(d);
-    batch.update(doc(d, "personaggi/s1"), { livello: 3 });
-    batch.update(doc(d, "users/p1"), { livelliDaSpendere: increment(-1) });
-    return assertFails(batch.commit());
+  test("NON si usa il credito di un'altra campagna", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const d = ctx.firestore();
+      await setDoc(doc(d, "campagne/c2"), { titolo: "Altra", titoloProvvisorio: false, dmUid: "dm", membriUid: ["p1"], stato: "attiva" });
+      await setDoc(doc(d, "campagne/c2/livelli/p1"), { daSpendere: 1 });
+    });
+    await assertFails(saliDiLivello("p1", "s1", 2, { campagna: "c2" }));
   });
-  test("NON si spende un credito che non si ha", () => {
-    const d = come("p2");
-    const batch = writeBatch(d);
-    batch.update(doc(d, "personaggi/s2"), { livello: 2 });
-    batch.update(doc(d, "users/p2"), { livelliDaSpendere: increment(-1) });
-    return assertFails(batch.commit());
-  });
-
+  test("NON si scala il credito senza salire di livello", () =>
+    assertFails(updateDoc(doc(come("p1"), "campagne/c1/livelli/p1"), { daSpendere: 0, schedaId: "s1", aggiornatoIl: serverTimestamp() })));
   test("si crea una scheda completa come quella del sito", () =>
     assertSucceeds(addDoc(collection(come("p1"), "personaggi"), {
       proprietarioUid: "p1", campagnaId: "c1", livello: 1, nome: "Nuovo", razza: "umano", sottorazza: null, classe: "mago",
@@ -230,6 +231,55 @@ describe("Schede personaggio", () => {
     assertSucceeds(updateDoc(doc(come("dm"), "personaggi/vecchia"), { campagnaId: "c1" })));
   test("il DM NON modifica altro nelle schede", () =>
     assertFails(updateDoc(doc(come("dm"), "personaggi/s1"), { livello: 20 })));
+});
+
+describe("Crediti di livello per campagna", () => {
+  const scrivi = (uid, per, daSpendere) =>
+    setDoc(doc(come(uid), `campagne/c1/livelli/${per}`), { daSpendere, aggiornatoIl: serverTimestamp() }, { merge: true });
+
+  test("il proprietario legge i propri crediti", () =>
+    assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/livelli/p1"))));
+  test("un altro giocatore NON legge i crediti altrui", () =>
+    assertFails(getDoc(doc(come("p2"), "campagne/c1/livelli/p1"))));
+  test("il DM della campagna elenca i crediti dei membri", () =>
+    assertSucceeds(getDocs(collection(come("dm"), "campagne/c1/livelli"))));
+  test("un giocatore NON elenca i crediti", () =>
+    assertFails(getDocs(collection(come("p1"), "campagne/c1/livelli"))));
+  test("il DM concede un livello a un membro (credito nuovo)", () => assertSucceeds(scrivi("dm", "p2", 1)));
+  test("il DM concede più livelli in un colpo (livello di partenza)", () => assertSucceeds(scrivi("dm", "p1", 4)));
+  test("il DM annulla un livello non ancora speso", () => assertSucceeds(scrivi("dm", "p1", 0)));
+  test("il DM NON annulla un livello già speso", () => assertFails(scrivi("dm", "p2", 0)));
+  test("il DM NON toglie più livelli in un colpo", async () => {
+    await scrivi("dm", "p1", 3);
+    await assertFails(scrivi("dm", "p1", 1));
+  });
+  test("il DM NON concede livelli a chi non è nella campagna", () => assertFails(scrivi("dm", "vecchio", 1)));
+  test("il DM NON concede livelli in una campagna che non guida", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const d = ctx.firestore();
+      await setDoc(doc(d, "users/dm2"), { nome: "Altro", email: "dm2@x.it", ruolo: "dm", approvato: true });
+      await setDoc(doc(d, "campagne/c2"), { titolo: "Altra", titoloProvvisorio: false, dmUid: "dm2", membriUid: ["p1"], stato: "attiva" });
+    });
+    await assertFails(setDoc(doc(come("dm"), "campagne/c2/livelli/p1"), { daSpendere: 1, aggiornatoIl: serverTimestamp() }));
+  });
+  test("il DM NON segna una scheda sul credito", () =>
+    assertFails(setDoc(doc(come("dm"), "campagne/c1/livelli/p2"), { daSpendere: 1, schedaId: "s2", aggiornatoIl: serverTimestamp() })));
+  test("un giocatore NON si regala crediti", () => assertFails(scrivi("p2", "p2", 1)));
+  test("un giocatore sposta i vecchi crediti del profilo nella campagna", () => {
+    const d = come("p1");
+    const batch = writeBatch(d);
+    batch.update(doc(d, "users/p1"), { livelliDaSpendere: 0 });
+    batch.set(doc(d, "campagne/c1/livelli/p1"), { daSpendere: 2, aggiornatoIl: serverTimestamp() }, { merge: true });
+    return assertSucceeds(batch.commit());
+  });
+  test("NON si spostano i crediti senza azzerare il profilo", () => assertFails(scrivi("p1", "p1", 2)));
+  test("NON si spostano più crediti di quelli del profilo", () => {
+    const d = come("p1");
+    const batch = writeBatch(d);
+    batch.update(doc(d, "users/p1"), { livelliDaSpendere: 0 });
+    batch.set(doc(d, "campagne/c1/livelli/p1"), { daSpendere: 5, aggiornatoIl: serverTimestamp() }, { merge: true });
+    return assertFails(batch.commit());
+  });
 });
 
 describe("Campagne e titolo provvisorio", () => {

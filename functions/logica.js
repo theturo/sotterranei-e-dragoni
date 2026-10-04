@@ -82,10 +82,21 @@ const breve = (valore, massimo = 80) => String(valore ?? "").replace(/\s+/g, " "
 export function messaggioPush(notifica) {
   const titolo = notifica?.titolo ? breve(notifica.titolo) : "";
   switch (notifica?.tipo) {
-    case "livello_su":
+    // Livelli concessi o annullati dal DM in una campagna (il titolo della
+    // campagna c'è solo se non è provvisorio).
+    case "livello_su": {
+      const chi = notifica.personaggio ? `${breve(notifica.personaggio, 40)} sale` : "Sali";
+      const dove = notifica.campagnaTitolo ? ` in «${breve(notifica.campagnaTitolo, 60)}»` : "";
       return {
         titolo: "Sei salito di livello!",
-        testo: `Il DM ti ha portato dal livello ${breve(notifica.livelloPrecedente, 4)} al ${breve(notifica.livelloNuovo, 4)}.`,
+        testo: `${chi} dal livello ${breve(notifica.livelloPrecedente, 4)} al ${breve(notifica.livelloNuovo, 4)}${dove}: completa il passaggio dalla scheda.`,
+        url: "dashboard.html",
+      };
+    }
+    case "livello_annullato":
+      return {
+        titolo: "Passaggio di livello annullato",
+        testo: `Il DM ha annullato ${notifica.livelloAnnullato ? `il passaggio al ${breve(notifica.livelloAnnullato, 4)}° livello` : "un passaggio di livello"}${notifica.campagnaTitolo ? ` in «${breve(notifica.campagnaTitolo, 60)}»` : ""}.`,
         url: "dashboard.html",
       };
     case "proposta_sessione": {
@@ -131,6 +142,7 @@ export const CATEGORIA_PUSH = {
   proposta_sessione: "date",
   sessione_confermata: "date",
   livello_su: "livello",
+  livello_annullato: "livello",
   turno: "turno",
 };
 

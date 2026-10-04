@@ -128,8 +128,8 @@ export const inviaNotificaPush = onDocumentCreated("users/{uid}/notifiche/{notif
 // L'admin elimina un utente dalla pagina Gestione utenti scrivendo
 // "richiesteEliminazione/{uid}" (solo lui può, vedi firestore.rules). Si
 // eliminano: account di accesso, profilo con notifiche e dispositivi,
-// personaggi con i ritratti, posto tra i membri e nel party delle campagne,
-// combattente nel tracker e pedina sulle mappe. Chi guida una campagna non
+// personaggi con i ritratti, posto tra i membri, nel party e crediti di
+// livello delle campagne, combattente nel tracker e pedina sulle mappe. Chi guida una campagna non
 // si elimina (la campagna resterebbe senza DM).
 // Gli appunti e i tiri scritti in sessione restano, firmati con il nome.
 // L'esito torna nella richiesta ("stato": completata | errore).
@@ -157,6 +157,7 @@ export const eliminaUtente = onDocumentCreated("richiesteEliminazione/{uid}", as
       const batch = db.batch();
       batch.update(c.ref, { membriUid: FieldValue.arrayRemove(uid) });
       batch.delete(c.ref.collection("party").doc(uid));
+      batch.delete(c.ref.collection("livelli").doc(uid));
       // Il suo personaggio esce anche dal tracker e dalle mappe (pedina,
       // righello e ping).
       const combattenti = await c.ref.collection("combattenti").where("uid", "==", uid).get();

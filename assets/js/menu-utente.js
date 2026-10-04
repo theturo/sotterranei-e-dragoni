@@ -143,7 +143,13 @@ const HTML_MODALE = `
 
 function testoNotifica(notifica) {
   if (notifica.tipo === "livello_su") {
-    return `Passaggio di livello: ${esc(notifica.livelloPrecedente)} → ${esc(notifica.livelloNuovo)}`;
+    const chi = notifica.personaggio ? `${esc(notifica.personaggio)}: ` : "";
+    const dove = notifica.campagnaTitolo ? ` in «${esc(notifica.campagnaTitolo)}»` : "";
+    return `Passaggio di livello${dove}: ${chi}${esc(notifica.livelloPrecedente)} → ${esc(notifica.livelloNuovo)}`;
+  }
+  if (notifica.tipo === "livello_annullato") {
+    const quale = notifica.livelloAnnullato ? ` al ${esc(notifica.livelloAnnullato)}° livello` : " di livello";
+    return `Il DM ha annullato il passaggio${quale}${notifica.campagnaTitolo ? ` in «${esc(notifica.campagnaTitolo)}»` : ""}`;
   }
   if (notifica.tipo === "proposta_sessione") {
     const quante = notifica.date === 1 ? "una data" : `${esc(notifica.date)} date`;
