@@ -17,7 +17,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "5b3c6690bdf1";
+const VERSIONE = "d5f82d1f8c6f";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
   "./archivio.html": "cacd8a002a1f",
@@ -28,7 +28,7 @@ const FILE = {
   "./assets/css/gioco.css": "bd5c1ef4b3ca",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "ffcf341dfab4",
-  "./assets/css/sessione.css": "ed3d773f5974",
+  "./assets/css/sessione.css": "7ba877439dfc",
   "./assets/fonts/cinzel-700.woff2": "8efa224fe70f",
   "./assets/fonts/cinzel-OFL.txt": "f5a242cf68ad",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
@@ -55,7 +55,7 @@ const FILE = {
   "./assets/js/bestiario-scheda.js": "9a1f509ff4c4",
   "./assets/js/calcoli-scheda.js": "660e3a9ce65d",
   "./assets/js/calendario.js": "e6cf8e5bd2ed",
-  "./assets/js/combattimento.js": "3cada4dcec84",
+  "./assets/js/combattimento.js": "d1bab596ac0e",
   "./assets/js/condizioni.js": "7798031d4694",
   "./assets/js/contenuti.js": "bc0640a2e0f3",
   "./assets/js/cruscotto-calcoli.js": "610babaca0d6",
@@ -126,6 +126,7 @@ const FILE = {
   "./assets/js/scheda-rapida.js": "0acec7ca6c0f",
   "./assets/js/spotify-config.js": "2cd119a39d39",
   "./assets/js/spotify.js": "608a6de358de",
+  "./assets/js/turno-animato.js": "d2822bb9a2d0",
   "./assets/js/utils.js": "bfba4f8d663e",
   "./assets/js/widget-musica.js": "763fb7eefde7",
   "./assets/js/youtube.js": "31a2b419c9ed",
