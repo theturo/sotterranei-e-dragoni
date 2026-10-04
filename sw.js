@@ -2,6 +2,8 @@
 // - Salva sul telefono pagine, stili, script e icone di questa versione del
 //   sito (FILE, sotto) e li serve da lì: l'app si apre subito e resta
 //   coerente, perché tutti i file appartengono alla stessa versione.
+// - Ogni file ha la sua impronta: a una versione nuova si riscaricano solo
+//   i file cambiati, gli altri si copiano dalla versione precedente.
 // - Senza rete le pagine mostrano offline.html (i dati stanno su Firebase).
 // - Una versione nuova si installa in silenzio e resta in attesa: la pagina
 //   mostra "È disponibile una nuova versione" e, con "Aggiorna", manda il
@@ -15,117 +17,124 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "69fd47dd28ab";
-const FILE = [
-  "./admin-utenti.html",
-  "./archivio.html",
-  "./assets/css/style.css",
-  "./assets/fonts/cinzel-700.woff2",
-  "./assets/fonts/cinzel-OFL.txt",
-  "./assets/icone/apple-touch-icon.png",
-  "./assets/icone/badge-96.png",
-  "./assets/icone/favicon-32.png",
-  "./assets/icone/favicon.svg",
-  "./assets/icone/icona-192.png",
-  "./assets/icone/icona-512.png",
-  "./assets/icone/icona-maskable-512.png",
-  "./assets/img/guida/combattimento.jpg",
-  "./assets/img/guida/mappa.jpg",
-  "./assets/img/guida/personaggio.jpg",
-  "./assets/img/guida/primi-passi.jpg",
-  "./assets/img/guida/sessione.jpg",
-  "./assets/js/aree-incantesimi.js",
-  "./assets/js/auth.js",
-  "./assets/js/bestiario-calcoli.js",
-  "./assets/js/bestiario-finestra.js",
-  "./assets/js/bestiario-scheda.js",
-  "./assets/js/calcoli-scheda.js",
-  "./assets/js/calendario.js",
-  "./assets/js/combattimento.js",
-  "./assets/js/condizioni.js",
-  "./assets/js/contenuti.js",
-  "./assets/js/cruscotto-calcoli.js",
-  "./assets/js/dadi-base.js",
-  "./assets/js/dadi.js",
-  "./assets/js/dado-caricamento.js",
-  "./assets/js/dado-pf.js",
-  "./assets/js/dati-srd.js",
-  "./assets/js/descrizioni.js",
-  "./assets/js/equipaggiamento-srd.js",
-  "./assets/js/esporta-scheda.js",
-  "./assets/js/firebase-config.js",
-  "./assets/js/geometria-3d.js",
-  "./assets/js/guida-personaggio-dati.js",
-  "./assets/js/guida-personaggio.js",
-  "./assets/js/icone.js",
-  "./assets/js/immagini.js",
-  "./assets/js/incantesimi-srd.js",
-  "./assets/js/intro-dado.js",
-  "./assets/js/intro.js",
-  "./assets/js/mappa-calcoli.js",
-  "./assets/js/mappa-pedine.js",
-  "./assets/js/mappa-strumenti.js",
-  "./assets/js/mappa-vista.js",
-  "./assets/js/mappa.js",
-  "./assets/js/menu-utente.js",
-  "./assets/js/mostri-srd.js",
-  "./assets/js/notifiche-push.js",
-  "./assets/js/pagine/admin-utenti.js",
-  "./assets/js/pagine/archivio.js",
-  "./assets/js/pagine/attesa-approvazione.js",
-  "./assets/js/pagine/bestiario.js",
-  "./assets/js/pagine/calendario.js",
-  "./assets/js/pagine/campagna.js",
-  "./assets/js/pagine/controllo-musica.js",
-  "./assets/js/pagine/crea-personaggio.js",
-  "./assets/js/pagine/dashboard.js",
-  "./assets/js/pagine/dm-party.js",
-  "./assets/js/pagine/glossario-equipaggiamento.js",
-  "./assets/js/pagine/glossario-incantesimi.js",
-  "./assets/js/pagine/guida.js",
-  "./assets/js/pagine/i-miei-personaggi.js",
-  "./assets/js/pagine/index.js",
-  "./assets/js/pagine/libreria.js",
-  "./assets/js/pagine/offline.js",
-  "./assets/js/pagine/register.js",
-  "./assets/js/pagine/scheda-personaggio.js",
-  "./assets/js/pagine/sessione.js",
-  "./assets/js/pagine/tavolo.js",
-  "./assets/js/pagine/verifica-email.js",
-  "./assets/js/pdf-scheda.js",
-  "./assets/js/privilegi.js",
-  "./assets/js/pwa.js",
-  "./assets/js/riposo.js",
-  "./assets/js/scheda-rapida.js",
-  "./assets/js/spotify-config.js",
-  "./assets/js/spotify.js",
-  "./assets/js/utils.js",
-  "./assets/js/widget-musica.js",
-  "./assets/js/youtube.js",
-  "./assets/vendor/three-LICENSE.txt",
-  "./assets/vendor/three.module.min.js",
-  "./attesa-approvazione.html",
-  "./bestiario.html",
-  "./calendario.html",
-  "./campagna.html",
-  "./controllo-musica.html",
-  "./crea-personaggio.html",
-  "./dashboard.html",
-  "./dm-party.html",
-  "./glossario-equipaggiamento.html",
-  "./glossario-incantesimi.html",
-  "./guida.html",
-  "./i-miei-personaggi.html",
-  "./index.html",
-  "./libreria.html",
-  "./manifest.webmanifest",
-  "./offline.html",
-  "./register.html",
-  "./scheda-personaggio.html",
-  "./sessione.html",
-  "./tavolo.html",
-  "./verifica-email.html",
-];
+const VERSIONE = "fde1da4f8960";
+const FILE = {
+  "./admin-utenti.html": "c3dce814aae5",
+  "./archivio.html": "57c375711752",
+  "./assets/css/style.css": "9c5a876df5ae",
+  "./assets/fonts/cinzel-700.woff2": "8efa224fe70f",
+  "./assets/fonts/cinzel-OFL.txt": "f5a242cf68ad",
+  "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
+  "./assets/fonts/pdf/cinzel-700.woff": "83ea41e439a2",
+  "./assets/fonts/pdf/eb-garamond-400-italic.woff": "ee21466cc9fc",
+  "./assets/fonts/pdf/eb-garamond-400.woff": "4667d9135a65",
+  "./assets/fonts/pdf/eb-garamond-600.woff": "f13dee5df7bc",
+  "./assets/icone/apple-touch-icon.png": "9bab2bfdad2b",
+  "./assets/icone/badge-96.png": "a5810617d2c8",
+  "./assets/icone/favicon-32.png": "81bfc5f90bb6",
+  "./assets/icone/favicon.svg": "97973c21e3af",
+  "./assets/icone/icona-192.png": "0a7fd460b893",
+  "./assets/icone/icona-512.png": "8746630aaa13",
+  "./assets/icone/icona-maskable-512.png": "25a81e1c86b0",
+  "./assets/img/guida/combattimento.jpg": "bf2d47844299",
+  "./assets/img/guida/mappa.jpg": "b2fe3c7f748d",
+  "./assets/img/guida/personaggio.jpg": "9c82704408fc",
+  "./assets/img/guida/primi-passi.jpg": "d77aa6f0aec8",
+  "./assets/img/guida/sessione.jpg": "8a78742a488d",
+  "./assets/js/aree-incantesimi.js": "1ff9cb09620d",
+  "./assets/js/auth.js": "af345e349d87",
+  "./assets/js/bestiario-calcoli.js": "3110364e2ddd",
+  "./assets/js/bestiario-finestra.js": "983e79dcb7bc",
+  "./assets/js/bestiario-scheda.js": "9a1f509ff4c4",
+  "./assets/js/calcoli-scheda.js": "660e3a9ce65d",
+  "./assets/js/calendario.js": "e6cf8e5bd2ed",
+  "./assets/js/combattimento.js": "1f254952e47e",
+  "./assets/js/condizioni.js": "7798031d4694",
+  "./assets/js/contenuti.js": "bc0640a2e0f3",
+  "./assets/js/cruscotto-calcoli.js": "610babaca0d6",
+  "./assets/js/dadi-base.js": "d1ee4ec14672",
+  "./assets/js/dadi.js": "d20e65c43d60",
+  "./assets/js/dado-caricamento.js": "7e138df9f108",
+  "./assets/js/dado-pf.js": "e1413301e1e1",
+  "./assets/js/dati-srd.js": "2ca98999c43e",
+  "./assets/js/descrizioni.js": "ebc456fbe5a1",
+  "./assets/js/equipaggiamento-srd.js": "f76aa365ff02",
+  "./assets/js/esporta-scheda.js": "426e98cb61b2",
+  "./assets/js/firebase-config.js": "a02623ecb818",
+  "./assets/js/geometria-3d.js": "c44409e8b331",
+  "./assets/js/guida-personaggio-dati.js": "c0ef4c32227a",
+  "./assets/js/guida-personaggio.js": "9aa3cb0a738c",
+  "./assets/js/icone.js": "3940048bc896",
+  "./assets/js/immagini.js": "ff9a3dd7757a",
+  "./assets/js/incantesimi-srd.js": "eff4eb2dd6b5",
+  "./assets/js/intro-dado.js": "4363a290dceb",
+  "./assets/js/intro.js": "c22faa6d2de2",
+  "./assets/js/mappa-calcoli.js": "bbb1481c0a4a",
+  "./assets/js/mappa-pedine.js": "4acd888fab54",
+  "./assets/js/mappa-strumenti.js": "a9364c7db074",
+  "./assets/js/mappa-vista.js": "7312b06793fd",
+  "./assets/js/mappa.js": "24a6fb7022d7",
+  "./assets/js/menu-utente.js": "380821c25e72",
+  "./assets/js/mostri-srd.js": "ddbfb68e0be4",
+  "./assets/js/notifiche-push.js": "eefd4466c27c",
+  "./assets/js/pagine/admin-utenti.js": "a15ee345eec3",
+  "./assets/js/pagine/archivio.js": "cd787e4dbb38",
+  "./assets/js/pagine/attesa-approvazione.js": "6243ff3a9e8b",
+  "./assets/js/pagine/bestiario.js": "cda788b57ea5",
+  "./assets/js/pagine/calendario.js": "d3397d661c42",
+  "./assets/js/pagine/campagna.js": "26e06c80500f",
+  "./assets/js/pagine/controllo-musica.js": "ea148e578539",
+  "./assets/js/pagine/crea-personaggio.js": "3b1ec1f4ad78",
+  "./assets/js/pagine/dashboard.js": "15088ef87f59",
+  "./assets/js/pagine/dm-party.js": "3b54242e743d",
+  "./assets/js/pagine/glossario-equipaggiamento.js": "017f9c070127",
+  "./assets/js/pagine/glossario-incantesimi.js": "e93b517f737b",
+  "./assets/js/pagine/guida.js": "f22cfb6c9854",
+  "./assets/js/pagine/i-miei-personaggi.js": "e94f4fee17a4",
+  "./assets/js/pagine/index.js": "c6be58e471e8",
+  "./assets/js/pagine/libreria.js": "b279730ee4aa",
+  "./assets/js/pagine/offline.js": "66f6add61755",
+  "./assets/js/pagine/register.js": "d351cfe15864",
+  "./assets/js/pagine/scheda-personaggio.js": "0e3e325e4b12",
+  "./assets/js/pagine/sessione.js": "a278e4cc24b8",
+  "./assets/js/pagine/tavolo.js": "55439a589e74",
+  "./assets/js/pagine/verifica-email.js": "0a9537d7b5e9",
+  "./assets/js/pdf-scheda.js": "ab909d461890",
+  "./assets/js/privilegi.js": "b1564bd3089a",
+  "./assets/js/pwa.js": "3b17ae011d28",
+  "./assets/js/riposo.js": "0c092c556e9e",
+  "./assets/js/scheda-rapida.js": "417ab758cf14",
+  "./assets/js/spotify-config.js": "2cd119a39d39",
+  "./assets/js/spotify.js": "608a6de358de",
+  "./assets/js/utils.js": "bfba4f8d663e",
+  "./assets/js/widget-musica.js": "8553a1a89d9f",
+  "./assets/js/youtube.js": "31a2b419c9ed",
+  "./assets/vendor/pdf/LICENZE.txt": "ea9f284440c0",
+  "./assets/vendor/pdf/pdf-lib-fontkit.min.js": "2a73af96da27",
+  "./assets/vendor/three-LICENSE.txt": "852e0e869916",
+  "./assets/vendor/three.module.min.js": "19b09d1f0a1d",
+  "./attesa-approvazione.html": "c37e89bbfb4e",
+  "./bestiario.html": "5d1c61e17985",
+  "./calendario.html": "6d5e78baaac9",
+  "./campagna.html": "1f6eebbe47e7",
+  "./controllo-musica.html": "43ce986e48dc",
+  "./crea-personaggio.html": "fe531a622993",
+  "./dashboard.html": "5b637f84f3d8",
+  "./dm-party.html": "c5c7bc57e7cf",
+  "./glossario-equipaggiamento.html": "8b9598f3f899",
+  "./glossario-incantesimi.html": "38559991c12f",
+  "./guida.html": "9053ecb22ee0",
+  "./i-miei-personaggi.html": "eeb83867157b",
+  "./index.html": "141d610370d6",
+  "./libreria.html": "675fb83975a2",
+  "./manifest.webmanifest": "e0b6ccda87a2",
+  "./offline.html": "58e922ae6b9c",
+  "./register.html": "944e4beb9a6c",
+  "./scheda-personaggio.html": "863e2f22a44e",
+  "./sessione.html": "bee86a002456",
+  "./tavolo.html": "8ebc64dcc6f4",
+  "./verifica-email.html": "8d4bb0392b3f",
+};
 // === FINE ELENCO GENERATO ===
 
 const CACHE = `sed-${VERSIONE}`;
@@ -135,11 +144,53 @@ const PAGINA_OFFLINE = "./offline.html";
 
 const indirizzo = (percorso) => new URL(percorso, self.registration.scope).href;
 
+// File pesanti usati di rado: non si scaricano all'installazione ma al primo
+// uso (vedi SU_RICHIESTA in aggiorna-sw.mjs): librerie e font del PDF della
+// scheda, mostri del SRD (solo per il DM).
+const SU_RICHIESTA = ["./assets/vendor/pdf/", "./assets/fonts/pdf/", "./assets/js/mostri-srd.js"];
+const suRichiesta = (f) => SU_RICHIESTA.some((prefisso) => f.startsWith(prefisso));
+const SU_RICHIESTA_URL = SU_RICHIESTA.map(indirizzo);
+
+// Le impronte della versione salvata, dentro la sua stessa cache.
+const IMPRONTE = indirizzo("./impronte-sw.json");
+
+// Copie salvate dalle versioni precedenti: [{ cache, impronte }].
+async function versioniPrecedenti() {
+  const nomi = (await caches.keys()).filter((n) => n.startsWith("sed-") && n !== CACHE && n !== CACHE_SDK);
+  const elenco = await Promise.all(nomi.map(async (nome) => {
+    const cache = await caches.open(nome);
+    const impronte = await cache.match(IMPRONTE).then((r) => r?.json()).catch(() => null);
+    return impronte ? { cache, impronte } : null;
+  }));
+  return elenco.filter(Boolean);
+}
+
 self.addEventListener("install", (evento) => {
-  // cache: "reload" scavalca la cache HTTP: si scaricano davvero i file nuovi.
-  evento.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(FILE.map((f) => new Request(f, { cache: "reload" }))))
-  );
+  evento.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    const precedenti = await versioniPrecedenti();
+    try {
+      await Promise.all(Object.entries(FILE).map(async ([f, impronta]) => {
+        const url = indirizzo(f);
+        // Stesso contenuto di una versione già sul telefono: si copia.
+        for (const { cache: vecchia, impronte } of precedenti) {
+          if (impronte[f] !== impronta) continue;
+          const copia = await vecchia.match(url);
+          if (copia) return cache.put(url, copia);
+        }
+        if (suRichiesta(f)) return;
+        // cache: "reload" scavalca la cache HTTP: si scarica davvero il file nuovo.
+        const risposta = await fetch(new Request(url, { cache: "reload" }));
+        if (!risposta.ok) throw new Error(`${f}: ${risposta.status}`);
+        await cache.put(url, risposta);
+      }));
+      await cache.put(IMPRONTE, new Response(JSON.stringify(FILE), { headers: { "Content-Type": "application/json" } }));
+    } catch (errore) {
+      // Installazione a metà: si riprova da capo la prossima volta.
+      await caches.delete(CACHE);
+      throw errore;
+    }
+  })());
 });
 
 self.addEventListener("activate", (evento) => {
@@ -172,15 +223,11 @@ async function navigazione(richiesta) {
   }
 }
 
-// Librerie e font del PDF della scheda: pesanti e usati di rado, non sono
-// in FILE e si salvano al primo uso (vedi SU_RICHIESTA in aggiorna-sw.mjs).
-const SU_RICHIESTA = ["./assets/vendor/pdf/", "./assets/fonts/pdf/"].map(indirizzo);
-
 async function file(richiesta) {
   const salvato = await caches.match(richiesta, { cacheName: CACHE });
   if (salvato) return salvato;
   const risposta = await fetch(richiesta);
-  if (risposta.ok && SU_RICHIESTA.some((prefisso) => richiesta.url.startsWith(prefisso))) {
+  if (risposta.ok && SU_RICHIESTA_URL.some((prefisso) => richiesta.url.startsWith(prefisso))) {
     const copia = risposta.clone();
     caches.open(CACHE).then((cache) => cache.put(richiesta, copia)).catch(() => {});
   }

@@ -1,6 +1,8 @@
-// Aggiorna in sw.js l'elenco dei file da salvare sul telefono e la VERSIONE,
-// un'impronta (SHA-256) del loro contenuto. Va lanciato dopo ogni modifica al
-// sito: node strumenti/aggiorna-sw.mjs
+// Aggiorna in sw.js l'elenco dei file da salvare sul telefono, ognuno con la
+// sua impronta (SHA-256 del contenuto), e la VERSIONE, l'impronta di tutto il
+// sito. Va lanciato dopo ogni modifica al sito: node strumenti/aggiorna-sw.mjs
+// Con le impronte per file, a ogni versione nuova il telefono riscarica solo
+// i file cambiati e copia gli altri dalla versione precedente.
 // Una VERSIONE nuova fa scaricare il service worker aggiornato e mostrare
 // "È disponibile una nuova versione" a chi ha l'app aperta. Il test
 // test/pagine/pwa.test.mjs fallisce se ci si dimentica di lanciarlo.
@@ -21,24 +23,24 @@ function fileIn(cartella) {
   });
 }
 
-// Cartelle pesanti usate di rado (librerie e font del PDF della scheda): non
-// si scaricano all'installazione, il service worker le salva al primo uso.
-// Lo stesso elenco è in sw.js (SU_RICHIESTA).
-export const SU_RICHIESTA = ["assets/vendor/pdf/", "assets/fonts/pdf/"];
+// File pesanti usati di rado: non si scaricano all'installazione, il service
+// worker li salva al primo uso (librerie e font del PDF della scheda, mostri
+// del SRD che servono solo al DM). Lo stesso elenco è in sw.js (SU_RICHIESTA).
+export const SU_RICHIESTA = ["assets/vendor/pdf/", "assets/fonts/pdf/", "assets/js/mostri-srd.js"];
+export const suRichiesta = (f) => SU_RICHIESTA.some((c) => f.startsWith(c));
 
-// Pagine, manifest e tutto assets/ (tranne SU_RICHIESTA), in ordine stabile.
+// Pagine, manifest e tutto assets/ (anche i file SU_RICHIESTA, che hanno
+// l'impronta ma non si scaricano all'installazione), in ordine stabile.
 export function elencoFile() {
   const pagine = readdirSync(RADICE).filter((f) => f.endsWith(".html"));
-  const asset = fileIn("assets").filter((f) => !SU_RICHIESTA.some((c) => f.startsWith(c)));
-  return [...pagine, "manifest.webmanifest", ...asset].sort();
+  return [...pagine, "manifest.webmanifest", ...fileIn("assets")].sort();
 }
+
+export const impronta = (f) => createHash("sha256").update(readFileSync(join(RADICE, f))).digest("hex").slice(0, 12);
 
 export function versione(file = elencoFile()) {
   const hash = createHash("sha256");
-  for (const f of file) {
-    hash.update(`${f}\n`);
-    hash.update(readFileSync(join(RADICE, f)));
-  }
+  for (const f of file) hash.update(`${f} ${impronta(f)}\n`);
   return hash.digest("hex").slice(0, 12);
 }
 
@@ -46,9 +48,9 @@ export function bloccoGenerato(file = elencoFile()) {
   return [
     INIZIO,
     `const VERSIONE = "${versione(file)}";`,
-    "const FILE = [",
-    ...file.map((f) => `  "./${f}",`),
-    "];",
+    "const FILE = {",
+    ...file.map((f) => `  "./${f}": "${impronta(f)}",`),
+    "};",
     FINE,
   ].join("\n");
 }

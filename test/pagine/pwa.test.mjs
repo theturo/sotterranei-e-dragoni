@@ -7,7 +7,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { RADICE, swAggiornato } from "../../strumenti/aggiorna-sw.mjs";
+import { RADICE, swAggiornato, impronta, suRichiesta } from "../../strumenti/aggiorna-sw.mjs";
 
 const leggi = (percorso) => readFileSync(join(RADICE, percorso), "utf8");
 const PAGINE = readdirSync(RADICE).filter((f) => f.endsWith(".html"));
@@ -37,9 +37,24 @@ test("sw.js è aggiornato (node strumenti/aggiorna-sw.mjs)", () => {
   assert.equal(sorgente, swAggiornato(sorgente), "sw.js non è aggiornato: lancia node strumenti/aggiorna-sw.mjs");
 });
 
-test("i file salvati dal service worker esistono tutti", () => {
-  const blocco = leggi("sw.js").match(/const FILE = \[([\s\S]*?)\];/)[1];
-  const file = [...blocco.matchAll(/"\.\/([^"]+)"/g)].map((m) => m[1]);
+test("i file salvati dal service worker esistono tutti, ognuno con la sua impronta", () => {
+  const blocco = leggi("sw.js").match(/const FILE = \{([\s\S]*?)\};/)[1];
+  const voci = [...blocco.matchAll(/"\.\/([^"]+)": "([0-9a-f]{12})"/g)];
+  assert.equal(voci.length, blocco.trim().split("\n").length, "ogni riga è «file: impronta»");
+  const file = voci.map((m) => m[1]);
   assert.ok(file.includes("offline.html"), "manca offline.html");
-  for (const f of file) assert.ok(existsSync(join(RADICE, f)), `${f} non esiste`);
+  for (const [, f, h] of voci) {
+    assert.ok(existsSync(join(RADICE, f)), `${f} non esiste`);
+    assert.equal(h, impronta(f), `${f}: impronta vecchia`);
+  }
+});
+
+test("a una versione nuova si riscaricano solo i file cambiati", () => {
+  const sw = leggi("sw.js");
+  // Copia dalla versione precedente se l'impronta coincide, altrimenti scarica.
+  assert.match(sw, /if \(impronte\[f\] !== impronta\) continue;/);
+  assert.match(sw, /cache\.put\(IMPRONTE, new Response\(JSON\.stringify\(FILE\)/);
+  // I mostri del SRD (solo per il DM) si salvano al primo uso.
+  assert.ok(suRichiesta("assets/js/mostri-srd.js") && !suRichiesta("assets/vendor/three.module.min.js"));
+  assert.match(sw, /"\.\/assets\/js\/mostri-srd\.js"\]/);
 });
