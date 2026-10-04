@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   registraInvio, emailNuovoIscritto, deveBloccare, idProgetto, MASSIMO_EMAIL_ORARIE,
-  messaggioPush, dataLeggibile, tokenDaRimuovere, motivoRifiutoEliminazione,
+  messaggioPush, dataLeggibile, tokenDaRimuovere, motivoRifiutoEliminazione, CATEGORIA_PUSH,
 } from "../logica.js";
 
 const ORA = 60 * 60 * 1000;
@@ -69,6 +69,11 @@ test("push: testo per ogni tipo di notifica, con la pagina da aprire", () => {
   assert.equal(livello.titolo, "Sei salito di livello!");
   assert.match(livello.testo, /dal livello 2 al 3/);
   assert.equal(livello.url, "dashboard.html");
+  const conCampagna = messaggioPush({ tipo: "livello_su", livelloPrecedente: 3, livelloNuovo: 4, personaggio: "Lyra", campagnaTitolo: "La cripta" });
+  assert.equal(conCampagna.testo, "Lyra sale dal livello 3 al 4 in «La cripta»: completa il passaggio dalla scheda.");
+  const annullato = messaggioPush({ tipo: "livello_annullato", livelloAnnullato: 4, campagnaTitolo: "La cripta" });
+  assert.equal(annullato.testo, "Il DM ha annullato il passaggio al 4° livello in «La cripta».");
+  assert.equal(CATEGORIA_PUSH.livello_annullato, "livello");
 
   const proposta = messaggioPush({ tipo: "proposta_sessione", titolo: "La Tomba", date: 3 });
   assert.match(proposta.testo, /propone 3 date \(La Tomba\)/);

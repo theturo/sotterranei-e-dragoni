@@ -2039,6 +2039,28 @@ footer.site-footer {
   gap: 8px;
 }
 
+/* Livello concesso dal DM da spendere: solo sulla scheda attiva. */
+.btn-credito-livello {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 9px;
+  border: 1px solid var(--color-gold);
+  border-radius: 6px;
+  background: var(--color-gold);
+  color: var(--color-ink);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.btn-credito-livello:hover,
+.btn-credito-livello:focus-visible {
+  background: var(--color-gold-bright);
+}
+
 .maniglia-trascina {
   display: none;
   cursor: grab;
@@ -6178,6 +6200,39 @@ table.tabella-punteggi select {
   margin: 0;
   font-size: 0.88rem;
   color: var(--color-ink-soft);
+}
+
+/* Colonna Livello del party: livello della scheda attiva e, se il DM ha
+   concesso livelli non ancora spesi, «↑ al N° in attesa · Annulla». */
+.livello-numero {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--color-burgundy);
+}
+
+.livello-attesa {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding: 1px 10px;
+  border: 1px solid var(--color-gold);
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.25);
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.livello-annulla {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-burgundy);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* ---------- Esportazione della scheda (esporta-scheda.js) ---------- */

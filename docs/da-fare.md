@@ -29,6 +29,14 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Crediti di livello per campagna: il DM concede (o annulla, finché non è
+  speso) un livello a un membro della sua campagna dalla pagina del party,
+  dove il livello mostrato è quello del personaggio attivo con «↑ al N° in
+  attesa · Annulla». Il giocatore lo spende solo con il personaggio attivo di
+  quella campagna (pulsante nella scheda e nella card di I miei personaggi);
+  avvisi e notifiche portano il nome della campagna. I vecchi crediti del
+  profilo passano alla campagna del giocatore se ne ha una sola, altrimenti
+  si azzerano.
 - Ruolo per campagna: si è DM della campagna che si guida e giocatori di
   quelle di cui si è membri, anche da admin o da DM (selettore della campagna
   con «DM»/«giocatore»; dashboard, sessione, calendario e archivio si

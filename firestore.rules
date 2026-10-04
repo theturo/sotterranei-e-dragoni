@@ -18,11 +18,11 @@ rules_version = '2';
 //   I profili creati prima dell'introduzione dell'approvazione (senza il campo
 //   "approvato") valgono come approvati.
 // - Il proprietario di un profilo può modificare solo pochi campi tecnici
-//   (email sincronizzata, flag di verifica, ordine dei pannelli) e può SOLO
-//   consumare (-1) un credito "livelliDaSpendere", mai aggiungerne.
+//   (email sincronizzata, flag di verifica, ordine dei pannelli) e può solo
+//   AZZERARE i vecchi crediti "livelliDaSpendere" del profilo (spostandoli in
+//   una campagna, vedi "campagne/{id}/livelli", o lasciandoli cadere).
 // - Solo un admin può modificare ruolo/approvazione/dati di un altro utente o
-//   eliminare un account. Un DM può solo concedere livelli a un giocatore
-//   (lo stesso aumento a "livello" e "livelliDaSpendere").
+//   eliminare un account.
 // - Profili utente (con le email) leggibili solo dal proprietario, dal DM e
 //   dall'admin: i giocatori vedono gli altri solo tramite il riepilogo del
 //   party (vedi "campagne/{id}/party").
@@ -34,8 +34,9 @@ rules_version = '2';
 //   "campagnaId" (entrambi immutabili dopo la creazione). Sono ammessi solo i
 //   campi noti di una scheda, con tipo e dimensione controllati. Leggibile per intero
 //   solo dal proprietario, dal DM e dall'admin. Il livello di una scheda può
-//   salire solo di 1 e solo spendendo, nella STESSA scrittura atomica, un
-//   credito "livelliDaSpendere" del proprietario (concesso dal DM).
+//   salire solo di 1, solo se è la scheda attiva, e solo spendendo, nella
+//   STESSA scrittura atomica, un credito di livello del proprietario nella
+//   campagna della scheda ("campagne/{id}/livelli/{uid}", concesso dal DM).
 // - "campagne/{campagnaId}": DM proprietario ("dmUid", immutabile per il DM) e
 //   membri ("membriUid"). Leggibile solo da DM, membri e admin. Se il titolo è
 //   provvisorio, il campo pubblico "titolo" deve essere null: il titolo vero
@@ -43,6 +44,10 @@ rules_version = '2';
 //   - "stato/{sessione|musica|riposo}": stato condiviso in tempo reale
 //     (lettura: DM/membri/admin; scrittura: DM/admin). Nel riposo breve
 //     avviato dal DM ogni giocatore invitato può solo segnare di aver finito.
+//   - "livelli/{uid}": crediti di livello del membro in QUESTA campagna
+//     ("daSpendere"). Il DM ne concede (+1..+19) o ne annulla uno finché non
+//     è speso; il membro ne spende uno salendo di livello con la scheda
+//     attiva, o ci sposta i vecchi crediti del profilo.
 //   - "party/{uid}": riepilogo pubblico della scheda attiva di ogni membro
 //     (nome giocatore, personaggio, classe, livello, PF, condizioni,
 //     esaurimento, dadi vita spesi, usi dei privilegi di classe, Carisma per
@@ -173,9 +178,7 @@ service cloud.firestore {
 
       allow update: if isAutenticato() && (
         (request.auth.uid == uid && aggiornamentoProprioProfiloValido()) ||
-        isAdmin() ||
-        // Il DM concede livelli ai giocatori (anche a un admin che gioca).
-        (isDM() && resource.data.ruolo in ["player", "admin"] && uid != request.auth.uid && passaggioLivelloDM())
+        isAdmin()
       );
 
       allow delete: if isAdmin();
@@ -189,9 +192,9 @@ service cloud.firestore {
           && (!campi.hasAny(['emailVerificata']) ||
               (dati.emailVerificata == true && request.auth.token.email_verified == true))
           && (!campi.hasAny(['ordinePannelli']) || dati.ordinePannelli is map)
-          && (!campi.hasAny(['livelliDaSpendere']) ||
-              (resource.data.livelliDaSpendere >= 1
-                && dati.livelliDaSpendere == resource.data.livelliDaSpendere - 1));
+          // I vecchi crediti del profilo (prima dei crediti per campagna) si
+          // possono solo azzerare.
+          && (!campi.hasAny(['livelliDaSpendere']) || dati.livelliDaSpendere == 0);
       }
 
       // Preferenze delle push (pannello ⚙️ → Notifiche): tipi accesi o spenti,
@@ -204,15 +207,6 @@ service cloud.firestore {
             && p.silenzio.get('da', '') is string && p.silenzio.get('da', '').size() <= 5
             && p.silenzio.get('a', '') is string && p.silenzio.get('a', '').size() <= 5))
           && (!('fuso' in p) || (p.fuso is string && p.fuso.size() <= 64));
-      }
-
-      // Il DM concede uno o più livelli (es. il livello di partenza della
-      // campagna): lo stesso aumento a entrambi i contatori, nient'altro.
-      function passaggioLivelloDM() {
-        let aumento = request.resource.data.livello - resource.data.get('livello', 0);
-        return campiModificati().hasOnly(['livello', 'livelliDaSpendere'])
-          && aumento >= 1 && aumento <= 19
-          && request.resource.data.livelliDaSpendere == resource.data.get('livelliDaSpendere', 0) + aumento;
       }
 
       match /notifiche/{notificaId} {
@@ -342,12 +336,15 @@ service cloud.firestore {
           && testoOpzionale(p.get('difetti', null), 2000);
       }
 
-      // +1 livello solo consumando, nella stessa scrittura atomica (batch), un
-      // credito "livelliDaSpendere" del proprietario.
+      // +1 livello solo per la scheda attiva e solo consumando, nella stessa
+      // scrittura atomica (batch), un credito di livello del proprietario
+      // nella campagna della scheda, segnato con l'id di questa scheda.
       function passaggioLivelloGiocatore() {
-        let utente = percorsoUtente(request.auth.uid);
+        let credito = /databases/$(database)/documents/campagne/$(resource.data.campagnaId)/livelli/$(request.auth.uid);
         return request.resource.data.livello == resource.data.get('livello', 1) + 1
-          && getAfter(utente).data.livelliDaSpendere == get(utente).data.livelliDaSpendere - 1;
+          && request.resource.data.get('attiva', false) == true
+          && getAfter(credito).data.daSpendere == get(credito).data.daSpendere - 1
+          && getAfter(credito).data.schedaId == schedaId;
       }
     }
 
@@ -533,6 +530,67 @@ service cloud.firestore {
             && (isDMdellaCampagna(campagnaId) || mappaInTavolaPerMembro(campagnaId, immagineId));
           allow delete: if isDMdellaCampagna(campagnaId)
             || (resource.data.autoreUid == request.auth.uid && isNellaCampagna(campagnaId));
+        }
+      }
+
+      // Crediti di livello di un membro in questa campagna.
+      match /livelli/{uid} {
+        allow get: if (isApprovato() && request.auth.uid == uid) || isDMdellaCampagna(campagnaId);
+        allow list: if isDMdellaCampagna(campagnaId);
+
+        allow create, update: if creditoLivelloValido() && uid in datiCampagna(campagnaId).membriUid && (
+          (isDMdellaCampagna(campagnaId) && variazioneCreditoDM())
+          || (isApprovato() && request.auth.uid == uid && (spesaCreditoLivello(campagnaId, uid) || trasferimentoCreditiProfilo(uid)))
+        );
+
+        allow delete: if isAdmin() || isDMdellaCampagna(campagnaId);
+
+        function creditiPrima() {
+          return resource == null ? 0 : resource.data.get('daSpendere', 0);
+        }
+
+        function creditoLivelloValido() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['daSpendere', 'schedaId', 'aggiornatoIl'])
+            && interoTra(d.daSpendere, 0, 19)
+            && (!('schedaId' in d) || testoValido(d.schedaId, 1, 128))
+            && d.aggiornatoIl == request.time;
+        }
+
+        function campiCredito() {
+          return resource == null ? request.resource.data.keys().toSet() : campiModificati();
+        }
+
+        // Il DM concede da 1 a 19 livelli o ne annulla uno non ancora speso.
+        function variazioneCreditoDM() {
+          let differenza = request.resource.data.daSpendere - creditiPrima();
+          return campiCredito().hasOnly(['daSpendere', 'aggiornatoIl'])
+            && ((differenza >= 1 && differenza <= 19) || (differenza == -1 && creditiPrima() >= 1));
+        }
+
+        // Il membro spende un credito salendo di 1 livello con la scheda
+        // attiva in questa campagna (nella stessa scrittura atomica).
+        function spesaCreditoLivello(campagnaId, uid) {
+          let d = request.resource.data;
+          let scheda = /databases/$(database)/documents/personaggi/$(d.get('schedaId', 'nessuna'));
+          return resource != null
+            && campiModificati().hasOnly(['daSpendere', 'schedaId', 'aggiornatoIl'])
+            && creditiPrima() >= 1 && d.daSpendere == creditiPrima() - 1
+            && getAfter(scheda).data.proprietarioUid == uid
+            && getAfter(scheda).data.campagnaId == campagnaId
+            && getAfter(scheda).data.get('attiva', false) == true
+            && getAfter(scheda).data.livello == get(scheda).data.get('livello', 1) + 1;
+        }
+
+        // Il membro sposta qui, tutti insieme, i vecchi crediti del profilo,
+        // azzerandoli nella stessa scrittura atomica.
+        function trasferimentoCreditiProfilo(uid) {
+          let profilo = percorsoUtente(uid);
+          let vecchi = get(profilo).data.get('livelliDaSpendere', 0);
+          return campiCredito().hasOnly(['daSpendere', 'aggiornatoIl'])
+            && vecchi >= 1
+            && request.resource.data.daSpendere == creditiPrima() + vecchi
+            && getAfter(profilo).data.livelliDaSpendere == 0;
         }
       }
 

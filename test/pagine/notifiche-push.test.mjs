@@ -15,7 +15,7 @@ const TIPI = [...new Set([...leggi("assets/js/auth.js")
   .matchAll(/(?:"notifiche"\), \{|notificaMembri\(campagnaId, \{)\s*tipo: "([a-z_]+)"/g)].map((m) => m[1]))];
 
 test("i tipi di notifica del sito sono quelli attesi", () => {
-  assert.deepEqual(TIPI.sort(), ["livello_su", "proposta_sessione", "sessione_confermata", "sessione_iniziata", "turno"]);
+  assert.deepEqual(TIPI.sort(), ["livello_annullato", "livello_su", "proposta_sessione", "sessione_confermata", "sessione_iniziata", "turno"]);
 });
 
 test("ogni tipo ha il testo della campanella e il messaggio push", () => {

@@ -11,6 +11,8 @@ import {
   aggiornaInventario,
   aggiornaScheda,
   applicaPassaggioLivello,
+  ascoltaCreditiLivello,
+  migraCreditiProfilo,
   impostaRitratto,
   aggiornaCondizioniScheda,
   ascoltaScheda,
@@ -87,6 +89,9 @@ let uidCorrente = null;
 let scheda = null;
 let soloLettura = false;
 let profiloCorrente = null;
+// Crediti di livello concessi dal DM nella campagna della scheda: si spendono
+// solo con la scheda attiva (vedi ascoltaCrediti).
+let creditiLivello = 0;
 let guida = null;
 
 function formattaVelocita(velocita) {
@@ -195,7 +200,31 @@ function renderAllineamento() {
 
 // ---------- Passaggio di livello ----------
 function creditiLivelloDisponibili() {
-  return !soloLettura && (profiloCorrente?.livelliDaSpendere || 0) > 0;
+  return !soloLettura && scheda?.attiva === true && creditiLivello > 0;
+}
+
+// Segue i crediti della campagna della scheda (il DM può concederne o
+// annullarne uno mentre la pagina è aperta). Prima sposta, se ci sono, i
+// vecchi crediti del profilo (migraCreditiProfilo). Si risolve alla prima
+// lettura, così la guida parte già sapendo quanti livelli ci sono da fare.
+async function ascoltaCrediti() {
+  if (soloLettura || !scheda.campagnaId) return;
+  try {
+    await migraCreditiProfilo({ uid: uidCorrente, ...profiloCorrente });
+  } catch (errore) {
+    console.error(errore);
+  }
+  await new Promise((pronto) => {
+    ascoltaCreditiLivello(scheda.campagnaId, uidCorrente, (n) => {
+      creditiLivello = n;
+      renderPulsanteLivello();
+      guida?.aggiorna();
+      pronto();
+    }, (errore) => {
+      console.error(errore);
+      pronto();
+    });
+  });
 }
 
 function renderPulsanteLivello() {
@@ -556,7 +585,7 @@ document.getElementById("btn-conferma-livello").addEventListener("click", async 
       incantesimiConosciuti: scheda.incantesimiConosciuti,
     });
     scheda.livello = nuovoLivello;
-    profiloCorrente.livelliDaSpendere = (profiloCorrente.livelliDaSpendere || 1) - 1;
+    creditiLivello = Math.max(0, creditiLivello - 1);
 
     document.getElementById("modal-livello").style.display = "none";
     renderIntestazione();
@@ -1776,7 +1805,10 @@ proteggiPagina(async (user, profilo) => {
   veil.style.display = "none";
   contenuto.style.display = "block";
   document.getElementById("btn-esporta").hidden = false;
+  await ascoltaCrediti();
   if (!soloLettura) avviaGuida();
+  // Dal pulsante «Passa al N° livello» di I miei personaggi.
+  if (new URLSearchParams(window.location.search).get("livello") === "1" && creditiLivelloDisponibili()) apriModalLivello();
 });
 
 // ---------- Esportazione (esporta-scheda.js) ----------
@@ -1802,7 +1834,7 @@ async function avviaGuida() {
   } catch (errore) {
     console.error(errore);
   }
-  const crediti = () => profiloCorrente?.livelliDaSpendere || 0;
+  const crediti = () => (scheda.attiva === true ? creditiLivello : 0);
   const livelloObiettivo = () => Math.max(livelloPartenza, (scheda.livello || 1) + crediti());
   const salvaETalenti = async (talenti) => {
     scheda.talenti = talenti;

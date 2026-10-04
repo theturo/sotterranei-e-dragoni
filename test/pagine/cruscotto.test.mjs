@@ -38,17 +38,19 @@ test("sessione in evidenza: in corso, oggi, prossima, proposta, nessuna", () => 
 
 test("avvisi del DM", () => {
   const membri = [
-    { uid: "g", nome: "Giulia", livelliDaSpendere: 0 },
-    { uid: "l", nome: "Luca", livelliDaSpendere: 1 },
+    { uid: "g", nome: "Giulia" },
+    { uid: "l", nome: "Luca" },
     { uid: "p", nome: "Paolo" },
   ];
+  // Crediti di livello della campagna non ancora spesi.
+  const crediti = new Map([["g", 0], ["l", 1]]);
   const party = [
     { uid: "g", schedaId: "elara", nomePersonaggio: "Elara", livello: 3 },
     { uid: "l", schedaId: "thorin", nomePersonaggio: "Thorin", livello: 3 },
     { uid: "p", schedaId: null },
   ];
   const evidenza = sessioneInEvidenza({ sessioni, oggi: "2026-10-03" });
-  const avvisi = avvisiDM({ membri, party, proposte: [{ titolo: "Il sarcofago", risposte: ["g"] }], evidenza, contenutiProssima: 0, inAttesa: 2 });
+  const avvisi = avvisiDM({ membri, crediti, party, proposte: [{ titolo: "Il sarcofago", risposte: ["g"] }], evidenza, contenutiProssima: 0, inAttesa: 2 });
   assert.deepEqual(avvisi.map((a) => a.testo), [
     "Ci sono 2 nuovi iscritti da approvare.",
     "Thorin deve completare il passaggio al 4° livello.",
@@ -56,14 +58,16 @@ test("avvisi del DM", () => {
     "Luca e Paolo non hanno risposto alle date di «Il sarcofago».",
     "Nessun contenuto collegato alla Sessione 4 — La cripta.",
   ]);
-  assert.deepEqual(avvisiDM({ membri: membri.slice(0, 1), party, evidenza, contenutiProssima: 3 }), []);
+  assert.deepEqual(avvisiDM({ membri: membri.slice(0, 1), crediti, party, evidenza, contenutiProssima: 3 }), []);
 });
 
 test("avvisi del giocatore e PF", () => {
   assert.equal(avvisiGiocatore({ scheda: null })[0].link, "i-miei-personaggi.html");
-  const a = avvisiGiocatore({ profilo: { livelliDaSpendere: 1 }, scheda: { id: "elara", livello: 3 }, daRispondere: 1 });
+  const a = avvisiGiocatore({ crediti: 2, scheda: { id: "elara", livello: 3 }, daRispondere: 1 });
   assert.deepEqual(a.map((x) => x.etichetta), ["Scheda", "Rispondi"]);
   assert.match(a[0].testo, /4°/);
+  assert.equal(a[0].link, "scheda-personaggio.html?id=elara&livello=1");
+  assert.equal(avvisiGiocatore({ crediti: 0, scheda: { id: "elara", livello: 3 } }).length, 0);
   assert.equal(testoPf({ attuali: 24, massimi: 31, temporanei: 5 }), "24/31 (+5)");
   assert.equal(testoPf(null), "");
   assert.deepEqual(barraPf({ attuali: 3, massimi: 17 }), { quota: 3 / 17, colore: "#b8323f" });

@@ -4,9 +4,11 @@ import {
   proteggiPaginaDM,
   ottieniCampagnaCorrente,
   elencaMembriCampagna,
-  segnalaLivelloSu,
   ottieniSchedaAttiva,
   impostaLivelloPartenza,
+  concediLivelli,
+  annullaLivello,
+  ascoltaCreditiCampagna,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
@@ -37,10 +39,10 @@ function creaRiga(giocatore) {
     <td>${esc(giocatore.nome || giocatore.email) || "—"}</td>
     <td data-cella="personaggio">—</td>
     <td data-cella="classe">—</td>
-    <td class="cella-livello">${esc(giocatore.livello ?? 1)}</td>
+    <td class="cella-livello">—</td>
     <td class="cella-pf">—</td>
     <td class="azioni-riga">
-      <button class="btn-tabella btn-icona-azione" data-uid="${esc(giocatore.uid)}" title="Aumento di livello" aria-label="Aumento di livello" type="button"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M12 3 L18.5 10 L14 10 L14 20 L10 20 L10 10 L5.5 10 Z M12 5 L13.1 7.3 L12 9.2 L10.9 7.3 Z M11.55 11 L12.45 11 L12.45 19 L11.55 19 Z"/></svg></button>
+      <button class="btn-tabella btn-icona-azione" data-azione="concedi" title="Concedi un livello" aria-label="Concedi un livello" type="button"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M12 3 L18.5 10 L14 10 L14 20 L10 20 L10 10 L5.5 10 Z M12 5 L13.1 7.3 L12 9.2 L10.9 7.3 Z M11.55 11 L12.45 11 L12.45 19 L11.55 19 Z"/></svg></button>
       <a class="btn-tabella btn-icona-azione azione-disabilitata" data-cella="visualizza" title="Nessun personaggio attivo" aria-label="Visualizza scheda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12 C6 7 18 7 22 12 C18 17 6 17 2 12 Z"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/></svg></a>
     </td>
   `;
@@ -57,6 +59,26 @@ function testoPf(scheda) {
 // Classe e il link "Visualizza scheda" — evita fetch ripetute per la stessa riga.
 let campagnaIdCorrente = null;
 let campagnaCorrente = null;
+// Livello e nome della scheda attiva di ogni membro, e i crediti di livello
+// concessi in questa campagna e non ancora spesi (uid → numero).
+const schedeAttive = new Map();
+let crediti = new Map();
+
+const livelloScheda = (uid) => schedeAttive.get(uid)?.livello || 1;
+
+// Colonna Livello: il livello della scheda attiva più, se ci sono crediti non
+// spesi, «↑ al N° in attesa · Annulla».
+function disegnaLivello(riga) {
+  const uid = riga.dataset.uid;
+  const cella = riga.querySelector(".cella-livello");
+  const livello = schedeAttive.has(uid) ? livelloScheda(uid) : null;
+  const inAttesa = crediti.get(uid) || 0;
+  cella.innerHTML = `<span class="livello-numero">${livello ?? "—"}</span>${
+    inAttesa > 0
+      ? `<span class="livello-attesa">↑ al ${(livello ?? 1) + inAttesa}° in attesa · <button type="button" class="livello-annulla" data-azione="annulla">Annulla</button></span>`
+      : ""
+  }`;
+}
 
 async function caricaDatiRiga(riga) {
   const cellaPersonaggio = riga.querySelector('[data-cella="personaggio"]');
@@ -66,6 +88,8 @@ async function caricaDatiRiga(riga) {
   try {
     const scheda = await ottieniSchedaAttiva(riga.dataset.uid, campagnaIdCorrente);
     riga.querySelector(".cella-pf").textContent = testoPf(scheda);
+    if (scheda) schedeAttive.set(riga.dataset.uid, { livello: scheda.livello || 1, nome: scheda.nome || null });
+    disegnaLivello(riga);
 
     if (scheda) {
       cellaPersonaggio.innerHTML = `${esc(scheda.nome) || "—"}${
@@ -116,6 +140,10 @@ proteggiPaginaDM(async (user, profilo) => {
       corpoTabella.innerHTML = "";
       giocatori.forEach((g) => corpoTabella.appendChild(creaRiga(g)));
       Array.from(corpoTabella.querySelectorAll("tr")).forEach(caricaDatiRiga);
+      ascoltaCreditiCampagna(campagnaIdCorrente, (mappa) => {
+        crediti = mappa;
+        corpoTabella.querySelectorAll("tr[data-uid]").forEach(disegnaLivello);
+      });
     }
   } catch (errore) {
     mostraToast("Impossibile caricare il party.", true);
@@ -126,14 +154,15 @@ proteggiPaginaDM(async (user, profilo) => {
   contenuto.style.display = "block";
 });
 
-// Applica l'aumento di livello a una singola riga; restituisce true se riuscito.
-async function aumentaLivelloRiga(riga) {
+// Concede un livello al membro di una riga; restituisce true se riuscito. La
+// colonna si aggiorna da sola con i crediti (ascoltaCreditiCampagna).
+async function concediLivelloRiga(riga) {
   const uid = riga.dataset.uid;
-  const cellaLivello = riga.querySelector(".cella-livello");
-  const livelloAttuale = Number(cellaLivello.textContent);
   try {
-    await segnalaLivelloSu(uid, livelloAttuale);
-    cellaLivello.textContent = String(livelloAttuale + 1);
+    await concediLivelli(campagnaIdCorrente, uid, {
+      livelloAttuale: livelloScheda(uid) + (crediti.get(uid) || 0),
+      personaggio: schedeAttive.get(uid)?.nome || null,
+    });
     return true;
   } catch (errore) {
     console.error(errore);
@@ -142,23 +171,36 @@ async function aumentaLivelloRiga(riga) {
 }
 
 corpoTabella.addEventListener("click", async (evento) => {
-  const bottone = evento.target.closest("[data-uid]");
+  const bottone = evento.target.closest("[data-azione]");
   if (!bottone) return;
-
   const riga = bottone.closest("tr");
+  const uid = riga.dataset.uid;
   bottone.disabled = true;
-  const riuscito = await aumentaLivelloRiga(riga);
+
+  if (bottone.dataset.azione === "annulla") {
+    try {
+      await annullaLivello(campagnaIdCorrente, uid, { livelloAnnullato: livelloScheda(uid) + (crediti.get(uid) || 0) });
+      mostraToast("Passaggio di livello annullato: il giocatore riceve un avviso.");
+    } catch (errore) {
+      console.error(errore);
+      bottone.disabled = false;
+      mostraToast("Impossibile annullare: forse il giocatore ha già speso il livello.", true);
+    }
+    return;
+  }
+
+  const riuscito = await concediLivelloRiga(riga);
   mostraToast(
     riuscito
-      ? "Livello aggiornato: il giocatore vedrà l'avviso al prossimo accesso."
-      : "Impossibile aggiornare il livello.",
+      ? "Livello concesso: il giocatore riceve un avviso e lo spende dalla scheda."
+      : "Impossibile concedere il livello.",
     !riuscito
   );
   bottone.disabled = false;
 });
 
 document.getElementById("btn-livello-party").addEventListener("click", async (evento) => {
-  const righe = Array.from(corpoTabella.querySelectorAll("tr"));
+  const righe = Array.from(corpoTabella.querySelectorAll("tr[data-uid]"));
   if (righe.length === 0) {
     mostraToast("Nessun giocatore da aggiornare.", true);
     return;
@@ -166,21 +208,21 @@ document.getElementById("btn-livello-party").addEventListener("click", async (ev
 
   const bottoneParty = evento.currentTarget;
   bottoneParty.disabled = true;
-  corpoTabella.querySelectorAll("[data-uid]").forEach((b) => (b.disabled = true));
+  corpoTabella.querySelectorAll('[data-azione="concedi"]').forEach((b) => (b.disabled = true));
 
-  const risultati = await Promise.all(righe.map((riga) => aumentaLivelloRiga(riga)));
+  const risultati = await Promise.all(righe.map((riga) => concediLivelloRiga(riga)));
   const successi = risultati.filter(Boolean).length;
   const falliti = risultati.length - successi;
 
   mostraToast(
     falliti === 0
-      ? `Livello aumentato per tutto il party (${successi} giocatori).`
-      : `Livello aumentato per ${successi} giocatori, ${falliti} falliti.`,
+      ? `Livello concesso a tutto il party (${successi} giocatori).`
+      : `Livello concesso a ${successi} giocatori, ${falliti} falliti.`,
     falliti > 0
   );
 
   bottoneParty.disabled = false;
-  corpoTabella.querySelectorAll("[data-uid]").forEach((b) => (b.disabled = false));
+  corpoTabella.querySelectorAll('[data-azione="concedi"]').forEach((b) => (b.disabled = false));
 });
 
 // Livello di partenza: porta tutto il party al livello scelto (vedi
@@ -199,10 +241,6 @@ function preparaLivelloPartenza(attuale) {
       const esiti = await impostaLivelloPartenza(campagnaIdCorrente, livello);
       const falliti = esiti.filter((e) => e.errore).length;
       const aggiornati = esiti.filter((e) => e.concessi > 0);
-      aggiornati.forEach(({ uid, concessi }) => {
-        const cella = corpoTabella.querySelector(`tr[data-uid="${CSS.escape(uid)}"] .cella-livello`);
-        if (cella) cella.textContent = String(Number(cella.textContent) + concessi);
-      });
       mostraToast(
         falliti
           ? `Livello di partenza salvato; ${falliti} giocatori non aggiornati.`

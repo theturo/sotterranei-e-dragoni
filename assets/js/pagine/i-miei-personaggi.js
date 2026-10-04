@@ -7,9 +7,12 @@ import {
   impostaSchedaAttiva,
   eliminaScheda,
   riordinaSchede,
+  creditiLivello,
+  migraCreditiProfilo,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc } from "../utils.js";
+import { icona } from "../icone.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK, nomeRazzaCompleto } from "../dati-srd.js";
 
 const veil = document.getElementById("veil");
@@ -21,6 +24,9 @@ const toast = document.getElementById("toast");
 let uidCorrente = null;
 let campagnaIdCorrente = null;
 let modoOrdinamento = false;
+// Livelli concessi dal DM in questa campagna e non ancora spesi: il pulsante
+// per spenderli compare solo sulla scheda attiva.
+let crediti = 0;
 
 let toastTimer = null;
 function mostraToast(testo, errore = false) {
@@ -60,6 +66,9 @@ function creaCard(scheda) {
       ${scheda.attiva ? "" : `<button class="btn-tabella btn-tabella-evidenza" data-attiva="${esc(scheda.id)}">Rendi attiva</button>`}
       <button class="btn-tabella azione-elimina" data-elimina="${esc(scheda.id)}" data-nome="${esc(scheda.nome || "questo personaggio")}">Elimina</button>
     </div>
+    ${scheda.attiva && crediti > 0
+      ? `<a class="btn-credito-livello" href="scheda-personaggio.html?id=${esc(encodeURIComponent(scheda.id))}&livello=1">${icona("livello")} Passa al ${esc((scheda.livello || 1) + 1)}° livello</a>`
+      : ""}
   `;
   return div;
 }
@@ -104,6 +113,12 @@ proteggiPagina(async (user, profilo) => {
     return;
   }
   campagnaIdCorrente = campagna.id;
+  try {
+    await migraCreditiProfilo({ uid: user.uid, ...profilo });
+    crediti = await creditiLivello(campagna.id, user.uid);
+  } catch (errore) {
+    console.error(errore);
+  }
 
   await caricaSchede();
   veil.style.display = "none";

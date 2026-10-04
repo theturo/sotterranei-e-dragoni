@@ -107,12 +107,13 @@ export function sessioneInEvidenza({ inCorso = null, sessioni = [], proposte = [
 }
 
 // Avvisi "Da fare" per il DM: [{ icona, testo, link, etichetta }].
-// membri: profili dei giocatori (uid, nome, livelliDaSpendere); party: i
-// riepiloghi (uid, schedaId, nomePersonaggio); proposte aperte con le
+// membri: profili dei giocatori (uid, nome); crediti: Map uid → livelli
+// concessi in questa campagna e non ancora spesi; party: i riepiloghi (uid,
+// schedaId, nomePersonaggio, livello); proposte aperte con le
 // risposte; evidenza: il risultato di sessioneInEvidenza; contenutiProssima:
 // quanti contenuti sono collegati alla prossima sessione; inAttesa: iscritti
 // da approvare (solo admin).
-export function avvisiDM({ membri = [], party = [], proposte = [], evidenza = null, contenutiProssima = null, inAttesa = 0 }) {
+export function avvisiDM({ membri = [], crediti = new Map(), party = [], proposte = [], evidenza = null, contenutiProssima = null, inAttesa = 0 }) {
   const avvisi = [];
   const riepilogo = new Map(party.map((p) => [p.uid, p]));
   if (inAttesa > 0) {
@@ -123,9 +124,9 @@ export function avvisiDM({ membri = [], party = [], proposte = [], evidenza = nu
     const nome = m.nome || "Un giocatore";
     if (!pg?.schedaId) {
       avvisi.push({ icona: "personaggi", testo: `${nome} non ha ancora un personaggio attivo.`, link: "campagna.html#giocatori", etichetta: "Giocatori" });
-    } else if ((m.livelliDaSpendere || 0) > 0) {
+    } else if ((crediti.get(m.uid) || 0) > 0) {
       const chi = pg.nomePersonaggio || nome;
-      avvisi.push({ icona: "livello", testo: `${chi} deve completare il passaggio al ${(pg.livello || 1) + m.livelliDaSpendere}° livello.`, link: "dm-party.html", etichetta: "Party" });
+      avvisi.push({ icona: "livello", testo: `${chi} deve completare il passaggio al ${(pg.livello || 1) + crediti.get(m.uid)}° livello.`, link: "dm-party.html", etichetta: "Party" });
     }
   }
   for (const p of proposte) {
@@ -141,12 +142,13 @@ export function avvisiDM({ membri = [], party = [], proposte = [], evidenza = nu
   return avvisi;
 }
 
-// Avvisi del giocatore.
-export function avvisiGiocatore({ profilo = null, scheda = null, daRispondere = 0 }) {
+// Avvisi del giocatore. crediti: livelli concessi dal DM in questa campagna e
+// non ancora spesi (si spendono con la scheda attiva).
+export function avvisiGiocatore({ crediti = 0, scheda = null, daRispondere = 0 }) {
   const avvisi = [];
   if (!scheda) avvisi.push({ icona: "personaggi", testo: "Non hai ancora un personaggio attivo in questa campagna.", link: "i-miei-personaggi.html", etichetta: "Crealo" });
-  if (scheda && (profilo?.livelliDaSpendere || 0) > 0) {
-    avvisi.push({ icona: "livello", testo: `Sei salito di livello: completa il passaggio al ${(scheda.livello || 1) + profilo.livelliDaSpendere}° dalla scheda.`, link: `scheda-personaggio.html?id=${encodeURIComponent(scheda.id)}`, etichetta: "Scheda" });
+  if (scheda && crediti > 0) {
+    avvisi.push({ icona: "livello", testo: `Sei salito di livello: completa il passaggio al ${(scheda.livello || 1) + 1}° dalla scheda.`, link: `scheda-personaggio.html?id=${encodeURIComponent(scheda.id)}&livello=1`, etichetta: "Scheda" });
   }
   if (daRispondere > 0) {
     avvisi.push({ icona: "calendario", testo: daRispondere === 1 ? "Il DM ha proposto delle date: segna quando puoi esserci." : `Ci sono ${daRispondere} proposte di date a cui rispondere.`, link: "calendario.html", etichetta: "Rispondi" });
