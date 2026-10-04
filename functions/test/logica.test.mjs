@@ -111,6 +111,12 @@ test("eliminazione utente: solo un admin, mai il proprio account", () => {
   assert.match(motivoRifiutoEliminazione({ richiestaDa: "x" }, "u1", undefined), /solo un admin/);
 });
 
+test("eliminazione utente: non chi guida una campagna", () => {
+  assert.equal(motivoRifiutoEliminazione({ richiestaDa: "a1" }, "u1", { ruolo: "admin" }, []), null);
+  assert.match(motivoRifiutoEliminazione({ richiestaDa: "a1" }, "u1", { ruolo: "admin" }, ["La cripta"]), /DM di una campagna \(«La cripta»\)/);
+  assert.match(motivoRifiutoEliminazione({ richiestaDa: "a1" }, "u1", { ruolo: "admin" }, ["A", null]), /alcune campagne \(«A», «senza titolo»\)/);
+});
+
 test("push «Tocca a te»: testo, pagina e niente push con la Sessione già davanti", async () => {
   const { messaggioPush } = await import("../logica.js");
   const m = messaggioPush({ tipo: "turno", nome: "Kael", round: 2 });

@@ -63,9 +63,9 @@ rules_version = '2';
 // - "campagna/{docId}" (vecchio, pre-campagne): solo lettura per admin/DM, per
 //   la migrazione una tantum. Rimovibile a migrazione confermata.
 // - "registroSessioni/{sessioneId}": sessioni (programmata/in-corso/chiusa),
-//   leggibili dagli utenti approvati, gestite da admin/DM. Un DM può eliminare
+//   leggibili da DM e membri della loro campagna, gestite dal DM. Un DM può eliminare
 //   solo le sessioni ancora "programmata"; l'admin qualsiasi.
-//   - "appunti": log scritto da tutti gli utenti approvati, sempre a proprio
+//   - "appunti": log scritto da DM e membri della campagna, sempre a proprio
 //     nome (nome verificato contro il profilo), max 2000 caratteri, solo
 //     mentre la sessione è in corso ("tipo": "riposo" per le righe scritte
 //     dai riposi, "tiro" per i lanci di dadi condivisi). Non modificabili;
@@ -832,7 +832,10 @@ service cloud.firestore {
     // ---------- Registro sessioni ----------
 
     match /registroSessioni/{sessioneId} {
-      allow get, list: if isApprovato();
+      // Lettura: DM e membri della campagna della sessione. DM e admin le
+      // leggono tutte finché serve la migrazione pre-campagne (scorre tutte le
+      // sessioni per trovare quelle senza campagna): da togliere con essa.
+      allow get, list: if isDMoAdmin() || isNellaCampagna(resource.data.get('campagnaId', 'nessuna'));
 
       // Solo il DM della campagna della sessione (le sessioni di prima delle
       // campagne ricevono la loro con la migrazione).
@@ -844,9 +847,9 @@ service cloud.firestore {
         || isDMdellaCampagna(resource.data.get('campagnaId', 'nessuna'));
 
       match /appunti/{appuntoId} {
-        allow get, list: if isApprovato();
+        allow get, list: if isDMoAdmin() || isNellaCampagnaDellaSessione(sessioneId);
 
-        allow create: if isApprovato()
+        allow create: if isNellaCampagnaDellaSessione(sessioneId)
           && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'tipo', 'tiro', 'creatoIl'])
           && request.resource.data.get('tipo', null) in [null, 'riposo', 'tiro']
           && tiroValido(request.resource.data)
@@ -871,6 +874,11 @@ service cloud.firestore {
           && tiroValido(request.resource.data)
           && request.resource.data.creatoIl == request.time;
       }
+    }
+
+    // DM o membro della campagna a cui appartiene la sessione.
+    function isNellaCampagnaDellaSessione(sessioneId) {
+      return isNellaCampagna(get(/databases/$(database)/documents/registroSessioni/$(sessioneId)).data.get('campagnaId', 'nessuna'));
     }
 
     function isDMdellaSessione(sessioneId) {

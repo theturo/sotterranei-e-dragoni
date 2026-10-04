@@ -190,9 +190,15 @@ export function tokenDaRimuovere(errore) {
 // Controlla una richiesta in "richiesteEliminazione/{uid}" (le regole già
 // permettono di crearla solo all'admin, qui si ricontrolla per sicurezza).
 // Restituisce il motivo del rifiuto, o null se si può procedere.
-export function motivoRifiutoEliminazione(richiesta, uid, profiloRichiedente) {
+// campagneGuidate: titoli delle campagne di cui l'utente è DM. Chi guida una
+// campagna non si elimina: la campagna resterebbe senza DM.
+export function motivoRifiutoEliminazione(richiesta, uid, profiloRichiedente, campagneGuidate = []) {
   if (!richiesta?.richiestaDa) return "richiesta senza autore";
   if (richiesta.richiestaDa === uid) return "un admin non può eliminare il proprio account da qui";
   if (profiloRichiedente?.ruolo !== "admin") return "solo un admin può eliminare un utente";
+  if (campagneGuidate.length) {
+    const elenco = campagneGuidate.map((titolo) => `«${titolo || "senza titolo"}»`).join(", ");
+    return `è il DM di ${campagneGuidate.length === 1 ? "una campagna" : "alcune campagne"} (${elenco}): eliminale o falle guidare da un altro DM prima`;
+  }
   return null;
 }
