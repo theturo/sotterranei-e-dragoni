@@ -5,6 +5,7 @@
 // I mostri del SRD si caricano solo quando servono (il file è grande).
 import { ottieniCreatura, sessioneInCorso, aggiungiTiro } from "./auth.js";
 import { creaElemento } from "./contenuti.js";
+import { elementoIcona } from "./icone.js";
 import { creaBloccoStatistiche } from "./bestiario-scheda.js";
 import { descrizioneTipo, tiraAzione } from "./bestiario-calcoli.js";
 
@@ -74,7 +75,9 @@ export async function apriSchedaCreatura({ campagnaId, rif, nome, utente, avviso
       const sessione = await sessioneInCorso(campagnaId);
       if (!sessione) return;
       await aggiungiTiro(sessione.id, utente.uid, utente.nome, testo, tiro, !visibili.checked);
-      li.append(creaElemento("span", `bestiario-tag${visibili.checked ? " visibile" : ""}`, visibili.checked ? "👁 a tutti" : "🔒 solo DM"));
+      const tag = creaElemento("span", `bestiario-tag${visibili.checked ? " visibile" : ""}`);
+      tag.append(elementoIcona(visibili.checked ? "occhio" : "lucchetto"), visibili.checked ? "a tutti" : "solo DM");
+      li.append(tag);
     } catch (errore) {
       console.error(errore);
       avviso("Impossibile scrivere il tiro nel registro.", true);

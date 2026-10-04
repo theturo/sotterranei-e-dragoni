@@ -5975,9 +5975,21 @@ table.tabella-punteggi select {
 
 .guida-segno {
   flex-shrink: 0;
-  width: 1.2em;
-  text-align: center;
+  width: 1.3em;
+  height: 1.3em;
+  display: flex;
   color: var(--color-gold-bright);
+}
+
+.guida-segno > .icona {
+  width: 100%;
+  height: 100%;
+}
+
+.icona-spunta {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.12em;
 }
 
 .guida-passi i {
@@ -6614,11 +6626,12 @@ table.tabella-punteggi select {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #e0525f;
-  font-size: 1.6em;
-  transform: rotate(45deg);
-  text-shadow: 0 0 0.2em #000;
   pointer-events: none;
+}
+
+.pedina-croce svg {
+  width: 62%;
+  height: 62%;
 }
 
 .pedina-terra {
@@ -7641,6 +7654,17 @@ table.tabella-punteggi select {
   vertical-align: 1px;
 }
 
+.blocco-tiro {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.blocco-tiro svg {
+  width: 14px;
+  height: 14px;
+}
+
 .blocco-tiro:hover,
 .blocco-tiro:focus-visible {
   background: var(--color-burgundy-bright);
@@ -7941,6 +7965,18 @@ table.tabella-punteggi select {
 
 .bestiario-tag.visibile {
   background: var(--color-emerald);
+}
+
+.bestiario-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: 1px;
+}
+
+.bestiario-tag svg {
+  width: 12px;
+  height: 12px;
 }
 
 /* ---------- Bestiario in combattimento ----------
@@ -8525,13 +8561,28 @@ table.tabella-punteggi select {
 .cruscotto-avviso {
   display: flex;
   gap: 10px;
-  align-items: baseline;
+  align-items: center;
   padding: 7px 0;
   border-bottom: 1px dashed rgba(122, 31, 43, 0.22);
 }
 
 .cruscotto-avviso:last-child {
   border-bottom: none;
+}
+
+.cruscotto-avviso-icona {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-burgundy);
+}
+
+.cruscotto-avviso-icona svg {
+  width: 20px;
+  height: 20px;
 }
 
 .cruscotto-avviso-testo {
@@ -8642,10 +8693,17 @@ table.tabella-punteggi select {
 }
 
 .strumento-icona {
-  font-size: 1.4rem;
   width: 32px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: var(--color-burgundy);
+}
+
+.strumento-icona svg {
+  width: 26px;
+  height: 26px;
 }
 
 .strumento-testo {
@@ -9512,4 +9570,134 @@ button.scheda-rapida-caratteristica:focus-visible {
 /* Spazio in fondo alla Sessione: il bottone fisso non copre l'ultimo pannello. */
 body:has(.btn-scheda-rapida:not([hidden])) .dashboard-wrap {
   padding-bottom: 72px;
+}
+
+/* ---------- Icone SVG dei lotti cruscotto/tracker e guida/bestiario/mappa/musica
+   (icone.js: icona()) ---------- */
+.icona {
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.2em;
+  flex-shrink: 0;
+}
+
+/* Specificità zero: le regole esistenti (es. pulsanti nascosti sul computer)
+   restano più forti. */
+:where(.btn-tabella:has(> .icona)) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-tabella > .icona {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-tira > .icona {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-spareggio > .icona,
+.btn-apri-combattente > .icona {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-scheda-creatura > .icona {
+  width: 17px;
+  height: 17px;
+}
+
+.combattente-posizione .icona {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+  color: var(--color-burgundy);
+}
+
+:where(.mappa-centra) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mappa-centra > .icona {
+  width: 15px;
+  height: 15px;
+}
+
+.yt-voce-nome b .icona {
+  width: 14px;
+  height: 14px;
+  vertical-align: -1px;
+  color: var(--color-burgundy);
+}
+
+:where(.yt-voce-azione) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yt-voce-azione > .icona {
+  width: 18px;
+  height: 18px;
+}
+
+.volume-riga button > .icona {
+  width: 19px;
+  height: 19px;
+  vertical-align: middle;
+}
+
+.yt-gia-salvato .icona {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+}
+
+/* Pannello Mappa senza mappa (solo il DM): la bussola grande e il testo. */
+.mappa-senza-mappa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.mappa-senza-mappa > .icona {
+  width: 56px;
+  height: 56px;
+  color: var(--color-burgundy);
+  opacity: 0.6;
+}
+
+.mappa-senza-mappa p {
+  margin: 0;
+  color: var(--color-ink-soft);
+}
+
+/* Guida: icone dei capitoli nell'indice (20 px) e nei titoli (28 px). */
+.guida-indice-voce > .icona {
+  width: 20px;
+  height: 20px;
+  color: var(--color-burgundy);
+}
+
+.guida-capitolo h2 > .icona,
+.guida-faq-titolo > .icona {
+  width: 28px;
+  height: 28px;
+  vertical-align: -5px;
+}
+
+/* Con il bottone «La mia scheda» sul telefono gli avvisi salgono sopra di lui. */
+@media (max-width: 760px) {
+  body:has(.btn-scheda-rapida:not([hidden])) .toast {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
 }

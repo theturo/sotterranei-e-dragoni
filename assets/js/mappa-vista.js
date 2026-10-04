@@ -30,6 +30,7 @@ import {
   contornoArea,
   pedineInCaselle,
 } from "./mappa-calcoli.js";
+import { icona } from "./icone.js";
 
 let contatoreViste = 0;
 
@@ -222,7 +223,9 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       el.append(occhio);
     }
     if (p.aTerra) {
-      el.append(crea("div", "pedina-croce", "✚"), crea("div", "pedina-terra", "A terra"));
+      const croce = crea("div", "pedina-croce");
+      croce.innerHTML = icona("a-terra");
+      el.append(croce, crea("div", "pedina-terra", "A terra"));
     } else if (p.quotaPf != null) {
       const pf = crea("div", "pedina-pf");
       const barra = crea("div", "pedina-pf-barra");

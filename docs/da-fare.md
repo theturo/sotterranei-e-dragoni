@@ -12,17 +12,14 @@ indicativo. Si aggiorna man mano che si completano.
 La tela di design "Grafica di Base e Caricamento" è la fonte di verità: si
 integra solo ciò che è segnato ✅, con una pull request per lotto.
 
-- **Tiro dei PF in 3D vero (JS)** (⏳ in revisione nella tela): ottaedro al
+- **Tiro dei PF in 3D vero (JS)** (✅ approvato nella tela): ottaedro al
   posto dell'illusione CSS nel passaggio di livello.
-- **Pulsante 🎲 del tracker di combattimento**: ancora in emoji, da disegnare
-  nella tela.
 - **Stemma per l'intestazione** (❌ scartato, drago da rifare).
-- **Bussola per la mappa** (tavola degli stati vuoti della Sessione): da usare
-  nel pannello Mappa quando non c'è ancora nessuna mappa.
 - **Animazioni in JavaScript** (da valutare insieme): fatto il dado di
-  caricamento, in revisione il tiro dei PF; l'annuncio di livello resta in CSS
-  (scelta della tela). Da valutare: comparsa dei contenuti in sessione, turno
-  nel tracker, eventuali risorse aggiuntive (sprite, suoni, particelle).
+  caricamento, approvato il tiro dei PF; l'annuncio di livello resta in CSS
+  (scelta della tela). Il cambio turno nel tracker è in sviluppo nella tela
+  (due proposte, in attesa). Da valutare: comparsa dei contenuti in sessione,
+  eventuali risorse aggiuntive (sprite, suoni, particelle).
 
 ## Funzioni per il tavolo
 
@@ -155,6 +152,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   salvati su scheda e party. Sul computer è un pannello a destra che lascia
   la mappa visibile, sul telefono occupa lo schermo. Il DM vede «Schede del
   party» in sola lettura.
+- Icone SVG al posto delle emoji rimaste (tavole «cruscotto e tracker» e
+  «guida, bestiario, mappa e musica»): strumenti e «Da fare» della dashboard,
+  tracker di combattimento (dado, scheda, frecce, turno), mappa («Centra su di
+  me», «Scheda», croce della pedina a terra e bussola quando non c'è una
+  mappa), capitoli e segni della guida, tiri e tag del Bestiario, elenco
+  YouTube e audio del widget musica. Registro in assets/js/icone.js (icona()).
 - Pulizia e campagne: il DM elimina dal registro una o più sessioni (anche
   già giocate, con appunti e tiri; il contatore riparte dal numero più alto
   rimasto); l'admin elimina un utente da Gestione utenti (Cloud Function
