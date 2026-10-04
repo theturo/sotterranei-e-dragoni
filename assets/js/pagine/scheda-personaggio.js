@@ -76,6 +76,7 @@ import {
 import { ARMI, ARMATURE, cercaEquipaggiamento, ETICHETTE_CATEGORIA } from "../equipaggiamento-srd.js";
 import { cercaIncantesimi, ottieniIncantesimo, TIRI_INCANTESIMI } from "../incantesimi-srd.js";
 import { montaGuida } from "../guida-personaggio.js";
+import { lanciaDadoPF } from "../dado-pf.js";
 import { apriEsportazione, pdfDelleSchede, jsonDelleSchede, nomeFile } from "../esporta-scheda.js";
 import { talentiConSottoclasse } from "../guida-personaggio-dati.js";
 
@@ -265,19 +266,15 @@ document.querySelectorAll(".scelta-pf [data-metodo]").forEach((bottone) => {
       document.getElementById("vassoio-etichetta").textContent = `Dado vita — d${dadoVita}`;
       esito.hidden = true;
       vassoio.hidden = false;
-      // Riavvia l'animazione del lancio.
-      vassoio.classList.remove("in-lancio");
-      void vassoio.offsetWidth;
-      vassoio.classList.add("in-lancio");
-      const durata = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 300 : 3400;
-      setTimeout(() => {
+      // Ottaedro in 3D (dado-pf.js): rotola e si ferma sul risultato.
+      lanciaDadoPF(document.getElementById("dado-pf"), { facce: dadoVita, risultato: tiro }).then(() => {
         esito.textContent = String(tiro);
         esito.hidden = false;
         const bonus = totale - tiro;
         risultato.textContent = `Tiro: ${tiro}${bonus ? ` ${bonus > 0 ? "+" : "−"} ${Math.abs(bonus)} (Costituzione)` : ""} → +${totale} PF`;
         risultato.hidden = false;
         btnAvanti.disabled = false;
-      }, durata);
+      });
     }
   });
 });
