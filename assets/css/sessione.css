@@ -1,0 +1,1815 @@
+/* sessione.css — Pagina Sessione e schermo del tavolo: party, tracker di combattimento, mappa, scheda rapida, Bestiario in combattimento.
+   Caricato dopo base.css (e gioco.css) da: sessione, tavolo.
+   Una regola nuova va nel file dell'area che la usa; in base.css se serve a
+   pagine di aree diverse. */
+
+/* ---------- Pagina Sessione ---------- */
+.sessione-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .sessione-layout {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.sessione-colonna {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sessione-appunti-intestazione {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sessione-appunti-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 14px;
+}
+
+.sessione-appunto {
+  background: rgba(122, 31, 43, 0.06);
+  border: 1px solid rgba(122, 31, 43, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.sessione-appunto-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-burgundy);
+  margin-bottom: 4px;
+}
+
+.sessione-appunto-testo {
+  color: var(--color-ink);
+  white-space: pre-wrap;
+}
+
+.sessione-appunti-form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.lista-party-sessione {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.party-sessione-riga {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.party-sessione-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.party-sessione-nome {
+  font-weight: 600;
+}
+
+.party-sessione-pf {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  white-space: nowrap;
+}
+
+.registro-sessione-voce {
+  border: 1px solid rgba(122, 31, 43, 0.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.registro-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.registro-selezione {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.registro-riga {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.registro-casella {
+  display: none;
+  padding-top: 12px;
+}
+
+.registro-sessione-voce summary {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.registro-sessione-appunti {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (max-width: 899px) {
+  .sessione-pannello-combattimento { order: 0; }
+}
+
+@media (max-width: 899px) {
+  .sessione-pannello-mappa { order: 1; }
+}
+
+@media (max-width: 899px) {
+  .sessione-pannello-appunti { order: 1; }
+}
+
+@media (max-width: 899px) {
+  .sessione-pannello-party { order: 2; }
+}
+
+@media (max-width: 899px) {
+  .sessione-pannello-contenuti { order: 3; }
+}
+
+@media (max-width: 899px) {
+  .sessione-pannello-musica { order: 4; }
+}
+
+/* La Sessione resta aperta al tavolo: sui computer usa più spazio. */
+@media (min-width: 1000px) {
+  .dashboard-wrap:has(#hub-sessione) {
+    max-width: 1200px;
+  }
+}
+
+.btn-ghost-chiaro {
+  color: var(--color-gold-bright);
+  border-color: var(--color-gold);
+}
+
+.btn-ghost-chiaro:hover {
+  background: rgba(201, 162, 39, 0.12);
+}
+
+.link-intestazione {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--color-burgundy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.lista-party-sessione .party-sessione-riga:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Contenuti: miniatura | dati | bottoni in colonna */
+.lista-contenuti-sessione {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.riga-contenuto-sessione {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 170px;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+}
+
+.riga-contenuto-giocatore {
+  grid-template-columns: 150px minmax(0, 1fr);
+}
+
+.riga-contenuto-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.riga-contenuto-titolo {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  overflow-wrap: anywhere;
+}
+
+.riga-contenuto-descrizione {
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+}
+
+.riga-contenuto-azioni {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-azione {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-burgundy);
+  background: transparent;
+  color: var(--color-burgundy);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.btn-azione:hover {
+  background: rgba(122, 31, 43, 0.08);
+}
+
+.btn-azione.pieno {
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.btn-azione.pieno:hover {
+  background: var(--color-burgundy-bright);
+}
+
+.btn-azione.attivo {
+  background: rgba(122, 31, 43, 0.14);
+}
+
+.btn-azione:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.scelta-giocatori {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px dashed var(--color-ink-soft);
+  border-radius: 6px;
+  font-size: 0.88rem;
+}
+
+.scelta-giocatori .btn-azione {
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .riga-contenuto-sessione,
+  .riga-contenuto-giocatore {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .riga-contenuto-azioni {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 700px) {
+  .scelta-giocatori {
+    grid-column: 1 / -1;
+  }
+}
+
+.combattimento-sottotitolo {
+  margin: -6px 0 10px;
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+}
+
+.banner-turno {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+  font-family: var(--font-heading);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.lista-combattimento {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.riga-combattente {
+  display: grid;
+  grid-template-columns: 26px 48px minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(122, 31, 43, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.riga-combattente.di-turno {
+  border: 2px solid var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.1);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.35);
+}
+
+.riga-combattente.mio .combattente-nome::after {
+  content: " (tu)";
+  font-weight: normal;
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+}
+
+.riga-combattente.a-terra {
+  opacity: 0.55;
+}
+
+.combattente-posizione {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  text-align: center;
+}
+
+.combattente-icona {
+  font-size: 1.3rem;
+}
+
+.combattente-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.combattente-nome {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.combattente-sub[data-salute="ferito"] {
+  color: #8a5a00;
+}
+
+.combattente-sub[data-salute="grave"],
+.combattente-sub[data-salute="a terra"] {
+  color: var(--color-burgundy-bright);
+}
+
+.combattente-iniziativa {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-tira {
+  padding: 4px 8px;
+}
+
+.combattente-azioni {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-spareggio {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+}
+
+.editor-pf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.etichetta-pf {
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+}
+
+.form-nemici {
+  margin-top: 14px;
+  border-top: 1px solid rgba(122, 31, 43, 0.15);
+  padding-top: 10px;
+}
+
+.form-nemici summary {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.form-nemici form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: flex-start;
+}
+
+.griglia-form-nemici label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+}
+
+.griglia-form-nemici .campo-largo {
+  grid-column: span 2;
+}
+
+/* Iniziativa modificabile, comandi del DM e riga compatta del telefono. */
+.iniziativa-editor {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.etichetta-iniziativa,
+.btn-apri-combattente,
+.combattente-pf-breve {
+  display: none;
+}
+
+.combattente-controlli {
+  grid-column: 3 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 639px) {
+  .riga-combattente {
+    grid-template-columns: 18px 36px minmax(0, 1fr) auto auto;
+    column-gap: 8px;
+    row-gap: 8px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 639px) {
+  .combattente-posizione { grid-row: 1; grid-column: 1; }
+}
+
+@media (max-width: 639px) {
+  .combattente-avatar { grid-row: 1; grid-column: 2; }
+}
+
+@media (max-width: 639px) {
+  .combattente-info { grid-row: 1; grid-column: 3; }
+}
+
+@media (max-width: 639px) {
+  .combattente-nome {
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: auto;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Il valore dell'iniziativa resta nella riga; l'editor va nel pannello. */
+  .combattente-iniziativa {
+    display: contents;
+  }
+}
+
+@media (max-width: 639px) {
+  .btn-apri-combattente {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    grid-row: 1;
+    grid-column: 5;
+    min-width: 40px;
+  }
+}
+
+@media (max-width: 639px) {
+  .combattente-pf-breve {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+  }
+}
+
+@media (max-width: 639px) {
+  .riga-combattente.aperta .combattente-pf-breve {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .iniziativa-editor,
+  .combattente-controlli,
+  .combattente-azioni {
+    grid-column: 1 / -1;
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .iniziativa-editor { grid-row: 2; }
+}
+
+@media (max-width: 639px) {
+  .combattente-controlli { grid-row: 3; }
+}
+
+@media (max-width: 639px) {
+  .combattente-azioni { grid-row: 4; justify-content: flex-end; }
+}
+
+@media (max-width: 639px) {
+  .riga-combattente.aperta .iniziativa-editor,
+  .riga-combattente.aperta .combattente-controlli,
+  .riga-combattente.aperta .combattente-azioni {
+    display: flex;
+  }
+}
+
+@media (max-width: 639px) {
+  .riga-combattente.aperta .combattente-controlli:empty,
+  .riga-combattente.aperta .combattente-azioni:empty {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .etichetta-iniziativa {
+    display: inline;
+    margin-right: 4px;
+  }
+}
+
+@media (max-width: 639px) {
+  .riga-combattente.aperta {
+    background: rgba(255, 255, 255, 0.4);
+  }
+}
+
+@media (max-width: 639px) {
+  .editor-pf .btn-tabella,
+  .btn-condizioni-nemico,
+  .btn-spareggio {
+    min-width: 40px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Appunti: campo a tutta larghezza, pulsante sotto. Lanciatore: "Tira" largo. */
+  .sessione-appunti-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 639px) {
+  .sessione-appunti-form button {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 639px) {
+  .lanciatore-dadi button[type="submit"] {
+    flex: 1 1 100px;
+  }
+}
+
+.party-sessione-pf {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.btn-stato-pg {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+}
+
+.editor-stato-pg {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-ink-soft);
+  border-radius: 8px;
+}
+
+.btn-condizioni-nemico {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+}
+
+/* Party della Sessione */
+.party-sessione-dv {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--color-ink-soft);
+}
+
+.chip-riposo {
+  font-family: var(--font-heading);
+  font-size: 0.64rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+.banner-riposo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-gold);
+  background: rgba(201, 162, 39, 0.12);
+  font-size: 0.9rem;
+}
+
+.btn-riposo-pg {
+  align-self: flex-start;
+}
+
+.sessione-appunto-riposo {
+  background: rgba(201, 162, 39, 0.1);
+  border-color: rgba(201, 162, 39, 0.45);
+}
+
+.sessione-appunto-riposo .sessione-appunto-testo {
+  font-style: italic;
+}
+
+.party-sessione-privilegi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 4px;
+  font-size: 0.74rem;
+  color: var(--color-ink-soft);
+}
+
+.privilegio-party.esaurito {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Lanciatore della pagina Sessione */
+.lanciatore-dadi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(122, 31, 43, 0.3);
+}
+
+.lanciatore-titolo {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin-right: 4px;
+}
+
+.input-dadi-etichetta {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.sessione-appunto-tiro {
+  background: rgba(47, 58, 80, 0.07);
+  border-color: rgba(47, 58, 80, 0.3);
+}
+
+.sessione-appunto-tiro .sessione-appunto-testo {
+  font-family: var(--font-heading);
+}
+
+.mappa-intestazione {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mappa-comandi {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mappa-scelta {
+  max-width: 220px;
+}
+
+.mappa-nastro {
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(122, 31, 43, 0.12);
+  border: 1px solid rgba(122, 31, 43, 0.4);
+  color: var(--color-burgundy);
+  font-size: 0.92rem;
+}
+
+.mappa-finestra.solo-visione {
+  cursor: default;
+}
+
+.mappa-finestra.in-taratura,
+.mappa-finestra.in-strumento {
+  cursor: crosshair;
+}
+
+.solo-visione .mappa-mondo {
+  transition: transform 0.6s ease;
+}
+
+.mappa-etichetta-misura.oltre {
+  background: var(--color-burgundy);
+  border-color: #e0525f;
+}
+
+.pedina-mappa.mobile {
+  cursor: grab;
+}
+
+.pedina-mappa.presa {
+  transition: none;
+  cursor: grabbing;
+  z-index: 5;
+  filter: drop-shadow(0 0 0.5em rgba(232, 198, 90, 0.9));
+}
+
+.pedina-mappa.mia .pedina-volto {
+  border-color: #f3d36b;
+  box-shadow: 0 0 0 0.08em #2b1b10, 0 0 0 0.35em rgba(232, 198, 90, 0.35), 0 0.25em 0.5em rgba(0, 0, 0, 0.7);
+}
+
+.pedina-mappa.selezionata .pedina-volto {
+  box-shadow: 0 0 0 0.08em #2b1b10, 0 0 0 0.35em rgba(232, 198, 90, 0.75), 0 0.25em 0.5em rgba(0, 0, 0, 0.7);
+}
+
+.pedina-mappa.a-terra .pedina-volto {
+  filter: grayscale(1) brightness(0.6);
+  border-color: var(--color-burgundy);
+  transform: rotate(-18deg);
+}
+
+.mappa-piede {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mappa-spazio {
+  flex: 1;
+}
+
+.mappa-selezione {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+}
+
+.mappa-griglia-pannello {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.mappa-campo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 0.92rem;
+}
+
+.mappa-campo input[type="checkbox"] {
+  accent-color: var(--color-gold);
+}
+
+.input-dadi.mappa-numero {
+  width: 72px;
+}
+
+.mappa-taratura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.mappa-taratura-testo {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 599px) {
+  .mappa-scelta {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+}
+
+/* Schermo del tavolo (tavolo.html): solo la mappa, a tutto schermo. */
+.pagina-tavolo {
+  background: #0b0705;
+  overflow: hidden;
+}
+
+.tavolo-mappa .mappa-vuota {
+  font-size: 1.4rem;
+}
+
+.tavolo-comandi.nascosti {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Mappa, fase 2: nemici e combattimento ---------- */
+.pedina-mappa.nemico .pedina-volto {
+  border-color: var(--color-burgundy-bright);
+  background: radial-gradient(circle at 35% 30%, #6a2a24, #2a0e0b);
+}
+
+.pedina-artigli {
+  display: flex;
+  color: var(--color-parchment);
+}
+
+/* Nascosta: la vede solo il DM, semitrasparente con l'occhio barrato. */
+.pedina-mappa.nascosta {
+  opacity: 0.5;
+}
+
+/* Pedina di turno: alone dorato che pulsa. */
+.pedina-mappa.di-turno::before {
+  content: "";
+  position: absolute;
+  inset: -0.45em;
+  border-radius: 50%;
+  border: 0.18em solid #f3d36b;
+  box-shadow: 0 0 0.8em var(--color-gold-bright);
+  animation: alone-turno 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes alone-turno {
+  0%, 100% { opacity: 0.45; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pedina-mappa.di-turno::before {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
+.mappa-nemici,
+.mappa-nuova-pedina,
+.mappa-dettagli-nemico {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.mappa-dettagli-nemico {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(165, 41, 58, 0.45);
+  background: rgba(122, 31, 43, 0.08);
+}
+
+.mappa-dettagli-nemico strong {
+  font-family: var(--font-heading);
+}
+
+.mappa-nuova-pedina {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.mappa-vassoio-titolo {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+}
+
+.mappa-vassoio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.mappa-chip-vassoio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 2px;
+  border-radius: 999px;
+  border: 1px dashed var(--color-burgundy-bright);
+  background: rgba(122, 31, 43, 0.1);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-size: 0.9rem;
+}
+
+.mappa-tocca {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  padding: 6px 18px;
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--color-ink);
+  background: linear-gradient(180deg, #f3d36b, var(--color-gold));
+  box-shadow: 0 0 14px rgba(232, 198, 90, 0.6);
+  white-space: nowrap;
+}
+
+.mappa-tocca[hidden] {
+  display: none;
+}
+
+/* Tracker: nemici nascosti ai giocatori (li vede solo il DM). */
+.riga-combattente.nascosto {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+/* ---------- Mappa, fase 3: nebbia di guerra ---------- */
+/* I nemici sotto la nebbia: il DM li vede con un contorno tratteggiato
+   (i giocatori non li vedono affatto). */
+.pedina-mappa.nella-nebbia {
+  outline: 0.12em dashed rgba(230, 211, 163, 0.65);
+  outline-offset: 0.25em;
+}
+
+.mappa-nebbia-anteprima {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px dashed var(--color-gold-bright);
+  background: rgba(232, 198, 90, 0.15);
+  pointer-events: none;
+}
+
+.mappa-nebbia-anteprima.copri {
+  border-color: #9aa0c8;
+  background: rgba(18, 16, 30, 0.35);
+}
+
+.mappa-nebbia-anteprima[hidden],
+.mappa-nebbia-pannello[hidden] {
+  display: none;
+}
+
+.mappa-nebbia-pannello {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.mappa-gruppo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ---------- Strumenti della mappa (fase 4) ----------
+   Ognuno ha il suo colore (--colore): oro per il DM. Aree degli incantesimi
+   con le caselle colpite, righelli in corso, onde dei ping. */
+.mappa-strumenti .area {
+  fill: none;
+  stroke: var(--colore);
+}
+
+.mappa-strumenti .area-casella {
+  fill: var(--colore);
+  fill-opacity: 0.26;
+  stroke: var(--colore);
+  stroke-opacity: 0.55;
+  stroke-width: calc(var(--tratto, 2px) * 0.5);
+}
+
+.mappa-strumenti .area-contorno {
+  fill: var(--colore);
+  fill-opacity: 0.08;
+  stroke-width: var(--tratto, 2px);
+}
+
+.mappa-strumenti .area.bozza .area-contorno {
+  stroke-dasharray: 6 4;
+}
+
+.mappa-strumenti .area-origine {
+  fill: var(--colore);
+  stroke: none;
+}
+
+.mappa-strumenti .righello line {
+  stroke: var(--colore);
+  stroke-width: var(--tratto, 2px);
+}
+
+.mappa-strumenti .righello circle {
+  fill: var(--colore);
+}
+
+.mappa-ping,
+.mappa-etichette-strumenti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mappa-etichette-strumenti {
+  z-index: 7;
+}
+
+.mappa-etichetta-righello,
+.mappa-etichetta-area {
+  position: absolute;
+  background: rgba(21, 13, 8, 0.92);
+  border: 1px solid var(--color-gold-bright);
+  color: var(--color-parchment);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  padding: 0.15em 0.6em;
+  border-radius: 0.4em;
+  white-space: nowrap;
+}
+
+.mappa-etichetta-righello {
+  transform: translate(-50%, calc(-100% - 0.7em));
+}
+
+.mappa-etichetta-area {
+  transform: translate(0.4em, 0.4em);
+  font-size: 0.85em;
+  opacity: 0.92;
+}
+
+.mappa-onda {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.mappa-onda span:nth-child(2) {
+  animation-delay: 0.35s;
+}
+
+.mappa-onda span:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
+@keyframes onda-ping {
+  0% { opacity: 1; transform: scale(0.1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mappa-onda span {
+    animation: onda-ping-ferma 2.4s linear forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes onda-ping-ferma {
+    0%, 80% { opacity: 1; transform: scale(0.5); }
+    100% { opacity: 0; transform: scale(0.5); }
+  }
+}
+
+/* Pedine dentro un'area: anello acceso. */
+.pedina-mappa.colpita {
+  outline: 0.14em solid #ff9b54;
+  outline-offset: 0.18em;
+  box-shadow: 0 0 0.9em rgba(255, 155, 84, 0.85);
+}
+
+.mappa-strumenti-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 8px;
+}
+
+.mappa-strumenti-barra[hidden],
+.mappa-area-opzioni[hidden],
+.mappa-aree-elenco[hidden] {
+  display: none;
+}
+
+.mappa-colore {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  background: var(--colore);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+  vertical-align: -0.05em;
+  margin-right: 0.35em;
+}
+
+.mappa-area-opzioni {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.mappa-aree-elenco {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+.mappa-area-voce {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--colore);
+  background: rgba(21, 13, 8, 0.35);
+}
+
+.mappa-area-voce button {
+  min-width: 28px;
+  min-height: 28px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.1em;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.mappa-area-voce button:hover,
+.mappa-area-voce button:focus-visible {
+  background: rgba(201, 162, 39, 0.25);
+}
+
+/* ---------- Bestiario in combattimento ----------
+   Alleati: bordo verde (tracker e pedina). Finestra della scheda dal
+   tracker o dalla pedina. */
+.riga-combattente.alleato {
+  border-left: 4px solid var(--color-emerald);
+}
+
+.pedina-mappa.nemico.alleato .pedina-volto {
+  border-color: #3fae7a;
+  background: radial-gradient(circle at 35% 30%, #2f6b4f, #0f2a1d);
+}
+
+.campo-bestiario {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.nota-bestiario {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--color-emerald);
+}
+
+.nota-bestiario[hidden] {
+  display: none;
+}
+
+.btn-scheda-creatura[hidden] {
+  display: none;
+}
+
+.modal-card.finestra-creatura {
+  max-width: 680px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  text-align: left;
+  padding: 18px 20px;
+}
+
+.finestra-creatura-testa {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.finestra-creatura-testa h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.finestra-creatura-corpo {
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .modal-card.finestra-creatura {
+    padding: 14px 12px;
+  }
+}
+
+.modal-card.finestra-creatura p.blocco-riga,
+.modal-card.finestra-creatura p.blocco-voce {
+  margin: 3px 0;
+}
+
+/* ---------- Scheda rapida nella Sessione (scheda-rapida.js) ---------- */
+/* Bottone fisso «La mia scheda» e pannello a destra (sul computer la mappa
+   resta visibile); sul telefono il pannello occupa lo schermo. Sotto le
+   finestre modali (200): la finestra dei dadi si apre sopra la scheda. */
+.btn-scheda-rapida {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 150;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  box-shadow: 0 4px 0 #4a1219, var(--shadow-deep);
+}
+
+.btn-scheda-rapida svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.scheda-rapida-testa {
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.2);
+}
+
+.scheda-rapida-maniglia {
+  display: none;
+}
+
+.scheda-rapida-titolo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scheda-rapida-nomi {
+  flex: 1;
+  min-width: 0;
+}
+
+.scheda-rapida-nomi h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.scheda-rapida-sotto {
+  font-size: 0.92rem;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-chiudi {
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 1rem;
+  align-self: flex-start;
+}
+
+.scheda-rapida-personaggi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.scheda-rapida-personaggi .btn-tabella[aria-pressed="true"] {
+  background: var(--color-burgundy);
+  border-color: #4a1219;
+  color: var(--color-parchment);
+}
+
+.scheda-rapida-numeri {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.scheda-rapida-numero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 2px;
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+button.scheda-rapida-numero {
+  cursor: pointer;
+}
+
+button.scheda-rapida-numero:hover,
+button.scheda-rapida-numero:focus-visible {
+  border-color: var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.06);
+}
+
+.scheda-rapida-numero b {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+}
+
+.scheda-rapida-numero small {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-pf {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scheda-rapida-pf-riga {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scheda-rapida-pf-riga .barra-pf {
+  flex: 1;
+  height: 9px;
+  margin-top: 0;
+}
+
+.scheda-rapida-pf-valore {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.scheda-rapida-schede {
+  display: flex;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.2);
+  background: rgba(122, 31, 43, 0.05);
+}
+
+.scheda-rapida-schede:empty {
+  display: none;
+}
+
+.scheda-rapida-scheda {
+  flex: 1;
+  padding: 10px 4px 8px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.scheda-rapida-scheda:hover {
+  color: var(--color-burgundy);
+}
+
+.scheda-rapida-scheda.scelta {
+  color: var(--color-burgundy);
+  font-weight: 700;
+  border-bottom-color: var(--color-gold);
+}
+
+.scheda-rapida-corpo {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 20px 18px;
+}
+
+.scheda-rapida-sezione {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+  margin: 18px 0 6px;
+}
+
+.scheda-rapida-sezione:first-child {
+  margin-top: 0;
+}
+
+.scheda-rapida-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scheda-rapida-lista .inventario-riga {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scheda-rapida-lista .inventario-nome small {
+  display: block;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-lista .btn-tiro {
+  margin-left: 0;
+}
+
+.scheda-rapida-bonus {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  padding: 1px 8px;
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: 999px;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-prove {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+}
+
+.scheda-rapida-prova {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  border: none;
+  border-bottom: 1px dotted rgba(122, 31, 43, 0.3);
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+}
+
+button.scheda-rapida-prova {
+  cursor: pointer;
+}
+
+button.scheda-rapida-prova:hover,
+button.scheda-rapida-prova:focus-visible {
+  background: rgba(122, 31, 43, 0.06);
+}
+
+.scheda-rapida-prova-nome {
+  flex: 1;
+  min-width: 0;
+}
+
+.scheda-rapida-prova b {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+}
+
+.scheda-rapida-caratteristiche {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.scheda-rapida-caratteristica {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 2px 8px;
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+button.scheda-rapida-caratteristica {
+  cursor: pointer;
+}
+
+button.scheda-rapida-caratteristica:hover,
+button.scheda-rapida-caratteristica:focus-visible {
+  border-color: var(--color-burgundy);
+  background: rgba(122, 31, 43, 0.06);
+}
+
+.scheda-rapida-caratteristica small {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-caratteristica b {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+}
+
+.scheda-rapida-nota,
+.scheda-rapida-vuoto {
+  margin: 10px 0 0;
+  font-size: 0.95rem;
+  color: var(--color-ink-soft);
+}
+
+.scheda-rapida-vuoto {
+  font-style: italic;
+}
+
+.scheda-rapida-statistiche {
+  margin-top: 0;
+}
+
+.scheda-rapida-slot button.pallino {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+}
+
+.scheda-rapida-slot button.pallino.competente {
+  background: var(--color-burgundy);
+}
+
+.scheda-rapida-privilegio .inventario-nome {
+  min-width: 55%;
+}
+
+.scheda-rapida .scheda-rapida-esito {
+  margin: 0 20px 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-gold);
+  background: var(--color-ink);
+  color: var(--color-parchment);
+  font-size: 0.92rem;
+}
+
+.scheda-rapida .scheda-rapida-esito.errore {
+  border-color: var(--color-danger);
+}
+
+.scheda-rapida-piede {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px 14px;
+  border-top: 1px solid rgba(122, 31, 43, 0.2);
+}
+
+.scheda-rapida-piede p {
+  flex: 1;
+  margin: 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+@media (max-width: 760px) {
+  .btn-scheda-rapida {
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .scheda-rapida-testa {
+    padding: 8px 16px 12px;
+    touch-action: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .scheda-rapida-maniglia {
+    display: block;
+    width: 44px;
+    height: 5px;
+    margin: 0 auto 10px;
+    border-radius: 3px;
+    background: rgba(122, 31, 43, 0.3);
+  }
+}
+
+@media (max-width: 760px) {
+  .scheda-rapida-corpo {
+    padding: 12px 16px 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .scheda-rapida-schede {
+    padding: 0 6px;
+  }
+}
+
+@media (max-width: 760px) {
+  .scheda-rapida-scheda {
+    font-size: 0.78rem;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 760px) {
+  .scheda-rapida-prove {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .scheda-rapida-prova {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 760px) {
+  .scheda-rapida-piede {
+    padding: 10px 16px 12px;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Con la scheda aperta la pagina sotto non scorre. */
+  body.scheda-rapida-aperta {
+    overflow: hidden;
+  }
+}
+
+/* Spazio in fondo alla Sessione: il bottone fisso non copre l'ultimo pannello. */
+body:has(.btn-scheda-rapida:not([hidden])) .dashboard-wrap {
+  padding-bottom: 72px;
+}
+
+.btn-tira > .icona {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-spareggio > .icona,
+.btn-apri-combattente > .icona {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-scheda-creatura > .icona {
+  width: 17px;
+  height: 17px;
+}
+
+.combattente-posizione .icona {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+  color: var(--color-burgundy);
+}
+
+:where(.mappa-centra) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mappa-centra > .icona {
+  width: 15px;
+  height: 15px;
+}
+
+/* Pannello Mappa senza mappa (solo il DM): la bussola grande e il testo. */
+.mappa-senza-mappa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.mappa-senza-mappa > .icona {
+  width: 56px;
+  height: 56px;
+  color: var(--color-burgundy);
+  opacity: 0.6;
+}
+
+.mappa-senza-mappa p {
+  margin: 0;
+  color: var(--color-ink-soft);
+}
+
+/* Con il bottone «La mia scheda» sul telefono gli avvisi salgono sopra di lui. */
+@media (max-width: 760px) {
+  body:has(.btn-scheda-rapida:not([hidden])) .toast {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
