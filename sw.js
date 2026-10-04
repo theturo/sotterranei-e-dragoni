@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "936d9c23e629";
+const VERSIONE = "d1f8ce263ee2";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -94,6 +94,7 @@ const FILE = [
   "./assets/js/privilegi.js",
   "./assets/js/pwa.js",
   "./assets/js/riposo.js",
+  "./assets/js/scheda-rapida.js",
   "./assets/js/spotify-config.js",
   "./assets/js/spotify.js",
   "./assets/js/utils.js",
