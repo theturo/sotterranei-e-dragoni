@@ -37,6 +37,7 @@ import { CLASSI, ICONA_CLASSE_FALLBACK } from "./dati-srd.js";
 import { ICONA_MASCHERA, icona, elementoIcona } from "./icone.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "./condizioni.js";
 import { montaTurnoAnimato } from "./turno-animato.js";
+import { suona } from "./suoni.js";
 
 const SALUTE = {
   illeso: "Illeso",
@@ -669,7 +670,13 @@ export function montaCombattimento({
       scenico: !isDM && mioTurno, ordine: ordinati.map((c) => c.id),
     });
     if (!isDM && eraAttivo === false && attivo) avviso("Combattimento! Tira l'iniziativa.");
-    if (!isDM && mioTurno && turnoPrecedente !== `${stato.round}:${stato.turno}`) avviso("Tocca a te!");
+    // Suoni: un nuovo round per tutti, «Tocca a te» solo per chi gioca il turno.
+    const roundPrima = Number((turnoPrecedente || "0:").split(":")[0]);
+    if (turnoPrecedente && attivo && roundPrima > 0 && stato.round > roundPrima) suona("round");
+    if (!isDM && mioTurno && turnoPrecedente !== `${stato.round}:${stato.turno}`) {
+      avviso("Tocca a te!");
+      if (turnoPrecedente) suona("tocca");
+    }
     eraAttivo = attivo;
     turnoPrecedente = `${stato.round}:${stato.turno}`;
   }

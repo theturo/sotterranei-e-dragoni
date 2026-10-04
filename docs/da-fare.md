@@ -28,6 +28,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Effetti sonori (kit della tela, sintetizzati nel browser, nessun file):
+  «Tocca a te» (non per il DM), nuovo round, contenuto rivelato, dado vita,
+  lancio rapido, 20 e 1 naturale, passaggio di livello, ping della mappa.
+  In ⚙️ → Effetti sonori interruttore, volume e prova, salvati sul
+  dispositivo; mai sullo schermo del tavolo né a pagina nascosta.
 - Comparsa dei contenuti nella Sessione del giocatore (effetto scenico della
   tela): la riga si apre, la miniatura si svela da sfocata a nitida con un
   riflesso, il titolo si scrive, la riga si accende d'oro; il sigillo

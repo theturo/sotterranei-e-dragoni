@@ -22,6 +22,7 @@ import {
   disattivaNotifichePush,
   riconfermaNotifichePush,
 } from "./notifiche-push.js";
+import { impostazioniSuoni, salvaImpostazioniSuoni, provaSuono } from "./suoni.js";
 
 const HTML_MENU = `
   <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">${ICONA_HOME}</a>
@@ -75,6 +76,7 @@ const HTML_MODALE = `
           <button class="btn-tabella" data-apri="email" type="button">Cambia email</button>
           <button id="mu-btn-installa" class="btn-tabella" type="button" hidden>Installa l'app</button>
           <button class="btn-tabella" data-apri="notifiche" type="button">Notifiche</button>
+          <button class="btn-tabella" data-apri="suoni" type="button">Effetti sonori</button>
           <a class="btn-tabella" href="guida.html">Guida e FAQ</a>
           <button id="mu-btn-logout-menu" class="btn-tabella btn-tabella-pericolo solo-telefono" type="button">Esci</button>
         </div>
@@ -116,6 +118,20 @@ const HTML_MODALE = `
         <div class="impostazioni-azioni">
           <button type="button" class="btn btn-ghost" data-indietro>Indietro</button>
           <button type="submit" class="btn" id="mu-btn-salva-notifiche">Salva</button>
+        </div>
+      </form>
+
+      <form id="mu-form-suoni" class="impostazioni-schermata" hidden novalidate>
+        <h2>Effetti sonori</h2>
+        <label class="preferenza-riga"><span><b>Effetti sonori</b><small>Turno, dadi, contenuti, livello</small></span><input type="checkbox" class="interruttore" id="mu-suoni-attivi" /></label>
+        <label class="preferenza-riga"><span><b>Volume</b><small id="mu-suoni-percentuale">60%</small></span><input type="range" class="volume-suoni" id="mu-suoni-volume" min="0" max="100" step="5" /></label>
+        <div class="preferenza-riga">
+          <span><b>Prova</b><small>Il suono di «Tocca a te»</small></span>
+          <button type="button" class="btn-tabella" id="mu-suoni-prova">Prova</button>
+        </div>
+        <p class="impostazioni-nota">Valgono per questo dispositivo. Nessun suono sullo schermo del tavolo né a pagina nascosta.</p>
+        <div class="impostazioni-azioni">
+          <button type="button" class="btn btn-ghost" data-indietro>Indietro</button>
         </div>
       </form>
 
@@ -275,6 +291,22 @@ function inizializzaImpostazioni() {
   modale.querySelectorAll("[data-apri]").forEach((bottone) => {
     bottone.addEventListener("click", () => mostraSchermata(`mu-form-${bottone.dataset.apri}`));
   });
+
+  // Effetti sonori (suoni.js): valgono subito, salvati sul dispositivo.
+  const attivi = document.getElementById("mu-suoni-attivi");
+  const volume = document.getElementById("mu-suoni-volume");
+  const percentuale = document.getElementById("mu-suoni-percentuale");
+  const mostraSuoni = () => {
+    const { attivi: si, volume: v } = impostazioniSuoni();
+    attivi.checked = si;
+    volume.value = String(Math.round(v * 100));
+    volume.disabled = !si;
+    percentuale.textContent = `${Math.round(v * 100)}%`;
+  };
+  mostraSuoni();
+  attivi.addEventListener("change", () => { salvaImpostazioniSuoni({ attivi: attivi.checked }); mostraSuoni(); });
+  volume.addEventListener("input", () => { salvaImpostazioniSuoni({ volume: Number(volume.value) / 100 }); mostraSuoni(); });
+  document.getElementById("mu-suoni-prova").addEventListener("click", provaSuono);
 
   modale.querySelectorAll("[data-indietro]").forEach((bottone) => {
     bottone.addEventListener("click", () => {

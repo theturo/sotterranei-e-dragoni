@@ -56,6 +56,7 @@ import { montaCombattimento } from "../combattimento.js";
 import { montaMappa } from "../mappa.js";
 import { montaSchedaRapida } from "../scheda-rapida.js";
 import { montaComparsaContenuti } from "../comparsa-contenuti.js";
+import { suonaTiro } from "../suoni.js";
 import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   apriRiposoBreve,
@@ -977,6 +978,7 @@ document.getElementById("lanciatore-dadi").addEventListener("submit", async (eve
     modificatore: valore("dadi-modificatore"),
     modo: document.getElementById("dadi-modo").value,
   });
+  suonaTiro(tiro);
   const mio = ultimoParty.find((r) => r.uid === uidCorrente);
   const chi = puoModerare ? null : mio?.nomePersonaggio || nomeCorrente;
   const nascosto = puoModerare && document.getElementById("dadi-nascosto").checked;
