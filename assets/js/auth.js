@@ -1112,13 +1112,31 @@ async function sincronizzaRiepilogoParty(scheda) {
   }
 }
 
-// Riscrive il riepilogo di un utente rileggendo la sua scheda attiva (dopo un
-// cambio di scheda attiva, una creazione o un'eliminazione).
-async function sincronizzaRiepilogoUtente(uid, campagnaId) {
+// Il contenuto di un riepilogo da confrontare (chiavi in ordine, senza la
+// data di aggiornamento): due riepiloghi uguali non si riscrivono.
+function firmaRiepilogo(dati) {
+  const ordina = (v) => (Array.isArray(v) ? v.map(ordina)
+    : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, ordina(v[k])])) : v);
+  const { aggiornatoIl, ...resto } = dati || {};
+  return JSON.stringify(ordina(resto));
+}
+
+// Riallinea il riepilogo di un utente alla sua scheda attiva (dopo un cambio
+// di scheda attiva, una creazione o un'eliminazione, all'apertura della
+// Sessione). Scrive solo se è cambiato: ogni scrittura arriva a tutti quelli
+// che hanno il party aperto. "esistente" è il riepilogo attuale, se già letto
+// (undefined = da leggere, null = non c'è).
+async function sincronizzaRiepilogoUtente(uid, campagnaId, esistente) {
   try {
-    const scheda = await ottieniSchedaAttiva(uid, campagnaId);
-    const nome = await nomeProfilo(uid);
-    await setDoc(doc(db, "campagne", campagnaId, "party", uid), datiRiepilogo(nome, scheda));
+    const riferimento = doc(db, "campagne", campagnaId, "party", uid);
+    const [scheda, nome, attuale] = await Promise.all([
+      ottieniSchedaAttiva(uid, campagnaId),
+      nomeProfilo(uid),
+      esistente !== undefined ? esistente : getDoc(riferimento).then((s) => (s.exists() ? s.data() : null)),
+    ]);
+    const dati = datiRiepilogo(nome, scheda);
+    if (attuale && firmaRiepilogo(attuale) === firmaRiepilogo(dati)) return;
+    await setDoc(riferimento, dati);
   } catch (errore) {
     console.error(errore);
   }
@@ -1133,12 +1151,15 @@ export async function sincronizzaMioRiepilogo(uid, campagnaId) {
 // Il DM rigenera tutti i riepiloghi della campagna dalle schede vere, e
 // rimuove quelli di chi non è più membro.
 export async function rigeneraRiepiloghiParty(campagnaId) {
-  const membri = await elencaMembriCampagna(campagnaId);
+  const [membri, esistenti] = await Promise.all([
+    elencaMembriCampagna(campagnaId),
+    getDocs(collection(db, "campagne", campagnaId, "party")),
+  ]);
   membri.forEach((membro) => cacheNomiProfilo.set(membro.uid, membro.nome ?? null));
-  await Promise.all(membri.map((membro) => sincronizzaRiepilogoUtente(membro.uid, campagnaId)));
+  const attuali = new Map(esistenti.docs.map((d) => [d.id, d.data()]));
+  await Promise.all(membri.map((membro) => sincronizzaRiepilogoUtente(membro.uid, campagnaId, attuali.get(membro.uid) ?? null)));
 
   const uidMembri = new Set(membri.map((membro) => membro.uid));
-  const esistenti = await getDocs(collection(db, "campagne", campagnaId, "party"));
   await Promise.all(
     esistenti.docs.filter((documento) => !uidMembri.has(documento.id)).map((documento) => deleteDoc(documento.ref))
   );

@@ -503,17 +503,11 @@ function avviaAscoltoRiposo() {
 }
 
 async function caricaParty() {
-  try {
-    // Il DM riallinea tutti i riepiloghi alle schede vere (e toglie chi
-    // non è più membro); un giocatore riallinea solo il proprio.
-    if (puoModerare) {
-      await rigeneraRiepiloghiParty(campagnaIdCorrente);
-    } else {
-      await sincronizzaMioRiepilogo(uidCorrente, campagnaIdCorrente);
-    }
-  } catch (errore) {
-    console.error(errore);
-  }
+  // Il DM riallinea tutti i riepiloghi alle schede vere (e toglie chi non è
+  // più membro); un giocatore riallinea solo il proprio. In sottofondo: il
+  // party si mostra subito e si aggiorna da solo se qualcosa cambia.
+  (puoModerare ? rigeneraRiepiloghiParty(campagnaIdCorrente) : sincronizzaMioRiepilogo(uidCorrente, campagnaIdCorrente))
+    .catch((errore) => console.error(errore));
   await new Promise((pronto) => {
     ascoltaRiepiloghiParty(campagnaIdCorrente, (party) => {
       renderParty(party);

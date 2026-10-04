@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { RADICE, elencoFile } from "../../strumenti/aggiorna-sw.mjs";
+import { RADICE, elencoFile, suRichiesta } from "../../strumenti/aggiorna-sw.mjs";
 import { vistaScheda, classeArmatura, bonusAttaccoSuggerito } from "../../assets/js/calcoli-scheda.js";
 import { creaPdfSchede } from "../../assets/js/pdf-scheda.js";
 import { PDFDocument, rgb, fontkit } from "../../assets/vendor/pdf/pdf-lib-fontkit.min.js";
@@ -86,7 +86,7 @@ test("PDF del party e testi lunghi: le pagine continuano", async () => {
 });
 
 test("librerie e font del PDF non si scaricano all'installazione dell'app", () => {
-  const precache = elencoFile();
-  assert.ok(!precache.some((f) => f.startsWith("assets/vendor/pdf/") || f.startsWith("assets/fonts/pdf/")));
-  assert.match(readFileSync(join(RADICE, "sw.js"), "utf8"), /SU_RICHIESTA = \["\.\/assets\/vendor\/pdf\/", "\.\/assets\/fonts\/pdf\/"\]/);
+  const pdf = elencoFile().filter((f) => f.startsWith("assets/vendor/pdf/") || f.startsWith("assets/fonts/pdf/"));
+  assert.ok(pdf.length > 0 && pdf.every(suRichiesta));
+  assert.match(readFileSync(join(RADICE, "sw.js"), "utf8"), /SU_RICHIESTA = \["\.\/assets\/vendor\/pdf\/", "\.\/assets\/fonts\/pdf\/"/);
 });
