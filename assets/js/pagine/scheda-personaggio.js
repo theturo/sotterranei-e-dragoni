@@ -73,6 +73,7 @@ import { montaGuida } from "../guida-personaggio.js";
 import { lanciaDadoPF } from "../dado-pf.js";
 import { apriEsportazione, pdfDelleSchede, jsonDelleSchede, nomeFile } from "../esporta-scheda.js";
 import { talentiConSottoclasse } from "../guida-personaggio-dati.js";
+import { suona } from "../suoni.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -244,6 +245,7 @@ function apriModalLivello() {
   document.getElementById("livello-rivelazione").hidden = false;
   document.getElementById("wizard-livello").hidden = true;
   document.getElementById("modal-livello").style.display = "flex";
+  suona("livello");
 }
 
 document.getElementById("btn-livello-su").addEventListener("click", apriModalLivello);

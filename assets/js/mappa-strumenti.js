@@ -5,6 +5,7 @@
 // subito, senza aspettare Firestore.
 import { ascoltaStrumenti, ascoltaAree } from "./dati/mappa.js";
 import { metriTraPunti, formattaMetri } from "./mappa-calcoli.js";
+import { suona } from "./suoni.js";
 
 export const COLORE_DM = "#e8c65a";
 const COLORI_GIOCATORI = ["#4fa3e0", "#5cc46a", "#c77dff", "#ff7a5c", "#3fd0c9", "#ff6fb1", "#a3d14a", "#f08a3c"];
@@ -22,35 +23,10 @@ export function colorePersona(membriUid, uid) {
 
 export const testoRighello = (griglia, r) => `${formattaMetri(metriTraPunti(griglia, { x: r.x1, y: r.y1 }, { x: r.x2, y: r.y2 }))} m`;
 
-// Suono leggero del ping (WebAudio, nessun file). Il browser lo lascia
-// suonare solo dopo che si è toccata la pagina almeno una volta.
-let audio = null;
-function preparaAudio() {
-  try {
-    audio ??= new (window.AudioContext || window.webkitAudioContext)();
-    if (audio.state === "suspended") audio.resume().catch(() => {});
-  } catch {
-    audio = null;
-  }
-}
-if (typeof document !== "undefined") document.addEventListener("pointerdown", preparaAudio, { once: true, capture: true });
-
+// Suono leggero del ping (kit di suoni, suoni.js): rispetta interruttore e
+// volume del pannello ⚙️.
 export function suonaPing() {
-  if (!audio || audio.state !== "running") return;
-  const ora = audio.currentTime;
-  [880, 1320].forEach((frequenza, i) => {
-    const osc = audio.createOscillator();
-    const volume = audio.createGain();
-    osc.type = "sine";
-    osc.frequency.value = frequenza;
-    const t = ora + i * 0.12;
-    volume.gain.setValueAtTime(0.0001, t);
-    volume.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
-    volume.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
-    osc.connect(volume).connect(audio.destination);
-    osc.start(t);
-    osc.stop(t + 0.4);
-  });
+  suona("ping");
 }
 
 // opzioni:

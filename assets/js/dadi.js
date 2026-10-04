@@ -4,6 +4,7 @@
 import { creaElemento } from "./contenuti.js";
 
 import { FACCE, conSegno, formula, leggiFormula, tira, testoTiro } from "./dadi-base.js";
+import { suonaTiro } from "./suoni.js";
 
 export { FACCE, conSegno, formula, leggiFormula, tira, testoTiro };
 
@@ -80,6 +81,7 @@ export function apriTiro({ etichetta, quanti = 1, facce = 20, modificatore = 0, 
     vassoio.hidden = false;
     vassoio.classList.add("in-lancio", "lancio-rapido");
     const durata = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 200 : 1300;
+    suonaTiro(tiro, durata);
     setTimeout(() => {
       esito.textContent = String(tiro.totale);
       esito.hidden = false;

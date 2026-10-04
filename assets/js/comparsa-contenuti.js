@@ -11,6 +11,7 @@
 //   sigillo «Nuovo» resta, fermo).
 // Le righe già presenti si riusano: si animano solo quelle che entrano o escono.
 import { creaElemento } from "./contenuti.js";
+import { suona } from "./suoni.js";
 
 const ridotto = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const easeOut = "cubic-bezier(0.33, 1, 0.68, 1)";
@@ -145,6 +146,8 @@ export function montaComparsaContenuti({ lista, vuoto }) {
       if (li === cursore) cursore = cursore.nextElementSibling;
       else lista.insertBefore(li, cursore);
     }
+    // Pergamena e sigillo (il sigillo cade sul badge «Nuovo», a 0,62 s).
+    if (nuove.length) suona("rivela");
     for (const li of nuove) {
       if (!anima) continue;
       li.querySelector(".sigillo-nuovo")?.remove();

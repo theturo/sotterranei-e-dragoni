@@ -5206,6 +5206,12 @@ table.tabella-punteggi select {
   margin: 16px 0 2px;
 }
 
+/* Volume degli effetti sonori (pannello ⚙️ → Effetti sonori). */
+.volume-suoni {
+  width: 150px;
+  accent-color: var(--color-burgundy);
+}
+
 input.interruttore {
   appearance: none;
   -webkit-appearance: none;

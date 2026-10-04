@@ -7,6 +7,7 @@
 // faccia frontale mostra sempre il risultato.
 // Con "riduci animazioni" il dado compare già fermo.
 import { v, q, slerp } from "./geometria-3d.js";
+import { suona } from "./suoni.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const CENTRO = 50;
@@ -122,6 +123,8 @@ export function lanciaDadoPF(palco, { facce = 8, risultato }) {
     disegna(Q_FINALE);
     return Promise.resolve();
   }
+  // Il suono del dado dura quanto il lancio (rotolata + assestamento).
+  suona("dado", (TUMBLE + SETTLE) / 1000);
 
   return new Promise((fatto) => {
     const asse = v.norm([Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5]);
