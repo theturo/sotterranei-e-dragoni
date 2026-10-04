@@ -23,6 +23,18 @@ export function escUrl(valore) {
   }
 }
 
+// Avviso in basso (il <div id="toast"> della pagina): sparisce da solo dopo
+// "durata" millisecondi; un nuovo avviso sostituisce quello in corso.
+let timerToast = null;
+export function mostraToast(testo, errore = false, durata = 3200) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+  toast.textContent = testo;
+  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
+  clearTimeout(timerToast);
+  timerToast = setTimeout(() => (toast.className = "toast"), durata);
+}
+
 // Spinner a forma di dado nei pulsanti in attesa (tela di design, "Elementi
 // decorativi di base"). Si toglie da solo quando il testo del pulsante viene
 // ripristinato con textContent.

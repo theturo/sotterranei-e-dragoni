@@ -27,10 +27,10 @@ import {
   INDOLI, TAGLIE_CREATURA, TIPI_CREATURA, CARATTERISTICHE, FASCE_GS, descrizioneTipo, tiraAzione, filtraCreature, copiaCreatura,
   creaturaVuota, danniDaTesto, testoDaDanni, statoIniziale, riposoLungo, cambiaUsi, etichettaDiario, bonusIniziativa,
 } from "../bestiario-calcoli.js";
+import { mostraToast } from "../utils.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
-const toast = document.getElementById("toast");
 const lista = document.getElementById("bestiario-lista");
 const dettaglio = document.getElementById("bestiario-dettaglio");
 const conteggio = document.getElementById("bestiario-conteggio");
@@ -44,13 +44,6 @@ const filtri = {
 const NOMI_TAGLIE = { minuscola: "Minuscola", piccola: "Piccola", media: "Media", grande: "Grande", enorme: "Enorme", mastodontica: "Mastodontica" };
 const NOMI_CONDIZIONI = new Map(CONDIZIONI.map((c) => [c.chiave, c.nome]));
 
-let toastTimer = null;
-function mostraToast(testo, errore = false) {
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (toast.className = "toast"), 3200);
-}
 const bottone = (testo, classe = "btn-tabella") => {
   const b = creaElemento("button", classe, testo);
   b.type = "button";

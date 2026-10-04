@@ -37,13 +37,12 @@ import {
   creaMiniatura,
   apriLightbox,
 } from "../contenuti.js";
-import { mostraAttesa } from "../utils.js";
+import { mostraAttesa, mostraToast } from "../utils.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
 const griglia = document.getElementById("griglia-contenuti");
 const libreriaVuota = document.getElementById("libreria-vuota");
-const toast = document.getElementById("toast");
 const filtri = {
   testo: document.getElementById("filtro-testo"),
   categoria: document.getElementById("filtro-categoria"),
@@ -60,15 +59,6 @@ let contenuti = [];
 // Schede già create, per ID: si aggiornano sul posto (niente miniature riscaricate).
 const schede = new Map();
 
-let toastTimer = null;
-function mostraToast(testo, errore = false) {
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.className = "toast";
-  }, 3200);
-}
 
 const nomeMembro = (uid) => membri.find((m) => m.uid === uid)?.nome || "Giocatore";
 const sessionePerId = (id) => sessioni.find((s) => s.id === id);

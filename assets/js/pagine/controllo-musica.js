@@ -2,7 +2,7 @@
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagnaCorrente, ottieniLinkMusica, salvaLinkMusica } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc, escUrl } from "../utils.js";
+import { esc, escUrl, mostraToast } from "../utils.js";
 import { ICONA_COPERTINA, ICONA_PRECEDENTE, ICONA_PAUSA, ICONA_RIPRODUCI, ICONA_SUCCESSIVO, icona } from "../icone.js";
 import * as Spotify from "../spotify.js";
 import {
@@ -12,15 +12,7 @@ import {
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
-const toast = document.getElementById("toast");
 
-let toastTimer = null;
-function mostraToast(testo, errore = false) {
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (toast.className = "toast"), 3200);
-}
 
 let sorgenteCorrente = null;
 let campagnaIdCorrente = null;

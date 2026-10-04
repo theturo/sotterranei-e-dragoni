@@ -12,31 +12,13 @@ import {
   ETICHETTE_RUOLO,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc, mostraAttesa } from "../utils.js";
+import { esc, mostraAttesa, mostraToast } from "../utils.js";
+import { dataBreve } from "../calendario.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
 const corpoTabella = document.getElementById("corpo-tabella");
-const toast = document.getElementById("toast");
 
-let toastTimer = null;
-function mostraToast(testo, errore = false) {
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.className = "toast";
-  }, 3200);
-}
-
-function formattaData(timestamp) {
-  if (!timestamp?.toDate) return "—";
-  return timestamp.toDate().toLocaleDateString("it-IT", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
 
 function creaRiga(utente, uidCorrente) {
   const tr = document.createElement("tr");
@@ -71,7 +53,7 @@ function creaRiga(utente, uidCorrente) {
         ${opzioniRuolo}
       </select>
     </td>
-    <td>${formattaData(utente.creatoIl)}</td>
+    <td>${dataBreve(utente.creatoIl, "—")}</td>
     <td>
       <div class="azioni-utente">
         <button class="btn-tabella" data-email="${esc(utente.email)}">Reset password</button>

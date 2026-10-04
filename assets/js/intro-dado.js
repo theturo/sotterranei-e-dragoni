@@ -5,54 +5,15 @@
 //
 // Coordinate: tavolo sul piano y = 0, camera sopra il tavolo che guarda in
 // giù; sullo schermo x va a destra e z verso il basso. Unità = raggio del dado.
+import { v, q } from "./geometria-3d.js";
+
+// Quaternioni [w, x, y, z]: riesportati per intro.js e per le prove.
+export { q };
 
 export const DURATA = 2.5;          // secondi
 export const T_ARRIVO = 1.25;       // il dado si ferma
 export const D = 9;                 // distanza della camera dal tavolo
 export const RAGGIO_ICONA = 57;     // px: raggio dell'esagono nell'icona da 124 px
-
-const v = {
-  add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
-  sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
-  mul: (a, s) => [a[0] * s, a[1] * s, a[2] * s],
-  dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
-  cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
-  len: (a) => Math.hypot(a[0], a[1], a[2]),
-  norm: (a) => {
-    const l = Math.hypot(a[0], a[1], a[2]);
-    return [a[0] / l, a[1] / l, a[2] / l];
-  },
-};
-
-// Quaternioni [w, x, y, z]
-export const q = {
-  asse: (asse, ang) => {
-    const s = Math.sin(ang / 2);
-    const n = v.norm(asse);
-    return [Math.cos(ang / 2), n[0] * s, n[1] * s, n[2] * s];
-  },
-  mul: (a, b) => [
-    a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
-    a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
-    a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1],
-    a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0],
-  ],
-  ruota: (qq, p) => {
-    const asse = [qq[1], qq[2], qq[3]];
-    const t = v.mul(v.cross(asse, p), 2);
-    return v.add(v.add(p, v.mul(t, qq[0])), v.cross(asse, t));
-  },
-  // ruota il versore a sul versore b
-  da: (a, b) => {
-    const d = v.dot(a, b);
-    if (d > 0.999999) return [1, 0, 0, 0];
-    if (d < -0.999999) return q.asse(Math.abs(a[0]) < 0.9 ? v.cross(a, [1, 0, 0]) : v.cross(a, [0, 1, 0]), Math.PI);
-    const c = v.cross(a, b);
-    const qq = [1 + d, c[0], c[1], c[2]];
-    const l = Math.hypot(...qq);
-    return qq.map((x) => x / l);
-  },
-};
 
 // ---------- Icosaedro ----------
 

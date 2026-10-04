@@ -47,7 +47,7 @@ import {
   effettiRiposoLungo,
   testoRiposoBreve,
 } from "../riposo.js";
-import { esc } from "../utils.js";
+import { esc, mostraToast } from "../utils.js";
 import {
   CLASSI,
   ICONA_CLASSE_FALLBACK,
@@ -132,12 +132,7 @@ function renderRitratto() {
   });
 }
 
-function mostraAvviso(testo) {
-  const toast = document.getElementById("toast");
-  toast.textContent = testo;
-  toast.className = "toast visibile toast-errore";
-  setTimeout(() => (toast.className = "toast"), 3600);
-}
+const mostraAvviso = (testo) => mostraToast(testo, true, 3600);
 
 document.getElementById("ritratto-file").addEventListener("change", async (evento) => {
   const file = evento.target.files?.[0];
@@ -528,16 +523,7 @@ document.getElementById("btn-avanti-incantesimi").addEventListener("click", () =
   mostraPassoLivello("passo-riepilogo-livello");
 });
 
-let timerToastLivello = null;
-function mostraToastLivello(testo) {
-  const toast = document.getElementById("toast");
-  toast.textContent = testo;
-  toast.className = "toast visibile toast-errore";
-  clearTimeout(timerToastLivello);
-  timerToastLivello = setTimeout(() => {
-    toast.className = "toast";
-  }, 3200);
-}
+const mostraToastLivello = (testo) => mostraToast(testo, true);
 
 function renderRiepilogoLivello() {
   const nuovoLivello = (scheda.livello || 1) + 1;

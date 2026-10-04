@@ -11,7 +11,7 @@ import {
   ascoltaCreditiCampagna,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc } from "../utils.js";
+import { esc, mostraToast } from "../utils.js";
 import { CLASSI, nomeRazzaCompleto } from "../dati-srd.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
 import { apriEsportazione, pdfDelleSchede, jsonDelleSchede, nomeFile } from "../esporta-scheda.js";
@@ -20,17 +20,7 @@ const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
 const corpoTabella = document.getElementById("corpo-tabella");
 const nessunGiocatore = document.getElementById("nessun-giocatore");
-const toast = document.getElementById("toast");
 
-let toastTimer = null;
-function mostraToast(testo, errore = false) {
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.className = "toast";
-  }, 3200);
-}
 
 function creaRiga(giocatore) {
   const tr = document.createElement("tr");

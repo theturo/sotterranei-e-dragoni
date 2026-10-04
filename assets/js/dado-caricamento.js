@@ -6,7 +6,8 @@
 // - Anima solo finché il velo è visibile: quando la pagina lo nasconde il
 //   ciclo si ferma (e riparte se il velo ricompare).
 // - Con "riduci animazioni" il dado resta fermo sul 20.
-import { VERTICI, FACCE, NUMERI, FACCIA_20, normale, q } from "./intro-dado.js";
+import { VERTICI, FACCE, NUMERI, FACCIA_20, normale } from "./intro-dado.js";
+import { v, q, slerp } from "./geometria-3d.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const CENTRO = 60;
@@ -14,35 +15,6 @@ const SCALA = 46;
 const TUMBLE = 1700;
 const SETTLE = 550;
 const PAUSA = 1050;
-
-const v = {
-  add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
-  mul: (a, s) => [a[0] * s, a[1] * s, a[2] * s],
-  dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
-  norm: (a) => {
-    const l = Math.hypot(a[0], a[1], a[2]);
-    return [a[0] / l, a[1] / l, a[2] / l];
-  },
-};
-
-function slerp(a, b, t) {
-  let dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
-  let bb = b;
-  if (dot < 0) {
-    dot = -dot;
-    bb = b.map((x) => -x);
-  }
-  if (dot > 0.9995) {
-    const r = a.map((x, i) => x + (bb[i] - x) * t);
-    const l = Math.hypot(...r);
-    return r.map((x) => x / l);
-  }
-  const theta0 = Math.acos(dot);
-  const theta = theta0 * t;
-  const s0 = Math.cos(theta) - (dot * Math.sin(theta)) / Math.sin(theta0);
-  const s1 = Math.sin(theta) / Math.sin(theta0);
-  return a.map((x, i) => x * s0 + bb[i] * s1);
-}
 
 // Posa finale: il 20 verso chi guarda (+z) e il contorno a punta in su.
 const Q_FINALE = (() => {

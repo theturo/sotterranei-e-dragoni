@@ -38,12 +38,21 @@ export function etichettaSessione(sessione) {
   return `Sessione ${sessione.numero ?? "?"}${sessione.titolo ? ` — ${sessione.titolo}` : ""}`;
 }
 
-// Prossima sessione programmata (oggi compreso), o null.
-export function prossimaSessione(sessioni) {
-  const oggi = oggiIso();
-  return sessioni
-    .filter((s) => s.stato === "programmata" && s.dataProgrammata && s.dataProgrammata >= oggi)
-    .sort((a, b) => `${a.dataProgrammata} ${a.oraProgrammata || ""}`.localeCompare(`${b.dataProgrammata} ${b.oraProgrammata || ""}`))[0] || null;
+// Date brevi dei documenti (Timestamp di Firestore): "10/10/2026",
+// "21:05", "10/10/2026, 21:05". "vuoto" se manca.
+const daTimestamp = (timestamp, opzioni, vuoto) =>
+  timestamp?.toDate ? timestamp.toDate().toLocaleString("it-IT", opzioni) : vuoto;
+const GIORNO = { day: "2-digit", month: "2-digit", year: "numeric" };
+const ORA = { hour: "2-digit", minute: "2-digit" };
+export const dataBreve = (timestamp, vuoto = "") => daTimestamp(timestamp, GIORNO, vuoto);
+export const oraBreve = (timestamp, vuoto = "") => daTimestamp(timestamp, ORA, vuoto);
+export const dataOraBreve = (timestamp, vuoto = "") => daTimestamp(timestamp, { ...GIORNO, ...ORA }, vuoto);
+
+// "2026-10-10" → "10/10/2026" ("" se manca).
+export function dataBreveIso(iso) {
+  if (!iso) return "";
+  const [anno, mese, giorno] = String(iso).split("-");
+  return `${giorno}/${mese}/${anno}`;
 }
 
 // ---------- File .ics ----------

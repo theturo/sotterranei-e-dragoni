@@ -35,9 +35,9 @@ import {
   ascoltaTiriNascosti,
 } from "../auth.js";
 import { tira, testoTiro } from "../dadi.js";
-import { oggiIso, formattaDataOra, etichettaSessione } from "../calendario.js";
+import { oggiIso, formattaDataOra, etichettaSessione, dataBreve, oraBreve } from "../calendario.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc, creaScheletro, mostraAttesa } from "../utils.js";
+import { esc, creaScheletro, mostraAttesa, mostraToast } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK, applicaVariazionePf } from "../dati-srd.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "../condizioni.js";
@@ -75,16 +75,6 @@ let smettiAscolto = null;
 // DM/admin: possono eliminare appunti (moderazione).
 let puoModerare = false;
 
-function formattaData(timestamp) {
-  if (!timestamp?.toDate) return "";
-  return timestamp.toDate().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
-function formattaOrario(timestamp) {
-  if (!timestamp?.toDate) return "";
-  return timestamp.toDate().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
-}
-
 function rigaAppunto(appunto, sessioneId) {
   const collezione = appunto.nascosto ? "tiriNascosti" : "appunti";
   const bottoneElimina = puoModerare
@@ -98,7 +88,7 @@ function rigaAppunto(appunto, sessioneId) {
   const etichettaNascosto = appunto.nascosto ? '<span class="chip-riposo">Nascosto</span> ' : "";
   return `
     <div class="${classi.join(" ")}">
-      <div class="sessione-appunto-meta"><span>${etichettaNascosto}${esc(appunto.autoreNome) || "—"}</span><span>${formattaOrario(appunto.creatoIl)}${bottoneElimina}</span></div>
+      <div class="sessione-appunto-meta"><span>${etichettaNascosto}${esc(appunto.autoreNome) || "—"}</span><span>${oraBreve(appunto.creatoIl)}${bottoneElimina}</span></div>
       <div class="sessione-appunto-testo">${esc(appunto.testo)}</div>
     </div>
   `;
@@ -766,15 +756,7 @@ function renderContenuti() {
   vuoto.hidden = elenco.length > 0;
 }
 
-let timerAvviso = null;
-function mostraAvvisoContenuto(testo, errore = false) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(timerAvviso);
-  timerAvviso = setTimeout(() => (toast.className = "toast"), 4000);
-}
+const mostraAvvisoContenuto = (testo, errore = false) => mostraToast(testo, errore, 4000);
 
 async function avviaContenuti(isDmOAdmin) {
   isDmContenuti = isDmOAdmin;
@@ -1096,7 +1078,7 @@ async function caricaRegistro() {
       dettagli.className = "registro-sessione-voce";
       const statoSessione = sessione.chiusaIl ? "" : " (in corso)";
       dettagli.innerHTML = `
-        <summary>Sessione ${esc(sessione.numero)} — ${formattaData(sessione.apertaIl)}${statoSessione}</summary>
+        <summary>Sessione ${esc(sessione.numero)} — ${dataBreve(sessione.apertaIl)}${statoSessione}</summary>
         <div class="registro-sessione-appunti" data-corpo></div>
       `;
       dettagli.addEventListener("toggle", async () => {
