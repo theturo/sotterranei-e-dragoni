@@ -26,12 +26,7 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Notifiche, seconda parte**:
-  - avviso "Tocca a te" quando arriva il proprio turno nel tracker di
-    combattimento;
-  - scelta dei tipi di avviso da ricevere come push;
-  - fascia "non disturbare", che rispetti comunque le impostazioni del
-    telefono (modalità silenziosa / full immersion).
+- Nessuna voce aperta.
 
 ## Altro
 
@@ -149,6 +144,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   sul telefono (app installata; su iPhone da iOS 16.4) o sul computer;
   attivabili dall'invito in dashboard o dal pannello ⚙️, al tocco aprono la
   pagina giusta (Cloud Function `inviaNotificaPush`).
+- Notifiche, seconda parte: push "Tocca a te!" quando arriva il turno del
+  proprio personaggio nel tracker (non se la Sessione è già aperta e visibile);
+  in ⚙️ → Notifiche si sceglie quali push ricevere (sessione, date, livello,
+  turno) e una fascia "non disturbare" in cui le push sono in pausa (gli
+  avvisi restano nella campanella).
 - Pulizia e campagne: il DM elimina dal registro una o più sessioni (anche
   già giocate, con appunti e tiri; il contatore riparte dal numero più alto
   rimasto); l'admin elimina un utente da Gestione utenti (Cloud Function

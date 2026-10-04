@@ -996,3 +996,20 @@ describe("Ruolo per campagna: l'admin che gioca nella campagna di un altro", () 
     await assertFails(getDoc(doc(come("dm2"), "registroSessioni/r1/tiriNascosti/t1")));
   });
 });
+
+describe("Notifiche: «Tocca a te» e preferenze", () => {
+  const preferenze = { tipi: { sessione: true, date: false, livello: true, turno: true }, silenzio: { attivo: true, da: "23:00", a: "08:00" }, fuso: "Europe/Rome" };
+  test("il giocatore salva le proprie preferenze delle push", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "users/p1"), { preferenzeNotifiche: preferenze })));
+  test("NON salva preferenze con campi estranei o tipi sconosciuti", async () => {
+    await assertFails(updateDoc(doc(come("p1"), "users/p1"), { preferenzeNotifiche: { ...preferenze, altro: 1 } }));
+    await assertFails(updateDoc(doc(come("p1"), "users/p1"), { preferenzeNotifiche: { tipi: { spam: true } } }));
+    await assertFails(updateDoc(doc(come("p1"), "users/p1"), { preferenzeNotifiche: { silenzio: { attivo: "sì" } } }));
+  });
+  test("NON salva le preferenze di un altro", () =>
+    assertFails(updateDoc(doc(come("p2"), "users/p1"), { preferenzeNotifiche: preferenze })));
+  test("il DM avvisa il giocatore di turno", () =>
+    assertSucceeds(addDoc(collection(come("dm"), "users/p1/notifiche"), { tipo: "turno", nome: "Eroe", round: 2, letta: false })));
+  test("un giocatore NON manda avvisi a un altro", () =>
+    assertFails(addDoc(collection(come("p2"), "users/p1/notifiche"), { tipo: "turno", nome: "Eroe", round: 2, letta: false })));
+});

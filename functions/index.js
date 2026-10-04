@@ -22,7 +22,7 @@ import { getStorage } from "firebase-admin/storage";
 import nodemailer from "nodemailer";
 import { CloudBillingClient } from "@google-cloud/billing";
 import {
-  registraInvio, emailNuovoIscritto, deveBloccare, idProgetto, messaggioPush, tokenDaRimuovere, MASSIMO_DISPOSITIVI,
+  registraInvio, emailNuovoIscritto, deveBloccare, idProgetto, messaggioPush, pushConsentita, tokenDaRimuovere, MASSIMO_DISPOSITIVI,
   motivoRifiutoEliminazione,
 } from "./logica.js";
 
@@ -93,9 +93,19 @@ export const notificaNuovoIscritto = onDocumentCreated(
 // service worker del sito (sw.js, evento "push"), con titolo, testo e la
 // pagina da aprire al tocco.
 export const inviaNotificaPush = onDocumentCreated("users/{uid}/notifiche/{notificaId}", async (evento) => {
-  const messaggio = messaggioPush(evento.data?.data());
+  const notifica = evento.data?.data();
+  const messaggio = messaggioPush(notifica);
   if (!messaggio) return;
   const { uid, notificaId } = evento.params;
+  // "Tocca a te" serve solo come push: non resta nella campanella.
+  if (notifica.tipo === "turno") await evento.data.ref.delete().catch(() => {});
+  // Preferenze del giocatore (pannello ⚙️ → Notifiche): tipi spenti e "non disturbare".
+  const profilo = await db.doc(`users/${uid}`).get();
+  const permesso = pushConsentita(notifica.tipo, profilo.get("preferenzeNotifiche"));
+  if (!permesso.consentita) {
+    logger.info("Notifica push non inviata.", { uid, tipo: notifica.tipo, motivo: permesso.motivo });
+    return;
+  }
   const dispositivi = (await db.collection(`users/${uid}/dispositivi`).get()).docs
     .filter((d) => typeof d.get("token") === "string" && d.get("token"))
     .sort((a, b) => (b.get("aggiornatoIl")?.toMillis?.() ?? 0) - (a.get("aggiornatoIl")?.toMillis?.() ?? 0))

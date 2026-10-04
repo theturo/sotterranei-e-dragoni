@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "720786d91857";
+const VERSIONE = "936d9c23e629";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",
@@ -231,14 +231,22 @@ self.addEventListener("push", (evento) => {
     dati = { testo: evento.data?.text() || "" };
   }
   const titolo = String(dati.titolo || dati.title || "Sotterranei & Dragoni").slice(0, 120);
-  evento.waitUntil(self.registration.showNotification(titolo, {
+  evento.waitUntil((async () => {
+    // "Tocca a te": se la Sessione è già aperta davanti, basta il riquadro nella pagina.
+    if (dati.nascondiSe) {
+      const finestre = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const pagina = paginaDaAprire(dati.nascondiSe);
+      if (finestre.some((f) => f.url.split("#")[0] === pagina && f.visibilityState === "visible")) return;
+    }
+    await self.registration.showNotification(titolo, {
     body: String(dati.testo || dati.body || "").slice(0, 300),
     icon: indirizzo(ICONA_NOTIFICA),
     badge: indirizzo(BADGE_NOTIFICA),
     lang: "it",
     ...(dati.tag ? { tag: String(dati.tag) } : {}),
     data: { url: paginaDaAprire(dati.url) },
-  }));
+    });
+  })());
 });
 
 self.addEventListener("notificationclick", (evento) => {

@@ -25,6 +25,7 @@ import {
   rivelaNemici,
   ascoltaBestiario,
   creatureInCombattimento,
+  avvisaTurno,
 } from "./auth.js";
 import { apriSchedaCreatura, caricaMostriSrd } from "./bestiario-finestra.js";
 import { bonusIniziativa } from "./bestiario-calcoli.js";
@@ -138,13 +139,21 @@ export function montaCombattimento({
     });
   }
 
+  // Push «Tocca a te» al giocatore del personaggio di turno (non a sé stessi).
+  function avvisaDiTurno(combattente, round) {
+    if (combattente?.tipo === "pg" && combattente.uid && combattente.uid !== uid) {
+      avvisaTurno(combattente.uid, { nome: combattente.nome, round });
+    }
+  }
+
   function avanza(verso) {
     if (ordinati.length === 0) return Promise.resolve();
     const indice = ordinati.findIndex((c) => c.id === stato.turno);
     // Prima mossa: si parte dal primo, round 1.
     if (stato.round === 0 || indice === -1) {
       if (verso < 0) return Promise.resolve();
-      return impostaTurno(campagnaId, Math.max(1, stato.round), ordinati[0].id);
+      return impostaTurno(campagnaId, Math.max(1, stato.round), ordinati[0].id)
+        .then(() => avvisaDiTurno(ordinati[0], Math.max(1, stato.round)));
     }
     let nuovo = indice + verso;
     let round = stato.round;
@@ -156,7 +165,8 @@ export function montaCombattimento({
       nuovo = ordinati.length - 1;
       round -= 1;
     }
-    return impostaTurno(campagnaId, round, ordinati[nuovo].id);
+    return impostaTurno(campagnaId, round, ordinati[nuovo].id)
+      .then(() => verso > 0 && avvisaDiTurno(ordinati[nuovo], round));
   }
 
   function creaFormNemici() {

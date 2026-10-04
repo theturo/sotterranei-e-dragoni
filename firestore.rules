@@ -183,7 +183,8 @@ service cloud.firestore {
       function aggiornamentoProprioProfiloValido() {
         let campi = campiModificati();
         let dati = request.resource.data;
-        return campi.hasOnly(['email', 'emailVerificata', 'ordinePannelli', 'livelliDaSpendere'])
+        return campi.hasOnly(['email', 'emailVerificata', 'ordinePannelli', 'livelliDaSpendere', 'preferenzeNotifiche'])
+          && (!campi.hasAny(['preferenzeNotifiche']) || preferenzeNotificheValide(dati.preferenzeNotifiche))
           && (!campi.hasAny(['email']) || dati.email == request.auth.token.email)
           && (!campi.hasAny(['emailVerificata']) ||
               (dati.emailVerificata == true && request.auth.token.email_verified == true))
@@ -191,6 +192,18 @@ service cloud.firestore {
           && (!campi.hasAny(['livelliDaSpendere']) ||
               (resource.data.livelliDaSpendere >= 1
                 && dati.livelliDaSpendere == resource.data.livelliDaSpendere - 1));
+      }
+
+      // Preferenze delle push (pannello ⚙️ → Notifiche): tipi accesi o spenti,
+      // fascia "non disturbare" e fuso orario del telefono.
+      function preferenzeNotificheValide(p) {
+        return p is map && p.keys().hasOnly(['tipi', 'silenzio', 'fuso'])
+          && (!('tipi' in p) || (p.tipi is map && p.tipi.keys().hasOnly(['sessione', 'date', 'livello', 'turno'])))
+          && (!('silenzio' in p) || (p.silenzio is map && p.silenzio.keys().hasOnly(['attivo', 'da', 'a'])
+            && p.silenzio.get('attivo', false) is bool
+            && p.silenzio.get('da', '') is string && p.silenzio.get('da', '').size() <= 5
+            && p.silenzio.get('a', '') is string && p.silenzio.get('a', '').size() <= 5))
+          && (!('fuso' in p) || (p.fuso is string && p.fuso.size() <= 64));
       }
 
       // Il DM concede uno o più livelli (es. il livello di partenza della
