@@ -1,0 +1,987 @@
+/* scheda.css — Pagine dei personaggi: scheda, passaggio di livello, allineamento, guida alla creazione, I miei personaggi, creazione.
+   Caricato dopo base.css (e gioco.css) da: crea-personaggio, i-miei-personaggi, scheda-personaggio.
+   Una regola nuova va nel file dell'area che la usa; in base.css se serve a
+   pagine di aree diverse. */
+
+.btn-pericolo {
+  background: linear-gradient(180deg, #c23a4d, var(--color-danger));
+  border-color: #6e1c26;
+  box-shadow: 0 4px 0 #6e1c26;
+}
+
+/* ---------- Scheda personaggio ---------- */
+.scheda-wrap-esterno {
+  max-width: 1200px;
+}
+
+.scheda-nome-valore {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  color: var(--color-burgundy);
+}
+
+.scheda-sottotitoli {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.scheda-sottotitoli span {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.input-inline:focus {
+  outline: none;
+}
+
+.input-inline:disabled {
+  opacity: 0.7;
+}
+
+.input-inline::placeholder {
+  color: var(--color-ink-soft);
+  opacity: 0.55;
+}
+
+.btn-allineamento-trigger:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.scheda-corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+}
+
+@media (min-width: 980px) {
+  .scheda-corpo {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.scheda-colonna {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.scheda-box-centrale {
+  text-align: center;
+}
+
+.valore-grande {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--color-burgundy);
+  line-height: 1;
+}
+
+.valore-grande-etichetta {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-ink-soft);
+  margin-top: 4px;
+}
+
+.griglia-caratteristiche {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.caratteristica-nome {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-ink-soft);
+}
+
+.caratteristica-mod {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--color-burgundy);
+  line-height: 1.3;
+}
+
+.caratteristica-punteggio {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--color-ink);
+}
+
+.riga-tre-box {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tiri-morte .pallino svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tiri-morte .pallino[data-tipo="successi"].competente {
+  color: var(--color-success);
+}
+
+.tiri-morte .pallino[data-tipo="fallimenti"].competente {
+  color: var(--color-danger);
+}
+
+.riga-hp > div > span {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--color-burgundy);
+}
+
+.tiri-morte-titolo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pallini-morte-etichetta {
+  text-align: left;
+}
+
+.tabella-attacchi th {
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.3);
+}
+
+.tabella-attacchi td {
+  padding: 6px;
+  border-bottom: 1px solid rgba(43, 27, 16, 0.1);
+}
+
+.riga-monete {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.riga-monete span {
+  display: block;
+  font-family: var(--font-heading);
+}
+
+.riga-monete input.input-moneta:focus {
+  outline: none;
+  border-color: var(--color-burgundy);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.lista-talenti {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.92rem;
+}
+
+.lista-talenti li {
+  margin-bottom: 6px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.form-aggiungi-talento {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.modal-allineamento-intestazione {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.modal-allineamento-corpo {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ruota-allineamento {
+  position: relative;
+  width: min(280px, 70vw);
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+
+.spicchio-allineamento:hover,
+.spicchio-allineamento:focus-visible {
+  transform: scale(1.12);
+  filter: brightness(1.2) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
+  z-index: 5;
+}
+
+.spicchio-allineamento-etichetta {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-bg-dark);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.hub-allineamento:hover,
+.hub-allineamento:focus-visible {
+  transform: translate(-50%, -50%) scale(1.1);
+  filter: brightness(1.15);
+}
+
+.pannello-allineamento-nome {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.pannello-allineamento-testo {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+@keyframes pulso-livello {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.55); }
+  50% { box-shadow: 0 0 0 7px rgba(201, 162, 39, 0); }
+}
+
+.livello-rivelazione {
+  padding: 20px 0;
+  cursor: pointer;
+}
+
+.livello-rivelazione-etichetta {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+}
+
+@keyframes rivelazione-livello {
+  0% { transform: scale(0.3); opacity: 0; }
+  65% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.livello-rivelazione-suggerimento {
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.scelta-asi {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+}
+
+.opzione-asi {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.campi-asi {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.campi-asi .field {
+  min-width: 160px;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.slot-incantesimo-riepilogo {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  margin: 0 0 10px;
+}
+
+.tratti-livello-lista {
+  margin: 0 0 8px;
+  padding-left: 20px;
+  font-size: 0.92rem;
+}
+
+.pips-slot-incantesimo {
+  margin-bottom: 10px;
+}
+
+.scelta-slot-vuota {
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+  font-style: italic;
+}
+
+/* ---------- "I miei personaggi": elenco a card ---------- */
+.griglia-schede-personaggio {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .griglia-schede-personaggio {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1300px) {
+  .griglia-schede-personaggio {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.scheda-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.scheda-card-header .icona-classe {
+  font-size: 1.6rem;
+}
+
+.scheda-card-titoli {
+  flex: 1;
+}
+
+.scheda-card-nome {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: var(--color-burgundy);
+}
+
+.scheda-card-sub {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+}
+
+.scheda-card-pf {
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+  margin-bottom: 12px;
+}
+
+.scheda-card-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-credito-livello:hover,
+.btn-credito-livello:focus-visible {
+  background: var(--color-gold-bright);
+}
+
+/* ---------- Creazione guidata del personaggio ---------- */
+.wizard-panel {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+table.tabella-punteggi {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+table.tabella-punteggi th {
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-ink-soft);
+  padding: 6px 8px;
+  border-bottom: 2px solid rgba(122, 31, 43, 0.35);
+}
+
+table.tabella-punteggi td {
+  padding: 8px;
+  border-bottom: 1px solid rgba(43, 27, 16, 0.12);
+  vertical-align: middle;
+}
+
+.riepilogo-lista p {
+  margin: 6px 0;
+}
+
+.ricerca-equipaggiamento {
+  position: relative;
+  margin: 14px 0 8px;
+}
+
+.inventario-lista {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+
+.inventario-quantita {
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+}
+
+/* Ritratto del personaggio (scheda) */
+.scheda-intestazione-riga {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.ritratto-scheda {
+  margin: 0;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ritratto-vuoto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-burgundy);
+}
+
+.ritratto-scheda figcaption label {
+  cursor: pointer;
+}
+
+.ritratto-scheda figcaption.in-caricamento {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@media (max-width: 560px) {
+  .scheda-intestazione-riga {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 639px) {
+  .scheda-box {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 639px) {
+  .riga-tre-box {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 639px) {
+  .riga-tre-box .valore-grande {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .riga-tre-box .valore-grande-etichetta {
+    font-size: 0.62rem;
+    letter-spacing: 0.3px;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Attacchi: ogni arma diventa una piccola scheda (nome e danno a sinistra,
+     bonus a destra, tiri sotto). */
+  .tabella-attacchi thead {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi,
+  .tabella-attacchi tbody {
+    display: block;
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(43, 27, 16, 0.1);
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi td {
+    padding: 0;
+    border: none;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi td:nth-child(1) {
+    grid-row: 1;
+    grid-column: 1;
+    font-family: var(--font-heading);
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi td:nth-child(2) {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi td:nth-child(2)::before {
+    content: "Attacco";
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi td:nth-child(3) {
+    grid-row: 2;
+    grid-column: 1;
+    color: var(--color-ink-soft);
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi td.colonna-tiri {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 639px) {
+  .tabella-attacchi td.colonna-tiri:empty {
+    display: none;
+  }
+}
+
+/* ---------- Divisore ornamentale (e varianti tematiche) ---------- */
+.divisore {
+  height: 16px;
+  margin: 12px 0;
+  background:
+    var(--divisore-icona, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='4' y='4' width='8' height='8' transform='rotate%2845 8 8%29' fill='%23c9a227'/%3E%3C/svg%3E")) center / 16px 16px no-repeat,
+    linear-gradient(90deg, transparent, var(--color-gold)) left center / calc(50% - 14px) 1px no-repeat,
+    linear-gradient(90deg, var(--color-gold), transparent) right center / calc(50% - 14px) 1px no-repeat;
+  opacity: 0.85;
+}
+
+.divisore-magia { --divisore-icona: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9a227' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2 C8 7 6 10 6 14 C6 18.5 9 21 12 21 C15 21 18 18.5 18 14 C18 11 16.5 9 15 7 C15 10 13 11 12 9 C11 7 12 4 12 2 Z'/%3E%3C/svg%3E"); }
+
+/* Titoli delle sezioni della scheda: il divisore prende il posto della linea. */
+.scheda-box h3 {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.scheda-box h3::after {
+  content: "";
+  display: block;
+  height: 14px;
+  margin-top: 6px;
+  background:
+    var(--divisore-icona, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='4' y='4' width='8' height='8' transform='rotate%2845 8 8%29' fill='%23c9a227'/%3E%3C/svg%3E")) center / 14px 14px no-repeat,
+    linear-gradient(90deg, transparent, var(--color-gold)) left center / calc(50% - 12px) 1px no-repeat,
+    linear-gradient(90deg, var(--color-gold), transparent) right center / calc(50% - 12px) 1px no-repeat;
+  opacity: 0.85;
+}
+
+.scheda-box.tema-combattimento { --divisore-icona: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9a227' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='4' y1='20' x2='20' y2='4'/%3E%3Cline x1='15' y1='7' x2='18' y2='10'/%3E%3Ccircle cx='20' cy='4' r='1.2' fill='%23c9a227' stroke='none'/%3E%3Cline x1='20' y1='20' x2='4' y2='4'/%3E%3Cline x1='9' y1='7' x2='6' y2='10'/%3E%3Ccircle cx='4' cy='4' r='1.2' fill='%23c9a227' stroke='none'/%3E%3C/svg%3E"); }
+
+.scheda-box.tema-note { --divisore-icona: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9a227' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='6' y1='19' x2='17' y2='6'/%3E%3Cline x1='17' y1='6' x2='14.6' y2='6.8'/%3E%3Cline x1='17' y1='6' x2='15.8' y2='4.2'/%3E%3Cline x1='3.5' y1='20.5' x2='9' y2='20.5'/%3E%3C/svg%3E"); }
+
+/* ---------- Segnalino a dado per gli elenchi ---------- */
+.lista-talenti {
+  list-style: none;
+  padding-left: 0;
+}
+
+.lista-talenti li {
+  justify-content: flex-start;
+}
+
+.lista-talenti .btn-rimuovi-talento {
+  margin-left: auto;
+}
+
+/* =====================================================================
+   Grafica, lotto 3 — passaggio di livello (tavole "Annuncio di passaggio
+   di livello" e "Tiro dei Punti Ferita" della tela di design).
+   ===================================================================== */
+/* ---------- Annuncio: raggiera, filigrana di classe, fregio, pulviscolo ---------- */
+.livello-rivelazione {
+  position: relative;
+  padding: 6px 0 22px;
+}
+
+.livello-rivelazione-etichetta,
+.livello-rivelazione-suggerimento {
+  position: relative;
+  z-index: 2;
+}
+
+.palco-numero {
+  position: relative;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes livello-filigrana {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 0.08; transform: scale(1); }
+}
+
+@keyframes livello-raggiera-comparsa {
+  0% { opacity: 0; transform: scale(0.4) rotate(-10deg); }
+  55% { opacity: 0.85; transform: scale(1.08) rotate(4deg); }
+  100% { opacity: 0.5; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes livello-raggiera-rotazione {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.colonna-numero {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.livello-rivelazione-numero {
+  position: relative;
+  line-height: 1;
+}
+
+/* Riflesso che attraversa il numero appena compare. */
+.livello-rivelazione-numero::after {
+  content: attr(data-numero);
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.95) 48%, transparent 66%);
+  background-size: 250% 100%;
+  background-position: 150% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  animation: livello-brillio 1s ease-out 0.4s backwards;
+}
+
+@keyframes livello-brillio {
+  0% { background-position: 150% 0; opacity: 0; }
+  15% { opacity: 1; }
+  100% { background-position: -50% 0; opacity: 0; }
+}
+
+.fregio-livello::before,
+.fregio-livello::after {
+  content: "";
+  width: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold));
+}
+
+.fregio-livello::after {
+  background: linear-gradient(90deg, var(--color-gold), transparent);
+}
+
+.fregio-gemma {
+  width: 6px;
+  height: 6px;
+  background: var(--color-gold);
+  transform: rotate(45deg);
+  box-shadow: 0 0 6px rgba(201, 162, 39, 0.5);
+}
+
+@keyframes livello-fregio {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes livello-pulviscolo {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.15; }
+  100% { opacity: 0; transform: translateY(-90px) scale(1); }
+}
+
+/* Dado vita in 3D (dado-pf.js): l'ottaedro si muove da solo, niente
+   animazione CSS. */
+.vassoio-dado.dado-3d {
+  bottom: auto;
+  top: 0;
+  width: 100px;
+  height: 100px;
+  margin-left: -50px;
+  transform: none;
+}
+
+/* Scheda personaggio */
+.condizioni-scheda {
+  margin: 12px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.invito-riposo {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-burgundy);
+  font-style: italic;
+}
+
+/* ---------- Privilegi di classe (scheda e party) ---------- */
+.lista-privilegi {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.riga-privilegio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.privilegio-ricarica {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.colonna-tiri {
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Tiri di armi e incantesimi */
+.statistiche-incantesimi {
+  margin: 0 0 10px;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--color-burgundy);
+}
+
+.btn-bonus-auto {
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  margin-left: 4px;
+}
+
+#sezione-incantesimi .inventario-riga {
+  flex-wrap: wrap;
+}
+
+.btn-guida[hidden] {
+  display: none;
+}
+
+.guida-pannello[hidden] {
+  display: none;
+}
+
+.guida-pannello.ridotto .guida-testata {
+  border-bottom: none;
+}
+
+.guida-avanzamento {
+  color: var(--color-parchment);
+  font-family: var(--font-body);
+}
+
+.guida-chiudi:hover,
+.guida-chiudi:focus-visible {
+  opacity: 1;
+}
+
+.guida-corpo {
+  overflow-y: auto;
+  padding: 8px 10px 12px;
+}
+
+.guida-pannello.ridotto .guida-corpo {
+  display: none;
+}
+
+.guida-obiettivo {
+  margin: 0 4px 8px;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.guida-completa {
+  margin: 10px 4px 0;
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+}
+
+.guida-fumetto[hidden] {
+  display: none;
+}
+
+.guida-fumetto::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: var(--freccia, 24px);
+  width: 14px;
+  height: 14px;
+  border-top: 1px solid var(--color-gold);
+  border-left: 1px solid var(--color-gold);
+  background: var(--color-bg-dark-2);
+  transform: rotate(45deg);
+}
+
+.guida-fumetto-testata {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.guida-fumetto .guida-chiudi {
+  margin: -8px -10px 0 0;
+}
+
+.guida-fumetto p {
+  margin: 0 0 8px;
+}
+
+.guida-elenco {
+  margin: 0 0 8px;
+  padding-left: 1.2em;
+}
+
+.guida-elenco li {
+  margin-bottom: 3px;
+}
+
+.guida-fumetto .btn-tabella:hover,
+.guida-fumetto .btn-tabella:focus-visible {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+.guida-sottoclasse {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.guida-sottoclasse label {
+  width: 100%;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.guida-fumetto-azioni {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+@keyframes guida-pulsa {
+  50% { outline-color: rgba(232, 198, 90, 0.35); }
+}
+
+@media (max-width: 639px) {
+  .guida-pannello {
+    right: 8px;
+    left: 8px;
+    bottom: 8px;
+    width: auto;
+    max-height: 60vh;
+  }
+}
+
+/* ---------- Esportazione della scheda (esporta-scheda.js) ---------- */
+.btn-esporta {
+  border-color: var(--color-gold);
+  background: transparent;
+  color: var(--color-gold-bright);
+}
+
+.btn-esporta:hover,
+.btn-esporta:focus-visible {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+.btn-esporta[hidden] {
+  display: none;
+}

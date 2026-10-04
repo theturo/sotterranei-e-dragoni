@@ -1,0 +1,260 @@
+/* dashboard.css — Dashboard: cruscotto della campagna e strumenti raggruppati.
+   Caricato dopo base.css da: dashboard.
+   Una regola nuova va nel file dell'area che la usa; in base.css se serve a
+   pagine di aree diverse. */
+
+.sezione-titolo::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(201, 162, 39, 0.35);
+}
+
+@media (max-width: 639px) {
+  .dashboard-header .site-subtitle {
+    font-size: 0.8rem;
+  }
+}
+
+.invito-installa[hidden] {
+  display: none;
+}
+
+.invito-installa img {
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.invito-installa p {
+  flex: 1;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 639px) {
+  .invito-installa p {
+    flex-basis: calc(100% - 62px);
+  }
+}
+
+@media (max-width: 639px) {
+  .invito-installa #btn-installa {
+    flex: 1;
+  }
+}
+
+.selettore-campagna label {
+  color: var(--color-gold-bright);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cruscotto-titolo a {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-burgundy);
+  white-space: nowrap;
+}
+
+.cruscotto-sessione.oggi {
+  border-width: 3px;
+}
+
+.cruscotto-sessione.in-corso {
+  background: linear-gradient(180deg, #e3f0e2 0%, #cfe2cb 100%);
+  border-color: var(--color-emerald);
+}
+
+.cruscotto-etichetta {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+}
+
+.in-corso .cruscotto-etichetta {
+  color: var(--color-emerald);
+}
+
+.cruscotto-sessione h2 {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  margin: 2px 0;
+  color: var(--color-ink);
+}
+
+.cruscotto-riga {
+  margin: 0;
+  color: var(--color-ink-soft);
+}
+
+.cruscotto-azioni a.btn-tabella {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-grande {
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+  border-color: #4a1219;
+  font-size: 1rem;
+  padding: 10px 18px;
+}
+
+.in-corso .btn-grande {
+  background: var(--color-emerald);
+  border-color: #1f4a36;
+}
+
+.cruscotto-party,
+.cruscotto-avvisi {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cruscotto-pg:last-child {
+  border-bottom: none;
+}
+
+.cruscotto-pg .party-avatar {
+  flex-basis: 40px;
+  width: 40px;
+  height: 40px;
+}
+
+.cruscotto-pg-nome {
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.cruscotto-pg.senza .cruscotto-pg-nome {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+
+.cruscotto-pg-sotto {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  margin: 0;
+}
+
+.cruscotto-pill {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  font-weight: 400;
+  border: 1px solid #b8860b;
+  color: #7a5200;
+  background: rgba(232, 198, 90, 0.35);
+  border-radius: 999px;
+  padding: 0 7px;
+  vertical-align: middle;
+}
+
+.cruscotto-avviso:last-child {
+  border-bottom: none;
+}
+
+.cruscotto-avviso-icona svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cruscotto-avviso-link {
+  font-size: 0.85rem;
+  color: var(--color-burgundy);
+  white-space: nowrap;
+}
+
+.cruscotto-vuoto {
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+
+#cruscotto-musica {
+  margin-bottom: 14px;
+}
+
+.party-avatar.cruscotto-mio-avatar {
+  flex-basis: 76px;
+  width: 76px;
+  height: 76px;
+}
+
+.cruscotto-mio-info h3 {
+  font-family: var(--font-heading);
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.cruscotto-mio-pf {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+.cruscotto-contatori span {
+  font-size: 0.8rem;
+  border: 1px solid rgba(122, 31, 43, 0.4);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.cruscotto-contatori span.esaurito {
+  opacity: 0.5;
+}
+
+.strumenti-gruppi.strumenti-giocatore {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.strumenti-gruppi .dashboard-grid.strumenti-griglia {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.strumenti-giocatore .dashboard-grid.strumenti-griglia {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.strumento-icona svg {
+  width: 26px;
+  height: 26px;
+}
+
+.strumento-testo {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .cruscotto-azioni {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .cruscotto-azioni .btn-tabella {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .strumenti-gruppi .dashboard-grid.strumenti-griglia,
+  .strumenti-giocatore .dashboard-grid.strumenti-griglia {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .strumento-testo small {
+    display: none;
+  }
+}

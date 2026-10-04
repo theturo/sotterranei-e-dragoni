@@ -1,0 +1,694 @@
+/* dm.css — Strumenti del DM: Gestione campagna, Libreria e archivio, Bestiario, Party, utenti, controllo musica, glossari.
+   Caricato dopo base.css (e gioco.css) da: admin-utenti, archivio, bestiario, campagna, controllo-musica, dm-party, glossario-equipaggiamento, glossario-incantesimi, libreria.
+   Una regola nuova va nel file dell'area che la usa; in base.css se serve a
+   pagine di aree diverse. */
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table.tabella-utenti {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+table.tabella-utenti th {
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-ink-soft);
+  padding: 8px 10px;
+  border-bottom: 2px solid rgba(122, 31, 43, 0.35);
+}
+
+table.tabella-utenti td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(43, 27, 16, 0.12);
+  vertical-align: middle;
+}
+
+table.tabella-utenti td.cella-email {
+  color: var(--color-ink-soft);
+  word-break: break-word;
+}
+
+.cella-classe {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.select-ruolo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.simbolo-verifica {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  cursor: default;
+}
+
+.badge-tu {
+  font-size: 0.72rem;
+  color: var(--color-burgundy);
+  font-style: italic;
+  margin-left: 6px;
+}
+
+.glossario-controlli {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.glossario-risultati {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 720px) {
+  .glossario-risultati {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.glossario-card {
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.glossario-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.glossario-card p {
+  margin: 4px 0;
+  font-size: 0.92rem;
+}
+
+.glossario-card label {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-ink-soft);
+}
+
+.glossario-riga-effetto {
+  font-weight: 600;
+  color: var(--color-burgundy);
+}
+
+.glossario-riga-effetto label {
+  color: var(--color-burgundy);
+}
+
+/* ---------- Controllo musica (DM + widget giocatore) ---------- */
+.sorgente-toggle {
+  display: inline-flex;
+  border: 1px solid var(--color-gold);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.sorgente-toggle button {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+
+.sorgente-toggle button.attivo {
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.sorgente-toggle-riga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: rgba(122, 31, 43, 0.08);
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+}
+
+.musica-doppio-pannello {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 720px) {
+  .musica-doppio-pannello {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 720px) {
+  .musica-doppio-pannello > div:first-child {
+    border-right: 1px solid rgba(122, 31, 43, 0.2);
+    padding-right: 24px;
+  }
+}
+
+.trasporto {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.trasporto button {
+  background: none;
+  border: none;
+  color: var(--color-ink);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  min-width: 36px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+}
+
+.trasporto button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.playlist-mini-info {
+  margin-top: 10px;
+}
+
+/* ---------- Gestione campagna ---------- */
+.lista-sessioni-programmate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sessione-programmata-riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Icona del ritratto accanto al nome (party) */
+.icona-ritratto {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--color-gold, #c9a227);
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+.cella-con-ritratto .icona-ritratto {
+  float: left;
+  margin-right: 0.5rem;
+}
+
+.textarea-galleria {
+  resize: vertical;
+}
+
+.scheda-immagine-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+
+.etichetta-visibilita[hidden] {
+  display: none;
+}
+
+.etichetta-visibilita[data-visibilita="dm"] {
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.etichetta-visibilita[data-visibilita="tutti"] {
+  border-color: #2f6b3a;
+  color: #2f6b3a;
+}
+
+.lettori-immagine {
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px dashed var(--color-ink-soft);
+  border-radius: 6px;
+}
+
+.lettori-immagine[hidden] {
+  display: none;
+}
+
+/* ---------- Libreria dei contenuti e archivio ---------- */
+.pannello-carica > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.pannello-carica > summary::-webkit-details-marker {
+  display: none;
+}
+
+.pannello-carica > summary h3 {
+  display: inline;
+  margin: 0;
+}
+
+.pannello-carica > summary::before {
+  content: "+ ";
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+}
+
+.pannello-carica[open] > summary::before {
+  content: "− ";
+}
+
+.pannello-carica[open] > summary {
+  margin-bottom: 12px;
+}
+
+.galleria-filtri {
+  flex-wrap: wrap;
+}
+
+.scheda-immagine-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip-tag {
+  font-size: 0.75rem;
+  color: var(--color-ink-soft);
+}
+
+.dettagli-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .dettagli-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dettagli-anteprima .scheda-immagine-anteprima {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dettagli-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin: 12px 0 0;
+  font-size: 0.88rem;
+}
+
+.dettagli-info dt {
+  font-family: var(--font-heading);
+  color: var(--color-ink-soft);
+}
+
+.dettagli-info dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.dettagli-form .lettori-immagine {
+  margin-bottom: 12px;
+}
+
+.elenco-caselle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+@media (max-width: 639px) {
+  .griglia-immagini .scheda-immagine-meta {
+    font-size: 0.7rem;
+    gap: 4px;
+  }
+}
+
+.livello-partenza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 18px;
+}
+
+.livello-partenza label {
+  font-weight: 600;
+}
+
+.livello-partenza select {
+  min-height: 40px;
+  padding: 6px 10px;
+}
+
+.livello-partenza-nota {
+  width: 100%;
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-ink-soft);
+}
+
+/* Colonna Livello del party: livello della scheda attiva e, se il DM ha
+   concesso livelli non ancora spesi, «↑ al N° in attesa · Annulla». */
+.livello-numero {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--color-burgundy);
+}
+
+.livello-attesa {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding: 1px 10px;
+  border: 1px solid var(--color-gold);
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.25);
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.livello-annulla {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-burgundy);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.azioni-utente {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.azioni-campagna {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.chip-filtro {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+  border: 1px solid rgba(122, 31, 43, 0.35);
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--color-ink);
+}
+
+.chip-filtro.scelto {
+  border-color: #4a1219;
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+/* ---------- Gestione campagna a schede ---------- */
+.campagna-schede {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.45);
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.campagna-scheda {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  padding: 9px 16px;
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--color-parchment-dark);
+  cursor: pointer;
+}
+
+.campagna-scheda.scelta {
+  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
+
+.campagna-pannello-titolo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 0;
+}
+
+.campagna-pannello-titolo a {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--color-burgundy);
+}
+
+.campagna-stato {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 400;
+  border: 1px solid var(--color-emerald);
+  color: var(--color-emerald);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+.campagna-numeri {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0 12px;
+}
+
+.campagna-numero {
+  text-align: center;
+  border: 1px solid rgba(122, 31, 43, 0.3);
+  border-radius: 10px;
+  padding: 8px 6px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.campagna-numero span {
+  font-size: 0.85rem;
+}
+
+.campagna-prossima {
+  margin: 0 0 14px;
+}
+
+.campagna-sottotitolo {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+  margin: 16px 0 6px;
+}
+
+.campagna-righe {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.campagna-riga {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+}
+
+.campagna-riga.fuori strong {
+  color: var(--color-ink-soft);
+}
+
+.lista-sessioni-programmate .azioni-riga a.btn-tabella {
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .campagna-numeri {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .campagna-riga {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.campagna-pannello a:not(.btn-tabella) {
+  color: var(--color-burgundy);
+}
+
+/* ---------- Controllo musica: link YouTube salvati ---------- */
+.yt-salva {
+  margin-top: 12px;
+}
+
+.yt-gia-salvato {
+  margin: 0;
+  color: var(--color-emerald);
+  font-size: 0.92rem;
+}
+
+.yt-salva-form {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px dashed var(--color-burgundy);
+  border-radius: 10px;
+}
+
+.yt-salva-form label {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin-bottom: 4px;
+}
+
+.yt-riga,
+.yt-rinomina {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.yt-elenco-titolo {
+  font-family: var(--font-heading);
+  color: var(--color-burgundy);
+  margin: 18px 0 4px;
+}
+
+.yt-elenco {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.yt-voce {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+  border-radius: 8px;
+}
+
+.yt-voce.in-onda {
+  background: rgba(47, 107, 79, 0.12);
+}
+
+.yt-voce-nome {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  padding: 2px;
+}
+
+.in-onda .yt-voce-nome small {
+  color: var(--color-emerald);
+  font-weight: 600;
+}
+
+.yt-tolto {
+  justify-content: space-between;
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+
+.yt-voce-nome b .icona {
+  width: 14px;
+  height: 14px;
+  vertical-align: -1px;
+  color: var(--color-burgundy);
+}
+
+:where(.yt-voce-azione) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yt-voce-azione > .icona {
+  width: 18px;
+  height: 18px;
+}
+
+.yt-gia-salvato .icona {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+}
