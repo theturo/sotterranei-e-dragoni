@@ -15,7 +15,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "1d1e8fa4601f";
+const VERSIONE = "371071624669";
 const FILE = [
   "./admin-utenti.html",
   "./archivio.html",

@@ -128,7 +128,9 @@ export const inviaNotificaPush = onDocumentCreated("users/{uid}/notifiche/{notif
 // L'admin elimina un utente dalla pagina Gestione utenti scrivendo
 // "richiesteEliminazione/{uid}" (solo lui può, vedi firestore.rules). Si
 // eliminano: account di accesso, profilo con notifiche e dispositivi,
-// personaggi con i ritratti, posto tra i membri e nel party delle campagne.
+// personaggi con i ritratti, posto tra i membri e nel party delle campagne,
+// combattente nel tracker e pedina sulle mappe. Chi guida una campagna non
+// si elimina (la campagna resterebbe senza DM).
 // Gli appunti e i tiri scritti in sessione restano, firmati con il nome.
 // L'esito torna nella richiesta ("stato": completata | errore).
 export const eliminaUtente = onDocumentCreated("richiesteEliminazione/{uid}", async (evento) => {
@@ -136,7 +138,8 @@ export const eliminaUtente = onDocumentCreated("richiesteEliminazione/{uid}", as
   const richiesta = evento.data?.data();
   const riferimento = evento.data.ref;
   const richiedente = richiesta?.richiestaDa ? (await db.doc(`users/${richiesta.richiestaDa}`).get()).data() : null;
-  const motivo = motivoRifiutoEliminazione(richiesta, uid, richiedente);
+  const guidate = await db.collection("campagne").where("dmUid", "==", uid).get();
+  const motivo = motivoRifiutoEliminazione(richiesta, uid, richiedente, guidate.docs.map((c) => c.get("titolo")));
   if (motivo) {
     logger.warn("Eliminazione rifiutata.", { uid, motivo });
     await riferimento.update({ stato: "errore", messaggio: motivo });
@@ -154,6 +157,15 @@ export const eliminaUtente = onDocumentCreated("richiesteEliminazione/{uid}", as
       const batch = db.batch();
       batch.update(c.ref, { membriUid: FieldValue.arrayRemove(uid) });
       batch.delete(c.ref.collection("party").doc(uid));
+      // Il suo personaggio esce anche dal tracker e dalle mappe (pedina,
+      // righello e ping).
+      const combattenti = await c.ref.collection("combattenti").where("uid", "==", uid).get();
+      combattenti.docs.forEach((d) => batch.delete(d.ref));
+      const mappe = await c.ref.collection("mappe").listDocuments();
+      mappe.forEach((m) => {
+        batch.delete(m.collection("pedine").doc(uid));
+        batch.delete(m.collection("strumenti").doc(uid));
+      });
       await batch.commit();
     }));
 

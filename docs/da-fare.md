@@ -159,6 +159,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - Tiro dei PF in 3D vero (JS) nel passaggio di livello: un ottaedro che
   rotola e si ferma con il risultato davanti (dado-pf.js), al posto
   dell'animazione CSS; con «riduci animazioni» compare già fermo.
+- Revisione del codice, parte 1 (sicurezza): sessioni e appunti leggibili e
+  scrivibili solo da DM e membri della loro campagna; PF, condizioni e
+  ritratto scritti insieme al riepilogo del party; eliminando un utente si
+  tolgono anche combattente e pedina, e non si elimina chi guida una
+  campagna.
 - Pulizia e campagne: il DM elimina dal registro una o più sessioni (anche
   già giocate, con appunti e tiri; il contatore riparte dal numero più alto
   rimasto); l'admin elimina un utente da Gestione utenti (Cloud Function

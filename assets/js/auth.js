@@ -608,8 +608,7 @@ export async function eliminaScheda(uid, campagnaId, schedaId) {
 // Riceve la scheda intera (non solo l'id) per poter aggiornare anche il
 // riepilogo del party, se è quella attiva.
 export async function aggiornaHp(scheda, hp) {
-  await updateDoc(doc(db, "personaggi", scheda.id), { hp, aggiornatoIl: serverTimestamp() });
-  await sincronizzaRiepilogoParty({ ...scheda, hp });
+  await aggiornaSchedaERiepilogo(scheda, { hp });
 }
 
 export async function aggiornaTiriSalvezzaMorte(schedaId, tiriSalvezzaMorte) {
@@ -624,8 +623,7 @@ export async function aggiornaInventario(schedaId, inventario) {
 // Imposta (o toglie, con null) la versione del ritratto di una scheda, dopo
 // averne caricato i file (vedi immagini.js), e aggiorna il riepilogo del party.
 export async function impostaRitratto(scheda, versione) {
-  await updateDoc(doc(db, "personaggi", scheda.id), { ritratto: versione, aggiornatoIl: serverTimestamp() });
-  await sincronizzaRiepilogoParty({ ...scheda, ritratto: versione });
+  await aggiornaSchedaERiepilogo(scheda, { ritratto: versione });
 }
 
 // Aggiornamento generico di uno o più campi di una scheda (abilità competenti,
@@ -1105,8 +1103,7 @@ export async function aggiornaStatoPersonaggio(campagnaId, riepilogo, { hp, cond
 
 // Il giocatore aggiorna condizioni ed esaurimento della propria scheda.
 export async function aggiornaCondizioniScheda(scheda, condizioni, esaurimento) {
-  await updateDoc(doc(db, "personaggi", scheda.id), { condizioni, esaurimento, aggiornatoIl: serverTimestamp() });
-  await sincronizzaRiepilogoParty({ ...scheda, condizioni, esaurimento });
+  await aggiornaSchedaERiepilogo(scheda, { condizioni, esaurimento });
 }
 
 // ---------- Riposi ----------

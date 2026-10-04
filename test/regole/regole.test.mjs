@@ -153,7 +153,8 @@ describe("Accesso di chi non è approvato", () => {
   test("un giocatore con email non verificata NON legge nulla", () =>
     assertFails(getDoc(doc(come("p1", false), "personaggi/s1"))));
   test("un profilo creato prima dell'approvazione resta valido", () =>
-    assertSucceeds(getDocs(collection(come("vecchio"), "registroSessioni"))));
+    assertSucceeds(setDoc(doc(come("vecchio"), "users/vecchio/dispositivi/d1"),
+      { token: "t", piattaforma: "test", aggiornatoIl: serverTimestamp() })));
 });
 
 describe("Schede personaggio", () => {
@@ -479,6 +480,33 @@ describe("Registro sessioni e appunti", () => {
     assertFails(deleteDoc(doc(come("p1"), "registroSessioni/r0"))));
   test("un giocatore NON crea sessioni", () =>
     assertFails(addDoc(collection(come("p1"), "registroSessioni"), { campagnaId: "c1", numero: 9, stato: "in-corso" })));
+
+
+  // Un giocatore di un'altra campagna (p3, membro solo di c2).
+  const altraCampagna = () => env.withSecurityRulesDisabled(async (ctx) => {
+    const d = ctx.firestore();
+    await setDoc(doc(d, "users/p3"), { nome: "Ugo", email: "p3@x.it", ruolo: "player", livello: 1, livelliDaSpendere: 0, approvato: true });
+    await setDoc(doc(d, "campagne/c2"), { titolo: "Altra", titoloProvvisorio: false, dmUid: "dm", membriUid: ["p3"], stato: "attiva" });
+  });
+  test("un giocatore di un'altra campagna NON legge sessioni e appunti", async () => {
+    await altraCampagna();
+    await assertFails(getDoc(doc(come("p3"), "registroSessioni/r1")));
+    await assertFails(getDoc(doc(come("p3"), "registroSessioni/r1/appunti/a1")));
+    await assertFails(getDocs(collection(come("p3"), "registroSessioni/r1/appunti")));
+    await assertFails(getDocs(query(collection(come("p3"), "registroSessioni"), where("campagnaId", "==", "c1"))));
+  });
+  test("un giocatore di un'altra campagna NON scrive appunti nella sessione in corso", async () => {
+    await altraCampagna();
+    await assertFails(addDoc(collection(come("p3"), "registroSessioni/r1/appunti"),
+      { autoreUid: "p3", autoreNome: "Ugo", testo: "Intruso", creatoIl: serverTimestamp() }));
+  });
+  test("i membri leggono le sessioni della propria campagna e i loro appunti", async () => {
+    await assertSucceeds(getDocs(query(collection(come("p1"), "registroSessioni"), where("campagnaId", "==", "c1"))));
+    await assertSucceeds(getDoc(doc(come("p2"), "registroSessioni/r1")));
+    await assertSucceeds(getDocs(collection(come("p2"), "registroSessioni/r1/appunti")));
+  });
+  test("un giocatore NON elenca tutte le sessioni senza filtro di campagna", () =>
+    assertFails(getDocs(collection(come("p1"), "registroSessioni"))));
 });
 
 describe("Dispositivi per le notifiche push", () => {
