@@ -31,6 +31,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Membri della campagna: in Gestione campagna → Giocatori compaiono tutti
+  gli iscritti approvati, anche chi ha il ruolo di DM (si può aggiungere come
+  giocatore), con il ruolo indicato; i membri attuali compaiono sempre (anche
+  senza profilo), così si possono togliere. Creando una campagna la casella
+  di migrazione porta solo i dati: i giocatori si aggiungono a mano.
 - Effetti sonori (kit della tela, sintetizzati nel browser, nessun file):
   «Tocca a te» (non per il DM), nuovo round, contenuto rivelato, dado vita,
   lancio rapido, 20 e 1 naturale, passaggio di livello, ping della mappa.

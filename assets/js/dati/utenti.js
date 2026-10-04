@@ -16,7 +16,6 @@ import {
   serverTimestamp,
   onSnapshot,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-import { ROLES } from "../auth.js";
 
 // Quanti iscritti aspettano l'approvazione dell'admin. È una query di
 // conteggio: Firestore la fattura come una sola lettura ogni 1000 documenti
@@ -57,15 +56,10 @@ export async function salvaOrdinePannelli(uid, sezione, ordineChiavi) {
   await updateDoc(doc(db, "users", uid), { [`ordinePannelli.${sezione}`]: ordineChiavi });
 }
 
-// Restituisce il roster dei soli giocatori (solo DM/admin, vedi firestore.rules).
-// Nota: l'ordinamento è fatto lato client (e non con orderBy in query) per
-// evitare di richiedere un indice composito Firestore per ruolo+nome.
-// Chi il DM può mettere nel party: i giocatori e anche gli admin (un admin
-// della piattaforma può giocare nella campagna di un altro), approvati, tranne
-// il DM stesso.
-export async function elencaGiocatori(escludiUid = null) {
-  const riferimento = query(collection(db, "users"), where("ruolo", "in", [ROLES.PLAYER, ROLES.ADMIN]));
-  const snapshot = await getDocs(riferimento);
+// Tutti gli iscritti approvati, qualunque ruolo, per la gestione dei membri
+// della campagna: anche un DM può giocare nella campagna di un altro.
+export async function elencaUtentiApprovati(escludiUid = null) {
+  const snapshot = await getDocs(collection(db, "users"));
   return snapshot.docs
     .map((documento) => ({ uid: documento.id, ...documento.data() }))
     .filter((u) => u.uid !== escludiUid && u.approvato !== false)
