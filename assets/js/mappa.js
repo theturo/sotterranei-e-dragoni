@@ -49,6 +49,7 @@ import {
 } from "./auth.js";
 import { urlImmagine, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
+import { icona } from "./icone.js";
 import { velocitaRazza } from "./dati-srd.js";
 import { creaVistaMappa } from "./mappa-vista.js";
 import { costruisciPedine, creaCacheRitratti, creaCacheImmagini, pedinaDiTurno } from "./mappa-pedine.js";
@@ -93,9 +94,15 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   const nastro = creaElemento("p", "mappa-nastro");
   nastro.hidden = true;
   const area = creaElemento("div", "mappa-area");
+  // Stato vuoto (solo il DM: ai giocatori il pannello compare con la mappa).
+  const vuoto = creaElemento("div", "mappa-senza-mappa");
+  vuoto.innerHTML = icona("bussola-grande");
+  const testoVuoto = creaElemento("p");
+  vuoto.append(testoVuoto);
+  vuoto.hidden = true;
   const sovrapposti = creaElemento("div", "mappa-sovrapposti");
   const piede = creaElemento("div", "mappa-piede");
-  pannello.replaceChildren(intestazione, nastro, area, piede);
+  pannello.replaceChildren(intestazione, nastro, vuoto, area, piede);
 
   const bottone = (testo, classe = "btn-tabella") => {
     const b = creaElemento("button", classe, testo);
@@ -184,7 +191,8 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
   piu.addEventListener("click", () => vista.zoom(1.3));
   meno.addEventListener("click", () => vista.zoom(1 / 1.3));
   zoom.append(piu, meno);
-  const centra = bottone("◎ Centra su di me", "mappa-centra");
+  const centra = bottone("", "mappa-centra");
+  centra.innerHTML = `${icona("centra")} Centra su di me`;
   centra.addEventListener("click", () => {
     if (!vista.centraSu(uid)) mostraSuggerimento("La tua pedina non è ancora sulla mappa.");
   });
@@ -627,7 +635,8 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       cura.addEventListener("click", () => applica(1));
       righe.push(creaElemento("span", null, `PF ${c.dm.pfAttuali}/${c.dm.pfMassimi}`), danno, colpisci, cura);
       if (c.dm.creatura) {
-        const scheda = bottone("📜 Scheda");
+        const scheda = bottone("");
+        scheda.innerHTML = `${icona("scheda")} Scheda`;
         scheda.title = "Scheda dal bestiario, con i tiri";
         scheda.addEventListener("click", () => apriSchedaCreatura({
           campagnaId, rif: c.dm.creatura, nome: c.nome, utente: { uid, nome: nomeUtente() }, avviso,
@@ -1306,10 +1315,11 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       mostraATutti.hidden = adatta.hidden = !mappaId;
       mostraATutti.disabled = Boolean(preparazione);
       apriTavolo.hidden = !tavola.immagineId;
-      if (!mappeLibreria().length) {
-        nastro.hidden = false;
-        nastro.textContent = "Carica una mappa nella Libreria (categoria «Mappa») per usarla qui.";
-      } else if (preparazione) {
+      vuoto.hidden = Boolean(mappaId);
+      testoVuoto.textContent = mappeLibreria().length
+        ? "Nessuna mappa al tavolo: scegline una dall'elenco."
+        : "Carica una mappa nella Libreria (categoria «Mappa») per usarla qui.";
+      if (preparazione) {
         const titoloTavola = contenutoMappa(tavola.immagineId)?.titolo;
         nastro.hidden = false;
         nastro.textContent = titoloTavola

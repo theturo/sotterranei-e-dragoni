@@ -1,7 +1,7 @@
 // Script di bestiario.html: il bestiario del DM.
 // - Elenco con ricerca e filtri (fonte, grado di sfida, tipo, taglia) di tutti
 //   i mostri del SRD 5.1 (mostri-srd.js) e delle creature create dal DM.
-// - Scheda con il blocco statistiche 5e e i tiri a un clic (🎲): se c'è una
+// - Scheda con il blocco statistiche 5e e i tiri a un clic (icona del dado): se c'è una
 //   sessione in corso finiscono nel suo registro, nascosti ai giocatori a meno
 //   che il DM non li renda visibili.
 // - Creature del DM: «+ Nuova creatura» o «Usa come base» su qualsiasi
@@ -17,6 +17,7 @@ import {
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { creaElemento } from "../contenuti.js";
+import { elementoIcona } from "../icone.js";
 import { urlImmagine, percorsiImmagineCampagna } from "../immagini.js";
 import { CONDIZIONI } from "../dati-srd.js";
 import { leggiFormula } from "../dadi.js";
@@ -171,7 +172,9 @@ async function tira(c, azione) {
     }
     const nascosto = !tiriVisibili.checked;
     await aggiungiTiro(sessione.id, utente.uid, utente.nome, testo, tiro, nascosto);
-    li.append(creaElemento("span", `bestiario-tag${nascosto ? "" : " visibile"}`, nascosto ? "🔒 nel registro, solo DM" : "👁 nel registro, a tutti"));
+    const tag = creaElemento("span", `bestiario-tag${nascosto ? "" : " visibile"}`);
+    tag.append(elementoIcona(nascosto ? "lucchetto" : "occhio"), nascosto ? "nel registro, solo DM" : "nel registro, a tutti");
+    li.append(tag);
     tiriNota.textContent = "";
   } catch (errore) {
     console.error(errore);

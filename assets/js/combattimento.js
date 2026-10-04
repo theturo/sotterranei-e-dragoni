@@ -7,7 +7,7 @@
 // I nemici possono entrare nascosti: i giocatori non li vedono finché il DM
 // non li rivela (dal tracker o dalla mappa), e allora compaiono al loro posto.
 // Dal bestiario: «Aggiungi nemici» compila nome, iniziativa, PF, taglia e
-// immagine dalla creatura scelta; la riga ha «📜» per aprirne la scheda con i
+// immagine dalla creatura scelta; la riga ha l'icona «scheda» per aprirne la scheda con i
 // tiri. Gli alleati hanno il bordo verde e tutti ne vedono i PF; i personaggi
 // unici entrano con il loro stato, una volta sola (vedi terminaCombattimento).
 import {
@@ -34,7 +34,7 @@ import { tira as tiraDadi } from "./dadi.js";
 import { mostraImmagine, percorsiRitratto, percorsiImmagineCampagna } from "./immagini.js";
 import { creaElemento } from "./contenuti.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK } from "./dati-srd.js";
-import { ICONA_MASCHERA } from "./icone.js";
+import { ICONA_MASCHERA, icona, elementoIcona } from "./icone.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "./condizioni.js";
 
 const SALUTE = {
@@ -104,10 +104,18 @@ export function montaCombattimento({
 
   // ---------- Comandi del DM ----------
   const btnAvvia = bottone("Avvia combattimento", "btn-tabella btn-tabella-evidenza");
-  const btnPrecedente = bottone("◀");
+  const btnPrecedente = bottone("");
+  btnPrecedente.innerHTML = icona("turno-precedente");
   btnPrecedente.title = "Turno precedente";
   btnPrecedente.setAttribute("aria-label", "Turno precedente");
-  const btnSuccessivo = bottone("Turno successivo ▶", "btn-tabella btn-tabella-evidenza");
+  const btnSuccessivo = bottone("", "btn-tabella btn-tabella-evidenza");
+  // Testo del pulsante seguito dall'icona (si riscrive solo quando cambia).
+  const testoSuccessivo = (testo) => {
+    if (btnSuccessivo.dataset.testo === testo) return;
+    btnSuccessivo.dataset.testo = testo;
+    btnSuccessivo.replaceChildren(`${testo} `, elementoIcona("turno-successivo"));
+  };
+  testoSuccessivo("Turno successivo");
   const btnTermina = bottone("Termina", "btn-tabella btn-tabella-pericolo");
   const btnRivelaTutti = bottone("Rivela tutti");
   btnRivelaTutti.title = "Rivela ai giocatori tutti i nemici nascosti";
@@ -311,12 +319,12 @@ export function montaCombattimento({
     img.alt = "";
     img.hidden = true;
     const classe = c.tipo === "pg" ? CLASSI[party().find((x) => x.uid === c.uid)?.classe] : null;
-    const icona = creaElemento("span", "combattente-icona icona-classe");
-    icona.setAttribute("aria-hidden", "true");
+    const simbolo = creaElemento("span", "combattente-icona icona-classe");
+    simbolo.setAttribute("aria-hidden", "true");
     // SVG fissi (dati-srd.js, icone.js), nessun dato inserito dagli utenti.
-    icona.innerHTML = c.tipo === "pg" ? classe?.iconaSvg || ICONA_CLASSE_FALLBACK : ICONA_MASCHERA;
-    avatar.append(img, icona);
-    caricaAvatar(c, img, icona);
+    simbolo.innerHTML = c.tipo === "pg" ? classe?.iconaSvg || ICONA_CLASSE_FALLBACK : ICONA_MASCHERA;
+    avatar.append(img, simbolo);
+    caricaAvatar(c, img, simbolo);
 
     const info = creaElemento("div", "combattente-info");
     info.append(
@@ -325,7 +333,7 @@ export function montaCombattimento({
       creaElemento("div", "combattente-condizioni")
     );
     // Comandi del DM sul nemico: su computer sotto il nome, sul telefono nel
-    // pannello che si apre toccando ▾ (lì la riga mostra solo "PF x/y").
+    // pannello che si apre toccando la freccia (lì la riga mostra solo "PF x/y").
     const controlli = creaElemento("div", "combattente-controlli");
     if (isDM && c.tipo === "nemico") {
       info.append(creaElemento("div", "combattente-pf-breve"));
@@ -362,7 +370,8 @@ export function montaCombattimento({
         if (v === "") return;
         esegui([input], () => impostaIniziativa(campagnaId, c.id, Math.trunc(Number(v)), undefined, nascosto(c.id)));
       });
-      const tira = bottone("🎲", "btn-tabella btn-tira");
+      const tira = bottone("", "btn-tabella btn-tira");
+      tira.innerHTML = icona("dado");
       tira.title = "Tira d20 + bonus";
       tira.setAttribute("aria-label", `Tira l'iniziativa per ${c.nome}`);
       tira.addEventListener("click", () => esegui([tira], async () => {
@@ -381,10 +390,12 @@ export function montaCombattimento({
 
     const azioni = creaElemento("div", "combattente-azioni");
     if (isDM) {
-      const su = bottone("▲", "btn-tabella btn-spareggio");
+      const su = bottone("", "btn-tabella btn-spareggio");
+      su.innerHTML = icona("su");
       su.title = "Prima, a pari iniziativa";
       su.setAttribute("aria-label", `Sposta ${c.nome} prima`);
-      const giu = bottone("▼", "btn-tabella btn-spareggio");
+      const giu = bottone("", "btn-tabella btn-spareggio");
+      giu.innerHTML = icona("giu");
       giu.title = "Dopo, a pari iniziativa";
       giu.setAttribute("aria-label", `Sposta ${c.nome} dopo`);
       const togli = bottone("×", "btn-rimuovi-talento");
@@ -406,7 +417,8 @@ export function montaCombattimento({
       });
       azioni.append(su, giu);
       if (c.tipo === "nemico") {
-        const scheda = bottone("📜", "btn-tabella btn-scheda-creatura");
+        const scheda = bottone("", "btn-tabella btn-scheda-creatura");
+        scheda.innerHTML = icona("scheda");
         scheda.title = "Scheda dal bestiario";
         scheda.setAttribute("aria-label", `Scheda di ${c.nome}`);
         scheda.hidden = true;
@@ -428,9 +440,10 @@ export function montaCombattimento({
     }
 
     li.append(posizione, avatar, info, iniziativa);
-    // Sul telefono la riga resta compatta: ▾ apre iniziativa e comandi.
+    // Sul telefono la riga resta compatta: la freccia apre iniziativa e comandi.
     if (modificabile) {
-      const espandi = bottone("▾", "btn-tabella btn-apri-combattente");
+      const espandi = bottone("", "btn-tabella btn-apri-combattente");
+      espandi.innerHTML = icona("giu");
       espandi.setAttribute("aria-expanded", "false");
       espandi.setAttribute("aria-label", `Comandi per ${c.nome}`);
       espandi.addEventListener("click", () => {
@@ -447,11 +460,11 @@ export function montaCombattimento({
     li.classList.toggle("aperta", aperta);
     const espandi = li.querySelector(".btn-apri-combattente");
     if (!espandi) return;
-    espandi.textContent = aperta ? "▴" : "▾";
+    espandi.innerHTML = icona(aperta ? "su" : "giu");
     espandi.setAttribute("aria-expanded", String(aperta));
   }
 
-  function caricaAvatar(c, img, icona) {
+  function caricaAvatar(c, img, simbolo) {
     let percorso = null;
     if (c.tipo === "pg") {
       const r = party().find((x) => x.uid === c.uid);
@@ -463,7 +476,7 @@ export function montaCombattimento({
     // Per i giocatori l'immagine di un nemico si vede solo se il DM l'ha
     // mostrata o archiviata per loro; altrimenti resta l'icona.
     mostraImmagine(img, percorso, { silenzioso: true }).then(() => {
-      icona.hidden = !img.hidden;
+      simbolo.hidden = !img.hidden;
     });
   }
 
@@ -545,7 +558,12 @@ export function montaCombattimento({
       rivela.textContent = c.nascosto ? "Rivela" : "Nascondi";
       rivela.title = c.nascosto ? "Mostra ai giocatori (nel tracker e sulla mappa)" : "Nascondi ai giocatori";
     }
-    li.querySelector(".combattente-posizione").textContent = diTurno ? "▶" : String(indice + 1);
+    const posizione = li.querySelector(".combattente-posizione");
+    if (diTurno) {
+      if (!posizione.querySelector("svg")) posizione.innerHTML = icona("turno-corrente");
+    } else {
+      posizione.textContent = String(indice + 1);
+    }
     li.querySelector(".combattente-nome").textContent = c.nome;
 
     let sotto;
@@ -615,7 +633,7 @@ export function montaCombattimento({
       btnAvvia.hidden = attivo;
       btnPrecedente.hidden = !attivo || stato.round === 0;
       btnSuccessivo.hidden = !attivo;
-      btnSuccessivo.textContent = stato.round === 0 ? "Inizia ▶" : "Turno successivo ▶";
+      testoSuccessivo(stato.round === 0 ? "Inizia" : "Turno successivo");
       btnTermina.hidden = !attivo;
       btnRivelaTutti.hidden = !attivo || !combattenti.some((c) => c.nascosto);
       formNemici.hidden = !attivo;

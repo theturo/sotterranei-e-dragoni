@@ -7,7 +7,7 @@
 //   lo attiva con il pulsante.
 import { ascoltaStatoMusica } from "./auth.js";
 import { esc, escUrl } from "./utils.js";
-import { ICONA_NOTA, ICONA_COPERTINA, ICONA_RIPRODUCI } from "./icone.js";
+import { ICONA_NOTA, ICONA_COPERTINA, ICONA_RIPRODUCI, icona } from "./icone.js";
 import { caricaApiYouTube, sorgenteDaStato, messaggioErroreYouTube } from "./youtube.js";
 
 // Monta il widget nel contenitore indicato e resta in ascolto dello stato
@@ -142,10 +142,10 @@ export function montaWidgetMusica(contenitore, campagnaId) {
           <div data-yt-segnaposto class="cover-grande cover-quadrata">${ICONA_RIPRODUCI}</div>
           <div data-yt-titolo class="musica-titolo-brano">Caricamento…</div>
           <div class="volume-riga" style="justify-content:center;">
-            <button type="button" data-yt-muto aria-label="Attiva l'audio" title="Attiva l'audio">🔈</button>
+            <button type="button" data-yt-muto aria-label="Attiva l'audio" title="Attiva l'audio">${icona("audio-muto")}</button>
             <input type="range" data-yt-volume min="0" max="100" value="70" style="max-width:140px;" aria-label="Volume" />
           </div>
-          <p class="sessione-placeholder" style="margin-top:6px;">L'audio parte disattivato: premi 🔈 per ascoltare.</p>
+          <p class="sessione-placeholder" style="margin-top:6px;">L'audio parte disattivato: premi ${icona("audio-muto", "icona-testo")} per ascoltare.</p>
         `;
         contenitore.querySelector("[data-yt-volume]").addEventListener("input", (evento) => {
           if (playerPronto) player.setVolume(Number(evento.target.value));
@@ -153,7 +153,7 @@ export function montaWidgetMusica(contenitore, campagnaId) {
         contenitore.querySelector("[data-yt-muto]").addEventListener("click", (evento) => {
           audioAttivo = !audioAttivo;
           if (playerPronto) audioAttivo ? player.unMute() : player.mute();
-          evento.currentTarget.textContent = audioAttivo ? "🔊" : "🔈";
+          evento.currentTarget.innerHTML = icona(audioAttivo ? "audio-acceso" : "audio-muto");
           evento.currentTarget.setAttribute("aria-label", audioAttivo ? "Disattiva l'audio" : "Attiva l'audio");
         });
       }

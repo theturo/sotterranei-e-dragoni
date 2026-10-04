@@ -1,8 +1,9 @@
 // Blocco statistiche di una creatura (mostro SRD o creatura del DM), con un
-// pulsante 🎲 sulle azioni che si possono tirare. Usato dalla pagina Bestiario
+// pulsante con il dado sulle azioni che si possono tirare. Usato dalla pagina Bestiario
 // e, durante il combattimento, dalla pagina Sessione.
 // Tutto il testo passa da textContent.
 import { creaElemento } from "./contenuti.js";
+import { elementoIcona } from "./icone.js";
 import { CARATTERISTICHE, modificatore, testoModificatore, azioneTirabile, descrizioneTipo } from "./bestiario-calcoli.js";
 
 function riga(etichetta, valore) {
@@ -20,7 +21,8 @@ function voce(creatura, a, onTira) {
     p.append(document.createTextNode(parte));
   });
   if (onTira && azioneTirabile(a)) {
-    const b = creaElemento("button", "blocco-tiro", Number.isFinite(a.colpire) ? `🎲 ${testoModificatore(a.colpire)}` : a.ts ? "🎲 CD" : "🎲 danni");
+    const b = creaElemento("button", "blocco-tiro");
+    b.append(elementoIcona("dado"), Number.isFinite(a.colpire) ? testoModificatore(a.colpire) : a.ts ? "CD" : "danni");
     b.type = "button";
     b.title = `Tira: ${a.nome}`;
     b.setAttribute("aria-label", `Tira ${a.nome}`);

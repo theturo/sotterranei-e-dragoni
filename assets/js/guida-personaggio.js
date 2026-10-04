@@ -7,6 +7,7 @@
 // Dati e regole: guida-personaggio-dati.js. Stato del pannello (chiuso,
 // passo aperto) nel localStorage di questo browser.
 import { esc } from "./utils.js";
+import { icona } from "./icone.js";
 import {
   passiGuida,
   ABILITA_CLASSE,
@@ -59,7 +60,7 @@ function testoPasso(passo, scheda, contesto) {
       const info = ABILITA_CLASSE[classe];
       const competenti = new Set(scheda.abilitaCompetenti || []);
       const voci = info?.scelta
-        ? `tra ${info.scelta.map((a) => (competenti.has(a) ? `<b>${esc(nomeAbilita(a))} ✓</b>` : esc(nomeAbilita(a)))).join(", ")}`
+        ? `tra ${info.scelta.map((a) => (competenti.has(a) ? `<b>${esc(nomeAbilita(a))} ${icona("fatto", "icona-spunta")}</b>` : esc(nomeAbilita(a)))).join(", ")}`
         : "tra tutte";
       const razza = ABILITA_RAZZA[scheda.razza];
       const testoRazza = razza
@@ -117,7 +118,7 @@ function testoPasso(passo, scheda, contesto) {
     case "livello": {
       const l = passo.livello;
       const nuovi = trattiAlLivello(classe, l);
-      if (livello >= l) return `<p>Fatto: il personaggio è di livello ${livello}. ✓</p>`;
+      if (livello >= l) return `<p>Fatto: il personaggio è di livello ${livello}. ${icona("fatto", "icona-spunta")}</p>`;
       if (livello < l - 1) return `<p>Prima completa il passaggio al livello ${l - 1}.</p>`;
       const dettagli = `<p>Al livello ${l} sceglierai i Punti Ferita (media o tiro del dado vita)${nuovi.length ? `; nuovi privilegi: <b>${nuovi.map(esc).join(", ")}</b>` : ""}.</p>`;
       return contesto.crediti > 0
@@ -221,7 +222,7 @@ export function montaGuida({ scheda, crediti, livelloObiettivo, azioni, apri = f
     const primoDaFare = elenco.find((p) => !p.fatto && !p.facoltativo);
     pannello.querySelector(".guida-passi").innerHTML = elenco.map((p) => `
       <li><button type="button" data-passo="${p.id}" class="${p.fatto ? "fatto" : ""} ${p.id === passoAperto ? "aperto" : ""} ${p === primoDaFare ? "prossimo" : ""}">
-        <span class="guida-segno" aria-hidden="true">${p.fatto ? "✓" : p === primoDaFare ? "▸" : "○"}</span>
+        <span class="guida-segno" aria-hidden="true">${icona(p.fatto ? "fatto" : p === primoDaFare ? "prossimo" : "da-fare")}</span>
         <span>${esc(p.titolo)}${p.facoltativo ? " <i>(facoltativo)</i>" : ""}</span>
         <span class="sr-only">${p.fatto ? "completato" : "da fare"}</span>
       </button></li>`).join("");
@@ -272,7 +273,7 @@ export function montaGuida({ scheda, crediti, livelloObiettivo, azioni, apri = f
     const indice = elenco.indexOf(passo);
     fumetto.innerHTML = `
       <div class="guida-fumetto-testata">
-        <h3>${esc(passo.titolo)}${passo.fatto ? ' <span class="guida-fatto">✓</span>' : ""}</h3>
+        <h3>${esc(passo.titolo)}${passo.fatto ? ` <span class="guida-fatto">${icona("fatto")}</span>` : ""}</h3>
         <button type="button" class="guida-chiudi" data-fumetto="chiudi" aria-label="Chiudi">×</button>
       </div>
       <div class="guida-fumetto-testo">${testoPasso(passo, scheda(), { crediti: crediti() })}</div>

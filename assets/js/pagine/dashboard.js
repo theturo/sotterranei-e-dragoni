@@ -20,6 +20,7 @@ import { privilegiDelPersonaggio } from "../privilegi.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
 import { creaElemento } from "../contenuti.js";
 import { esc } from "../utils.js";
+import { icona } from "../icone.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -44,7 +45,7 @@ function renderStrumenti(ruolo, ordinePannelli, admin = false) {
       <div class="dashboard-grid strumenti-griglia" data-sezione="${esc(g.id)}">
         ${ordinaVoci(g.voci, ordinePannelli?.[g.id]).map((v) => `
           <a class="strumento" href="${esc(v.link)}" data-chiave="${esc(v.chiave)}">
-            ${MANIGLIA}<span class="strumento-icona" aria-hidden="true">${v.icona}</span>
+            ${MANIGLIA}<span class="strumento-icona" aria-hidden="true">${icona(v.icona)}</span>
             <span class="strumento-testo"><b>${esc(v.titolo)}</b><small>${esc(v.testo)}</small></span>
           </a>`).join("")}
       </div>
@@ -75,9 +76,12 @@ const oraDa = (ts) => (ts?.toDate ? ts.toDate().toLocaleTimeString("it-IT", { ho
 
 function disegnaAvvisi(avvisi, vuoto) {
   const lista = document.getElementById("lista-avvisi");
-  lista.replaceChildren(...(avvisi.length ? avvisi : [{ icona: "✔️", testo: vuoto }]).map((a) => {
+  lista.replaceChildren(...(avvisi.length ? avvisi : [{ icona: "tutto-ok", testo: vuoto }]).map((a) => {
     const li = creaElemento("li", "cruscotto-avviso");
-    li.append(creaElemento("span", "cruscotto-avviso-icona", a.icona), creaElemento("span", "cruscotto-avviso-testo", a.testo));
+    const simbolo = creaElemento("span", "cruscotto-avviso-icona");
+    simbolo.setAttribute("aria-hidden", "true");
+    simbolo.innerHTML = icona(a.icona);
+    li.append(simbolo, creaElemento("span", "cruscotto-avviso-testo", a.testo));
     if (a.link) li.append(bottoneLink(`${a.etichetta} →`, a.link, "cruscotto-avviso-link"));
     return li;
   }));
@@ -86,17 +90,17 @@ function disegnaAvvisi(avvisi, vuoto) {
 function avatar(riepilogo, classe = "party-avatar") {
   const span = creaElemento("span", classe);
   const datiClasse = CLASSI[riepilogo.classe];
-  const icona = creaElemento("span", "icona-classe");
-  icona.setAttribute("aria-hidden", "true");
-  icona.innerHTML = datiClasse?.iconaSvg || ICONA_CLASSE_FALLBACK;
-  span.append(icona);
+  const simbolo = creaElemento("span", "icona-classe");
+  simbolo.setAttribute("aria-hidden", "true");
+  simbolo.innerHTML = datiClasse?.iconaSvg || ICONA_CLASSE_FALLBACK;
+  span.append(simbolo);
   if (riepilogo.ritratto && riepilogo.schedaId) {
     const img = creaElemento("img", "party-ritratto");
     img.alt = "";
     img.hidden = true;
-    icona.before(img);
+    simbolo.before(img);
     mostraImmagine(img, percorsiRitratto(riepilogo.uid, riepilogo.schedaId, riepilogo.ritratto).icona, { silenzioso: true })
-      .then(() => { icona.hidden = !img.hidden; });
+      .then(() => { simbolo.hidden = !img.hidden; });
   }
   return span;
 }

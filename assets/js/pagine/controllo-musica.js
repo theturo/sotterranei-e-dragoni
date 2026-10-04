@@ -3,7 +3,7 @@
 import { proteggiPaginaDM, ottieniStatoMusica, salvaStatoMusica, ottieniCampagnaCorrente, ottieniLinkMusica, salvaLinkMusica } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, escUrl } from "../utils.js";
-import { ICONA_COPERTINA, ICONA_PRECEDENTE, ICONA_PAUSA, ICONA_RIPRODUCI, ICONA_SUCCESSIVO } from "../icone.js";
+import { ICONA_COPERTINA, ICONA_PRECEDENTE, ICONA_PAUSA, ICONA_RIPRODUCI, ICONA_SUCCESSIVO, icona } from "../icone.js";
 import * as Spotify from "../spotify.js";
 import {
   caricaApiYouTube, interpretaLinkYouTube, sorgenteDaStato, messaggioErroreYouTube,
@@ -257,7 +257,7 @@ document.getElementById("yt-now-playing").addEventListener("click", (evento) => 
 
 // ---------- Elenco dei link salvati ----------
 // Solo il DM lo vede (privato/musica). Un tocco sul nome carica il link e lo
-// trasmette; ✎ rinomina; × toglie, con "Annulla" per qualche secondo.
+// trasmette; la matita rinomina; × toglie, con "Annulla" per qualche secondo.
 
 let linkSalvati = [];
 let tolto = null; // { voce, indice, timer }
@@ -309,10 +309,10 @@ function renderElencoLink() {
     }
     li.innerHTML = `
       <button type="button" class="yt-voce-nome" data-suona="${esc(chiave)}" title="Carica e trasmetti">
-        <b>▶ ${esc(voce.nome)}</b>
+        <b>${icona("riproduci")} ${esc(voce.nome)}</b>
         <small>${inOnda ? "● in onda" : voce.tipo === "playlist" ? "Playlist" : "Video"}</small>
       </button>
-      <button type="button" class="yt-voce-azione" data-rinomina="${esc(chiave)}" aria-label="Rinomina «${esc(voce.nome)}»" title="Rinomina">✎</button>
+      <button type="button" class="yt-voce-azione" data-rinomina="${esc(chiave)}" aria-label="Rinomina «${esc(voce.nome)}»" title="Rinomina">${icona("rinomina")}</button>
       <button type="button" class="yt-voce-azione" data-togli="${esc(chiave)}" aria-label="Togli «${esc(voce.nome)}» dall'elenco" title="Togli dall'elenco">×</button>`;
     return li;
   });
