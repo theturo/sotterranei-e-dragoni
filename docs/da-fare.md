@@ -20,7 +20,10 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- Nessuna voce aperta.
+- **Inquadratura delle immagini** (più avanti): al caricamento del ritratto,
+  un'anteprima per spostare e ingrandire l'area da mostrare, come nei siti
+  per la foto profilo, vedendo subito come uscirà nella scheda personaggio e
+  nella pedina sulla mappa, così da evitare tagli non voluti.
 
 ## Altro
 
