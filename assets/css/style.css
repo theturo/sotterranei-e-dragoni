@@ -9694,3 +9694,10 @@ body:has(.btn-scheda-rapida:not([hidden])) .dashboard-wrap {
   height: 28px;
   vertical-align: -5px;
 }
+
+/* Con il bottone «La mia scheda» sul telefono gli avvisi salgono sopra di lui. */
+@media (max-width: 760px) {
+  body:has(.btn-scheda-rapida:not([hidden])) .toast {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
