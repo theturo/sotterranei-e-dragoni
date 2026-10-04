@@ -13,11 +13,11 @@ La tela di design "Grafica di Base e Caricamento" è la fonte di verità: si
 integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 - **Stemma per l'intestazione** (❌ scartato, drago da rifare).
-- **Animazioni in JavaScript** (da valutare insieme): fatto il dado di
-  caricamento e il tiro dei PF; l'annuncio di livello resta in CSS
-  (scelta della tela). Il cambio turno nel tracker è in sviluppo nella tela
-  (due proposte, in attesa). Da valutare: comparsa dei contenuti in sessione,
-  eventuali risorse aggiuntive (sprite, suoni, particelle).
+- **Animazioni in JavaScript** (da valutare insieme): fatti il dado di
+  caricamento, il tiro dei PF e il cambio turno nel tracker; l'annuncio di
+  livello resta in CSS (scelta della tela). La comparsa dei contenuti in
+  sessione è in revisione nella tela. Da valutare: eventuali risorse
+  aggiuntive (sprite, suoni, particelle).
 
 ## Funzioni per il tavolo
 
@@ -29,6 +29,12 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Cambio turno animato nel tracker: per tutti una cornice dorata scorre
+  sulla riga di turno con il ▶, il sottotitolo cambia in dissolvenza e il
+  numero del round si illumina; per il giocatore di turno la cornice arriva
+  a molla con scia, onda, riflesso e scintille, il banner «Tocca a te!»
+  entra con un lampo e la riga pulsa. Il DM vede sempre la versione sobria;
+  con «riduci animazioni» il cambio è istantaneo.
 - Crediti di livello per campagna: il DM concede (o annulla, finché non è
   speso) un livello a un membro della sua campagna dalla pagina del party,
   dove il livello mostrato è quello del personaggio attivo con «↑ al N° in

@@ -36,6 +36,7 @@ import { creaElemento } from "./contenuti.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK } from "./dati-srd.js";
 import { ICONA_MASCHERA, icona, elementoIcona } from "./icone.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "./condizioni.js";
+import { montaTurnoAnimato } from "./turno-animato.js";
 
 const SALUTE = {
   illeso: "Illeso",
@@ -74,7 +75,11 @@ export function montaCombattimento({
   const bannerTurno = creaElemento("div", "banner-turno", "Tocca a te!");
   bannerTurno.hidden = true;
   const vuoto = creaElemento("p", "scheda-testo-libero", "Nessun combattimento in corso.");
-  pannello.replaceChildren(intestazione, sottotitolo, bannerTurno, elenco, vuoto);
+  // Contenitore dell'elenco: ospita la cornice del turno (turno-animato.js).
+  const contenitore = creaElemento("div", "lista-combattimento-contenitore");
+  contenitore.append(elenco);
+  pannello.replaceChildren(intestazione, sottotitolo, bannerTurno, contenitore, vuoto);
+  const animazioneTurno = montaTurnoAnimato({ contenitore, sottotitolo, banner: bannerTurno });
 
   let stato = { attivo: false, round: 0, turno: null };
   let combattenti = [];
@@ -618,16 +623,13 @@ export function montaCombattimento({
     const attivo = stato.attivo;
     pannello.hidden = !isDM && !attivo;
     elenco.hidden = !attivo;
+    contenitore.hidden = !attivo;
     vuoto.hidden = attivo;
 
-    if (!attivo) {
-      sottotitolo.textContent = "";
-    } else if (stato.round === 0) {
-      sottotitolo.textContent = "In preparazione: tirate l'iniziativa.";
-    } else {
-      const diTurno = ordinati.find((c) => c.id === stato.turno);
-      sottotitolo.textContent = `Round ${stato.round}${diTurno ? ` · turno di ${diTurno.nome}` : ""}`;
-    }
+    const diTurno = attivo && stato.round > 0 ? ordinati.find((c) => c.id === stato.turno) : null;
+    const testi = !attivo ? { testoRound: "", round: "", resto: "" }
+      : stato.round === 0 ? { testoRound: "In preparazione: tirate l'iniziativa.", round: "", resto: "" }
+        : { testoRound: "Round ", round: stato.round, resto: diTurno ? ` · turno di ${diTurno.nome}` : "" };
 
     if (isDM) {
       btnAvvia.hidden = attivo;
@@ -661,6 +663,11 @@ export function montaCombattimento({
     // Avvisi per il giocatore: inizio combattimento e proprio turno.
     const mioTurno = attivo && stato.round > 0 && ordinati.find((c) => c.id === stato.turno)?.uid === uid;
     bannerTurno.hidden = !mioTurno;
+    // Cornice del turno: sobria per tutti, scenica per chi gioca il turno.
+    animazioneTurno.aggiorna({
+      riga: diTurno ? righe.get(diTurno.id) : null, id: diTurno?.id ?? null, round: stato.round, sottotitolo: testi,
+      scenico: !isDM && mioTurno, ordine: ordinati.map((c) => c.id),
+    });
     if (!isDM && eraAttivo === false && attivo) avviso("Combattimento! Tira l'iniziativa.");
     if (!isDM && mioTurno && turnoPrecedente !== `${stato.round}:${stato.turno}`) avviso("Tocca a te!");
     eraAttivo = attivo;
@@ -679,6 +686,7 @@ export function montaCombattimento({
   return {
     stop: () => {
       stop();
+      animazioneTurno.stop();
       smettiBestiario();
     },
     ridisegna: () => {
