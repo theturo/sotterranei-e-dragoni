@@ -11,7 +11,7 @@ import {
   migraCreditiProfilo,
 } from "../auth.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc } from "../utils.js";
+import { esc, mostraToast } from "../utils.js";
 import { icona } from "../icone.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK, nomeRazzaCompleto } from "../dati-srd.js";
 
@@ -19,7 +19,6 @@ const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
 const griglia = document.getElementById("griglia-schede");
 const nessunaScheda = document.getElementById("nessuna-scheda");
-const toast = document.getElementById("toast");
 
 let uidCorrente = null;
 let campagnaIdCorrente = null;
@@ -28,15 +27,6 @@ let modoOrdinamento = false;
 // per spenderli compare solo sulla scheda attiva.
 let crediti = 0;
 
-let toastTimer = null;
-function mostraToast(testo, errore = false) {
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.className = "toast";
-  }, 3200);
-}
 
 function testoPf(scheda) {
   if (!scheda?.hp) return "—";

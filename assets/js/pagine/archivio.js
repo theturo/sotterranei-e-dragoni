@@ -19,12 +19,12 @@ import {
   apriLightbox,
   chiudiLightboxSeSparito,
 } from "../contenuti.js";
+import { mostraToast } from "../utils.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
 const griglia = document.getElementById("griglia-archivio");
 const vuoto = document.getElementById("archivio-vuoto");
-const toast = document.getElementById("toast");
 const filtri = {
   testo: document.getElementById("filtro-testo"),
   categoria: document.getElementById("filtro-categoria"),
@@ -39,15 +39,6 @@ let archivio = [];
 let primoCaricamento = true;
 const schede = new Map();
 
-let toastTimer = null;
-function mostraToast(testo, errore = false) {
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.className = "toast";
-  }, 3200);
-}
 
 // Sessioni in cui il contenuto è comparso, in ordine.
 function sessioniDi(c) {

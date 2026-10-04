@@ -3,11 +3,6 @@
 // per tutti i livelli, le scuole e le classi) — vedi nota nel file privato
 // di roadmap. Solo dati di regolamento, descrizioni sintetiche originali.
 
-export const SCUOLE = [
-  "Abiurazione", "Ammaliamento", "Divinazione", "Evocazione",
-  "Illusione", "Invocazione", "Necromanzia", "Trasmutazione",
-];
-
 // chiave: { nome, livello (0 = trucchetto), scuola, tempoLancio, gittata,
 // componenti, durata, concentrazione, rituale, classi: [chiavi classe],
 // danno/cura (opzionali: formula dei dadi da tirare, solo al livello base
@@ -167,10 +162,6 @@ export const INCANTESIMI = {
   pioggia_di_meteore: { nome: "Pioggia di Meteore", livello: 9, scuola: "Invocazione", tempoLancio: "1 azione", gittata: "1,5 km", componenti: "V, S", durata: "Istantanea", classi: ["mago", "stregone"], danno: "20d6 fuoco + 20d6 contundente per punto d'impatto (fino a 4 punti)", descrizione: "Sfere di fuoco infuocato cadono dal cielo, devastando un'area vastissima." },
   portale: { nome: "Portale", livello: 9, scuola: "Evocazione", tempoLancio: "1 azione", gittata: "18 m", componenti: "V, S, M", durata: "1 minuto", concentrazione: true, classi: ["chierico", "mago", "stregone"], descrizione: "Apri un varco tra due punti nello spazio, anche tra piani di esistenza diversi." },
 };
-
-export function tutteLeClassiIncantatrici() {
-  return ["bardo", "chierico", "druido", "mago", "paladino", "ranger", "stregone", "warlock"];
-}
 
 // Ricerca per nome (case-insensitive, ignora gli accenti), opzionalmente
 // filtrata per classe e/o livello.

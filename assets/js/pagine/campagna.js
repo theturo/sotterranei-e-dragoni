@@ -23,15 +23,14 @@ import {
   elencaRiepiloghiParty,
   ascoltaBestiario,
 } from "../auth.js";
-import { formattaDataOra, distanzaGiorni, etichettaSessione } from "../calendario.js";
+import { formattaDataOra, distanzaGiorni, etichettaSessione, dataBreveIso } from "../calendario.js";
 import { CLASSI } from "../dati-srd.js";
 import { montaMenuUtente } from "../menu-utente.js";
-import { esc } from "../utils.js";
+import { esc, mostraToast } from "../utils.js";
 import { scegliContenuti } from "../contenuti.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
-const toast = document.getElementById("toast");
 
 let uidCorrente = null;
 let campagne = [];
@@ -68,19 +67,6 @@ function aggiornaConteggiContenuti() {
   });
 }
 
-let toastTimer = null;
-function mostraToast(testo, errore = false) {
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (toast.className = "toast"), 3200);
-}
-
-function formattaData(dataIso) {
-  if (!dataIso) return "";
-  const [anno, mese, giorno] = dataIso.split("-");
-  return `${giorno}/${mese}/${anno}`;
-}
 
 async function ricaricaTutto() {
   // Con il titolo vero (anche se provvisorio), letto dal documento privato.
@@ -339,7 +325,7 @@ async function renderProgrammate() {
       riga.innerHTML = `
         <div>
           <strong>Sessione ${esc(sessione.numero)}</strong>${sessione.titolo ? ` — ${esc(sessione.titolo)}` : ""}
-          <div class="party-sessione-sub">${esc(formattaData(sessione.dataProgrammata))}${sessione.oraProgrammata ? `, ${esc(sessione.oraProgrammata)}` : ""}</div>
+          <div class="party-sessione-sub">${esc(dataBreveIso(sessione.dataProgrammata))}${sessione.oraProgrammata ? `, ${esc(sessione.oraProgrammata)}` : ""}</div>
         </div>
         <div class="azioni-riga">
           <button type="button" class="btn-tabella" data-contenuti-sessione="${esc(sessione.id)}" data-etichetta="${esc(`Sessione ${sessione.numero}`)}">Contenuti</button>

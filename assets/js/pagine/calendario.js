@@ -31,6 +31,7 @@ import {
   etichettaSessione,
   scaricaIcs,
 } from "../calendario.js";
+import { mostraToast } from "../utils.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -50,12 +51,7 @@ meseMostrato.setDate(1);
 
 const NOMI_RISPOSTA = { si: "Sì", forse: "Forse", no: "No" };
 
-function avviso(testo, errore = false) {
-  const toast = document.getElementById("toast");
-  toast.textContent = testo;
-  toast.className = `toast visibile${errore ? " toast-errore" : ""}`;
-  setTimeout(() => (toast.className = "toast"), 3600);
-}
+const avviso = (testo, errore = false) => mostraToast(testo, errore, 3600);
 
 function bottone(testo, classe = "btn-tabella") {
   const b = creaElemento("button", classe, testo);

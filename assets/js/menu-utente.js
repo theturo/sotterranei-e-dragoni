@@ -20,7 +20,7 @@ import {
 } from "./auth.js";
 import { esc } from "./utils.js";
 import { ICONA_HOME, ICONA_MODIFICA, ICONA_SESSIONE, ICONA_CALENDARIO, ICONA_SI } from "./icone.js";
-import { formattaDataOra } from "./calendario.js";
+import { formattaDataOra, dataOraBreve } from "./calendario.js";
 import { attivaDescrizioni } from "./descrizioni.js";
 import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "./pwa.js";
 import {
@@ -164,17 +164,6 @@ function testoNotifica(notifica) {
   return "Notifica";
 }
 
-function formattaDataNotifica(timestamp) {
-  if (!timestamp?.toDate) return "";
-  return timestamp.toDate().toLocaleString("it-IT", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function aggiornaBadgeNonLette(count) {
   const badge = document.getElementById("mu-badge-non-lette");
   if (count > 0) {
@@ -201,7 +190,7 @@ function renderNotifiche(tutte, uid) {
         (n) => `
       <div class="notifica-riga ${n.letta ? "" : "non-letta"}" data-id="${esc(n.id)}">
         <span class="notifica-testo">${testoNotifica(n)}</span>
-        <span class="notifica-data">${formattaDataNotifica(n.creataIl)}</span>
+        <span class="notifica-data">${dataOraBreve(n.creataIl)}</span>
       </div>`
       )
       .join("");
