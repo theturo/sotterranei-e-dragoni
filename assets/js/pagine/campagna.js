@@ -1,7 +1,7 @@
 // Script della pagina campagna.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-import { proteggiPaginaDM } from "../auth.js";
-import { elencaGiocatori } from "../dati/utenti.js";
+import { proteggiPaginaDM, ETICHETTE_RUOLO, ROLES } from "../auth.js";
+import { elencaUtentiApprovati, ottieniProfiloUtente } from "../dati/utenti.js";
 import {
   elencaCampagneDMConTitolo,
   creaCampagna,
@@ -185,7 +185,15 @@ async function renderMembri() {
   }
 
   try {
-    const [giocatori, party] = await Promise.all([elencaGiocatori(uidCorrente), elencaRiepiloghiParty(campagnaAttiva.id)]);
+    const membriUid = campagnaAttiva.membriUid || [];
+    const [utenti, party] = await Promise.all([elencaUtentiApprovati(uidCorrente), elencaRiepiloghiParty(campagnaAttiva.id)]);
+    // I membri compaiono sempre, qualunque ruolo o stato abbiano, così si
+    // possono togliere: anche chi non è (più) approvato o non ha più un profilo.
+    const perUid = new Map(utenti.map((u) => [u.uid, u]));
+    const mancanti = membriUid.filter((uid) => !perUid.has(uid));
+    const profili = await Promise.all(mancanti.map((uid) => ottieniProfiloUtente(uid).catch(() => null)));
+    mancanti.forEach((uid, i) => perUid.set(uid, profili[i] ? { uid, ...profili[i] } : { uid, nome: "Utente non più registrato" }));
+    const giocatori = [...perUid.values()];
     if (giocatori.length === 0) {
       vuoto.hidden = false;
       vuoto.textContent = "Nessun giocatore registrato ancora.";
@@ -193,17 +201,22 @@ async function renderMembri() {
     }
     vuoto.hidden = true;
     const riepiloghi = new Map(party.map((p) => [p.uid, p]));
-    const membriUid = campagnaAttiva.membriUid || [];
     // Prima chi è nel party, poi gli altri.
     const ordinati = [...giocatori].sort((a, b) => Number(membriUid.includes(b.uid)) - Number(membriUid.includes(a.uid)));
     ordinati.forEach((giocatore) => {
       const dentro = membriUid.includes(giocatore.uid);
       const pg = riepiloghi.get(giocatore.uid);
-      const sotto = !dentro
+      const stato = !dentro
         ? "non fa parte del party"
         : pg?.schedaId
           ? `${pg.nomePersonaggio || "—"} · ${CLASSI[pg.classe]?.nome || "—"} ${pg.livello || 1}`
           : "nessun personaggio attivo";
+      // Il ruolo sul sito si mostra solo se non è "giocatore" (es. un DM che gioca qui).
+      const note = [
+        giocatore.ruolo && giocatore.ruolo !== ROLES.PLAYER ? ETICHETTE_RUOLO[giocatore.ruolo] || giocatore.ruolo : "",
+        giocatore.approvato === false ? "in attesa di approvazione" : "",
+      ].filter(Boolean);
+      const sotto = [...note, stato].join(" · ");
       const li = document.createElement("li");
       li.className = `campagna-riga${dentro ? "" : " fuori"}`;
       li.innerHTML = `
@@ -378,8 +391,7 @@ document.getElementById("form-benvenuto").addEventListener("submit", async (even
     const id = await creaCampagna(uidCorrente, { titolo, titoloProvvisorio: provvisorio });
     await impostaCampagnaAttiva(uidCorrente, id);
     if (migra) {
-      const giocatori = await elencaGiocatori(uidCorrente);
-      await Promise.all(giocatori.map((g) => aggiungiMembroCampagna(id, g.uid)));
+      // Solo i dati: i membri li aggiunge il DM a mano (Giocatori).
       await migraDatiEsistenti(id);
     }
     mostraToast("Campagna creata.");

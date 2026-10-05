@@ -17,7 +17,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "626458441d98";
+const VERSIONE = "a3481b6b538d";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
   "./archivio.html": "cacd8a002a1f",
@@ -77,7 +77,7 @@ const FILE = {
   "./assets/js/dati/party.js": "f9d4dca97659",
   "./assets/js/dati/schede.js": "26cad57df92c",
   "./assets/js/dati/sessioni.js": "4cd8c9e9633b",
-  "./assets/js/dati/utenti.js": "b71c122412e4",
+  "./assets/js/dati/utenti.js": "cef6301d4201",
   "./assets/js/descrizioni.js": "ebc456fbe5a1",
   "./assets/js/equipaggiamento-srd.js": "f76aa365ff02",
   "./assets/js/esporta-scheda.js": "426e98cb61b2",
@@ -103,7 +103,7 @@ const FILE = {
   "./assets/js/pagine/attesa-approvazione.js": "1f9b02510e75",
   "./assets/js/pagine/bestiario.js": "0a6654891bec",
   "./assets/js/pagine/calendario.js": "0f763a62ea77",
-  "./assets/js/pagine/campagna.js": "6c4b910f75dc",
+  "./assets/js/pagine/campagna.js": "f6ec656066e5",
   "./assets/js/pagine/controllo-musica.js": "1e640cc10077",
   "./assets/js/pagine/crea-personaggio.js": "9e149e62852e",
   "./assets/js/pagine/dashboard.js": "22dc6496b393",
@@ -139,7 +139,7 @@ const FILE = {
   "./attesa-approvazione.html": "af80db271a26",
   "./bestiario.html": "497c66ff5353",
   "./calendario.html": "8b9e816e3b7d",
-  "./campagna.html": "a3e6c09c3304",
+  "./campagna.html": "1d739390399e",
   "./controllo-musica.html": "74b173fe550f",
   "./crea-personaggio.html": "b47503d35bd7",
   "./dashboard.html": "cf6009393158",
