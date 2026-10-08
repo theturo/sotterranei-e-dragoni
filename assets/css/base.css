@@ -96,6 +96,26 @@ a:hover {
   letter-spacing: 1px;
 }
 
+.top-banner .site-logo {
+  margin: 0 auto;
+  line-height: 0;
+}
+
+.top-banner .site-logo img {
+  display: block;
+  width: min(520px, 100%);
+  height: auto;
+  margin: 0 auto;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
+}
+
+/* Sul telefono lo stemma (logo e scritta impilati) si legge meglio. */
+@media (max-width: 520px) {
+  .top-banner .site-logo img {
+    width: min(230px, 64vw);
+  }
+}
+
 .top-banner .site-subtitle {
   font-family: var(--font-heading);
   font-size: 0.95rem;
@@ -3468,11 +3488,13 @@ table.tabella-punteggi select {
 }
 
 .intro-icona {
+  /* Il d20 dipinto nel logo ha il centro a (122, 134) px e il raggio di 57 px
+     (RAGGIO_ICONA): combacia con il dado 3D fermo in (cx, cy). */
   position: absolute;
-  left: calc(var(--cx) - 62px);
-  top: calc(var(--cy) - 62px);
-  width: 124px;
-  height: 124px;
+  left: calc(var(--cx) - 122px);
+  top: calc(var(--cy) - 134px);
+  width: 239px;
+  height: 231px;
   opacity: 0;
 }
 
@@ -3486,7 +3508,7 @@ table.tabella-punteggi select {
 }
 
 .intro-titolo {
-  top: calc(var(--cy) + 110px);
+  top: calc(var(--cy) + 116px);
   font-family: "Cinzel", "Cinzel Intro", serif;
   font-weight: 700;
   font-size: 31px;
@@ -3496,7 +3518,7 @@ table.tabella-punteggi select {
 }
 
 .intro-sottotitolo {
-  top: calc(var(--cy) + 192px);
+  top: calc(var(--cy) + 198px);
   font-family: "Cinzel", "Cinzel Intro", serif;
   font-size: 12px;
   letter-spacing: 4px;
@@ -5303,4 +5325,14 @@ input.interruttore:focus-visible {
   width: 19px;
   height: 19px;
   vertical-align: middle;
+}
+
+/* ---------- Logo nell'intestazione della dashboard ---------- */
+.logo-intestazione {
+  display: block;
+  width: 190px;
+  max-width: 60vw;
+  height: auto;
+  margin: 0 0 6px -4px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
 }

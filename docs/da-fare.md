@@ -31,6 +31,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Logo e header (grafiche generate con un'IA, provvisorie finché il grafico
+  non le ridisegna): header orizzontale nelle pagine d'accesso (stemma con
+  la scritta sul telefono), logo piccolo nella dashboard, nuova icona
+  dell'app (192/512, maskable, iPhone), intro dell'app che finisce sul
+  drago avvolto al d20. La favicon resta quella di prima.
 - Membri della campagna: in Gestione campagna → Giocatori compaiono tutti
   gli iscritti approvati, anche chi ha il ruolo di DM (si può aggiungere come
   giocatore), con il ruolo indicato; i membri attuali compaiono sempre (anche

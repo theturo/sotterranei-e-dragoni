@@ -1,6 +1,7 @@
 // Intro dell'app installata: un d20 di resina avorio con i numeri rossi entra
 // rimbalzando, si ferma sul 20, il 20 si accende d'oro, la luce avvolge il
-// dado e al suo posto resta l'icona dell'app con il titolo (2,5 secondi).
+// dado e al suo posto resta il logo (il drago avvolto al d20) con il titolo
+// (2,5 secondi).
 // La lancia pwa.js una volta per sessione, solo nell'app installata.
 // - Un tocco la salta; con "riduci animazioni" compaiono solo icona e titolo.
 // - Three.js (assets/vendor, MIT) e il Cinzel dei numeri (assets/fonts, OFL)
@@ -12,11 +13,9 @@ import {
 
 const FONT = "Cinzel Intro";
 const AVORIO = "rgb(239,228,204)";
-const ICONA_SVG = `<svg class="intro-icona" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-  <path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.1" opacity="0.5"/>
-  <text x="50" y="54" text-anchor="middle" font-family="${FONT}, Cinzel, serif" font-weight="700" font-size="22" fill="#e8c65a">20</text>
-</svg>`;
+// Il logo (drago avvolto al d20): il d20 dipinto cade esattamente dove si
+// ferma quello 3D (posizione e misure in .intro-icona).
+const ICONA = `<img class="intro-icona" src="assets/img/logo/drago.webp" alt="" width="239" height="231" decoding="async">`;
 
 let inCorso = false;
 
@@ -41,7 +40,7 @@ function creaSovrapposizione(cx, cy) {
     <div class="intro-bagliore"></div>
     <div class="intro-alone20"></div>
     <div class="intro-brace20">20</div>
-    ${ICONA_SVG}
+    ${ICONA}
     <div class="intro-titolo">Sotterranei<br>&amp; Dragoni</div>
     <div class="intro-sottotitolo">Il portale della campagna</div>`;
   intro.style.setProperty("--cx", `${cx}px`);
