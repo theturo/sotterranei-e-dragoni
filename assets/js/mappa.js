@@ -577,7 +577,7 @@ export function montaMappa({ pannello, campagnaId, uid, isDM, party, libreria, m
       const casella = vista.casellaPerPunto(punto, caselleTaglia(c.taglia));
       try {
         await salvaPedinaNemico(campagnaId, mappaId, c.id, {
-          nome: c.nome, immagineId: c.immagineId || null, taglia: c.taglia || "media",
+          nome: c.nome, immagineId: c.immagineId || null, ritaglio: c.ritaglio || null, taglia: c.taglia || "media",
           salute: c.salute || "illeso", condizioni: c.condizioni || [], alleato: Boolean(c.alleato), ...casella,
         }, Boolean(c.nascosto));
         selezionata = c.id;

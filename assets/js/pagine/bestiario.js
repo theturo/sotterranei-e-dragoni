@@ -26,7 +26,9 @@ import { aggiungiNemici, combattimentoAttivo, creatureInCombattimento } from "..
 import { montaMenuUtente } from "../menu-utente.js";
 import { creaElemento } from "../contenuti.js";
 import { elementoIcona } from "../icone.js";
-import { urlImmagine, percorsiImmagineCampagna } from "../immagini.js";
+import { urlImmagine, scaricaImmagine, percorsiImmagineCampagna, ErroreImmagine } from "../immagini.js";
+import { apriInquadratura, ANTEPRIME_CREATURA } from "../inquadratura.js";
+import { applicaRitaglio } from "../ritaglio.js";
 import { CONDIZIONI } from "../dati-srd.js";
 import { leggiFormula } from "../dadi.js";
 import { MOSTRI } from "../mostri-srd.js";
@@ -95,6 +97,7 @@ function creaAvatar(c, grande = false) {
       const img = creaElemento("img");
       img.alt = "";
       img.src = url;
+      applicaRitaglio(img, c.ritaglio);
       avatar.replaceChildren(img);
     }).catch(() => {});
   }
@@ -258,6 +261,7 @@ async function aggiungiAlCombattimento(c, pulsante) {
       bonus: bonusIniziativa(c),
       pfMassimi: c.pf,
       immagineId: c.immagineId || null,
+      ritaglio: c.immagineId ? c.ritaglio || null : null,
       taglia: c.taglia || "media",
       nascosti: !alleato,
       alleato,
@@ -554,6 +558,40 @@ function editorVoci(m, chiave, titolo, massimo, singolare) {
   return box;
 }
 
+// Immagine della creatura (dalla Libreria) e «Inquadra» per la pedina: si
+// salva solo il ritaglio nella creatura, l'immagine della Libreria resta com'è.
+function sceltaImmagine(m, voci) {
+  const box = creaElemento("span", "bestiario-immagine-scelta");
+  const scelta = select(m.immagineId || "", voci);
+  const inquadra = bottone("Inquadra");
+  inquadra.disabled = !m.immagineId;
+  scelta.addEventListener("input", () => {
+    m.immagineId = scelta.value || null;
+    m.ritaglio = null;
+    inquadra.disabled = !m.immagineId;
+  });
+  inquadra.addEventListener("click", async () => {
+    if (!m.immagineId) return;
+    inquadra.disabled = true;
+    try {
+      const sorgente = await scaricaImmagine(percorsiImmagineCampagna(campagnaId, m.immagineId).mini);
+      const esito = await apriInquadratura({ sorgente, ritaglio: m.ritaglio, titolo: "Inquadra la pedina", anteprime: ANTEPRIME_CREATURA });
+      if (esito) {
+        esito.bitmap.close?.();
+        m.ritaglio = esito.ritaglio;
+        mostraToast("Inquadratura pronta: salva la creatura per tenerla.");
+      }
+    } catch (errore) {
+      console.error(errore);
+      mostraToast(errore instanceof ErroreImmagine ? errore.message : "Impossibile aprire l'immagine.", true);
+    } finally {
+      inquadra.disabled = !m.immagineId;
+    }
+  });
+  box.append(scelta, inquadra);
+  return box;
+}
+
 function moduloModifica() {
   const m = modifica;
   const form = creaElemento("form", "bestiario-modifica");
@@ -588,7 +626,7 @@ function moduloModifica() {
     campo("Velocità", lega(input(m.velocita, { maxLength: 120 }), "velocita")),
     campo("Grado di Sfida", lega(input(m.gs, { maxLength: 6, placeholder: "1/4" }), "gs")),
     campo("PE", lega(input(m.pe, { type: "number", min: 0, max: 1000000 }), "pe", Number)),
-    campo("Immagine dalla Libreria", lega(select(m.immagineId || "", immagini2), "immagineId", (v) => v || null)),
+    campo("Immagine dalla Libreria", sceltaImmagine(m, immagini2)),
   );
   const car = creaElemento("div", "bestiario-car-modifica");
   CARATTERISTICHE.forEach((c, i) => {
@@ -678,6 +716,7 @@ function pulisci(m) {
   out.note = (m.note || "").trim();
   out.base = m.base || null;
   out.immagineId = m.immagineId || null;
+  out.ritaglio = out.immagineId ? m.ritaglio || null : null;
   out.unico = Boolean(m.unico);
   for (const [k] of SEZIONI) out[k] = (m[k] || []).map((a) => ({ ...a, nome: a.nome.trim(), testo: a.testo.trim() }));
   if (out.unico) out.stato = { ...statoIniziale(out), ...(m.stato || {}), pfAttuali: Math.min(out.pf, m.stato?.pfAttuali ?? out.pf) };

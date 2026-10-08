@@ -318,6 +318,16 @@ describe("Ritratti", () => {
     assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), { ritratto: null })));
   test("NON si salva un ritratto che non è una versione numerica", () =>
     assertFails(updateDoc(doc(come("p1"), "personaggi/s1"), { ritratto: "https://evil.example/x.png" })));
+  test("il proprietario salva l'inquadratura del ritratto", () =>
+    assertSucceeds(updateDoc(doc(come("p1"), "personaggi/s1"), { ritratto: 1790000000001, ritrattoRitaglio: { x: 0.5, y: 0.375, z: 1.4, r: 0.75 } })));
+  test("NON si salva un'inquadratura malformata", async () => {
+    const rif = doc(come("p1"), "personaggi/s1");
+    await assertFails(updateDoc(rif, { ritrattoRitaglio: { x: 0.5, y: 0.5, z: 9, r: 1 } }));
+    await assertFails(updateDoc(rif, { ritrattoRitaglio: { x: 0.5, y: 0.5, z: 1 } }));
+    await assertFails(updateDoc(rif, { ritrattoRitaglio: { x: 0.5, y: 0.5, z: 1, r: 1, extra: "x" } }));
+    await assertFails(updateDoc(rif, { ritrattoRitaglio: "centro" }));
+    await assertSucceeds(updateDoc(rif, { ritrattoRitaglio: null }));
+  });
   test("il riepilogo porta la stessa versione del ritratto della scheda", async () => {
     await env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore(), "personaggi/s1"), { ritratto: 42 }));
     const base = {
@@ -866,6 +876,13 @@ describe("Nemici nascosti e pedine dei nemici", () => {
   });
   test("un giocatore vede i nemici rivelati sulla mappa in tavola", () =>
     assertSucceeds(getDoc(doc(come("p1"), "campagne/c1/mappe/pubblica/pedine/goblin1"))));
+  test("combattente e pedina portano l'inquadratura dell'immagine", async () => {
+    const ritaglio = { x: 0.5, y: 0.3, z: 1.5, r: 0.8 };
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/combattentiNascosti/inq"), combattente({ immagineId: "ogre", ritaglio })));
+    await assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedineDM/inq"), pedinaNemico({ immagineId: "ogre", ritaglio })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/combattentiNascosti/inq2"), combattente({ ritaglio: { x: 0.5 } })));
+    await assertFails(setDoc(doc(come("dm"), "campagne/c1/mappe/pubblica/pedineDM/inq2"), pedinaNemico({ ritaglio: { x: 0.5, y: 0.5, z: 0, r: 1 } })));
+  });
   test("il DM aggiunge un nemico nascosto, con la taglia", () =>
     assertSucceeds(setDoc(doc(come("dm"), "campagne/c1/combattentiNascosti/ogre"), combattente())));
   test("il DM NON mette un personaggio tra i nascosti", () =>
@@ -995,6 +1012,11 @@ describe("Bestiario del DM", () => {
     await assertFails(setDoc(rif, creatura({ nome: "" })));
     await assertFails(setDoc(rif, creatura({ extra: 1 })));
     await assertFails(setDoc(rif, creatura({ stato: { pfAttuali: 3, condizioni: ["ubriaco"], risorse: [], equip: [], diario: [] } })));
+  });
+  test("la creatura ricorda l'inquadratura della sua immagine", async () => {
+    const rif = doc(come("dm"), "campagne/c1/bestiario/inquadrata");
+    await assertSucceeds(setDoc(rif, creatura({ immagineId: "ogre", ritaglio: { x: 0.4, y: 0.3, z: 2, r: 1.5 } })));
+    await assertFails(setDoc(rif, creatura({ immagineId: "ogre", ritaglio: { x: 2, y: 0.3, z: 2, r: 1.5 } })));
   });
   test("i giocatori NON vedono né scrivono il bestiario", async () => {
     await env.withSecurityRulesDisabled(async (ctx) => {

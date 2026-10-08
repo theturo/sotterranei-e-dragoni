@@ -143,7 +143,7 @@ function testoPasso(passo, scheda, contesto) {
       return `<p>${spiegazione}</p>${elenco(righe)}<p>Usa le ricerche nella sezione: ti propongono solo quelli del tuo livello.</p>`;
     }
     case "ritratto":
-      return `<p>Facoltativo: carica un'immagine del personaggio. Comparirà anche nel party e nel tracker di combattimento.</p>`;
+      return `<p>Facoltativo: carica un'immagine del personaggio e inquadrala trascinandola nel cerchio. Comparirà anche nel party, nel tracker di combattimento e come pedina sulla mappa; con «Inquadra» la sistemi quando vuoi.</p>`;
     default:
       return "";
   }

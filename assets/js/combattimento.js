@@ -32,6 +32,7 @@ import { bonusIniziativa } from "./bestiario-calcoli.js";
 import { TAGLIE } from "./mappa-calcoli.js";
 import { tira as tiraDadi } from "./dadi.js";
 import { mostraImmagine, percorsiRitratto, percorsiImmagineCampagna } from "./immagini.js";
+import { applicaRitaglio } from "./ritaglio.js";
 import { creaElemento } from "./contenuti.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK } from "./dati-srd.js";
 import { ICONA_MASCHERA, icona, elementoIcona } from "./icone.js";
@@ -299,6 +300,8 @@ export function montaCombattimento({
           iniziativa: numero("iniziativa", null),
           iniziativaComune: dati.get("comune") === "on",
           immagineId: dati.get("immagine") || null,
+          // L'inquadratura della creatura vale solo se l'immagine è la sua.
+          ritaglio: scelta?.immagineId && dati.get("immagine") === scelta.immagineId ? scelta.ritaglio || null : null,
           taglia: dati.get("taglia") || "media",
           nascosti: dati.get("nascosti") === "on" && !daBestiario.alleato,
         });
@@ -479,6 +482,7 @@ export function montaCombattimento({
       percorso = percorsiImmagineCampagna(campagnaId, c.immagineId).mini;
     }
     if (!percorso) return;
+    if (c.tipo !== "pg") applicaRitaglio(img, c.ritaglio);
     // Per i giocatori l'immagine di un nemico si vede solo se il DM l'ha
     // mostrata o archiviata per loro; altrimenti resta l'icona.
     mostraImmagine(img, percorso, { silenzioso: true }).then(() => {

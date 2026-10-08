@@ -6,13 +6,19 @@ indicativo. Si aggiorna man mano che si completano.
 ## Manutenzione e rifiniture
 
 - **Pulizia del codice** e piccole rifiniture dell'interfaccia.
+- **Fine della migrazione** (dopo la prima campagna vera): togliere la
+  casella «Migra qui i dati già esistenti» e il codice di migrazione dei dati
+  di prima delle campagne, quando non servirà più.
+- **Pulsanti evidenziati**: `.btn-tabella-evidenza` è definita prima di
+  `.btn-tabella` in base.css, che la annulla; dove serve oggi c'è una regola
+  apposta. Spostarla dopo cambierebbe l'aspetto di vari pulsanti: da
+  rivedere pagina per pagina.
 
 ## Grafica
 
 La tela di design "Grafica di Base e Caricamento" è la fonte di verità: si
 integra solo ciò che è segnato ✅, con una pull request per lotto.
 
-- **Stemma per l'intestazione** (❌ scartato, drago da rifare).
 - **Animazioni in JavaScript** (da valutare insieme): fatti il dado di
   caricamento, il tiro dei PF e il cambio turno nel tracker; l'annuncio di
   livello resta in CSS (scelta della tela). Da valutare: eventuali risorse
@@ -20,10 +26,7 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Funzioni per il tavolo
 
-- **Inquadratura delle immagini** (più avanti): al caricamento del ritratto,
-  un'anteprima per spostare e ingrandire l'area da mostrare, come nei siti
-  per la foto profilo, vedendo subito come uscirà nella scheda personaggio e
-  nella pedina sulla mappa, così da evitare tagli non voluti.
+Nessuna in sospeso.
 
 ## Altro
 
@@ -31,6 +34,13 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 
 ## Già fatto
 
+- Inquadratura delle immagini: scegliendo un ritratto si apre «Inquadra il
+  ritratto» (trascina, zoom con due dita, rotella, cursore o tastiera, con le
+  anteprime di scheda, pedina, party e tabella del DM). Si salvano l'originale
+  e le versioni ritagliate; «Inquadra» sotto il ritratto lo risistema senza
+  ricaricarlo, anche per i ritratti di prima. Le creature del bestiario hanno
+  «Inquadra» accanto all'immagine: la creatura ricorda il ritaglio (la
+  Libreria resta intatta) e lo passa a tracker e pedine.
 - Logo e header (grafiche generate con un'IA, provvisorie finché il grafico
   non le ridisegna): header orizzontale nelle pagine d'accesso (stemma con
   la scritta sul telefono), logo piccolo nella dashboard, nuova icona

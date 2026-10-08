@@ -31,6 +31,7 @@ import {
   pedineInCaselle,
 } from "./mappa-calcoli.js";
 import { icona } from "./icone.js";
+import { applicaRitaglio } from "./ritaglio.js";
 
 let contatoreViste = 0;
 
@@ -206,6 +207,7 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
       img.alt = "";
       img.draggable = false;
       img.src = p.ritrattoUrl;
+      applicaRitaglio(img, p.ritaglio);
       volto.append(img);
     } else if (p.nemico) {
       const artigli = crea("span", "pedina-artigli");

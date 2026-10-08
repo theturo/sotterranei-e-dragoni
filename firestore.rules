@@ -293,7 +293,8 @@ service cloud.firestore {
             'inventario', 'allineamento', 'background', 'incantesimiConosciuti', 'incantesimiPreparati',
             'slotIncantesimoUsati', 'incantesimiRazzaUsati', 'armaturaIndossata', 'scudoIndossato',
             'abilitaCompetenti', 'personalita', 'competenzeLinguaggi', 'talenti', 'monete', 'ritratto',
-            'condizioni', 'esaurimento', 'dadiVitaSpesi', 'usiPrivilegi'])
+            'ritrattoRitaglio', 'condizioni', 'esaurimento', 'dadiVitaSpesi', 'usiPrivilegi'])
+          && (!campi.hasAny(['ritrattoRitaglio']) || ritaglioValido(d.ritrattoRitaglio))
           && (!campi.hasAny(['condizioni']) || condizioniValide(d.condizioni))
           && (!campi.hasAny(['dadiVitaSpesi']) || interoTra(d.dadiVitaSpesi, 0, d.get('livello', 1)))
           && (!campi.hasAny(['usiPrivilegi']) || (d.usiPrivilegi is map && d.usiPrivilegi.size() <= 20))
@@ -669,6 +670,15 @@ service cloud.firestore {
     }
 
     // Pedina di un personaggio (ID = uid del giocatore) o di un nemico.
+    // Inquadratura di un'immagine in un cerchio (assets/js/ritaglio.js):
+    // centro in frazioni dell'immagine, zoom 1–4, proporzioni larghezza/altezza.
+    function ritaglioValido(v) {
+      return v == null || (v is map
+        && v.keys().hasOnly(['x', 'y', 'z', 'r']) && v.keys().hasAll(['x', 'y', 'z', 'r'])
+        && numeroTra(v.x, 0, 1) && numeroTra(v.y, 0, 1) && numeroTra(v.z, 1, 4)
+        && numeroTra(v.r, 0.01, 20));
+    }
+
     function pedinaValida(pedinaId) {
       let d = request.resource.data;
       return (d.tipo == 'pg'
@@ -682,8 +692,9 @@ service cloud.firestore {
     function pedinaNemicoValida() {
       let d = request.resource.data;
       return d.tipo == 'nemico'
-        && d.keys().hasOnly(['tipo', 'nome', 'immagineId', 'taglia', 'salute', 'condizioni', 'c', 'r', 'alleato', 'aggiornatoIl'])
+        && d.keys().hasOnly(['tipo', 'nome', 'immagineId', 'ritaglio', 'taglia', 'salute', 'condizioni', 'c', 'r', 'alleato', 'aggiornatoIl'])
         && d.get('alleato', false) is bool
+        && ritaglioValido(d.get('ritaglio', null))
         && testoValido(d.nome, 1, 60)
         && (d.immagineId == null || (d.immagineId is string && d.immagineId.size() <= 40))
         && tagliaValida(d.taglia)
@@ -753,8 +764,9 @@ service cloud.firestore {
       let d = request.resource.data;
       return d.keys().hasOnly(['nome', 'taglia', 'tipo', 'sottotipo', 'allineamento', 'ca', 'caValore', 'pf', 'dadiPf', 'velocita',
           'car', 'ts', 'abilita', 'vulnerabilita', 'resistenze', 'immunita', 'immunitaCondizioni', 'sensi', 'lingue', 'gs', 'pe',
-          'competenza', 'tratti', 'azioni', 'reazioni', 'leggendarie', 'base', 'indole', 'unico', 'note', 'immagineId', 'stato',
-          'aggiornatoIl'])
+          'competenza', 'tratti', 'azioni', 'reazioni', 'leggendarie', 'base', 'indole', 'unico', 'note', 'immagineId', 'ritaglio',
+          'stato', 'aggiornatoIl'])
+        && ritaglioValido(d.get('ritaglio', null))
         && testoValido(d.nome, 1, 60)
         && tagliaValida(d.taglia)
         && testoValido(d.tipo, 1, 40)
@@ -814,8 +826,9 @@ service cloud.firestore {
 
     function combattenteValido() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['tipo', 'nome', 'uid', 'iniziativa', 'bonus', 'spareggio', 'salute', 'immagineId',
+      return d.keys().hasOnly(['tipo', 'nome', 'uid', 'iniziativa', 'bonus', 'spareggio', 'salute', 'immagineId', 'ritaglio',
           'condizioni', 'taglia', 'alleato', 'pf', 'creatoIl'])
+        && ritaglioValido(d.get('ritaglio', null))
         && condizioniValide(d.get('condizioni', []))
         && d.get('alleato', false) is bool
         && (d.get('pf', null) == null || (d.pf is map && d.pf.keys().hasOnly(['attuali', 'massimi'])
