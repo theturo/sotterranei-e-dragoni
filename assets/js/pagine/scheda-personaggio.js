@@ -20,14 +20,18 @@ import { apriTiro, testoTiro, leggiFormula } from "../dadi.js";
 import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   ridimensionaImmagine,
+  leggiImmagine,
   caricaImmagine,
   eliminaImmagine,
   mostraImmagine,
+  scaricaImmagine,
   percorsiRitratto,
   LATO_RITRATTO,
   LATO_ICONA,
+  LATO_ORIGINALE,
   ErroreImmagine,
 } from "../immagini.js";
+import { apriInquadratura, ritagliaImmagine } from "../inquadratura.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "../condizioni.js";
 import {
@@ -104,14 +108,16 @@ function renderIntestazione() {
 }
 
 // ---------- Ritratto ----------
-// Il proprietario carica un'immagine: il browser ne ricava una versione per la
-// scheda (512 px) e un'icona per il party (96 px); la scheda salva solo il
-// numero di versione (vedi immagini.js).
+// Il proprietario sceglie un'immagine e la inquadra (inquadratura.js): il
+// browser ne ricava la versione per la scheda (512 px) e l'icona per il party
+// (96 px), già ritagliate, più l'originale per reinquadrarla in seguito; la
+// scheda salva il numero di versione e il ritaglio (vedi immagini.js).
 function renderRitratto() {
   const img = document.getElementById("ritratto-img");
   const vuoto = document.getElementById("ritratto-vuoto");
   document.getElementById("ritratto-azioni").hidden = soloLettura;
   document.getElementById("btn-rimuovi-ritratto").hidden = !scheda.ritratto;
+  document.getElementById("btn-inquadra-ritratto").hidden = !scheda.ritratto;
   document.getElementById("ritratto-etichetta-carica").textContent = scheda.ritratto ? "Cambia" : "Carica ritratto";
   if (!scheda.ritratto) {
     img.hidden = true;
@@ -127,34 +133,68 @@ function renderRitratto() {
 
 const mostraAvviso = (testo) => mostraToast(testo, true, 3600);
 
-document.getElementById("ritratto-file").addEventListener("change", async (evento) => {
-  const file = evento.target.files?.[0];
-  evento.target.value = "";
-  if (!file || soloLettura) return;
+// Inquadra "sorgente" e, con «Salva», carica una nuova versione del ritratto
+// ("originale": il file intero da conservare, già pronto o da ricavare).
+async function inquadraESalva(sorgente, { ritaglio = null, originale }) {
+  const scelta = await apriInquadratura({ sorgente, ritaglio, titolo: "Inquadra il ritratto" });
+  if (!scelta) return;
   const azioni = document.getElementById("ritratto-azioni");
   azioni.classList.add("in-caricamento");
   const precedente = scheda.ritratto;
   try {
-    const [grande, icona] = await Promise.all([
-      ridimensionaImmagine(file, LATO_RITRATTO),
-      ridimensionaImmagine(file, LATO_ICONA),
+    const [grande, icona, intero] = await Promise.all([
+      ritagliaImmagine(scelta.bitmap, scelta.ritaglio, LATO_RITRATTO),
+      ritagliaImmagine(scelta.bitmap, scelta.ritaglio, LATO_ICONA),
+      originale(),
     ]);
     const versione = Date.now();
     const percorsi = percorsiRitratto(scheda.proprietarioUid, scheda.id, versione);
-    await caricaImmagine(percorsi.grande, grande.blob);
-    await caricaImmagine(percorsi.icona, icona.blob);
-    await impostaRitratto(scheda, versione);
+    await caricaImmagine(percorsi.originale, intero);
+    await caricaImmagine(percorsi.grande, grande);
+    await caricaImmagine(percorsi.icona, icona);
+    await impostaRitratto(scheda, versione, scelta.ritaglio);
     scheda.ritratto = versione;
+    scheda.ritrattoRitaglio = scelta.ritaglio;
     renderRitratto();
     if (precedente) {
       const vecchi = percorsiRitratto(scheda.proprietarioUid, scheda.id, precedente);
-      Promise.all([eliminaImmagine(vecchi.grande), eliminaImmagine(vecchi.icona)]).catch((e) => console.error(e));
+      Promise.all([eliminaImmagine(vecchi.grande), eliminaImmagine(vecchi.icona), eliminaImmagine(vecchi.originale)])
+        .catch((e) => console.error(e));
     }
+  } finally {
+    scelta.bitmap.close?.();
+    azioni.classList.remove("in-caricamento");
+  }
+}
+
+document.getElementById("ritratto-file").addEventListener("change", async (evento) => {
+  const file = evento.target.files?.[0];
+  evento.target.value = "";
+  if (!file || soloLettura) return;
+  try {
+    // Controlla formato e peso prima di aprire la finestra.
+    (await leggiImmagine(file)).close?.();
+    await inquadraESalva(file, {
+      originale: async () => (await ridimensionaImmagine(file, LATO_ORIGINALE, 0.85, 1.9 * 1024 * 1024)).blob,
+    });
   } catch (errore) {
     console.error(errore);
     mostraAvviso(errore instanceof ErroreImmagine ? errore.message : "Impossibile caricare il ritratto. Riprova.");
-  } finally {
-    azioni.classList.remove("in-caricamento");
+  }
+});
+
+// Reinquadra il ritratto attuale partendo dall'originale (i ritratti caricati
+// prima dell'inquadratura non ce l'hanno: lì l'immagine intera è "grande").
+document.getElementById("btn-inquadra-ritratto").addEventListener("click", async () => {
+  if (soloLettura || !scheda.ritratto) return;
+  const percorsi = percorsiRitratto(scheda.proprietarioUid, scheda.id, scheda.ritratto);
+  const conOriginale = Boolean(scheda.ritrattoRitaglio);
+  try {
+    const intero = await scaricaImmagine(conOriginale ? percorsi.originale : percorsi.grande);
+    await inquadraESalva(intero, { ritaglio: scheda.ritrattoRitaglio || null, originale: async () => intero });
+  } catch (errore) {
+    console.error(errore);
+    mostraAvviso(errore instanceof ErroreImmagine ? errore.message : "Impossibile inquadrare il ritratto. Riprova.");
   }
 });
 
@@ -165,8 +205,9 @@ document.getElementById("btn-rimuovi-ritratto").addEventListener("click", async 
   try {
     await impostaRitratto(scheda, null);
     scheda.ritratto = null;
+    scheda.ritrattoRitaglio = null;
     renderRitratto();
-    await Promise.all([eliminaImmagine(vecchi.grande), eliminaImmagine(vecchi.icona)]);
+    await Promise.all([eliminaImmagine(vecchi.grande), eliminaImmagine(vecchi.icona), eliminaImmagine(vecchi.originale)]);
   } catch (errore) {
     console.error(errore);
     mostraAvviso("Impossibile rimuovere il ritratto. Riprova.");

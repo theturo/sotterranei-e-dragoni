@@ -113,8 +113,8 @@ export async function eliminaScheda(uid, campagnaId, schedaId) {
   await deleteDoc(doc(db, "personaggi", schedaId));
   if (scheda?.ritratto) {
     // Via anche i file del ritratto (senza bloccare se non riesce).
-    const { grande, icona } = percorsiRitratto(uid, schedaId, scheda.ritratto);
-    await Promise.all([eliminaImmagine(grande), eliminaImmagine(icona)]).catch((errore) => console.error(errore));
+    const { grande, icona, originale } = percorsiRitratto(uid, schedaId, scheda.ritratto);
+    await Promise.all([eliminaImmagine(grande), eliminaImmagine(icona), eliminaImmagine(originale)]).catch((errore) => console.error(errore));
   }
 
   if (scheda?.attiva) {
@@ -143,8 +143,8 @@ export async function aggiornaInventario(schedaId, inventario) {
 
 // Imposta (o toglie, con null) la versione del ritratto di una scheda, dopo
 // averne caricato i file (vedi immagini.js), e aggiorna il riepilogo del party.
-export async function impostaRitratto(scheda, versione) {
-  await aggiornaSchedaERiepilogo(scheda, { ritratto: versione });
+export async function impostaRitratto(scheda, versione, ritaglio = null) {
+  await aggiornaSchedaERiepilogo(scheda, { ritratto: versione, ritrattoRitaglio: ritaglio });
 }
 
 // Aggiornamento generico di uno o più campi di una scheda (abilità competenti,

@@ -111,6 +111,7 @@ export function costruisciPedine({
         nome: p.nome,
         iniziali: (p.nome.match(/\d+$/) || [p.nome.slice(0, 2)])[0],
         ritrattoUrl: immagine(p.immagineId),
+        ritaglio: p.immagineId ? p.ritaglio || c?.ritaglio || null : null,
         quotaPf: pf ?? BARRA_SALUTE[salute] ?? 1,
         aTerra: salute === "a terra",
         condizioni: bolliniCondizioni(c?.condizioni || p.condizioni || []),

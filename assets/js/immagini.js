@@ -25,18 +25,7 @@ export class ErroreImmagine extends Error {}
 // Con "massimoByte" abbassa la qualità a passi finché il file non ci sta
 // (le mappe a 4096 px molto dettagliate possono superare il limite).
 export async function ridimensionaImmagine(file, lato, qualita = 0.85, massimoByte = Infinity) {
-  if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
-    throw new ErroreImmagine("Formato non supportato: usa un'immagine PNG, JPEG, WebP o GIF.");
-  }
-  if (file.size > MASSIMO_FILE_ORIGINALE) {
-    throw new ErroreImmagine("Immagine troppo grande (massimo 25 MB).");
-  }
-  let bitmap;
-  try {
-    bitmap = await createImageBitmap(file);
-  } catch {
-    throw new ErroreImmagine("Impossibile leggere l'immagine: il file potrebbe essere danneggiato.");
-  }
+  const bitmap = await leggiImmagine(file);
   const scala = Math.min(1, lato / Math.max(bitmap.width, bitmap.height));
   const larghezza = Math.max(1, Math.round(bitmap.width * scala));
   const altezza = Math.max(1, Math.round(bitmap.height * scala));
@@ -46,6 +35,28 @@ export async function ridimensionaImmagine(file, lato, qualita = 0.85, massimoBy
   tela.getContext("2d").drawImage(bitmap, 0, 0, larghezza, altezza);
   bitmap.close?.();
 
+  const blob = await comprimiTela(tela, qualita, massimoByte);
+  return { blob, larghezza, altezza };
+}
+
+// Controlla un file scelto dall'utente (formato e peso) e lo decodifica.
+export async function leggiImmagine(file) {
+  if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
+    throw new ErroreImmagine("Formato non supportato: usa un'immagine PNG, JPEG, WebP o GIF.");
+  }
+  if (file.size > MASSIMO_FILE_ORIGINALE) {
+    throw new ErroreImmagine("Immagine troppo grande (massimo 25 MB).");
+  }
+  try {
+    return await createImageBitmap(file);
+  } catch {
+    throw new ErroreImmagine("Impossibile leggere l'immagine: il file potrebbe essere danneggiato.");
+  }
+}
+
+// Comprime una tela in WebP (o JPEG, se il browser non sa produrre WebP),
+// abbassando la qualità a passi finché il file non sta in "massimoByte".
+export async function comprimiTela(tela, qualita = 0.85, massimoByte = Infinity) {
   const comprimi = (tipo, q) => new Promise((risolvi) => tela.toBlob(risolvi, tipo, q));
   let blob = null;
   for (const q of [qualita, 0.75, 0.65, 0.55].filter((q) => q <= qualita)) {
@@ -53,7 +64,7 @@ export async function ridimensionaImmagine(file, lato, qualita = 0.85, massimoBy
     // Browser che non producono WebP restituiscono un PNG: meglio un JPEG.
     if (!blob || blob.type !== "image/webp") blob = await comprimi("image/jpeg", q);
     if (!blob) throw new ErroreImmagine("Impossibile elaborare l'immagine.");
-    if (blob.size <= massimoByte) return { blob, larghezza, altezza };
+    if (blob.size <= massimoByte) return blob;
   }
   throw new ErroreImmagine(`Immagine troppo pesante anche dopo la compressione (massimo ${Math.round(massimoByte / 1024 / 1024)} MB).`);
 }
@@ -108,14 +119,19 @@ export async function mostraImmagine(img, percorso, { silenzioso = false } = {})
 }
 
 // ---------- Ritratti dei personaggi ----------
-// Due file per versione: "grande" (scheda) e "icona" (party). La versione è un
-// numero (istante del caricamento) salvato nel campo "ritratto" della scheda.
+// Tre file per versione: "grande" (scheda) e "icona" (party), già ritagliati
+// quadrati secondo l'inquadratura scelta, e "originale" (l'immagine intera,
+// per reinquadrarla senza ricaricarla). La versione è un numero (istante del
+// caricamento) salvato nel campo "ritratto" della scheda, l'inquadratura in
+// "ritrattoRitaglio". I ritratti caricati prima dell'inquadratura non hanno
+// l'originale né il ritaglio: lì "grande" è l'immagine intera.
 export const LATO_RITRATTO = 512;
 export const LATO_ICONA = 96;
+export const LATO_ORIGINALE = 1600;
 
 export function percorsiRitratto(uid, schedaId, versione) {
   const base = `ritratti/${uid}/${schedaId}-${versione}`;
-  return { grande: base, icona: `${base}-icona` };
+  return { grande: base, icona: `${base}-icona`, originale: `${base}-originale` };
 }
 
 // ---------- Immagini della campagna ----------

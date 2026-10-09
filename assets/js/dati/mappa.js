@@ -24,7 +24,7 @@ import { campiVisibilita, scriviAPezzi } from "./comuni.js";
 //   visibile, snap } (lato e scarto in pixel dell'immagine).
 // campagne/{c}/mappe/{immagineId}/pedine/{id}: le pedine che vedono tutti:
 //   personaggi { tipo: "pg", uid, c, r } (ID = uid del giocatore) e nemici
-//   { tipo: "nemico", nome, immagineId, taglia, salute, condizioni, c, r }
+//   { tipo: "nemico", nome, immagineId, ritaglio, taglia, salute, condizioni, c, r }
 //   (ID = quello del combattente nel tracker, se ci è entrato). c e r sono
 //   colonna e riga della casella in alto a sinistra (decimali se la pedina non
 //   è agganciata).
@@ -144,11 +144,12 @@ export function nuovoIdPedina(campagnaId, immagineId) {
   return doc(riferimentoPedine(campagnaId, immagineId)).id;
 }
 
-export function salvaPedinaNemico(campagnaId, immagineId, id, { nome, immagineId: immagine = null, taglia = "media", salute = "illeso", condizioni = [], c, r, alleato = false }, nascosta = true) {
+export function salvaPedinaNemico(campagnaId, immagineId, id, { nome, immagineId: immagine = null, ritaglio = null, taglia = "media", salute = "illeso", condizioni = [], c, r, alleato = false }, nascosta = true) {
   return setDoc(riferimentoPedina(campagnaId, immagineId, id, nascosta), {
     tipo: "nemico",
     nome: nome.slice(0, 60),
     immagineId: immagine,
+    ...(immagine && ritaglio ? { ritaglio } : {}),
     taglia,
     salute,
     condizioni,

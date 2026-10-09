@@ -101,7 +101,7 @@ export async function avviaCombattimento(campagnaId, personaggi) {
 // alla scheda (solo il DM lo sa), "alleato" mostra a tutti i PF veri,
 // "pfAttuali" e "condizioni" sono lo stato di un personaggio unico.
 export async function aggiungiNemici(campagnaId, {
-  nome, quantita = 1, bonus = 0, pfMassimi = 0, iniziativa = null, iniziativaComune = true, immagineId = null,
+  nome, quantita = 1, bonus = 0, pfMassimi = 0, iniziativa = null, iniziativaComune = true, immagineId = null, ritaglio = null,
   taglia = "media", nascosti = false, alleato = false, creatura = null, pfAttuali = null, condizioni = [],
 }) {
   const batch = writeBatch(db);
@@ -118,6 +118,7 @@ export async function aggiungiNemici(campagnaId, {
       spareggio: 0,
       salute: "illeso",
       immagineId: immagineId || null,
+      ...(immagineId && ritaglio ? { ritaglio } : {}),
       taglia,
       ...(condizioni.length ? { condizioni } : {}),
       ...(alleato ? { alleato: true, pf: { attuali: pfAttuali ?? pfMassimi, massimi: pfMassimi } } : {}),
@@ -155,6 +156,7 @@ export async function pedinaInCombattimento(campagnaId, pedina, { pfMassimi = 0,
     spareggio: 0,
     salute: pfMassimi > 0 ? "illeso" : pedina.salute || "illeso",
     immagineId: pedina.immagineId || null,
+    ...(pedina.immagineId && pedina.ritaglio ? { ritaglio: pedina.ritaglio } : {}),
     taglia: pedina.taglia || "media",
     condizioni: pedina.condizioni || [],
     creatoIl: serverTimestamp(),

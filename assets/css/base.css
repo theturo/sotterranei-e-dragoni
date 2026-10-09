@@ -1980,6 +1980,7 @@ table.tabella-punteggi select {
 }
 
 .party-avatar {
+  position: relative;
   flex: 0 0 48px;
   width: 48px;
   height: 48px;
@@ -3961,6 +3962,7 @@ table.tabella-punteggi select {
 }
 
 .pedina-volto {
+  position: relative;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -4457,6 +4459,7 @@ table.tabella-punteggi select {
 }
 
 .bestiario-avatar {
+  position: relative;
   flex-shrink: 0;
   width: 38px;
   height: 38px;
@@ -5335,4 +5338,205 @@ input.interruttore:focus-visible {
   height: auto;
   margin: 0 0 6px -4px;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* ---------- Finestra «Inquadra» (inquadratura.js) ---------- */
+.modal-card.modal-inquadra {
+  max-width: 600px;
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  padding: 24px 24px 20px;
+}
+
+.modal-inquadra h2 {
+  margin: 0 0 4px;
+}
+
+.inquadra-aiuto {
+  margin: 0 0 16px;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+
+.inquadra-corpo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.inquadra-sinistra {
+  flex: 0 0 auto;
+  width: min(300px, 72vw);
+}
+
+.inquadra-palco {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0d0805;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.inquadra-palco.in-trascinamento {
+  cursor: grabbing;
+}
+
+.inquadra-palco:focus-visible {
+  outline: 3px solid var(--color-gold-bright);
+  outline-offset: 3px;
+}
+
+.inquadra-palco img,
+.inquadra-cerchio img {
+  display: block;
+  pointer-events: none;
+}
+
+/* Fuori dal cerchio l'immagine si scurisce; il cerchio dorato è ciò che resta. */
+.inquadra-maschera {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle closest-side, transparent calc(100% - 1px), rgba(13, 8, 5, 0.62) 100%);
+}
+
+.inquadra-maschera::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--color-gold-bright);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+.inquadra-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  color: var(--color-burgundy);
+}
+
+.inquadra-zoom input {
+  flex: 1;
+  accent-color: var(--color-burgundy);
+}
+
+.inquadra-zoom svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.inquadra-anteprime {
+  flex: 1 1 200px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.inquadra-anteprima {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 132px;
+  padding: 10px 6px 8px;
+  border: 1px dashed rgba(122, 31, 43, 0.3);
+  border-radius: 8px;
+}
+
+.inquadra-anteprima figcaption {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  color: var(--color-burgundy);
+}
+
+.inquadra-cerchio {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  max-width: 100%;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid var(--color-gold);
+  background: rgba(122, 31, 43, 0.06);
+}
+
+.inquadra-cerchio-pedina {
+  border-width: 3px;
+  box-shadow: 0 0 0 1px #2b1b10, 0 4px 8px rgba(0, 0, 0, 0.6);
+}
+
+.inquadra-cerchio-mini {
+  border-width: 1px;
+}
+
+.inquadra-azioni {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.inquadra-azioni .btn-tabella {
+  min-height: 44px;
+}
+
+.inquadra-azioni .btn-tabella.btn-tabella-evidenza {
+  background: var(--color-burgundy);
+  color: var(--color-parchment);
+}
+
+.inquadra-azioni .btn-tabella.btn-tabella-evidenza:hover {
+  background: var(--color-burgundy-bright);
+}
+
+/* Sul telefono le anteprime stanno su una riga, rimpicciolite se serve. */
+@media (max-width: 560px) {
+  .modal-card.modal-inquadra {
+    padding: 18px 14px 14px;
+  }
+
+  .inquadra-anteprime {
+    flex-basis: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .inquadra-anteprima {
+    min-height: 0;
+    padding: 6px 2px;
+    border: 0;
+  }
+}
+
+/* Immagini ritagliate (ritaglio.js): l'immagine intera, spostata e scalata
+   dentro un riquadro con overflow nascosto. */
+.img-ritagliata {
+  object-fit: fill;
+}
+
+/* Bestiario: immagine dalla Libreria e «Inquadra» sulla stessa riga. */
+.bestiario-immagine-scelta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.bestiario-immagine-scelta select {
+  flex: 1;
+  min-width: 0;
 }
