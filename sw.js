@@ -17,18 +17,18 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "b835441c79e1";
+const VERSIONE = "5e748e2343ce";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
   "./archivio.html": "cacd8a002a1f",
-  "./assets/css/base.css": "2bf57fadac00",
+  "./assets/css/base.css": "3ce7363f8f73",
   "./assets/css/calendario.css": "492f4315d65d",
   "./assets/css/dashboard.css": "5cee4f6c2bc7",
   "./assets/css/dm.css": "ac39fd0be665",
   "./assets/css/gioco.css": "bd5c1ef4b3ca",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "ffcf341dfab4",
-  "./assets/css/sessione.css": "6fff6a6a827e",
+  "./assets/css/sessione.css": "827e8c9fc095",
   "./assets/fonts/cinzel-700.woff2": "8efa224fe70f",
   "./assets/fonts/cinzel-OFL.txt": "f5a242cf68ad",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",

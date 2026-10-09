@@ -181,8 +181,10 @@
   border-color: var(--color-gold);
 }
 
-.btn-ghost-chiaro:hover {
-  background: rgba(201, 162, 39, 0.12);
+@media (hover: hover) {
+  .btn-ghost-chiaro:not(:disabled):hover {
+    background: rgba(201, 162, 39, 0.12);
+  }
 }
 
 .link-intestazione {
@@ -298,8 +300,10 @@
   text-align: center;
 }
 
-.btn-azione:hover {
-  background: rgba(122, 31, 43, 0.08);
+@media (hover: hover) {
+  .btn-azione:not(:disabled):hover {
+    background: rgba(122, 31, 43, 0.08);
+  }
 }
 
 .btn-azione.pieno {
@@ -307,8 +311,10 @@
   color: var(--color-parchment);
 }
 
-.btn-azione.pieno:hover {
-  background: var(--color-burgundy-bright);
+@media (hover: hover) {
+  .btn-azione.pieno:not(:disabled):hover {
+    background: var(--color-burgundy-bright);
+  }
 }
 
 .btn-azione.attivo {
