@@ -5621,3 +5621,16 @@ button, a.btn-tabella, .btn-azione {
   outline-offset: 3px;
   box-shadow: none;
 }
+
+/* «Esci» nell'intestazione: sul fondo scuro il pulsante «fantasma» bordeaux
+   spariva; qui è pieno, con il bordo oro dei controlli della barra. */
+.slot-utente .btn-ghost {
+  background: linear-gradient(180deg, var(--color-burgundy-bright), var(--color-burgundy));
+  color: var(--color-parchment);
+  border-color: var(--color-gold);
+}
+
+.slot-utente .btn-ghost:not(:disabled):active {
+  transform: translateY(1px);
+  filter: brightness(0.92);
+}
