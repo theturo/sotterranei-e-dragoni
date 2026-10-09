@@ -5552,9 +5552,18 @@ input.interruttore:focus-visible {
    Niente riquadro del browser al tocco: al suo posto lo stato «premuto».
    Gli hover sono in @media (hover: hover), così sul telefono non restano
    appiccicati dopo un tocco, e mai sui pulsanti disabilitati. */
-button, a.btn-tabella, .btn-azione {
+/* Ereditata: vale per tutto (link, icone dell'intestazione, tessere, schede). */
+html {
   -webkit-tap-highlight-color: transparent;
+}
+
+button, a.btn-tabella, .btn-azione, .btn-campanella {
   touch-action: manipulation;
+}
+
+/* Senza il riquadro del browser, anche i link danno un segno al tocco. */
+a:not(.btn-tabella, .btn-campanella):active {
+  opacity: 0.75;
 }
 
 /* Premuto, solo se non disabilitato. Nessuna transizione: cambio istantaneo. */
