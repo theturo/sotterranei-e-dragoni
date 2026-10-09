@@ -215,8 +215,10 @@ a:hover {
   box-shadow: 0 4px 0 #4a1219;
 }
 
-.btn:hover {
-  filter: brightness(1.08);
+@media (hover: hover) {
+  .btn:not(:disabled):hover {
+    filter: brightness(1.08);
+  }
 }
 
 .btn:active {
@@ -599,23 +601,28 @@ a:hover {
   border-bottom: 1px solid rgba(122, 31, 43, 0.2);
 }
 
-.btn-tabella-evidenza {
+/* Doppia classe: .btn-tabella, definita più sotto, le annullerebbe. */
+.btn-tabella.btn-tabella-evidenza {
   background: var(--color-burgundy);
   color: var(--color-parchment);
   border-color: #4a1219;
 }
 
-.btn-tabella-pericolo {
+.btn-tabella.btn-tabella-pericolo {
   color: var(--color-danger);
   border-color: var(--color-danger);
 }
 
-.btn-tabella-pericolo:hover {
-  background: rgba(165, 41, 58, 0.1);
+@media (hover: hover) {
+  .btn-tabella.btn-tabella-pericolo:not(:disabled):hover {
+    background: rgba(165, 41, 58, 0.1);
+  }
 }
 
-.btn-tabella-evidenza:hover {
-  background: var(--color-burgundy-bright);
+@media (hover: hover) {
+  .btn-tabella.btn-tabella-evidenza:not(:disabled):hover {
+    background: var(--color-burgundy-bright);
+  }
 }
 
 .azioni-riga {
@@ -675,8 +682,10 @@ a:hover {
   white-space: nowrap;
 }
 
-.btn-tabella:hover {
-  background: rgba(122, 31, 43, 0.08);
+@media (hover: hover) {
+  .btn-tabella:not(:disabled):hover {
+    background: rgba(122, 31, 43, 0.08);
+  }
 }
 
 .btn-tabella:disabled {
@@ -750,8 +759,10 @@ a:hover {
   color: var(--color-gold-bright);
 }
 
-.btn-campanella:hover {
-  background: rgba(201, 162, 39, 0.1);
+@media (hover: hover) {
+  .btn-campanella:not(:disabled):hover {
+    background: rgba(201, 162, 39, 0.1);
+  }
 }
 
 .btn-campanella svg {
@@ -1273,8 +1284,10 @@ a:hover {
   padding: 0 4px;
 }
 
-.btn-chiudi-modal:hover {
-  color: var(--color-burgundy);
+@media (hover: hover) {
+  .btn-chiudi-modal:not(:disabled):hover {
+    color: var(--color-burgundy);
+  }
 }
 
 .ruota-allineamento-anello {
@@ -2385,11 +2398,13 @@ table.tabella-punteggi select {
   color: var(--color-parchment);
 }
 
-.azione-salva:hover,
-.azione-elimina:hover,
-.azione-aggiungi:hover {
-  color: var(--color-parchment);
-  filter: brightness(1.08);
+@media (hover: hover) {
+  .azione-salva:not(:disabled):hover,
+  .azione-elimina:not(:disabled):hover,
+  .azione-aggiungi:not(:disabled):hover {
+    color: var(--color-parchment);
+    filter: brightness(1.08);
+  }
 }
 
 .azione-salva:active,
@@ -5495,14 +5510,6 @@ input.interruttore:focus-visible {
   min-height: 44px;
 }
 
-.inquadra-azioni .btn-tabella.btn-tabella-evidenza {
-  background: var(--color-burgundy);
-  color: var(--color-parchment);
-}
-
-.inquadra-azioni .btn-tabella.btn-tabella-evidenza:hover {
-  background: var(--color-burgundy-bright);
-}
 
 /* Sul telefono le anteprime stanno su una riga, rimpicciolite se serve. */
 @media (max-width: 560px) {
@@ -5539,4 +5546,91 @@ input.interruttore:focus-visible {
 .bestiario-immagine-scelta select {
   flex: 1;
   min-width: 0;
+}
+
+/* ---------- Stati dei pulsanti (tela: «Stati dei pulsanti») ----------
+   Niente riquadro del browser al tocco: al suo posto lo stato «premuto».
+   Gli hover sono in @media (hover: hover), così sul telefono non restano
+   appiccicati dopo un tocco, e mai sui pulsanti disabilitati. */
+button, a.btn-tabella, .btn-azione {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Premuto, solo se non disabilitato. Nessuna transizione: cambio istantaneo. */
+.btn-tabella:not(:disabled):active,
+.btn-azione:not(:disabled):active {
+  background: rgba(122, 31, 43, 0.16);
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 3px rgba(74, 18, 25, 0.35);
+}
+
+.btn-tabella.btn-tabella-evidenza:not(:disabled):active,
+.btn-azione.pieno:not(:disabled):active {
+  background: #5e1822;
+}
+
+.btn-tabella.btn-tabella-pericolo:not(:disabled):active {
+  background: rgba(165, 41, 58, 0.2);
+}
+
+/* Dopo le regole del pulsante a contorno: l'icona rotonda non scende, si stringe. */
+.btn-icona-azione:not(:disabled):active {
+  background: rgba(122, 31, 43, 0.16);
+  transform: scale(0.93);
+  box-shadow: none;
+}
+
+.btn-campanella:not(:disabled):active {
+  background: rgba(201, 162, 39, 0.22);
+  transform: scale(0.93);
+}
+
+.btn-chiudi-modal:not(:disabled):active {
+  color: var(--color-burgundy);
+  transform: scale(0.88);
+}
+
+/* Focus da tastiera: anello bordeaux, alone dorato solo decorativo. */
+:is(button, a, summary, [role="button"], input.interruttore):focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+:is(.btn-tabella, .btn-azione, .btn-icona-azione, .btn-chiudi-modal):focus-visible {
+  box-shadow: 0 0 0 5px rgba(201, 162, 39, 0.5);
+}
+
+/* Pulsanti 3D: niente alone (c'è già l'ombra), anello più spesso. */
+.btn:focus-visible,
+.azione-salva:focus-visible,
+.azione-elimina:focus-visible,
+.azione-aggiungi:focus-visible {
+  outline-width: 3px;
+  outline-offset: 3px;
+}
+
+/* Controlli sul fondo scuro (intestazione, link «Torna alla dashboard»,
+   comandi dello schermo del tavolo): anello oro vivo. */
+.btn-campanella:focus-visible,
+.btn-ghost-chiaro:focus-visible,
+.slot-utente :not(.dropdown-notifiche *):focus-visible,
+.link-back:focus-visible,
+.tavolo-comandi :focus-visible {
+  outline-color: var(--color-gold-bright);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+/* «Esci» nell'intestazione: sul fondo scuro il pulsante «fantasma» bordeaux
+   spariva; qui è pieno, con il bordo oro dei controlli della barra. */
+.slot-utente .btn-ghost {
+  background: linear-gradient(180deg, var(--color-burgundy-bright), var(--color-burgundy));
+  color: var(--color-parchment);
+  border-color: var(--color-gold);
+}
+
+.slot-utente .btn-ghost:not(:disabled):active {
+  transform: translateY(1px);
+  filter: brightness(0.92);
 }

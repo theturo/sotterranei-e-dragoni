@@ -9,10 +9,6 @@ indicativo. Si aggiorna man mano che si completano.
 - **Fine della migrazione** (dopo la prima campagna vera): togliere la
   casella «Migra qui i dati già esistenti» e il codice di migrazione dei dati
   di prima delle campagne, quando non servirà più.
-- **Pulsanti evidenziati**: `.btn-tabella-evidenza` è definita prima di
-  `.btn-tabella` in base.css, che la annulla; dove serve oggi c'è una regola
-  apposta. Spostarla dopo cambierebbe l'aspetto di vari pulsanti: da
-  rivedere pagina per pagina.
 
 ## Grafica
 
@@ -34,6 +30,11 @@ Nessuna in sospeso.
 
 ## Già fatto
 
+- Stati dei pulsanti (tavola della tela): niente più riquadro colorato del
+  browser al tocco, al suo posto lo stato «premuto»; anello di focus da
+  tastiera bordeaux (oro sul fondo scuro); hover solo dove c'è un mouse e mai
+  sui pulsanti disabilitati. I pulsanti evidenziati (.btn-tabella-evidenza)
+  ora si vedono davvero pieni.
 - Inquadratura delle immagini: scegliendo un ritratto si apre «Inquadra il
   ritratto» (trascina, zoom con due dita, rotella, cursore o tastiera, con le
   anteprime di scheda, pedina, party e tabella del DM). Si salvano l'originale
