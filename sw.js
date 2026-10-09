@@ -5,6 +5,8 @@
 // - Ogni file ha la sua impronta: a una versione nuova si riscaricano solo
 //   i file cambiati, gli altri si copiano dalla versione precedente.
 // - Senza rete le pagine mostrano offline.html (i dati stanno su Firebase).
+// - VERSIONE e DATA_VERSIONE si leggono dalle Impostazioni (messaggio
+//   "versione"), che mostrano «V. 09.10.2026 · codice» e «Cerca aggiornamenti».
 // - Una versione nuova si installa in silenzio e resta in attesa: la pagina
 //   mostra "È disponibile una nuova versione" e, con "Aggiorna", manda il
 //   messaggio "attiva" (vedi assets/js/pwa.js). Altrimenti si attiva alla
@@ -17,11 +19,12 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "5818134d8efa";
+const VERSIONE = "3ec8d9dd3061";
+const DATA_VERSIONE = "2026-10-10";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
   "./archivio.html": "cacd8a002a1f",
-  "./assets/css/base.css": "750a35578887",
+  "./assets/css/base.css": "d588cb376951",
   "./assets/css/calendario.css": "492f4315d65d",
   "./assets/css/dashboard.css": "5cee4f6c2bc7",
   "./assets/css/dm.css": "ac39fd0be665",
@@ -100,7 +103,7 @@ const FILE = {
   "./assets/js/mappa-strumenti.js": "4334765dc777",
   "./assets/js/mappa-vista.js": "8c0cce095302",
   "./assets/js/mappa.js": "ec14017c5d2f",
-  "./assets/js/menu-utente.js": "3965f5b67682",
+  "./assets/js/menu-utente.js": "2f34e9cba029",
   "./assets/js/mostri-srd.js": "ddbfb68e0be4",
   "./assets/js/notifiche-push.js": "eefd4466c27c",
   "./assets/js/pagine/admin-utenti.js": "49af8b90fdc7",
@@ -127,7 +130,7 @@ const FILE = {
   "./assets/js/pagine/verifica-email.js": "9160b11d3edd",
   "./assets/js/pdf-scheda.js": "ab909d461890",
   "./assets/js/privilegi.js": "b1564bd3089a",
-  "./assets/js/pwa.js": "3b17ae011d28",
+  "./assets/js/pwa.js": "6d6129658b28",
   "./assets/js/riposo.js": "0c092c556e9e",
   "./assets/js/ritaglio.js": "047db73fdef2",
   "./assets/js/scheda-rapida.js": "0acec7ca6c0f",
@@ -136,6 +139,7 @@ const FILE = {
   "./assets/js/suoni.js": "c89c1d1ef463",
   "./assets/js/turno-animato.js": "d2822bb9a2d0",
   "./assets/js/utils.js": "bfba4f8d663e",
+  "./assets/js/versione.js": "10e8c49db420",
   "./assets/js/widget-musica.js": "763fb7eefde7",
   "./assets/js/youtube.js": "31a2b419c9ed",
   "./assets/vendor/pdf/LICENZE.txt": "ea9f284440c0",
@@ -230,8 +234,11 @@ self.addEventListener("activate", (evento) => {
   })());
 });
 
+// "attiva": la versione in attesa prende il controllo (pulsante «Aggiorna»).
+// "versione": risponde con codice e data, mostrati nelle Impostazioni.
 self.addEventListener("message", (evento) => {
   if (evento.data?.tipo === "attiva") self.skipWaiting();
+  if (evento.data?.tipo === "versione") evento.ports[0]?.postMessage({ versione: VERSIONE, data: DATA_VERSIONE });
 });
 
 async function paginaOffline() {
