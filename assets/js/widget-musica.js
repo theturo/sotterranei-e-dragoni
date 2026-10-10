@@ -6,6 +6,7 @@
 //   Il player parte muto (i browser bloccano l'audio automatico): il giocatore
 //   lo attiva con il pulsante.
 import { ascoltaStatoMusica } from "./dati/musica.js";
+import { statoSpotifyRecente } from "./musica-stato.js";
 import { esc, escUrl } from "./utils.js";
 import { ICONA_NOTA, ICONA_COPERTINA, ICONA_RIPRODUCI, icona } from "./icone.js";
 import { caricaApiYouTube, sorgenteDaStato, messaggioErroreYouTube } from "./youtube.js";
@@ -99,7 +100,9 @@ export function montaWidgetMusica(contenitore, campagnaId) {
   function render(stato) {
     if (stato.sorgente !== "youtube" && modalita === "youtube") fermaYouTube();
 
-    if (!stato.sorgente) {
+    // Un brano di Spotify non più aggiornato (pagina del DM chiusa da ore, o
+    // stato rimasto dai test) vale come "nessuna musica".
+    if (!stato.sorgente || (stato.sorgente === "spotify" && stato.spotify && !statoSpotifyRecente(stato))) {
       modalita = null;
       contenitore.innerHTML = `<div class="stato-vuoto-riga">${ICONA_NOTA}<p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>`;
       return;

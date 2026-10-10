@@ -1,6 +1,6 @@
 // Stato della musica condivisa e link YouTube salvati dal DM.
 import { db } from "../firebase-config.js";
-import { getDoc, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getDoc, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 // Stato condiviso della musica di sessione per una campagna:
 // "campagne/{campagnaId}/stato/musica", con la sorgente attualmente trasmessa
@@ -16,6 +16,13 @@ export async function ottieniStatoMusica(campagnaId) {
 // e snapshot dei brani si aggiornano indipendentemente.
 export async function salvaStatoMusica(campagnaId, campi) {
   await setDoc(doc(db, "campagne", campagnaId, "stato", "musica"), campi, { merge: true });
+}
+
+// Brano di Spotify pubblicato dalla pagina «Controllo musica» del DM, con
+// l'ora: se la pagina resta chiusa, lo stato invecchia e i giocatori non lo
+// vedono più (vedi statoSpotifyRecente).
+export async function salvaStatoSpotify(campagnaId, spotify) {
+  await salvaStatoMusica(campagnaId, { spotify, spotifyAggiornatoIl: serverTimestamp() });
 }
 
 // Link YouTube salvati dal DM (campagne/{c}/privato/musica): solo il DM li

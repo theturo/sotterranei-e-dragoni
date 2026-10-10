@@ -65,8 +65,6 @@ rules_version = '2';
 //   - "proposte/{id}": date proposte dal DM per la prossima sessione (calendario);
 //     "proposte/{id}/risposte/{uid}": sì/forse/no di ogni membro, scritti
 //     solo a proprio nome e solo finché la proposta è aperta.
-// - "campagna/{docId}" (vecchio, pre-campagne): solo lettura per admin/DM, per
-//   la migrazione una tantum. Rimovibile a migrazione confermata.
 // - "registroSessioni/{sessioneId}": sessioni (programmata/in-corso/chiusa),
 //   leggibili da DM e membri della loro campagna, gestite dal DM. Un DM può eliminare
 //   solo le sessioni ancora "programmata"; l'admin qualsiasi.
@@ -893,11 +891,6 @@ service cloud.firestore {
         && lista.hasOnly(['accecato', 'affascinato', 'afferrato', 'assordato', 'avvelenato', 'incapacitato',
           'invisibile', 'paralizzato', 'pietrificato', 'privo-di-sensi', 'prono', 'spaventato', 'stordito',
           'trattenuto']);
-    }
-
-    // Vecchia collezione pre-campagne: solo lettura per admin/DM (migrazione).
-    match /campagna/{docId} {
-      allow get: if isDMoAdmin();
     }
 
     // ---------- Registro sessioni ----------

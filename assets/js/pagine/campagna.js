@@ -13,7 +13,6 @@ import {
   scegliCampagna,
   aggiungiMembroCampagna,
   rimuoviMembroCampagna,
-  migraDatiEsistenti,
 } from "../dati/campagne.js";
 import { elencaRiepiloghiParty } from "../dati/party.js";
 import { elencaSessioniProgrammate, eliminaSessioneProgrammata, elencaSessioniCampagna } from "../dati/sessioni.js";
@@ -382,7 +381,6 @@ document.getElementById("form-benvenuto").addEventListener("submit", async (even
   evento.preventDefault();
   const titolo = document.getElementById("benvenuto-titolo").value.trim();
   const provvisorio = document.getElementById("benvenuto-provvisorio").checked;
-  const migra = document.getElementById("benvenuto-migra").checked;
   if (!titolo) return;
 
   const bottone = evento.target.querySelector("button[type=submit]");
@@ -390,10 +388,6 @@ document.getElementById("form-benvenuto").addEventListener("submit", async (even
   try {
     const id = await creaCampagna(uidCorrente, { titolo, titoloProvvisorio: provvisorio });
     await impostaCampagnaAttiva(uidCorrente, id);
-    if (migra) {
-      // Solo i dati: i membri li aggiunge il DM a mano (Giocatori).
-      await migraDatiEsistenti(id);
-    }
     mostraToast("Campagna creata.");
     await ricaricaTutto();
   } catch (errore) {
