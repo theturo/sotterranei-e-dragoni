@@ -66,8 +66,8 @@ rules_version = '2';
 //     "proposte/{id}/risposte/{uid}": sì/forse/no di ogni membro, scritti
 //     solo a proprio nome e solo finché la proposta è aperta.
 // - "registroSessioni/{sessioneId}": sessioni (programmata/in-corso/chiusa),
-//   leggibili da DM e membri della loro campagna, gestite dal DM. Un DM può eliminare
-//   solo le sessioni ancora "programmata"; l'admin qualsiasi.
+//   leggibili solo da DM e membri della loro campagna (anche per l'admin),
+//   gestite dal DM, che può eliminarle (anche già giocate); l'admin qualsiasi.
 //   - "appunti": log scritto da DM e membri della campagna, sempre a proprio
 //     nome (nome verificato contro il profilo), max 2000 caratteri, solo
 //     mentre la sessione è in corso ("tipo": "riposo" per le righe scritte
@@ -896,13 +896,12 @@ service cloud.firestore {
     // ---------- Registro sessioni ----------
 
     match /registroSessioni/{sessioneId} {
-      // Lettura: DM e membri della campagna della sessione. DM e admin le
-      // leggono tutte finché serve la migrazione pre-campagne (scorre tutte le
-      // sessioni per trovare quelle senza campagna): da togliere con essa.
-      allow get, list: if isDMoAdmin() || isNellaCampagna(resource.data.get('campagnaId', 'nessuna'));
+      // Lettura: solo il DM e i membri della campagna della sessione (anche
+      // un admin, se non ne fa parte, non la legge: come per la campagna).
+      // Gli elenchi vanno filtrati per campagnaId.
+      allow get, list: if isNellaCampagna(resource.data.get('campagnaId', 'nessuna'));
 
-      // Solo il DM della campagna della sessione (le sessioni di prima delle
-      // campagne ricevono la loro con la migrazione).
+      // Solo il DM della campagna della sessione.
       allow create: if isDMdellaCampagna(request.resource.data.get('campagnaId', 'nessuna'));
       allow update: if isDMdellaCampagna(resource.data.get('campagnaId', request.resource.data.get('campagnaId', 'nessuna')));
       // Il DM della campagna può eliminare anche le sessioni già giocate (es.
@@ -911,7 +910,7 @@ service cloud.firestore {
         || isDMdellaCampagna(resource.data.get('campagnaId', 'nessuna'));
 
       match /appunti/{appuntoId} {
-        allow get, list: if isDMoAdmin() || isNellaCampagnaDellaSessione(sessioneId);
+        allow get, list: if isNellaCampagnaDellaSessione(sessioneId);
 
         allow create: if isNellaCampagnaDellaSessione(sessioneId)
           && request.resource.data.keys().hasOnly(['autoreUid', 'autoreNome', 'testo', 'tipo', 'tiro', 'creatoIl'])
