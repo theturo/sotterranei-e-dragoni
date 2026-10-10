@@ -17,7 +17,7 @@ import { aggiornaCondizioniScheda, applicaRiposoScheda, aggiornaUsiPrivilegi } f
 import { annotaRiposo, ascoltaRiposo, segnaRiposoConcluso, annotaTiro } from "../dati/sessioni.js";
 import { iniziativaNelTracker } from "../dati/combattimento.js";
 import { apriTiro, testoTiro, leggiFormula } from "../dadi.js";
-import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
+import { privilegiDelPersonaggio, usiDopoVariazione, NOMI_RICARICA } from "../privilegi.js";
 import {
   ridimensionaImmagine,
   leggiImmagine,
@@ -1568,13 +1568,8 @@ function renderPrivilegi() {
 }
 
 async function cambiaUsoPrivilegio(chiave, delta) {
-  const privilegio = privilegiDelPersonaggio(scheda).find((p) => p.chiave === chiave);
-  if (!privilegio || !Number.isFinite(privilegio.max)) return;
-  const usati = Math.max(0, Math.min(privilegio.max, privilegio.usati + delta));
-  if (usati === privilegio.usati) return;
-  const usi = { ...(scheda.usiPrivilegi || {}) };
-  if (usati) usi[chiave] = usati;
-  else delete usi[chiave];
+  const usi = usiDopoVariazione(scheda, chiave, delta);
+  if (!usi) return;
   scheda.usiPrivilegi = usi;
   renderPrivilegi();
   try {

@@ -147,3 +147,18 @@ export function usiDopoRiposoBreve(personaggio) {
   const breve = new Set(privilegiDelPersonaggio(personaggio).filter((p) => p.ricarica === "breve").map((p) => p.chiave));
   return Object.fromEntries(Object.entries(personaggio.usiPrivilegi || {}).filter(([chiave]) => !breve.has(chiave)));
 }
+
+// Usi spesi dopo aver speso (delta > 0) o recuperato (delta < 0) usi del
+// privilegio "chiave", tenendo il conteggio tra 0 e il massimo. Restituisce il
+// nuovo oggetto "usiPrivilegi" da salvare, oppure null se non cambia nulla
+// (privilegio sconosciuto o illimitato, già al limite).
+export function usiDopoVariazione(personaggio, chiave, delta) {
+  const privilegio = privilegiDelPersonaggio(personaggio).find((p) => p.chiave === chiave);
+  if (!privilegio || !Number.isFinite(privilegio.max)) return null;
+  const usati = Math.max(0, Math.min(privilegio.max, privilegio.usati + delta));
+  if (usati === privilegio.usati) return null;
+  const usi = { ...(personaggio.usiPrivilegi || {}) };
+  if (usati) usi[chiave] = usati;
+  else delete usi[chiave];
+  return usi;
+}

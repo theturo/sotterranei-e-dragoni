@@ -12,7 +12,7 @@ import { iniziativaNelTracker } from "./dati/combattimento.js";
 import { apriTiro } from "./dadi.js";
 import { datiSchedaRapida, tiroIncantesimo, livelliDiLancio } from "./calcoli-scheda.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK, applicaVariazionePf, formattaModificatore } from "./dati-srd.js";
-import { NOMI_RICARICA } from "./privilegi.js";
+import { NOMI_RICARICA, usiDopoVariazione } from "./privilegi.js";
 import { creaChipCondizioni } from "./condizioni.js";
 import { mostraImmagine, percorsiRitratto } from "./immagini.js";
 import { esc } from "./utils.js";
@@ -389,14 +389,8 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
   }
 
   function cambiaUso(chiave, delta) {
-    const dati = datiSchedaRapida(scheda);
-    const privilegio = dati.privilegi.find((p) => p.chiave === chiave);
-    if (!privilegio || !Number.isFinite(privilegio.max)) return;
-    const usati = Math.max(0, Math.min(privilegio.max, privilegio.usati + delta));
-    if (usati === privilegio.usati) return;
-    const usi = { ...(scheda.usiPrivilegi || {}) };
-    if (usati) usi[chiave] = usati;
-    else delete usi[chiave];
+    const usi = usiDopoVariazione(scheda, chiave, delta);
+    if (!usi) return;
     scheda.usiPrivilegi = usi;
     salva(() => aggiornaUsiPrivilegi(scheda, usi), "Impossibile salvare il privilegio. Riprova.");
   }
