@@ -567,6 +567,19 @@ describe("Registro sessioni e appunti", () => {
   });
   test("un giocatore NON elenca tutte le sessioni senza filtro di campagna", () =>
     assertFails(getDocs(collection(come("p1"), "registroSessioni"))));
+  test("DM e admin di altre campagne NON leggono sessioni e appunti", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "users/dm2"), { nome: "Altro", email: "dm2@x.it", ruolo: "dm", approvato: true }));
+    for (const chi of ["dm2", "admin"]) {
+      await assertFails(getDoc(doc(come(chi), "registroSessioni/r1")));
+      await assertFails(getDocs(collection(come(chi), "registroSessioni")));
+      await assertFails(getDocs(query(collection(come(chi), "registroSessioni"), where("campagnaId", "==", "c1"))));
+      await assertFails(getDocs(collection(come(chi), "registroSessioni/r1/appunti")));
+    }
+  });
+  test("il DM della campagna legge sessioni e appunti", async () => {
+    await assertSucceeds(getDocs(query(collection(come("dm"), "registroSessioni"), where("campagnaId", "==", "c1"))));
+    await assertSucceeds(getDocs(collection(come("dm"), "registroSessioni/r1/appunti")));
+  });
 });
 
 describe("Dispositivi per le notifiche push", () => {

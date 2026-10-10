@@ -6,9 +6,6 @@ indicativo. Si aggiorna man mano che si completano.
 ## Manutenzione e rifiniture
 
 - **Pulizia del codice** e piccole rifiniture dell'interfaccia.
-- **Registro sessioni, lettura**: le regole lasciano ancora leggere tutte le
-  sessioni a DM e admin (serviva alla migrazione, ora tolta). Restringerle ai
-  soli membri della campagna richiede di verificare prima le query del DM.
 
 ## Grafica
 
@@ -30,6 +27,9 @@ Nessuna in sospeso.
 
 ## Già fatto
 
+- Registro sessioni: sessioni e appunti si leggono solo dal DM e dai membri
+  della campagna (anche l'admin, se non ne fa parte, non li vede più); tutte
+  le query del sito filtravano già per campagna.
 - Fine della migrazione: tolti la casella «Migra qui i dati già esistenti»,
   il codice che portava i dati di prima delle campagne e la regola della
   vecchia raccolta «campagna». Musica: un brano di Spotify non aggiornato da
