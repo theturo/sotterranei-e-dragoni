@@ -2,7 +2,7 @@
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 import { proteggiPaginaDM } from "../auth.js";
 import { ottieniCampagnaCorrente } from "../dati/campagne.js";
-import { ottieniStatoMusica, salvaStatoMusica, ottieniLinkMusica, salvaLinkMusica } from "../dati/musica.js";
+import { ottieniStatoMusica, salvaStatoMusica, salvaStatoSpotify, ottieniLinkMusica, salvaLinkMusica } from "../dati/musica.js";
 import { montaMenuUtente } from "../menu-utente.js";
 import { esc, escUrl, mostraToast } from "../utils.js";
 import { ICONA_COPERTINA, ICONA_PRECEDENTE, ICONA_PAUSA, ICONA_RIPRODUCI, ICONA_SUCCESSIVO, icona } from "../icone.js";
@@ -53,6 +53,8 @@ document.querySelectorAll("[data-sorgente-btn]").forEach((bottone) => {
 // ---------- Spotify ----------
 
 let ultimaFirmaSpotify = null;
+let ultimoSalvataggioSpotify = 0;
+const RINNOVO_SPOTIFY_MS = 20 * 60 * 1000;
 
 function renderSpotifyNowPlaying(stato) {
   const box = document.getElementById("spotify-now-playing");
@@ -93,10 +95,13 @@ async function aggiornaSchermataSpotify() {
     // Lo stato di Spotify viene pubblicato sempre (non solo quando è la
     // sorgente scelta), così passando a Spotify i giocatori lo vedono subito;
     // si scrive solo quando cambia, per non consumare scritture inutili.
+    // Anche senza cambi, ogni 20 minuti si rinnova l'ora: finché questa
+    // pagina è aperta lo stato resta "recente" per i giocatori.
     const firma = JSON.stringify(stato);
-    if (firma !== ultimaFirmaSpotify) {
-      await salvaStatoMusica(campagnaIdCorrente, { spotify: stato });
+    if (firma !== ultimaFirmaSpotify || Date.now() - ultimoSalvataggioSpotify > RINNOVO_SPOTIFY_MS) {
+      await salvaStatoSpotify(campagnaIdCorrente, stato);
       ultimaFirmaSpotify = firma;
+      ultimoSalvataggioSpotify = Date.now();
     }
   } catch (errore) {
     console.error(errore);

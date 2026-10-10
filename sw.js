@@ -19,7 +19,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "3ec8d9dd3061";
+const VERSIONE = "60ae1afcb8b5";
 const DATA_VERSIONE = "2026-10-10";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
@@ -74,13 +74,13 @@ const FILE = {
   "./assets/js/dati-srd.js": "2ca98999c43e",
   "./assets/js/dati/bestiario.js": "da85ce1ef009",
   "./assets/js/dati/calendario.js": "4ee54ec1e983",
-  "./assets/js/dati/campagne.js": "57298082451c",
+  "./assets/js/dati/campagne.js": "dd9d2897281c",
   "./assets/js/dati/combattimento.js": "1f374f7107b8",
   "./assets/js/dati/comuni.js": "a9d88c523a5a",
   "./assets/js/dati/libreria.js": "6178c7c61e22",
   "./assets/js/dati/livelli.js": "03caddf55208",
   "./assets/js/dati/mappa.js": "631ce999906b",
-  "./assets/js/dati/musica.js": "0a3c5bb27bfa",
+  "./assets/js/dati/musica.js": "2e7248a4e025",
   "./assets/js/dati/party.js": "f9d4dca97659",
   "./assets/js/dati/schede.js": "a0545974417e",
   "./assets/js/dati/sessioni.js": "4cd8c9e9633b",
@@ -105,14 +105,15 @@ const FILE = {
   "./assets/js/mappa.js": "ec14017c5d2f",
   "./assets/js/menu-utente.js": "2f34e9cba029",
   "./assets/js/mostri-srd.js": "ddbfb68e0be4",
+  "./assets/js/musica-stato.js": "d35aa49ed95e",
   "./assets/js/notifiche-push.js": "eefd4466c27c",
   "./assets/js/pagine/admin-utenti.js": "49af8b90fdc7",
   "./assets/js/pagine/archivio.js": "ac748d064c75",
   "./assets/js/pagine/attesa-approvazione.js": "1f9b02510e75",
   "./assets/js/pagine/bestiario.js": "70f6fc5cf5bc",
   "./assets/js/pagine/calendario.js": "0f763a62ea77",
-  "./assets/js/pagine/campagna.js": "f6ec656066e5",
-  "./assets/js/pagine/controllo-musica.js": "1e640cc10077",
+  "./assets/js/pagine/campagna.js": "86590380335b",
+  "./assets/js/pagine/controllo-musica.js": "364c8186bd52",
   "./assets/js/pagine/crea-personaggio.js": "9e149e62852e",
   "./assets/js/pagine/dashboard.js": "22dc6496b393",
   "./assets/js/pagine/dm-party.js": "3b36dc8f7828",
@@ -140,7 +141,7 @@ const FILE = {
   "./assets/js/turno-animato.js": "d2822bb9a2d0",
   "./assets/js/utils.js": "bfba4f8d663e",
   "./assets/js/versione.js": "10e8c49db420",
-  "./assets/js/widget-musica.js": "763fb7eefde7",
+  "./assets/js/widget-musica.js": "c2be39beebf8",
   "./assets/js/youtube.js": "31a2b419c9ed",
   "./assets/vendor/pdf/LICENZE.txt": "ea9f284440c0",
   "./assets/vendor/pdf/pdf-lib-fontkit.min.js": "2a73af96da27",
@@ -149,7 +150,7 @@ const FILE = {
   "./attesa-approvazione.html": "566c8bd296d6",
   "./bestiario.html": "497c66ff5353",
   "./calendario.html": "8b9e816e3b7d",
-  "./campagna.html": "1d739390399e",
+  "./campagna.html": "7eefdddc4eea",
   "./controllo-musica.html": "74b173fe550f",
   "./crea-personaggio.html": "b47503d35bd7",
   "./dashboard.html": "9c71b5214238",

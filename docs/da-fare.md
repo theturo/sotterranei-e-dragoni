@@ -6,9 +6,9 @@ indicativo. Si aggiorna man mano che si completano.
 ## Manutenzione e rifiniture
 
 - **Pulizia del codice** e piccole rifiniture dell'interfaccia.
-- **Fine della migrazione** (dopo la prima campagna vera): togliere la
-  casella «Migra qui i dati già esistenti» e il codice di migrazione dei dati
-  di prima delle campagne, quando non servirà più.
+- **Registro sessioni, lettura**: le regole lasciano ancora leggere tutte le
+  sessioni a DM e admin (serviva alla migrazione, ora tolta). Restringerle ai
+  soli membri della campagna richiede di verificare prima le query del DM.
 
 ## Grafica
 
@@ -30,6 +30,11 @@ Nessuna in sospeso.
 
 ## Già fatto
 
+- Fine della migrazione: tolti la casella «Migra qui i dati già esistenti»,
+  il codice che portava i dati di prima delle campagne e la regola della
+  vecchia raccolta «campagna». Musica: un brano di Spotify non aggiornato da
+  più di un'ora (pagina del DM chiusa, o stato rimasto dai test) non si
+  mostra più ai giocatori.
 - Versione dell'app nelle Impostazioni ⚙️: «V. 09.10.2026 · codice», lo
   stato rispetto al sito e «Cerca aggiornamenti» / «Aggiorna ora» (si
   scaricano solo i file cambiati). Data e codice si generano da soli con
