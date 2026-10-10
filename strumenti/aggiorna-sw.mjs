@@ -4,7 +4,9 @@
 // Con le impronte per file, a ogni versione nuova il telefono riscarica solo
 // i file cambiati e copia gli altri dalla versione precedente.
 // Una VERSIONE nuova fa scaricare il service worker aggiornato e mostrare
-// "È disponibile una nuova versione" a chi ha l'app aperta. Il test
+// "È disponibile una nuova versione" a chi ha l'app aperta. DATA_VERSIONE è
+// il giorno (ora italiana) in cui la VERSIONE è cambiata l'ultima volta: si
+// mostra nelle Impostazioni come «V. 09.10.2026 · codice». Il test
 // test/pagine/pwa.test.mjs fallisce se ci si dimentica di lanciarlo.
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -44,10 +46,14 @@ export function versione(file = elencoFile()) {
   return hash.digest("hex").slice(0, 12);
 }
 
-export function bloccoGenerato(file = elencoFile()) {
+// Oggi, nel fuso italiano, come AAAA-MM-GG.
+export const oggi = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Rome" }).format(new Date());
+
+export function bloccoGenerato(file = elencoFile(), data = oggi()) {
   return [
     INIZIO,
     `const VERSIONE = "${versione(file)}";`,
+    `const DATA_VERSIONE = "${data}";`,
     "const FILE = {",
     ...file.map((f) => `  "./${f}": "${impronta(f)}",`),
     "};",
@@ -55,11 +61,18 @@ export function bloccoGenerato(file = elencoFile()) {
   ].join("\n");
 }
 
-export function swAggiornato(sorgente) {
+// Rigenera il blocco. La data cambia solo se cambia la VERSIONE: rilanciato
+// sullo stesso sito, il blocco resta identico (il test lo verifica).
+export function swAggiornato(sorgente, data = oggi()) {
   const inizio = sorgente.indexOf(INIZIO);
   const fine = sorgente.indexOf(FINE);
   if (inizio === -1 || fine === -1) throw new Error("sw.js: marcatori dell'elenco generato non trovati");
-  return sorgente.slice(0, inizio) + bloccoGenerato() + sorgente.slice(fine + FINE.length);
+  const file = elencoFile();
+  const vecchio = sorgente.slice(inizio, fine);
+  const stessaVersione = vecchio.includes(`const VERSIONE = "${versione(file)}";`);
+  const dataPrecedente = vecchio.match(/const DATA_VERSIONE = "(\d{4}-\d{2}-\d{2})";/)?.[1];
+  const dataUsata = stessaVersione && dataPrecedente ? dataPrecedente : data;
+  return sorgente.slice(0, inizio) + bloccoGenerato(file, dataUsata) + sorgente.slice(fine + FINE.length);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

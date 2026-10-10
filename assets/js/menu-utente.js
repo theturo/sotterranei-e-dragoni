@@ -15,7 +15,16 @@ import { esc } from "./utils.js";
 import { ICONA_HOME, ICONA_MODIFICA, ICONA_SESSIONE, ICONA_CALENDARIO, ICONA_SI } from "./icone.js";
 import { formattaDataOra, dataOraBreve } from "./calendario.js";
 import { attivaDescrizioni } from "./descrizioni.js";
-import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "./pwa.js";
+import {
+  statoInstallazione,
+  quandoCambiaInstallazione,
+  installaApp,
+  infoVersione,
+  cercaAggiornamenti,
+  applicaAggiornamento,
+  quandoCambiaVersione,
+} from "./pwa.js";
+import { nomeVersione, versioneNuova } from "./versione.js";
 import {
   statoNotifichePush,
   attivaNotifichePush,
@@ -79,6 +88,14 @@ const HTML_MODALE = `
           <button class="btn-tabella" data-apri="suoni" type="button">Effetti sonori</button>
           <a class="btn-tabella" href="guida.html">Guida e FAQ</a>
           <button id="mu-btn-logout-menu" class="btn-tabella btn-tabella-pericolo solo-telefono" type="button">Esci</button>
+        </div>
+        <div class="versione-app" id="mu-versione">
+          <div class="versione-app-riga">
+            <span class="versione-app-nome" id="mu-versione-nome">V. …</span>
+            <span class="versione-app-stato" id="mu-versione-stato" role="status"></span>
+          </div>
+          <p class="versione-app-disponibile" id="mu-versione-nuova" hidden></p>
+          <button type="button" class="btn-tabella" id="mu-versione-azione">Cerca aggiornamenti</button>
         </div>
       </div>
 
@@ -270,6 +287,72 @@ function resetForm(form, messaggio) {
   nascondiMessaggio(messaggio);
 }
 
+// Riquadro «Versione» in fondo alle Impostazioni (tavola "Versione dell'app"):
+// «V. 09.10.2026 · codice», lo stato e «Cerca aggiornamenti» / «Aggiorna ora».
+function montaVersione() {
+  const nome = document.getElementById("mu-versione-nome");
+  const stato = document.getElementById("mu-versione-stato");
+  const nuova = document.getElementById("mu-versione-nuova");
+  const azione = document.getElementById("mu-versione-azione");
+  let pronta = false; // c'è una versione nuova in attesa
+  let occupato = false;
+
+  function mostraStato(testo, tipo, icona = false) {
+    stato.className = `versione-app-stato${tipo ? ` versione-app-${tipo}` : ""}`;
+    stato.innerHTML = icona ? ICONA_SI : "";
+    stato.append(testo);
+  }
+
+  function disegna({ supportato, attuale, inAttesa }, messaggio = null) {
+    nome.textContent = nomeVersione(attuale) || (supportato ? "V. precedente" : "V. —");
+    pronta = versioneNuova(attuale, inAttesa);
+    nuova.hidden = !pronta;
+    if (pronta) {
+      nuova.textContent = "";
+      const b = document.createElement("b");
+      b.textContent = nomeVersione(inAttesa);
+      nuova.append("Disponibile la ", b);
+      mostraStato("Da aggiornare", "nuova");
+    } else if (messaggio) {
+      mostraStato(messaggio.testo, messaggio.tipo, messaggio.tipo === "ok");
+    } else {
+      mostraStato("Aggiornata", "ok", true);
+    }
+    azione.textContent = pronta ? "Aggiorna ora" : "Cerca aggiornamenti";
+    azione.classList.toggle("btn-tabella-evidenza", pronta);
+    azione.disabled = !supportato;
+  }
+
+  async function aggiorna(messaggio) {
+    disegna(await infoVersione(), messaggio);
+  }
+
+  azione.addEventListener("click", async () => {
+    if (occupato) return;
+    if (pronta) {
+      azione.disabled = true;
+      azione.textContent = "Aggiorno…";
+      if (!(await applicaAggiornamento())) aggiorna();
+      return;
+    }
+    occupato = true;
+    azione.disabled = true;
+    azione.textContent = "Cerco…";
+    mostraStato("Controllo…", "cerca");
+    try {
+      const info = await cercaAggiornamenti();
+      disegna(info, { testo: "Nessun aggiornamento", tipo: "ok" });
+    } catch (errore) {
+      console.warn("Aggiornamenti non controllati", errore);
+      await aggiorna({ testo: "Impossibile controllare ora", tipo: "errore" });
+    } finally {
+      occupato = false;
+    }
+  });
+  quandoCambiaVersione(() => aggiorna());
+  return { aggiorna };
+}
+
 function inizializzaImpostazioni() {
   const modale = document.getElementById("mu-modal-impostazioni");
   const formPassword = document.getElementById("mu-form-password");
@@ -277,9 +360,11 @@ function inizializzaImpostazioni() {
   const msgPassword = document.getElementById("mu-messaggio-password");
   const msgEmail = document.getElementById("mu-messaggio-email");
 
+  const versione = montaVersione();
   document.getElementById("mu-btn-impostazioni").addEventListener("click", () => {
     mostraSchermata("mu-schermata-scelta");
     modale.style.display = "flex";
+    versione.aggiorna();
   });
 
   document.getElementById("mu-chiudi-impostazioni").addEventListener("click", () => {

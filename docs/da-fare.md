@@ -30,6 +30,10 @@ Nessuna in sospeso.
 
 ## Già fatto
 
+- Versione dell'app nelle Impostazioni ⚙️: «V. 09.10.2026 · codice», lo
+  stato rispetto al sito e «Cerca aggiornamenti» / «Aggiorna ora» (si
+  scaricano solo i file cambiati). Data e codice si generano da soli con
+  node strumenti/aggiorna-sw.mjs.
 - Stati dei pulsanti (tavola della tela): niente più riquadro colorato del
   browser al tocco, al suo posto lo stato «premuto»; anello di focus da
   tastiera bordeaux (oro sul fondo scuro); hover solo dove c'è un mouse e mai

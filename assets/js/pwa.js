@@ -1,6 +1,8 @@
 // App installabile (PWA), caricato da ogni pagina:
 // - registra il service worker (sw.js) e, quando è pronta una versione nuova
 //   del sito, mostra "È disponibile una nuova versione" con "Aggiorna";
+// - dà alle Impostazioni versione in uso e in attesa, «Cerca aggiornamenti»
+//   e «Aggiorna ora» (infoVersione, cercaAggiornamenti, applicaAggiornamento);
 // - tiene l'invito a installare l'app: su Android/Chrome la finestra del
 //   browser (evento beforeinstallprompt), su iPhone le istruzioni per
 //   "Aggiungi alla schermata Home";
@@ -16,6 +18,16 @@ const suIOS = () =>
 // ---------- Aggiornamenti ----------
 
 let bannerMostrato = false;
+let aggiornamentoRichiesto = false;
+let registrazioneSW = null;
+const ascoltatoriVersione = new Set();
+const avvisaVersione = () => ascoltatoriVersione.forEach((f) => f());
+
+// Le Impostazioni si ridisegnano quando compare una versione in attesa.
+export function quandoCambiaVersione(callback) {
+  ascoltatoriVersione.add(callback);
+  return () => ascoltatoriVersione.delete(callback);
+}
 
 function mostraBannerAggiornamento(registrazione) {
   if (bannerMostrato) return;
@@ -36,6 +48,7 @@ function mostraBannerAggiornamento(registrazione) {
   chiudi.textContent = "×";
   aggiorna.addEventListener("click", () => {
     aggiorna.disabled = true;
+    aggiornamentoRichiesto = true;
     registrazione.waiting?.postMessage({ tipo: "attiva" });
   });
   chiudi.addEventListener("click", () => banner.remove());
@@ -53,10 +66,14 @@ async function registraServiceWorker() {
     return;
   }
   if (!registrazione) return;
+  registrazioneSW = registrazione;
   // Una versione nuova in attesa conta solo se ce n'è già una attiva
   // (la prima installazione non è un "aggiornamento").
   const controlla = () => {
-    if (registrazione.waiting && navigator.serviceWorker.controller) mostraBannerAggiornamento(registrazione);
+    if (registrazione.waiting && navigator.serviceWorker.controller) {
+      mostraBannerAggiornamento(registrazione);
+      avvisaVersione();
+    }
   };
   controlla();
   registrazione.addEventListener("updatefound", () => {
@@ -68,7 +85,7 @@ async function registraServiceWorker() {
   // Con "Aggiorna" la versione nuova prende il controllo: si ricarica la pagina.
   let ricaricata = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (ricaricata || !bannerMostrato) return;
+    if (ricaricata || !(bannerMostrato || aggiornamentoRichiesto)) return;
     ricaricata = true;
     window.location.reload();
   });
@@ -76,6 +93,68 @@ async function registraServiceWorker() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") registrazione.update().catch(() => {});
   });
+}
+
+// ---------- Versione (Impostazioni) ----------
+
+const trovaRegistrazione = async () =>
+  registrazioneSW || (("serviceWorker" in navigator) ? navigator.serviceWorker.getRegistration().catch(() => null) : null);
+
+// Chiede a un service worker codice e data della sua versione. I service
+// worker di prima dell'indicatore non rispondono: null dopo un attimo.
+function chiediVersione(worker) {
+  return new Promise((risolvi) => {
+    const canale = new MessageChannel();
+    const scadenza = setTimeout(() => risolvi(null), 1500);
+    canale.port1.onmessage = (evento) => {
+      clearTimeout(scadenza);
+      risolvi(evento.data || null);
+    };
+    worker.postMessage({ tipo: "versione" }, [canale.port2]);
+  });
+}
+
+// { supportato, attuale, inAttesa }: versione in uso e quella pronta (o null).
+export async function infoVersione() {
+  const reg = await trovaRegistrazione();
+  if (!reg) return { supportato: false, attuale: null, inAttesa: null };
+  const [attuale, inAttesa] = await Promise.all([
+    reg.active ? chiediVersione(reg.active) : null,
+    reg.waiting && navigator.serviceWorker.controller ? chiediVersione(reg.waiting) : null,
+  ]);
+  return { supportato: true, attuale, inAttesa };
+}
+
+// Chiede subito al sito se c'è una versione nuova e aspetta che sia scaricata
+// (solo i file cambiati). Senza rete l'errore arriva a chi chiama.
+export async function cercaAggiornamenti() {
+  const reg = await trovaRegistrazione();
+  if (!reg) throw new Error("Service worker non disponibile");
+  // Senza rete il controllo non può dire niente: meglio dirlo subito.
+  if (navigator.onLine === false) throw new Error("Nessuna connessione");
+  await reg.update();
+  const nuovo = reg.installing;
+  if (nuovo) {
+    await new Promise((risolvi) => {
+      const scadenza = setTimeout(risolvi, 30000);
+      nuovo.addEventListener("statechange", () => {
+        if (nuovo.state !== "installing") {
+          clearTimeout(scadenza);
+          risolvi();
+        }
+      });
+    });
+  }
+  return infoVersione();
+}
+
+// «Aggiorna ora»: la versione in attesa prende il controllo e la pagina si ricarica.
+export async function applicaAggiornamento() {
+  const reg = await trovaRegistrazione();
+  if (!reg?.waiting) return false;
+  aggiornamentoRichiesto = true;
+  reg.waiting.postMessage({ tipo: "attiva" });
+  return true;
 }
 
 // ---------- Installazione ----------
