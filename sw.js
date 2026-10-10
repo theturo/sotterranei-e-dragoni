@@ -19,7 +19,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "60ae1afcb8b5";
+const VERSIONE = "c80c7ad28977";
 const DATA_VERSIONE = "2026-10-10";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
@@ -125,16 +125,16 @@ const FILE = {
   "./assets/js/pagine/libreria.js": "095f4f1c4f68",
   "./assets/js/pagine/offline.js": "66f6add61755",
   "./assets/js/pagine/register.js": "d351cfe15864",
-  "./assets/js/pagine/scheda-personaggio.js": "b15c769d2a4a",
+  "./assets/js/pagine/scheda-personaggio.js": "cc5bcfb4ee12",
   "./assets/js/pagine/sessione.js": "3b0f3e1b447d",
   "./assets/js/pagine/tavolo.js": "f38a46e915a7",
   "./assets/js/pagine/verifica-email.js": "9160b11d3edd",
   "./assets/js/pdf-scheda.js": "ab909d461890",
-  "./assets/js/privilegi.js": "b1564bd3089a",
+  "./assets/js/privilegi.js": "2637166c19f2",
   "./assets/js/pwa.js": "6d6129658b28",
   "./assets/js/riposo.js": "0c092c556e9e",
   "./assets/js/ritaglio.js": "047db73fdef2",
-  "./assets/js/scheda-rapida.js": "0acec7ca6c0f",
+  "./assets/js/scheda-rapida.js": "e7462585c3b8",
   "./assets/js/spotify-config.js": "2cd119a39d39",
   "./assets/js/spotify.js": "608a6de358de",
   "./assets/js/suoni.js": "c89c1d1ef463",
