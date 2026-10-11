@@ -680,6 +680,9 @@ a:hover {
   color: var(--color-burgundy);
   cursor: pointer;
   white-space: nowrap;
+  /* Usato anche su <a> (link "Apri scheda", "Visualizza scheda"). */
+  display: inline-block;
+  text-decoration: none;
 }
 
 @media (hover: hover) {
@@ -1468,12 +1471,6 @@ footer.site-footer {
   outline: none;
   border-color: var(--color-burgundy);
   background: rgba(255, 255, 255, 0.85);
-}
-
-/* .btn-tabella usato anche su <a> (link "Apri scheda", "Visualizza scheda"). */
-.btn-tabella {
-  display: inline-block;
-  text-decoration: none;
 }
 
 .btn-tabella:hover {
@@ -3594,12 +3591,6 @@ table.tabella-punteggi select {
   line-height: 1;
   cursor: pointer;
   opacity: 0.75;
-}
-
-.guida-passi {
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
 .guida-passi button {
