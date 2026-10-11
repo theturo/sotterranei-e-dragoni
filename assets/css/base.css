@@ -2758,6 +2758,7 @@ table.tabella-punteggi select {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-ink-soft);
+  flex-wrap: wrap;
 }
 
 .select-esaurimento {
@@ -2794,10 +2795,6 @@ table.tabella-punteggi select {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-}
-
-.campo-esaurimento {
-  flex-wrap: wrap;
 }
 
 .campo-esaurimento .select-esaurimento {
@@ -4904,17 +4901,14 @@ table.tabella-punteggi select {
   padding: 0 5px;
   background: var(--color-burgundy);
   color: var(--color-parchment);
-}
-
-.bestiario-tag.visibile {
-  background: var(--color-emerald);
-}
-
-.bestiario-tag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   vertical-align: 1px;
+}
+
+.bestiario-tag.visibile {
+  background: var(--color-emerald);
 }
 
 .bestiario-tag svg {

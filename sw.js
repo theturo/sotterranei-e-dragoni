@@ -19,19 +19,19 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "c80c7ad28977";
-const DATA_VERSIONE = "2026-10-10";
+const VERSIONE = "4a87d4a24883";
+const DATA_VERSIONE = "2026-10-11";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
   "./archivio.html": "cacd8a002a1f",
-  "./assets/css/base.css": "d588cb376951",
+  "./assets/css/base.css": "5b06eba6aa0c",
   "./assets/css/calendario.css": "492f4315d65d",
   "./assets/css/dashboard.css": "5cee4f6c2bc7",
   "./assets/css/dm.css": "ac39fd0be665",
-  "./assets/css/gioco.css": "bd5c1ef4b3ca",
+  "./assets/css/gioco.css": "b5a623af94d3",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "ffcf341dfab4",
-  "./assets/css/sessione.css": "827e8c9fc095",
+  "./assets/css/sessione.css": "37858fd3fd3e",
   "./assets/fonts/cinzel-700.woff2": "8efa224fe70f",
   "./assets/fonts/cinzel-OFL.txt": "f5a242cf68ad",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
