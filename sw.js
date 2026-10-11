@@ -19,7 +19,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "4a87d4a24883";
+const VERSIONE = "46c1fcc64798";
 const DATA_VERSIONE = "2026-10-11";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
@@ -68,7 +68,7 @@ const FILE = {
   "./assets/js/contenuti.js": "bc0640a2e0f3",
   "./assets/js/cruscotto-calcoli.js": "610babaca0d6",
   "./assets/js/dadi-base.js": "d1ee4ec14672",
-  "./assets/js/dadi.js": "9f573d6b32fe",
+  "./assets/js/dadi.js": "c32fc3581542",
   "./assets/js/dado-caricamento.js": "7e138df9f108",
   "./assets/js/dado-pf.js": "753910f2e1e9",
   "./assets/js/dati-srd.js": "2ca98999c43e",
@@ -132,7 +132,7 @@ const FILE = {
   "./assets/js/pdf-scheda.js": "ab909d461890",
   "./assets/js/privilegi.js": "2637166c19f2",
   "./assets/js/pwa.js": "6d6129658b28",
-  "./assets/js/riposo.js": "0c092c556e9e",
+  "./assets/js/riposo.js": "a38cd2bd0cd2",
   "./assets/js/ritaglio.js": "047db73fdef2",
   "./assets/js/scheda-rapida.js": "e7462585c3b8",
   "./assets/js/spotify-config.js": "2cd119a39d39",

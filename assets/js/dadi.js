@@ -12,6 +12,21 @@ export { FACCE, conSegno, formula, leggiFormula, tira, testoTiro };
 
 const SVG_DADO = '<svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="3" stroke-linejoin="round"/><path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.3" opacity="0.5"/></svg>';
 
+// Vassoio del dado (etichetta, dado che ruota e numero dell'esito), nascosto
+// finché non si tira. Usato dalla finestra del tiro e da quella del riposo breve.
+export function creaVassoio(etichetta) {
+  const vassoio = creaElemento("div", "vassoio-tiro");
+  vassoio.hidden = true;
+  const stage = creaElemento("div", "vassoio-stage");
+  const dado = creaElemento("div", "vassoio-dado");
+  dado.innerHTML = SVG_DADO;
+  const esito = creaElemento("div", "esito-numero");
+  esito.hidden = true;
+  stage.append(creaElemento("div", "vassoio-ombra"), dado, esito);
+  vassoio.append(creaElemento("div", "vassoio-etichetta", etichetta), stage);
+  return { vassoio, esito };
+}
+
 // Chiede come tirare (vantaggio/svantaggio sui d20, critico sui danni),
 // tira, chiama subito onTiro(tiro) (per il registro) e mostra il risultato nel
 // vassoio. onTiro può restituire (anche con una promessa) una riga da mostrare
@@ -39,15 +54,7 @@ export function apriTiro({ etichetta, quanti = 1, facce = 20, modificatore = 0, 
   });
   finestra.append(scelte);
 
-  const vassoio = creaElemento("div", "vassoio-tiro");
-  vassoio.hidden = true;
-  const stage = creaElemento("div", "vassoio-stage");
-  const dado = creaElemento("div", "vassoio-dado");
-  dado.innerHTML = SVG_DADO;
-  const esito = creaElemento("div", "esito-numero");
-  esito.hidden = true;
-  stage.append(creaElemento("div", "vassoio-ombra"), dado, esito);
-  vassoio.append(creaElemento("div", "vassoio-etichetta", `d${facce}`), stage);
+  const { vassoio, esito } = creaVassoio(`d${facce}`);
   const risultato = creaElemento("div", "risultato-pf");
   risultato.setAttribute("role", "status");
   risultato.hidden = true;
