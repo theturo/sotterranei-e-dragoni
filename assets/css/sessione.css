@@ -99,6 +99,10 @@
   font-family: var(--font-heading);
   color: var(--color-burgundy);
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
 }
 
 .registro-sessione-voce {
@@ -377,6 +381,9 @@
   font-family: var(--font-heading);
   text-align: center;
   letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+  animation: banner-turno-pulsa 1.4s ease-in-out infinite;
 }
 
 .lista-combattimento {
@@ -518,12 +525,6 @@
   position: absolute;
   margin: 0;
   pointer-events: none;
-}
-
-.banner-turno {
-  position: relative;
-  overflow: hidden;
-  animation: banner-turno-pulsa 1.4s ease-in-out infinite;
 }
 
 @keyframes banner-turno-pulsa {
@@ -817,13 +818,6 @@
   .lanciatore-dadi button[type="submit"] {
     flex: 1 1 100px;
   }
-}
-
-.party-sessione-pf {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
 }
 
 .btn-stato-pg {

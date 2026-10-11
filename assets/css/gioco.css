@@ -305,9 +305,6 @@
   background: var(--color-burgundy);
   color: var(--color-parchment);
   vertical-align: 1px;
-}
-
-.blocco-tiro {
   display: inline-flex;
   align-items: center;
   gap: 5px;
