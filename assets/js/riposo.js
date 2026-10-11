@@ -9,6 +9,7 @@
 // I privilegi di classe si ricaricano secondo privilegi.js.
 import { CLASSI, TIPO_LANCIATORE, modificatore, formattaModificatore } from "./dati-srd.js";
 import { creaElemento } from "./contenuti.js";
+import { creaVassoio } from "./dadi.js";
 import { privilegiDelPersonaggio, usiDopoRiposoBreve } from "./privilegi.js";
 
 export const dadoVitaClasse = (classe) => CLASSI[classe]?.dadoVita || 8;
@@ -151,21 +152,6 @@ export function confermaRiposo({ titolo, effetti, personaggi = null, etichettaCo
     conferma.addEventListener("click", () => fine(personaggi ? caselle.filter((c) => c.checked).map((c) => c.value) : true));
     conferma.focus();
   });
-}
-
-const SVG_DADO = '<svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="3" stroke-linejoin="round"/><path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.3" opacity="0.5"/></svg>';
-
-function creaVassoio(etichetta) {
-  const vassoio = creaElemento("div", "vassoio-tiro");
-  vassoio.hidden = true;
-  const stage = creaElemento("div", "vassoio-stage");
-  const dado = creaElemento("div", "vassoio-dado");
-  dado.innerHTML = SVG_DADO;
-  const esito = creaElemento("div", "esito-numero");
-  esito.hidden = true;
-  stage.append(creaElemento("div", "vassoio-ombra"), dado, esito);
-  vassoio.append(creaElemento("div", "vassoio-etichetta", etichetta), stage);
-  return { vassoio, esito };
 }
 
 // Riposo breve di un personaggio: quanti dadi vita spendere, poi tiro
