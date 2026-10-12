@@ -630,12 +630,7 @@ table.tabella-punteggi td {
 
 .divisore-magia { --divisore-icona: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9a227' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2 C8 7 6 10 6 14 C6 18.5 9 21 12 21 C15 21 18 18.5 18 14 C18 11 16.5 9 15 7 C15 10 13 11 12 9 C11 7 12 4 12 2 Z'/%3E%3C/svg%3E"); }
 
-/* Titoli delle sezioni della scheda: il divisore prende il posto della linea. */
-.scheda-box h3 {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
+/* Titoli delle sezioni della scheda: sotto il titolo c'è il divisore. */
 .scheda-box h3::after {
   content: "";
   display: block;
@@ -715,6 +710,11 @@ table.tabella-punteggi td {
 }
 
 .livello-rivelazione-numero {
+  font-family: var(--font-display);
+  font-size: 5rem;
+  color: var(--color-burgundy);
+  text-shadow: 0 0 26px rgba(201, 162, 39, 0.55);
+  animation: rivelazione-livello 0.6s ease-out;
   position: relative;
   line-height: 1;
 }
