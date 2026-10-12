@@ -6,7 +6,7 @@
 // l'ottaedro, i numeri sulle facce sono quelli possibili per quel dado e la
 // faccia frontale mostra sempre il risultato.
 // Con "riduci animazioni" il dado compare già fermo.
-import { v, q, slerp } from "./geometria-3d.js";
+import { v, q, slerp, facceVisibili, coloreFaccia } from "./geometria-3d.js";
 import { suona } from "./suoni.js";
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -30,7 +30,6 @@ export const FACCE = [];
 }
 export const normale = (f) => v.norm(v.cross(v.sub(VERTICI[f[1]], VERTICI[f[0]]), v.sub(VERTICI[f[2]], VERTICI[f[0]])));
 const NORMALI = FACCE.map(normale);
-const LUCE = v.norm([-0.4, 0.5, 1]);
 
 // Numeri di un d8 vero: le facce opposte sommano 9.
 const NUMERI_D8 = new Array(8).fill(0);
@@ -90,12 +89,7 @@ export function lanciaDadoPF(palco, { facce = 8, risultato }) {
   palco.replaceChildren(svg);
 
   function disegna(rot) {
-    // Facce rivolte verso chi guarda, dalla più lontana alla più vicina.
-    const visibili = FACCE.map((f, i) => {
-      const punti = f.map((k) => q.ruota(rot, VERTICI[k]));
-      const centro = v.mul(punti.reduce(v.add), 1 / 3);
-      return { i, punti, centro, n: q.ruota(rot, NORMALI[i]) };
-    }).filter((fc) => fc.n[2] > 0.05).sort((a, b) => a.centro[2] - b.centro[2]);
+    const visibili = facceVisibili(rot, FACCE, VERTICI, NORMALI);
     poligoni.forEach((el) => el.setAttribute("visibility", "hidden"));
     testi.forEach((el) => el.setAttribute("visibility", "hidden"));
     for (const fc of visibili) {
@@ -103,8 +97,7 @@ export function lanciaDadoPF(palco, { facce = 8, risultato }) {
       const ys = fc.punti.map((p) => CENTRO - p[1] * SCALA);
       const el = poligoni[fc.i];
       el.setAttribute("points", xs.map((x, k) => `${x.toFixed(1)},${ys[k].toFixed(1)}`).join(" "));
-      const lum = Math.max(0.3, v.dot(fc.n, LUCE));
-      el.setAttribute("fill", `rgb(${Math.round(60 + 160 * lum)},${Math.round(40 + 120 * lum)},${Math.round(10 + 50 * lum)})`);
+      el.setAttribute("fill", coloreFaccia(fc.n));
       el.setAttribute("visibility", "visible");
       svg.appendChild(el);
       // Il numero solo sulle facce quasi frontali, al centro del riquadro della

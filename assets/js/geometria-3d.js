@@ -64,3 +64,25 @@ export function slerp(a, b, t) {
   const s1 = Math.sin(theta) / Math.sin(theta0);
   return a.map((x, i) => x * s0 + bb[i] * s1);
 }
+
+// Direzione della luce che illumina i dadi: da sinistra in alto, verso chi guarda.
+export const LUCE = v.norm([-0.4, 0.5, 1]);
+
+// Facce rivolte verso chi guarda dopo la rotazione `rot`, dalla più lontana alla
+// più vicina (l'ordine in cui vanno disegnate). Ogni voce: { i, punti, centro, n }
+// con i = indice della faccia, punti = i suoi vertici ruotati, centro = il
+// baricentro e n = la normale ruotata.
+export function facceVisibili(rot, facce, vertici, normali) {
+  return facce.map((f, i) => {
+    const punti = f.map((k) => q.ruota(rot, vertici[k]));
+    const centro = v.mul(punti.reduce(v.add), 1 / 3);
+    return { i, punti, centro, n: q.ruota(rot, normali[i]) };
+  }).filter((fc) => fc.n[2] > 0.05).sort((a, b) => a.centro[2] - b.centro[2]);
+}
+
+// Colore di una faccia di normale `n` in base a quanto guarda la luce (mai più
+// scura di 0,3).
+export function coloreFaccia(n) {
+  const lum = Math.max(0.3, v.dot(n, LUCE));
+  return `rgb(${Math.round(60 + 160 * lum)},${Math.round(40 + 120 * lum)},${Math.round(10 + 50 * lum)})`;
+}

@@ -19,7 +19,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "724c3bbb49cd";
+const VERSIONE = "f5862ae0cd3d";
 const DATA_VERSIONE = "2026-10-12";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
@@ -69,8 +69,8 @@ const FILE = {
   "./assets/js/cruscotto-calcoli.js": "610babaca0d6",
   "./assets/js/dadi-base.js": "d1ee4ec14672",
   "./assets/js/dadi.js": "c32fc3581542",
-  "./assets/js/dado-caricamento.js": "7e138df9f108",
-  "./assets/js/dado-pf.js": "753910f2e1e9",
+  "./assets/js/dado-caricamento.js": "223a69f9bc5e",
+  "./assets/js/dado-pf.js": "8e31050df550",
   "./assets/js/dati-srd.js": "2ca98999c43e",
   "./assets/js/dati/bestiario.js": "da85ce1ef009",
   "./assets/js/dati/calendario.js": "4ee54ec1e983",
@@ -89,7 +89,7 @@ const FILE = {
   "./assets/js/equipaggiamento-srd.js": "f76aa365ff02",
   "./assets/js/esporta-scheda.js": "426e98cb61b2",
   "./assets/js/firebase-config.js": "a02623ecb818",
-  "./assets/js/geometria-3d.js": "c44409e8b331",
+  "./assets/js/geometria-3d.js": "cf8ca801bd2e",
   "./assets/js/guida-personaggio-dati.js": "c0ef4c32227a",
   "./assets/js/guida-personaggio.js": "d4ebca6b833e",
   "./assets/js/icone.js": "3940048bc896",

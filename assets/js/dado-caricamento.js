@@ -7,7 +7,7 @@
 //   ciclo si ferma (e riparte se il velo ricompare).
 // - Con "riduci animazioni" il dado resta fermo sul 20.
 import { VERTICI, FACCE, NUMERI, FACCIA_20, normale } from "./intro-dado.js";
-import { v, q, slerp } from "./geometria-3d.js";
+import { v, q, slerp, facceVisibili, coloreFaccia } from "./geometria-3d.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const CENTRO = 60;
@@ -26,7 +26,6 @@ const Q_FINALE = (() => {
 })();
 
 const NORMALI = FACCE.map(normale);
-const LUCE = v.norm([-0.4, 0.5, 1]);
 const asseCasuale = () => v.norm([Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5]);
 
 function crea(nome, attributi = {}) {
@@ -50,19 +49,13 @@ export function montaDadoCaricamento(palco) {
   palco.classList.add("dado-js");
 
   function disegna(rot) {
-    // Facce rivolte verso chi guarda, dalla più lontana alla più vicina.
-    const visibili = FACCE.map((f, i) => {
-      const punti = f.map((k) => q.ruota(rot, VERTICI[k]));
-      const centro = v.mul(punti.reduce(v.add), 1 / 3);
-      return { i, punti, centro, n: q.ruota(rot, NORMALI[i]) };
-    }).filter((fc) => fc.n[2] > 0.05).sort((a, b) => a.centro[2] - b.centro[2]);
+    const visibili = facceVisibili(rot, FACCE, VERTICI, NORMALI);
     facce.forEach((el) => el.setAttribute("visibility", "hidden"));
     numeri.forEach((el) => el.setAttribute("visibility", "hidden"));
     for (const fc of visibili) {
       const el = facce[fc.i];
       el.setAttribute("points", fc.punti.map((p) => `${(CENTRO + p[0] * SCALA).toFixed(1)},${(CENTRO - p[1] * SCALA).toFixed(1)}`).join(" "));
-      const lum = Math.max(0.3, v.dot(fc.n, LUCE));
-      el.setAttribute("fill", `rgb(${Math.round(60 + 160 * lum)},${Math.round(40 + 120 * lum)},${Math.round(10 + 50 * lum)})`);
+      el.setAttribute("fill", coloreFaccia(fc.n));
       el.setAttribute("visibility", "visible");
       svg.appendChild(el);
       // Il numero solo sulle facce quasi frontali (non segue l'inclinazione).
