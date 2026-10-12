@@ -940,8 +940,6 @@ a:hover {
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: var(--color-burgundy);
-  border-bottom: 1px solid rgba(122, 31, 43, 0.25);
-  padding-bottom: 8px;
 }
 
 .caratteristica {
@@ -1406,14 +1404,6 @@ a:hover {
   padding: 32px 30px;
   box-shadow: var(--shadow-deep);
   text-align: center;
-}
-
-.livello-rivelazione-numero {
-  font-family: var(--font-display);
-  font-size: 5rem;
-  color: var(--color-burgundy);
-  text-shadow: 0 0 26px rgba(201, 162, 39, 0.55);
-  animation: rivelazione-livello 0.6s ease-out;
 }
 
 .wizard-livello-passo h2 {
@@ -2785,13 +2775,6 @@ table.tabella-punteggi select {
 
 .combattente-condizioni:empty {
   display: none;
-}
-
-/* Il pannello "Stato" non deve allargare la colonna del party. */
-.editor-stato-pg {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
 }
 
 .campo-esaurimento .select-esaurimento {
