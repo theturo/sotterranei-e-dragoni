@@ -3,6 +3,34 @@
    Una regola nuova va nel file dell'area che la usa; in base.css se serve a
    pagine di aree diverse. */
 
+.calendario-intestazione h3 {
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.conteggi-opzione svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.nomi-mancano {
+  font-style: italic;
+}
+
+.riga-opzione-form input {
+  padding: 6px 8px;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-body);
+  min-width: 0;
+}
+
+.riga-opzione-form input[type="date"] {
+  flex: 1;
+}
+
 /* ---------- Calendario ---------- */
 .calendario-layout {
   display: grid;
