@@ -19,14 +19,14 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "f5862ae0cd3d";
-const DATA_VERSIONE = "2026-10-12";
+const VERSIONE = "5384b927aeba";
+const DATA_VERSIONE = "2026-10-13";
 const FILE = {
   "./admin-utenti.html": "77d8086bb4b1",
   "./archivio.html": "cacd8a002a1f",
-  "./assets/css/base.css": "c888d73d595a",
-  "./assets/css/calendario.css": "492f4315d65d",
-  "./assets/css/dashboard.css": "5cee4f6c2bc7",
+  "./assets/css/base.css": "652931ce43c2",
+  "./assets/css/calendario.css": "b7f8d6336144",
+  "./assets/css/dashboard.css": "a29fb3cdce9a",
   "./assets/css/dm.css": "ac39fd0be665",
   "./assets/css/gioco.css": "b5a623af94d3",
   "./assets/css/guida.css": "b6e84121ae34",
