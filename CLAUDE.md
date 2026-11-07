@@ -106,3 +106,16 @@ CI (`.github/workflows/test.yml`) esegue le tre suite su ogni PR e su `main`.
 - La pulizia del codice la fa un agente parallelo su rami `claude/pulizia-…`, un lotto
   piccolo per PR; i lotti e il loro stato sono tracciati in un registro condiviso (il
   link lo fornisce l'utente) e la sessione principale li verifica prima del merge.
+
+## Privacy e wiki privata
+
+- **Questa repo è pubblica** (e GitHub Pages pubblica tutti i suoi file). Qui non vanno
+  informazioni personali o interne: nomi e contatti delle persone, link a sessioni di
+  Claude o ad artifact, note sul gruppo, decisioni interne. Vale per codice, commenti,
+  `docs/`, commit, PR e questo file.
+- Storia del progetto, decisioni con il loro perché, diario delle sessioni e
+  riferimenti privati stanno in una **wiki privata** (vault Obsidian in una repo
+  separata, non pubblica): il link lo fornisce l'utente.
+- La wiki si aggiorna **a fine sessione**, quando l'utente dice che ci si ferma:
+  nota di diario, pagine toccate, commit e push. Lo fa la sessione principale; le
+  altre sessioni (es. l'agente di pulizia) non ci scrivono.
