@@ -2799,18 +2799,16 @@ table.tabella-punteggi select {
   display: block;
 }
 
-/* ---------- Intro dell'app installata (intro.js) ---------- */
+/* ---------- Intro dell'app (intro.js): drago e D20, poi il logo sul bianco ---------- */
 .intro-app {
   position: fixed;
   inset: 0;
   z-index: 1000;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 42%, rgba(201, 162, 39, 0.1), transparent 55%),
-    linear-gradient(160deg, var(--color-bg-dark) 0%, var(--color-bg-dark-2) 55%, #0d0805 100%);
-  transition: opacity 0.35s ease;
-  -webkit-user-select: none;
-  user-select: none;
+  background: #22355a;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity 0.5s ease;
 }
 
 .intro-app.intro-uscita {
@@ -2818,8 +2816,7 @@ table.tabella-punteggi select {
   pointer-events: none;
 }
 
-.intro-livello,
-.intro-livello canvas {
+.intro-app canvas {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -2827,81 +2824,25 @@ table.tabella-punteggi select {
   display: block;
 }
 
-.intro-bagliore {
+/* "riduci animazioni": solo il logo fermo sul bianco dipinto */
+.intro-app.intro-ferma {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4ebda url("../img/intro/bianco_finale.webp") center / cover;
+}
+
+.intro-logo {
+  position: relative;
+  height: min(64vmin, 620px);
+  aspect-ratio: 806 / 900;
+}
+
+.intro-logo img {
   position: absolute;
-  left: var(--cx);
-  top: var(--cy);
-  width: 460px;
-  height: 460px;
-  margin: -230px 0 0 -230px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 244, 214, 0.95) 0%, rgba(245, 214, 140, 0.55) 22%, rgba(201, 162, 39, 0.18) 48%, transparent 70%);
-  mix-blend-mode: screen;
-  opacity: 0;
-}
-
-.intro-alone20 {
-  position: absolute;
-  width: 90px;
-  height: 60px;
-  margin: -30px 0 0 -45px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(255, 190, 90, 0.55) 0%, rgba(232, 130, 40, 0.3) 40%, transparent 72%);
-  mix-blend-mode: screen;
-  opacity: 0;
-}
-
-/* Il 20 dorato sopra quello inciso: il centro del testo HTML cade 1,5 px più
-   in basso di quello dipinto sul dado, si corregge qui. */
-.intro-brace20 {
-  position: absolute;
-  transform: translate(-50%, calc(-50% - 1.5px));
-  font-family: "Cinzel Intro", "Cinzel", serif;
-  font-weight: 700;
-  font-size: 21px;
-  line-height: 1;
-  color: #ffd66e;
-  text-shadow: 0 0 3px #ffb33a, 0 0 8px rgba(255, 150, 30, 0.9), 0 0 18px rgba(255, 120, 20, 0.6);
-  opacity: 0;
-}
-
-.intro-icona {
-  /* Il d20 dipinto nel logo ha il centro a (122, 134) px e il raggio di 57 px
-     (RAGGIO_ICONA): combacia con il dado 3D fermo in (cx, cy). */
-  position: absolute;
-  left: calc(var(--cx) - 122px);
-  top: calc(var(--cy) - 134px);
-  width: 239px;
-  height: 231px;
-  opacity: 0;
-}
-
-.intro-titolo,
-.intro-sottotitolo {
-  position: absolute;
-  left: 0;
-  right: 0;
-  text-align: center;
-  opacity: 0;
-}
-
-.intro-titolo {
-  top: calc(var(--cy) + 116px);
-  font-family: "Cinzel", "Cinzel Intro", serif;
-  font-weight: 700;
-  font-size: 31px;
-  line-height: 1.15;
-  color: var(--color-gold-bright);
-  text-shadow: 0 2px 0 #000, 0 0 18px rgba(201, 162, 39, 0.35);
-}
-
-.intro-sottotitolo {
-  top: calc(var(--cy) + 198px);
-  font-family: "Cinzel", "Cinzel Intro", serif;
-  font-size: 12px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: rgba(230, 211, 163, 0.62);
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 /* ---------- Guida alla creazione del personaggio (guida-personaggio.js) ---------- */

@@ -69,8 +69,8 @@ device. After changing any file of the site, run `node strumenti/aggiorna-sw.mjs
 refreshes the file list and the version fingerprint in `sw.js`, so installed apps pick up
 the new version (`test/pagine` fails if you forget).
 
-Third-party files shipped with the site: Three.js (`assets/vendor/`, MIT license) for the
-intro animation and the Cinzel typeface (`assets/fonts/`, SIL Open Font License).
+Third-party files shipped with the site: pdf-lib and fontkit (`assets/vendor/pdf/`) and the
+fonts used in the character-sheet PDF (`assets/fonts/pdf/`, SIL Open Font License).
 
 Any Dungeons & Dragons rules content referenced by this project is based on the freely
 licensed System Reference Document (SRD); this project is not affiliated with or endorsed

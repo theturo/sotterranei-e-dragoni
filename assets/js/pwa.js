@@ -228,17 +228,28 @@ function mostraIstruzioniIOS() {
 }
 
 // ---------- Intro ----------
-// All'avvio dell'app installata (una volta per sessione: non cambiando pagina)
-// parte l'intro del d20 (intro.js, caricato solo quando serve).
+// L'intro «drago e D20» (intro.js, caricato solo quando serve) copre il caricamento della
+// dashboard in due casi:
+// - avvio a freddo dell'app installata (una volta per sessione), se si era già entrati:
+//   altrimenti la dashboard rimanda al login e l'intro partirebbe solo per essere interrotta;
+// - subito dopo il login, nell'app e nel browser (segnale lasciato dalla pagina di login).
+// Restituisce true se l'intro parte.
+const PAGINA_INTRO = /(^|\/)dashboard\.html$/;
 function avviaIntro() {
-  if (!inAppInstallata()) return;
+  if (!PAGINA_INTRO.test(window.location.pathname)) return false;
   try {
-    if (sessionStorage.getItem("sed-intro-vista") === "1") return;
+    const dopoLogin = sessionStorage.getItem("sed-intro-dopo-login") === "1";
+    sessionStorage.removeItem("sed-intro-dopo-login");
+    const avvioApp = inAppInstallata()
+      && sessionStorage.getItem("sed-intro-vista") !== "1"
+      && localStorage.getItem("sed-accesso") === "1";
+    if (!dopoLogin && !avvioApp) return false;
     sessionStorage.setItem("sed-intro-vista", "1");
   } catch {
-    return;
+    return false;
   }
   import("./intro.js").then((m) => m.mostraIntro()).catch((errore) => console.warn("Intro non avviata", errore));
+  return true;
 }
 
 // ---------- Dado di caricamento ----------
@@ -253,5 +264,5 @@ function avviaDadoCaricamento() {
 }
 
 registraServiceWorker();
-avviaDadoCaricamento();
-avviaIntro();
+// sotto l'intro il velo tiene il suo dado disegnato in CSS: quello in 3D non si vedrebbe
+if (!avviaIntro()) avviaDadoCaricamento();

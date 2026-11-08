@@ -83,7 +83,20 @@ export async function accediUtente({ email, password }) {
   return credenziali.user;
 }
 
+// Indizio, leggibile subito all'apertura dell'app, che c'è una sessione aperta: pwa.js lo usa
+// per decidere se mostrare l'intro all'avvio (senza sessione si va al login, niente intro).
+// Non è un controllo di sicurezza: quello lo fanno proteggiPagina e le regole.
+function ricordaAccesso(aperto) {
+  try {
+    if (aperto) localStorage.setItem("sed-accesso", "1");
+    else localStorage.removeItem("sed-accesso");
+  } catch {
+    // senza localStorage l'intro all'avvio non parte: nessun danno
+  }
+}
+
 export async function esciUtente() {
+  ricordaAccesso(false);
   await signOut(auth);
 }
 
@@ -132,6 +145,7 @@ export async function ricaricaUtente(user) {
 export function proteggiPagina(callback) {
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
+      ricordaAccesso(false);
       window.location.href = "index.html";
       return;
     }
@@ -172,6 +186,7 @@ export function proteggiPagina(callback) {
       window.location.href = "attesa-approvazione.html";
       return;
     }
+    ricordaAccesso(true);
     callback(user, profilo);
   });
 }

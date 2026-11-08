@@ -88,7 +88,10 @@ CI (`.github/workflows/test.yml`) esegue le tre suite su ogni PR e su `main`.
   (registrazione, controllo aggiornamenti, banner «nuova versione»).
 - **CSS**: `assets/css/base.css` (comune) + fogli per area (`scheda`, `sessione`,
   `gioco`, `dm`, …). Le pagine caricano più fogli: l'ordine conta.
-- **Librerie incluse**: Three.js in `assets/vendor/` (intro 3D), font in `assets/fonts/`.
+- **Librerie incluse**: librerie del PDF in `assets/vendor/pdf/`, font del PDF in `assets/fonts/pdf/`.
+- **Intro** (`intro.js` → worker `intro-worker.js` → `intro-motore.js`, scena pura in
+  `intro-scena.js` testata in `test/pagine/`): pezzi dipinti in `assets/img/intro/`, misure in
+  `intro-pezzi.js` (generato, non modificare a mano). Parte da `pwa.js`.
   Niente npm per il sito.
 
 ## Documenti
