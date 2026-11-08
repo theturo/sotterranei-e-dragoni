@@ -23,6 +23,12 @@ form.addEventListener("submit", async (evento) => {
 
   try {
     await accediUtente({ email, password });
+    // la dashboard mostrerà l'intro mentre si carica (pwa.js)
+    try {
+      sessionStorage.setItem("sed-intro-dopo-login", "1");
+    } catch {
+      // senza sessionStorage niente intro: si entra e basta
+    }
     window.location.href = "dashboard.html";
   } catch (errore) {
     mostraMessaggio(traduciErrore(errore.code), "error");

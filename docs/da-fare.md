@@ -190,7 +190,13 @@ Nessuna in sospeso.
 - Intro dell'app installata: d20 in resina avorio con i numeri rossi (Three.js)
   che entra rimbalzando, si ferma sul 20, il 20 si accende d'oro e il dado
   diventa l'icona con il titolo (2,5 s, un tocco la salta, versione ferma con
-  "riduci animazioni").
+  "riduci animazioni"). Sostituita dall'intro «drago e D20» (sotto).
+- Intro «drago e D20» con pezzi dipinti: il drago entra da sinistra, gira attorno
+  al D20, lo colpisce, esplosione a spirale che vira al bianco e logo (6,7 s).
+  Copre il caricamento: all'avvio a freddo dell'app installata e subito dopo il
+  login; si entra quando la dashboard è pronta. Disegno in un worker
+  (OffscreenCanvas) dove c'è; un tocco salta; logo fermo con "riduci animazioni".
+  Tolti Three.js e il Cinzel per il web, non più usati.
 - Notifiche push: gli avvisi della campanella (livello, date proposte, sessione
   confermata e il nuovo "la sessione è iniziata") arrivano anche ad app chiusa,
   sul telefono (app installata; su iPhone da iOS 16.4) o sul computer;

@@ -55,6 +55,6 @@ test("a una versione nuova si riscaricano solo i file cambiati", () => {
   assert.match(sw, /if \(impronte\[f\] !== impronta\) continue;/);
   assert.match(sw, /cache\.put\(IMPRONTE, new Response\(JSON\.stringify\(FILE\)/);
   // I mostri del SRD (solo per il DM) si salvano al primo uso.
-  assert.ok(suRichiesta("assets/js/mostri-srd.js") && !suRichiesta("assets/vendor/three.module.min.js"));
+  assert.ok(suRichiesta("assets/js/mostri-srd.js") && !suRichiesta("assets/js/intro.js"));
   assert.match(sw, /"\.\/assets\/js\/mostri-srd\.js"\]/);
 });
