@@ -19,14 +19,14 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "19b2cf46feb5";
+const VERSIONE = "6c22862121b6";
 const DATA_VERSIONE = "2026-11-09";
 const FILE = {
   "./admin-utenti.html": "e961c02cf6fa",
   "./archivio.html": "afcf7df72938",
-  "./assets/css/base.css": "56d993f2cf07",
+  "./assets/css/base.css": "d393a199e7e4",
   "./assets/css/calendario.css": "b7f8d6336144",
-  "./assets/css/dashboard.css": "a29fb3cdce9a",
+  "./assets/css/dashboard.css": "09b34c359400",
   "./assets/css/dm.css": "ac39fd0be665",
   "./assets/css/gioco.css": "d816ddd3eb92",
   "./assets/css/guida.css": "b6e84121ae34",
@@ -71,10 +71,6 @@ const FILE = {
   "./assets/img/intro/vortice_quadrato.webp": "65cf19334bca",
   "./assets/img/intro/zampa_ant.webp": "714536bee26f",
   "./assets/img/intro/zampa_post.webp": "df342e05cbb7",
-  "./assets/img/logo/drago.webp": "a337b3083e2b",
-  "./assets/img/logo/logo-orizzontale-560.webp": "0359e443032c",
-  "./assets/img/logo/logo-orizzontale.webp": "e2c434091cce",
-  "./assets/img/logo/stemma.webp": "d0fd6f1e9680",
   "./assets/js/aree-incantesimi.js": "1ff9cb09620d",
   "./assets/js/auth.js": "f54e89ea6ce2",
   "./assets/js/bestiario-calcoli.js": "3110364e2ddd",
@@ -170,27 +166,27 @@ const FILE = {
   "./assets/js/youtube.js": "31a2b419c9ed",
   "./assets/vendor/pdf/LICENZE.txt": "ea9f284440c0",
   "./assets/vendor/pdf/pdf-lib-fontkit.min.js": "2a73af96da27",
-  "./attesa-approvazione.html": "aaa8004918e0",
+  "./attesa-approvazione.html": "46dd7ac6fe50",
   "./bestiario.html": "58295998cef8",
   "./calendario.html": "120041a085a0",
   "./campagna.html": "4bacfb9a0ace",
   "./controllo-musica.html": "c85fc9974130",
   "./crea-personaggio.html": "3b8926472e4e",
-  "./dashboard.html": "64f5dc276f0a",
+  "./dashboard.html": "15e60678895f",
   "./dm-party.html": "99c926976e98",
   "./glossario-equipaggiamento.html": "568976c27e32",
   "./glossario-incantesimi.html": "39fc5189bc3b",
   "./guida.html": "2a87a98b613f",
   "./i-miei-personaggi.html": "502813bdbfe0",
-  "./index.html": "628fedaa7b7d",
+  "./index.html": "2b1fb4fe0247",
   "./libreria.html": "2500a81c5cbd",
   "./manifest.webmanifest": "879337aa9851",
-  "./offline.html": "aeaa45c107b5",
-  "./register.html": "d8b0d9259f07",
+  "./offline.html": "db6483bdcfa1",
+  "./register.html": "03a7cf2e4704",
   "./scheda-personaggio.html": "d06cb3a6bd91",
   "./sessione.html": "c869775da120",
   "./tavolo.html": "24b0ce5bc660",
-  "./verifica-email.html": "6b64367d54f8",
+  "./verifica-email.html": "374faa034a5b",
 };
 // === FINE ELENCO GENERATO ===
 

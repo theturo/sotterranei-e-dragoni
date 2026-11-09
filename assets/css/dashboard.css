@@ -244,14 +244,45 @@
   }
 }
 
-/* ---------- Logo nell'intestazione della dashboard ---------- */
-.logo-intestazione {
-  display: block;
-  width: 190px;
-  max-width: 60vw;
-  height: auto;
-  margin: 0 0 6px -4px;
+/* ---------- Marchio nell'intestazione della dashboard ---------- */
+/* L'emblema del logo (la parte alta dell'immagine, senza il titolo dipinto) e accanto
+   la scritta in Cinzel come testo, nitida a ogni misura. Sotto i 60 px l'emblema
+   perderebbe il drago. */
+.marchio-intestazione {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px -4px;
+}
+
+.marchio-intestazione img {
+  width: 80px;
+  height: 78px;
+  object-fit: cover;
+  object-position: top;
+  flex-shrink: 0;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+.marchio-scritta {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+  color: var(--color-gold-bright);
+  text-shadow: 0 2px 0 #000, 0 0 18px rgba(201, 162, 39, 0.3);
+}
+
+@media (max-width: 639px) {
+  .marchio-intestazione img {
+    width: 62px;
+    height: 60px;
+  }
+
+  .marchio-scritta {
+    font-size: 17px;
+  }
 }
 
 .sezione-titolo::after {
