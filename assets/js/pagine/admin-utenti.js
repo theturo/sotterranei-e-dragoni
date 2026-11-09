@@ -8,7 +8,7 @@ import {
   aggiornaRuoloUtente,
   approvaUtente,
 } from "../dati/utenti.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { esc, mostraAttesa, mostraToast } from "../utils.js";
 import { dataBreve } from "../calendario.js";
 
@@ -65,7 +65,7 @@ let uidAdmin = null;
 
 proteggiPaginaAdmin(async (user, profilo) => {
   uidAdmin = user.uid;
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
   try {
     const utenti = await elencaUtenti();
     // Chi è in attesa di approvazione in cima, così non passa inosservato.

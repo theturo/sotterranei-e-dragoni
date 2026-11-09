@@ -1,260 +1,10 @@
-/* dashboard.css — Dashboard ridisegnata (blu notte): barra laterale, testata con
-   campagna e campanella, pannello della sessione sul dipinto, riepilogo su
-   pergamena e strumenti.
-   Caricato dopo base.css da: dashboard. I colori sono le variabili --rd-* di
-   base.css. Le regole su pezzi condivisi (campanella, pannello ⚙️) valgono
-   solo dentro .pagina-ridisegnata: le altre pagine restano com'erano.
+/* dashboard.css — Dashboard ridisegnata: testata con campagna, targhette e
+   «● Sessione in corso», pannello della sessione sul dipinto, riepilogo su
+   pergamena e strumenti. Barra laterale, cassetto, campanella e pannello ⚙️
+   sono del guscio comune (base.css, guscio.js).
+   Caricato dopo base.css da: dashboard.
    Una regola nuova va nel file dell'area che la usa; in base.css se serve a
-   pagine di aree diverse.
-   Larghezze: ≥1200 px barra completa · 900–1199 barra a sole icone ·
-   <900 testata del telefono (niente barra) · <640 strumenti senza descrizione. */
-
-html:has(body.pagina-ridisegnata) {
-  background-color: var(--rd-fondo);
-}
-
-.pagina-ridisegnata {
-  background: var(--rd-fondo);
-  color: var(--rd-avorio);
-}
-
-.pagina-ridisegnata :is(a, button, select):focus-visible {
-  outline: 2px solid var(--rd-oro);
-  outline-offset: 2px;
-}
-
-/* Etichetta in maiuscoletto dorato (campagna, pannello, strumenti, stato). */
-.rd-etichetta {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 2.4px;
-  text-transform: uppercase;
-  color: var(--rd-oro);
-}
-
-/* ---------- Guscio: barra laterale + area principale ---------- */
-.rd-guscio {
-  display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
-.rd-barra {
-  position: sticky;
-  top: 0;
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  width: 248px;
-  height: 100vh;
-  height: 100dvh;
-  padding: 22px 14px 16px;
-  overflow-y: auto;
-  background: var(--rd-barra);
-  border-right: 1px solid var(--rd-bordo-scuro);
-  scrollbar-width: thin;
-  scrollbar-color: var(--rd-bordo) transparent;
-}
-
-.rd-marchio {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 6px 16px;
-  text-decoration: none;
-}
-
-/* L'emblema senza il titolo dipinto: sotto i 50 px perderebbe il drago. */
-.rd-marchio img {
-  width: 54px;
-  height: 53px;
-  object-fit: cover;
-  object-position: top;
-  flex: none;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
-}
-
-.rd-marchio-scritta {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 17px;
-  line-height: 1.05;
-  letter-spacing: 0.4px;
-  color: var(--rd-avorio);
-}
-
-.rd-nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.rd-nav-gruppo {
-  margin: 0;
-  padding: 14px 10px 5px;
-  font-family: var(--font-heading);
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 2.2px;
-  text-transform: uppercase;
-  color: var(--rd-bronzo);
-}
-
-.rd-voce {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 38px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: none;
-  color: var(--rd-testo-2);
-  font-family: var(--font-body);
-  font-size: 17px;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-@media (hover: hover) {
-  .rd-voce:hover {
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--rd-avorio);
-  }
-}
-
-.rd-voce.attiva {
-  background: var(--rd-selezione);
-  border-color: var(--rd-bordo);
-  color: var(--rd-avorio);
-  font-weight: 500;
-}
-
-.rd-voce-icona {
-  display: flex;
-  flex: none;
-  color: var(--rd-oro);
-}
-
-.rd-voce-icona svg {
-  width: 19px;
-  height: 19px;
-  fill: currentColor;
-}
-
-.rd-voce-testo {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rd-punto-live {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #e0574a;
-  box-shadow: 0 0 0 3px rgba(224, 87, 74, 0.25);
-}
-
-.rd-conta {
-  flex: none;
-  min-width: 19px;
-  height: 19px;
-  padding: 0 5px;
-  border-radius: 10px;
-  background: var(--rd-cremisi);
-  border: 1px solid var(--rd-cremisi-bordo);
-  color: #fff;
-  font-family: var(--font-body);
-  font-size: 12px;
-  line-height: 17px;
-  text-align: center;
-}
-
-.rd-account {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 14px;
-  border-top: 1px solid var(--rd-bordo-scuro);
-}
-
-.rd-account-chi {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 8px 4px;
-  min-width: 0;
-}
-
-.rd-avatar {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #33506a;
-  border: 1px solid var(--rd-bronzo);
-  font-family: var(--font-heading);
-  font-weight: 700;
-  color: var(--rd-avorio);
-}
-
-.rd-account-testi {
-  min-width: 0;
-}
-
-.rd-account-testi b,
-.rd-account-testi small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rd-account-testi b {
-  font-weight: 600;
-  font-size: 17px;
-  color: var(--rd-avorio);
-}
-
-.rd-account-testi small {
-  font-size: 14px;
-  color: var(--rd-oro);
-}
-
-.rd-account-azioni {
-  display: flex;
-  gap: 4px;
-}
-
-.rd-account-azioni .rd-voce {
-  flex: 1;
-  gap: 8px;
-  min-height: 36px;
-  font-size: 15px;
-}
-
-.rd-account-azioni .rd-voce-icona svg {
-  width: 17px;
-  height: 17px;
-}
-
-/* ---------- Area principale e dipinto ---------- */
-.rd-principale {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-}
+   pagine di aree diverse. */
 
 /* Il master del drago e del D20: testa del drago dietro il pannello, D20 alla
    sua destra; sfuma nel blu sotto il riepilogo. */
@@ -293,9 +43,6 @@ html:has(body.pagina-ridisegnata) {
   gap: 20px;
 }
 
-.rd-emblema-telefono {
-  display: none;
-}
 
 .rd-campagna {
   min-width: 0;
@@ -375,40 +122,6 @@ html:has(body.pagina-ridisegnata) {
   font-size: 16px;
 }
 
-.rd-targhette {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* Contorno bronzo: il ruolo in questa campagna. Pieno oro: «Admin», il ruolo
-   dell'account (al computer sta anche nel riquadro in fondo alla barra). */
-.rd-targhetta {
-  font-family: var(--font-heading);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 1.4px;
-  line-height: 1;
-  text-transform: uppercase;
-  padding: 6px 9px 5px;
-  border-radius: 6px;
-  color: var(--rd-oro);
-  background: rgba(20, 38, 53, 0.92);
-  border: 1px solid var(--rd-bronzo);
-}
-
-.rd-targhetta-admin {
-  color: var(--rd-inchiostro);
-  background: var(--rd-oro);
-  border-color: var(--rd-oro);
-}
-
-@media (min-width: 900px) {
-  .rd-targhetta-admin {
-    display: none;
-  }
-}
-
 .rd-testata-destra {
   display: flex;
   align-items: center;
@@ -441,73 +154,6 @@ html:has(body.pagina-ridisegnata) {
   font-weight: 600;
 }
 
-/* Campanella e ingranaggio dell'intestazione condivisa (variante compatta). */
-.rd-slot {
-  gap: 10px;
-}
-
-.pagina-ridisegnata .rd-slot .btn-campanella {
-  width: 46px;
-  height: 46px;
-  border-radius: 10px;
-  background: rgba(20, 38, 53, 0.9);
-  border: 1px solid var(--rd-bordo);
-  color: var(--rd-oro);
-}
-
-.pagina-ridisegnata .rd-slot .btn-campanella svg {
-  width: 22px;
-  height: 22px;
-}
-
-.pagina-ridisegnata .badge-non-lette {
-  top: -6px;
-  right: -6px;
-  background: var(--rd-cremisi);
-  border-color: var(--rd-cremisi-bordo);
-  font-family: var(--font-body);
-}
-
-/* Al computer Impostazioni sta nella barra laterale. */
-.pagina-ridisegnata #mu-btn-impostazioni {
-  display: none;
-}
-
-.pagina-ridisegnata .dropdown-notifiche {
-  top: calc(100% + 8px);
-  width: 360px;
-  background: var(--rd-barra);
-  border: 1px solid var(--rd-bordo);
-  color: var(--rd-avorio);
-  scrollbar-color: var(--rd-bordo) transparent;
-}
-
-.pagina-ridisegnata .dropdown-notifiche-titolo {
-  color: var(--rd-oro);
-  border-bottom-color: var(--rd-bordo-scuro);
-}
-
-.pagina-ridisegnata .notifica-riga {
-  color: var(--rd-avorio);
-}
-
-.pagina-ridisegnata .notifica-riga.non-letta {
-  background: rgba(237, 187, 118, 0.12);
-}
-
-.pagina-ridisegnata .notifica-riga:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.pagina-ridisegnata .notifica-data,
-.pagina-ridisegnata .dropdown-notifiche-vuoto {
-  color: var(--rd-testo-2);
-}
-
-.pagina-ridisegnata .notifica-testo a {
-  color: var(--rd-oro);
-}
-
 /* ---------- Inviti (installa l'app, attiva le notifiche) ---------- */
 .invito-installa {
   display: flex;
@@ -536,58 +182,6 @@ html:has(body.pagina-ridisegnata) {
 
 .invito-installa .banner-app-chiudi {
   color: var(--rd-testo-2);
-}
-
-/* ---------- Pulsanti del redesign ---------- */
-.rd-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  min-height: 48px;
-  padding: 0 20px;
-  border-radius: 8px;
-  font-family: var(--font-body);
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.1;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.rd-btn:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.rd-btn-primario {
-  background: var(--rd-cremisi);
-  border: 1px solid var(--rd-cremisi-bordo);
-  color: var(--rd-avorio);
-}
-
-.rd-btn-secondario {
-  background: rgba(41, 59, 70, 0.85);
-  border: 1px solid var(--rd-bordo);
-  color: var(--rd-avorio);
-  font-size: 18px;
-  font-weight: 400;
-}
-
-.rd-btn-piccolo {
-  min-height: 38px;
-  padding: 0 14px;
-  font-size: 17px;
-}
-
-@media (hover: hover) {
-  .rd-btn-primario:not(:disabled):hover {
-    background: #9a4642;
-  }
-
-  .rd-btn-secondario:not(:disabled):hover {
-    border-color: var(--rd-bronzo);
-  }
 }
 
 /* ---------- Pannello: saluto e sessione ---------- */
@@ -903,32 +497,8 @@ html:has(body.pagina-ridisegnata) {
   margin: 10px 0 12px;
 }
 
-.rd-riordina {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 8px;
-  background: rgba(41, 59, 70, 0.7);
-  border: 1px solid var(--rd-bordo);
-  color: var(--rd-testo-2);
-  font-family: var(--font-body);
-  font-size: 16px;
-  cursor: pointer;
-}
 
-.rd-riordina svg {
-  width: 15px;
-  height: 15px;
-  fill: var(--rd-oro);
-}
 
-.rd-riordina.attivo {
-  border-color: var(--rd-oro);
-  background: rgba(237, 187, 118, 0.12);
-  color: var(--rd-avorio);
-}
 
 .rd-gruppi {
   display: grid;
@@ -1045,248 +615,8 @@ html:has(body.pagina-ridisegnata) {
   display: none;
 }
 
-/* ---------- Pannello ⚙️ (condiviso) nello stile della dashboard ---------- */
-.pagina-ridisegnata #mu-modal-impostazioni {
-  background: rgba(5, 10, 15, 0.62);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .modal-card {
-  max-width: 440px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 22px 22px 20px;
-  text-align: left;
-  background: var(--rd-barra);
-  color: var(--rd-avorio);
-  border: 1px solid var(--rd-bordo);
-  scrollbar-color: var(--rd-bordo) transparent;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni h2 {
-  margin: 0 40px 8px 0;
-  font-size: 1.2rem;
-  color: var(--rd-avorio);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni :is(p, .card-tagline, .impostazioni-nota) {
-  color: var(--rd-testo-2);
-  opacity: 1;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .btn-chiudi-modal {
-  color: var(--rd-testo-2);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-account {
-  justify-content: flex-start;
-  margin: 2px 0 6px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rd-bordo-scuro);
-  color: var(--rd-avorio);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-account .role-badge {
-  color: var(--rd-oro);
-  border-color: var(--rd-bronzo);
-  background: transparent;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .field label {
-  color: var(--rd-oro);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni :is(.field input, .field select) {
-  background: var(--rd-testata);
-  border: 1px solid var(--rd-bordo);
-  color: var(--rd-avorio);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni :is(.field input, .field select):focus {
-  border-color: var(--rd-oro);
-  background: var(--rd-testata);
-}
-
-/* Le voci del pannello come elenco, con la freccia a destra. */
-.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni {
-  gap: 0;
-  margin-top: 6px;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 48px;
-  padding: 0 2px;
-  border: none;
-  border-bottom: 1px solid rgba(59, 77, 86, 0.45);
-  border-radius: 0;
-  background: none;
-  color: var(--rd-avorio);
-  font-family: var(--font-body);
-  font-size: 18px;
-  text-align: left;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella::after {
-  content: "›";
-  font-size: 22px;
-  color: var(--rd-testo-2);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella-pericolo {
-  justify-content: center;
-  margin-top: 14px;
-  border: 1px solid var(--rd-cremisi-bordo);
-  border-radius: 8px;
-  color: #f2b4a8;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella-pericolo::after {
-  content: none;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .btn {
-  background: var(--rd-cremisi);
-  border-color: var(--rd-cremisi-bordo);
-  color: var(--rd-avorio);
-  box-shadow: none;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .btn-ghost {
-  background: rgba(41, 59, 70, 0.85);
-  border-color: var(--rd-bordo);
-  color: var(--rd-avorio);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .btn-tabella {
-  border-color: var(--rd-bordo);
-  color: var(--rd-avorio);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .preferenza-riga {
-  border-bottom-color: rgba(59, 77, 86, 0.45);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .preferenza-riga small {
-  color: var(--rd-testo-2);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .preferenze-titolo {
-  color: var(--rd-oro);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni input.interruttore {
-  background: #4a5a63;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni input.interruttore:checked {
-  background: #3f7a52;
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .volume-suoni {
-  accent-color: var(--rd-oro);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .versione-app {
-  border: 1px solid var(--rd-bordo-scuro);
-  background: rgba(16, 30, 42, 0.6);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .versione-app-nome {
-  color: var(--rd-oro);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .versione-app-stato {
-  color: var(--rd-testo-2);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.pagina-ridisegnata #mu-modal-impostazioni .versione-app-disponibile {
-  color: var(--rd-avorio);
-}
-
 /* ---------- 900–1199 px: barra a sole icone ---------- */
 @media (min-width: 900px) and (max-width: 1199px) {
-  .rd-barra {
-    width: 76px;
-    padding: 20px 10px 14px;
-    align-items: center;
-  }
-
-  .rd-marchio {
-    padding: 0 0 12px;
-  }
-
-  .rd-marchio-scritta,
-  .rd-account-testi {
-    display: none;
-  }
-
-  /* Testo nascosto alla vista ma letto dai lettori di schermo. */
-  .rd-voce-testo {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  .rd-nav {
-    align-items: center;
-    width: 100%;
-  }
-
-  .rd-nav-gruppo {
-    width: 36px;
-    height: 1px;
-    margin: 9px 0;
-    padding: 0;
-    overflow: hidden;
-    font-size: 0;
-    background: var(--rd-bordo);
-  }
-
-  .rd-voce {
-    justify-content: center;
-    width: 44px;
-    padding: 0;
-  }
-
-  .rd-voce .rd-punto-live,
-  .rd-voce .rd-conta {
-    position: absolute;
-    top: 2px;
-    right: 1px;
-  }
-
-  .rd-voce .rd-conta {
-    min-width: 16px;
-    height: 16px;
-    padding: 0 3px;
-    font-size: 11px;
-    line-height: 14px;
-  }
-
-  .rd-account {
-    width: 100%;
-    align-items: center;
-  }
-
-  .rd-account-chi {
-    padding: 0 0 4px;
-  }
-
-  .rd-account-azioni {
-    flex-direction: column;
-  }
-
-  .rd-account-azioni .rd-voce {
-    flex: none;
-  }
-
   .rd-dipinto {
     background-position: 0 0, -90px -180px;
   }
@@ -1303,26 +633,12 @@ html:has(body.pagina-ridisegnata) {
   .rd-saluto {
     font-size: 38px;
   }
-
-  .rd-btn {
-    gap: 10px;
-    padding: 0 16px;
-    font-size: 19px;
-  }
-
-  .rd-btn-secondario {
-    font-size: 17px;
-  }
 }
 
 /* ---------- Sotto i 900 px: telefono e tablet ---------- */
 @media (max-width: 899px) {
-  .rd-barra {
-    display: none;
-  }
-
   /* Il dipinto in una fascia in alto: drago a sinistra, D20 a destra (le
-     percentuali tengono il D20 allo stesso punto a ogni larghezza). */
+       percentuali tengono il D20 allo stesso punto a ogni larghezza). */
   .rd-dipinto {
     height: 330px;
     background-image:
@@ -1344,15 +660,6 @@ html:has(body.pagina-ridisegnata) {
     padding: 11px 0 8px;
   }
 
-  .rd-emblema-telefono {
-    display: block;
-    flex: none;
-    width: 42px;
-    height: 41px;
-    object-fit: cover;
-    object-position: top;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
-  }
 
   .rd-campagna {
     flex: 1;
@@ -1387,54 +694,8 @@ html:has(body.pagina-ridisegnata) {
     font-size: 13px;
   }
 
-  .rd-targhette {
-    gap: 5px;
-  }
-
-  .rd-targhetta {
-    padding: 4px 7px 3px;
-    font-size: 0.6rem;
-    letter-spacing: 1.2px;
-  }
-
   .rd-testata-destra {
     padding-top: 0;
-  }
-
-  .rd-slot {
-    gap: 8px;
-  }
-
-  .pagina-ridisegnata .rd-slot .btn-campanella {
-    width: 42px;
-    height: 42px;
-  }
-
-  .pagina-ridisegnata .rd-slot .btn-campanella svg {
-    width: 21px;
-    height: 21px;
-  }
-
-  .pagina-ridisegnata #mu-btn-impostazioni {
-    display: flex;
-  }
-
-  /* Le notifiche si aprono a tutta larghezza sotto la testata. */
-  .pagina-ridisegnata .rd-slot,
-  .pagina-ridisegnata .rd-slot .notifiche-wrap {
-    position: static;
-  }
-
-  .pagina-ridisegnata .dropdown-notifiche {
-    top: 100%;
-    left: -14px;
-    right: -14px;
-    width: auto;
-    max-width: none;
-    max-height: 60vh;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
   }
 
   .rd-pannello {
@@ -1521,10 +782,21 @@ html:has(body.pagina-ridisegnata) {
     display: contents;
   }
 
-  .rd-gruppo[data-gruppo="prepara"] { order: 1; }
-  .rd-gruppo[data-gruppo="gioca"] { order: 2; }
-  .rd-gruppo[data-gruppo="consulta"] { order: 3; }
-  .rd-gruppo[data-gruppo="admin"] { order: 4; }
+  .rd-gruppo[data-gruppo="prepara"] {
+    order: 1;
+  }
+
+  .rd-gruppo[data-gruppo="gioca"] {
+    order: 2;
+  }
+
+  .rd-gruppo[data-gruppo="consulta"] {
+    order: 3;
+  }
+
+  .rd-gruppo[data-gruppo="admin"] {
+    order: 4;
+  }
 
   .rd-gruppo + .rd-gruppo {
     margin-top: 0;
@@ -1606,19 +878,5 @@ html:has(body.pagina-ridisegnata) {
   .invito-installa p {
     font-size: 15px;
     line-height: 1.25;
-  }
-
-  /* Il pannello ⚙️ sale dal basso come un foglio. */
-  .pagina-ridisegnata #mu-modal-impostazioni {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .pagina-ridisegnata #mu-modal-impostazioni .modal-card {
-    max-width: none;
-    max-height: 88vh;
-    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
-    border-radius: 18px 18px 0 0;
-    border-width: 1px 0 0;
   }
 }

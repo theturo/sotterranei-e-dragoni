@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="assets/css/scheda.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="personaggi">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -43,36 +43,45 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            I miei personaggi
-          </h1>
-        </div>
-        <div class="intestazione-destra">
-          <a id="link-nuovo-personaggio" href="crea-personaggio.html" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Nuovo personaggio</a>
-          <div id="slot-utente" class="slot-utente"></div>
-        </div>
-      </div>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <h1 class="rd-titolo-pagina">I miei personaggi</h1>
+            </div>
+            <div class="rd-comandi-pagina">
+              <a id="link-nuovo-personaggio" href="crea-personaggio.html" class="btn btn-secondary">Nuovo personaggio</a>
+            </div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
 
-      <div id="nessuna-campagna" class="panel-wide" hidden>
-        <p class="scheda-testo-libero">
-          Non sei ancora membro di una campagna attiva: chiedi al tuo Dungeon Master di aggiungerti prima di creare un personaggio.
-        </p>
-      </div>
+          <div id="nessuna-campagna" class="panel-wide" hidden>
+            <p class="scheda-testo-libero">
+              Non sei ancora membro di una campagna attiva: chiedi al tuo Dungeon Master di aggiungerti prima di creare un personaggio.
+            </p>
+          </div>
 
-      <div id="pannello-schede" class="panel-wide">
-        <p id="suggerimento-riordino" class="scheda-testo-libero" hidden>
-          Modalità riordino attiva: trascina le card per cambiare l'ordine, poi conferma con la spunta in alto.
-        </p>
-        <div id="griglia-schede" class="griglia-schede-personaggio"></div>
-        <p id="nessuna-scheda" style="display:none; color: var(--color-ink-soft); text-align:center;">
-          <svg viewBox="0 0 64 64" fill="none" stroke="#7a1f2b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:56px;height:56px;display:block;margin:0 auto 12px;" aria-hidden="true"><path d="M8 16 C19 11 27 13 32 19 C37 13 45 11 56 16 L56 48 C45 43 37 45 32 51 C27 45 19 43 8 48 Z"/><line x1="32" y1="19" x2="32" y2="51"/><line x1="14" y1="27" x2="25" y2="24.5" opacity="0.45"/><line x1="14" y1="34" x2="25" y2="32" opacity="0.45"/><line x1="39" y1="24.5" x2="50" y2="27" opacity="0.45"/><line x1="39" y1="32" x2="50" y2="34" opacity="0.45"/><line x1="20" y1="42" x2="46" y2="14" stroke-width="1.4"/><line x1="46" y1="14" x2="42.5" y2="15.6" stroke-width="1.1"/><line x1="46" y1="14" x2="44.4" y2="10.5" stroke-width="1.1"/><circle cx="20" cy="42" r="1" fill="#7a1f2b" stroke="none"/></svg>
-          Non hai ancora nessun personaggio: creane uno per iniziare l'avventura.
-        </p>
-      </div>
+          <div class="rd-sopra-elenco">
+            <button type="button" id="btn-riordina-personaggi" class="rd-riordina" aria-pressed="false"></button>
+          </div>
+          <div id="pannello-schede" class="panel-wide">
+            <p id="suggerimento-riordino" class="scheda-testo-libero" hidden>
+              Modalità riordino attiva: trascina le card per cambiare l'ordine, poi conferma con «Fatto».
+            </p>
+            <div id="griglia-schede" class="griglia-schede-personaggio"></div>
+            <p id="nessuna-scheda" style="display:none; color: var(--color-ink-soft); text-align:center;">
+              <svg viewBox="0 0 64 64" fill="none" stroke="#7a1f2b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:56px;height:56px;display:block;margin:0 auto 12px;" aria-hidden="true"><path d="M8 16 C19 11 27 13 32 19 C37 13 45 11 56 16 L56 48 C45 43 37 45 32 51 C27 45 19 43 8 48 Z"/><line x1="32" y1="19" x2="32" y2="51"/><line x1="14" y1="27" x2="25" y2="24.5" opacity="0.45"/><line x1="14" y1="34" x2="25" y2="32" opacity="0.45"/><line x1="39" y1="24.5" x2="50" y2="27" opacity="0.45"/><line x1="39" y1="32" x2="50" y2="34" opacity="0.45"/><line x1="20" y1="42" x2="46" y2="14" stroke-width="1.4"/><line x1="46" y1="14" x2="42.5" y2="15.6" stroke-width="1.1"/><line x1="46" y1="14" x2="44.4" y2="10.5" stroke-width="1.1"/><circle cx="20" cy="42" r="1" fill="#7a1f2b" stroke="none"/></svg>
+              Non hai ancora nessun personaggio: creane uno per iniziare l'avventura.
+            </p>
+          </div>
+        </div>
+  
+      </main>
     </div>
   </div>
 
@@ -88,8 +97,6 @@
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/i-miei-personaggi.js"></script>
 </body>

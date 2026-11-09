@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="assets/css/dm.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="impostazioni-campagna">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -43,100 +43,105 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Gestione campagna
-          </h1>
-        </div>
-        <div id="slot-utente" class="slot-utente"></div>
-      </div>
-
-      <!-- Prima configurazione: nessuna campagna esistente ancora -->
-      <div id="pannello-benvenuto" class="panel-wide" hidden>
-        <h3 style="margin-top:0;">Crea la tua prima campagna</h3>
-        <p class="card-tagline" style="text-align:left;">
-          Da qui in poi ogni sessione, personaggio e registro nascerà dentro questa campagna.
-        </p>
-        <form id="form-benvenuto">
-          <div class="field">
-            <label for="benvenuto-titolo">Titolo della campagna</label>
-            <input type="text" id="benvenuto-titolo" placeholder="Es. La maledizione di Fenraven" required />
-          </div>
-          <label class="checkbox-scudo" style="margin-bottom:18px;">
-            <input type="checkbox" id="benvenuto-provvisorio" />
-            Titolo provvisorio (lo rivelerò più avanti, es. durante la prima sessione)
-          </label>
-          <button type="submit" class="btn" style="width:auto; padding:10px 22px;">Crea campagna</button>
-        </form>
-      </div>
-
-      <div id="pannelli-gestione" hidden>
-        <div class="campagna-schede" role="tablist" aria-label="Sezioni della campagna">
-          <button type="button" role="tab" class="campagna-scheda" id="tab-panoramica" data-tab="panoramica" aria-controls="pannello-panoramica">Panoramica</button>
-          <button type="button" role="tab" class="campagna-scheda" id="tab-giocatori" data-tab="giocatori" aria-controls="pannello-giocatori">Giocatori</button>
-          <button type="button" role="tab" class="campagna-scheda" id="tab-sessioni" data-tab="sessioni" aria-controls="pannello-sessioni">Sessioni</button>
-          <button type="button" role="tab" class="campagna-scheda" id="tab-altre" data-tab="altre" aria-controls="pannello-altre">Altre campagne</button>
-        </div>
-
-        <section class="panel-wide campagna-pannello" id="pannello-panoramica" role="tabpanel" aria-labelledby="tab-panoramica">
-          <div id="corpo-campagna-attiva"></div>
-          <div id="numeri-campagna" class="campagna-numeri"></div>
-          <p id="prossima-campagna" class="campagna-prossima"></p>
-          <div id="azioni-campagna-attiva" class="azioni-campagna"></div>
-        </section>
-
-        <section class="panel-wide campagna-pannello" id="pannello-giocatori" role="tabpanel" aria-labelledby="tab-giocatori" hidden>
-          <h3 class="campagna-pannello-titolo">Giocatori <a href="dm-party.html">Party e livelli →</a></h3>
-          <p class="card-tagline" style="text-align:left;">
-            Solo chi è nel party vede questa campagna (personaggi, sessioni, party) nella propria dashboard.
-          </p>
-          <ul id="lista-membri" class="campagna-righe"></ul>
-          <p id="nessun-giocatore-membri" class="scheda-testo-libero" hidden>Nessun giocatore registrato ancora.</p>
-        </section>
-
-        <section class="panel-wide campagna-pannello" id="pannello-sessioni" role="tabpanel" aria-labelledby="tab-sessioni" hidden>
-          <h3 class="campagna-pannello-titolo">Sessioni <a href="calendario.html">Calendario →</a></h3>
-          <h4 class="campagna-sottotitolo">In programma</h4>
-          <div id="lista-programmate" class="lista-sessioni-programmate"></div>
-          <p id="nessuna-programmata" class="scheda-testo-libero" hidden>Nessuna sessione pianificata.</p>
-          <h4 class="campagna-sottotitolo">Proposte aperte</h4>
-          <div id="lista-proposte" class="lista-sessioni-programmate"></div>
-          <p id="nessuna-proposta" class="scheda-testo-libero" hidden>Nessuna proposta di date aperta.</p>
-          <h4 class="campagna-sottotitolo">Giocate</h4>
-          <div id="lista-giocate" class="lista-sessioni-programmate"></div>
-          <p id="nessuna-giocata" class="scheda-testo-libero" hidden>Nessuna sessione giocata ancora.</p>
-          <p class="scheda-testo-libero" style="margin-top:12px;">
-            Per proporre date ai giocatori o fissare la prossima sessione usa il <a href="calendario.html">Calendario</a>.
-          </p>
-        </section>
-
-        <section class="panel-wide campagna-pannello" id="pannello-altre" role="tabpanel" aria-labelledby="tab-altre" hidden>
-          <h3 class="campagna-pannello-titolo">Altre campagne</h3>
-          <p class="card-tagline" style="text-align:left;">Più campagne possono essere attive insieme (gruppi diversi): passi dall'una all'altra con il selettore della campagna in dashboard o nel pannello ⚙️.</p>
-          <div id="lista-altre-campagne"></div>
-          <p id="nessuna-altra-campagna" class="scheda-testo-libero" hidden>Non hai altre campagne.</p>
-          <form id="form-nuova-campagna" class="field-riga" style="margin-top:16px; align-items:flex-end;">
-            <div class="field" style="flex:1; margin-bottom:0;">
-              <label for="nuova-campagna-titolo">Titolo della nuova campagna</label>
-              <input type="text" id="nuova-campagna-titolo" placeholder="Es. Le sabbie di Nethys" required />
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <h1 class="rd-titolo-pagina">Gestione campagna</h1>
             </div>
-            <label class="checkbox-scudo" style="margin-bottom:10px;">
-              <input type="checkbox" id="nuova-campagna-provvisorio" />
-              Titolo provvisorio
-            </label>
-            <button type="submit" class="btn-tabella" style="white-space:nowrap;">Crea nuova campagna</button>
-          </form>
-        </section>
-      </div>
+            <div class="rd-comandi-pagina"></div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
+
+          <!-- Prima configurazione: nessuna campagna esistente ancora -->
+          <div id="pannello-benvenuto" class="panel-wide" hidden>
+            <h3 style="margin-top:0;">Crea la tua prima campagna</h3>
+            <p class="card-tagline" style="text-align:left;">
+              Da qui in poi ogni sessione, personaggio e registro nascerà dentro questa campagna.
+            </p>
+            <form id="form-benvenuto">
+              <div class="field">
+                <label for="benvenuto-titolo">Titolo della campagna</label>
+                <input type="text" id="benvenuto-titolo" placeholder="Es. La maledizione di Fenraven" required />
+              </div>
+              <label class="checkbox-scudo" style="margin-bottom:18px;">
+                <input type="checkbox" id="benvenuto-provvisorio" />
+                Titolo provvisorio (lo rivelerò più avanti, es. durante la prima sessione)
+              </label>
+              <button type="submit" class="btn" style="width:auto; padding:10px 22px;">Crea campagna</button>
+            </form>
+          </div>
+
+          <div id="pannelli-gestione" hidden>
+            <div class="campagna-schede" role="tablist" aria-label="Sezioni della campagna">
+              <button type="button" role="tab" class="campagna-scheda" id="tab-panoramica" data-tab="panoramica" aria-controls="pannello-panoramica">Panoramica</button>
+              <button type="button" role="tab" class="campagna-scheda" id="tab-giocatori" data-tab="giocatori" aria-controls="pannello-giocatori">Giocatori</button>
+              <button type="button" role="tab" class="campagna-scheda" id="tab-sessioni" data-tab="sessioni" aria-controls="pannello-sessioni">Sessioni</button>
+              <button type="button" role="tab" class="campagna-scheda" id="tab-altre" data-tab="altre" aria-controls="pannello-altre">Altre campagne</button>
+            </div>
+
+            <section class="panel-wide campagna-pannello" id="pannello-panoramica" role="tabpanel" aria-labelledby="tab-panoramica">
+              <div id="corpo-campagna-attiva"></div>
+              <div id="numeri-campagna" class="campagna-numeri"></div>
+              <p id="prossima-campagna" class="campagna-prossima"></p>
+              <div id="azioni-campagna-attiva" class="azioni-campagna"></div>
+            </section>
+
+            <section class="panel-wide campagna-pannello" id="pannello-giocatori" role="tabpanel" aria-labelledby="tab-giocatori" hidden>
+              <h3 class="campagna-pannello-titolo">Giocatori <a href="dm-party.html">Party e livelli →</a></h3>
+              <p class="card-tagline" style="text-align:left;">
+                Solo chi è nel party vede questa campagna (personaggi, sessioni, party) nella propria dashboard.
+              </p>
+              <ul id="lista-membri" class="campagna-righe"></ul>
+              <p id="nessun-giocatore-membri" class="scheda-testo-libero" hidden>Nessun giocatore registrato ancora.</p>
+            </section>
+
+            <section class="panel-wide campagna-pannello" id="pannello-sessioni" role="tabpanel" aria-labelledby="tab-sessioni" hidden>
+              <h3 class="campagna-pannello-titolo">Sessioni <a href="calendario.html">Calendario →</a></h3>
+              <h4 class="campagna-sottotitolo">In programma</h4>
+              <div id="lista-programmate" class="lista-sessioni-programmate"></div>
+              <p id="nessuna-programmata" class="scheda-testo-libero" hidden>Nessuna sessione pianificata.</p>
+              <h4 class="campagna-sottotitolo">Proposte aperte</h4>
+              <div id="lista-proposte" class="lista-sessioni-programmate"></div>
+              <p id="nessuna-proposta" class="scheda-testo-libero" hidden>Nessuna proposta di date aperta.</p>
+              <h4 class="campagna-sottotitolo">Giocate</h4>
+              <div id="lista-giocate" class="lista-sessioni-programmate"></div>
+              <p id="nessuna-giocata" class="scheda-testo-libero" hidden>Nessuna sessione giocata ancora.</p>
+              <p class="scheda-testo-libero" style="margin-top:12px;">
+                Per proporre date ai giocatori o fissare la prossima sessione usa il <a href="calendario.html">Calendario</a>.
+              </p>
+            </section>
+
+            <section class="panel-wide campagna-pannello" id="pannello-altre" role="tabpanel" aria-labelledby="tab-altre" hidden>
+              <h3 class="campagna-pannello-titolo">Altre campagne</h3>
+              <p class="card-tagline" style="text-align:left;">Più campagne possono essere attive insieme (gruppi diversi): passi dall'una all'altra con il selettore della campagna in dashboard o nel pannello ⚙️.</p>
+              <div id="lista-altre-campagne"></div>
+              <p id="nessuna-altra-campagna" class="scheda-testo-libero" hidden>Non hai altre campagne.</p>
+              <form id="form-nuova-campagna" class="field-riga" style="margin-top:16px; align-items:flex-end;">
+                <div class="field" style="flex:1; margin-bottom:0;">
+                  <label for="nuova-campagna-titolo">Titolo della nuova campagna</label>
+                  <input type="text" id="nuova-campagna-titolo" placeholder="Es. Le sabbie di Nethys" required />
+                </div>
+                <label class="checkbox-scudo" style="margin-bottom:10px;">
+                  <input type="checkbox" id="nuova-campagna-provvisorio" />
+                  Titolo provvisorio
+                </label>
+                <button type="submit" class="btn-tabella" style="white-space:nowrap;">Crea nuova campagna</button>
+              </form>
+            </section>
+          </div>
+        </div>
+  
+      </main>
     </div>
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/campagna.js"></script>
 </body>

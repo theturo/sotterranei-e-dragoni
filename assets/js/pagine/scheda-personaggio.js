@@ -32,7 +32,7 @@ import {
   ErroreImmagine,
 } from "../immagini.js";
 import { apriInquadratura, ritagliaImmagine } from "../inquadratura.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "../condizioni.js";
 import {
   apriRiposoBreve,
@@ -1746,7 +1746,7 @@ function renderBadgeStato() {
 proteggiPagina(async (user, profilo) => {
   uidCorrente = user.uid;
   profiloCorrente = profilo || {};
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
   const idParam = new URLSearchParams(window.location.search).get("id");
 
   try {

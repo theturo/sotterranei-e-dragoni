@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="assets/css/dm.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="party">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -43,66 +43,72 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Party e livelli
-          </h1>
-        </div>
-        <div id="slot-utente" class="slot-utente"></div>
-      </div>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <p id="rd-riga-campagna" class="rd-riga-campagna" hidden></p>
+              <h1 class="rd-titolo-pagina">Party e livelli</h1>
+            </div>
+            <div class="rd-comandi-pagina"></div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
 
-      <div id="nessuna-campagna" class="panel-wide" hidden>
-        <p class="scheda-testo-libero">
-          Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>.
-        </p>
-      </div>
+          <div id="nessuna-campagna" class="panel-wide" hidden>
+            <p class="scheda-testo-libero">
+              Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>.
+            </p>
+          </div>
 
-      <div id="pannello-party" class="panel-wide">
-        <p style="margin-top:0; color: var(--color-ink-soft);">
-          Quando un giocatore sale di livello, concediglielo qui: vale solo in questa
-          campagna, riceverà un avviso e farà il passaggio dalla scheda del personaggio attivo.
-          Finché non lo spende lo vedi «in attesa» e puoi annullarlo.
-        </p>
-        <div class="azioni-party">
-          <button id="btn-livello-party" class="btn-tabella btn-tabella-evidenza">Concedi un livello al party</button>
-          <button id="btn-esporta-party" class="btn-tabella" type="button">Esporta il party</button>
+          <div id="pannello-party" class="panel-wide">
+            <p style="margin-top:0; color: var(--color-ink-soft);">
+              Quando un giocatore sale di livello, concediglielo qui: vale solo in questa
+              campagna, riceverà un avviso e farà il passaggio dalla scheda del personaggio attivo.
+              Finché non lo spende lo vedi «in attesa» e puoi annullarlo.
+            </p>
+            <div class="azioni-party">
+              <button id="btn-livello-party" class="btn-tabella btn-tabella-evidenza">Concedi un livello al party</button>
+              <button id="btn-esporta-party" class="btn-tabella" type="button">Esporta il party</button>
+            </div>
+            <div class="livello-partenza">
+              <label for="select-livello-partenza">Livello di partenza della campagna</label>
+              <select id="select-livello-partenza"></select>
+              <button id="btn-livello-partenza" class="btn-tabella" type="button">Porta il party a questo livello</button>
+              <p class="livello-partenza-nota">Ogni giocatore riceve i livelli che gli mancano (una sola notifica) e la guida della scheda lo accompagna nella creazione fino a quel livello.</p>
+            </div>
+            <div class="table-scroll">
+              <table class="tabella-utenti">
+                <thead>
+                  <tr>
+                    <th>Giocatore</th>
+                    <th>Personaggio</th>
+                    <th>Classe</th>
+                    <th>Livello</th>
+                    <th>PF</th>
+                    <th>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody id="corpo-tabella">
+                  <!-- righe generate dinamicamente -->
+                </tbody>
+              </table>
+            </div>
+            <p id="nessun-giocatore" style="display:none; color: var(--color-ink-soft);">
+              Nessun giocatore registrato ancora.
+            </p>
+          </div>
         </div>
-        <div class="livello-partenza">
-          <label for="select-livello-partenza">Livello di partenza della campagna</label>
-          <select id="select-livello-partenza"></select>
-          <button id="btn-livello-partenza" class="btn-tabella" type="button">Porta il party a questo livello</button>
-          <p class="livello-partenza-nota">Ogni giocatore riceve i livelli che gli mancano (una sola notifica) e la guida della scheda lo accompagna nella creazione fino a quel livello.</p>
-        </div>
-        <div class="table-scroll">
-          <table class="tabella-utenti">
-            <thead>
-              <tr>
-                <th>Giocatore</th>
-                <th>Personaggio</th>
-                <th>Classe</th>
-                <th>Livello</th>
-                <th>PF</th>
-                <th>Azioni</th>
-              </tr>
-            </thead>
-            <tbody id="corpo-tabella">
-              <!-- righe generate dinamicamente -->
-            </tbody>
-          </table>
-        </div>
-        <p id="nessun-giocatore" style="display:none; color: var(--color-ink-soft);">
-          Nessun giocatore registrato ancora.
-        </p>
-      </div>
+  
+      </main>
     </div>
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/dm-party.js"></script>
 </body>

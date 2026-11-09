@@ -6,7 +6,7 @@ import { proteggiPagina, ROLES } from "../auth.js";
 import { ottieniCampagnaCorrente } from "../dati/campagne.js";
 import { elencaSessioniCampagna } from "../dati/sessioni.js";
 import { ascoltaContenutiVisibili } from "../dati/libreria.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import {
   CATEGORIE,
   riempiCategorie,
@@ -167,7 +167,7 @@ Object.values(filtri).forEach((campo) => campo.addEventListener(campo.type === "
 
 proteggiPagina(async (user, profilo) => {
   uidCorrente = user.uid;
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
   const ruolo = profilo?.ruolo || ROLES.PLAYER;
 
   const campagna = await ottieniCampagnaCorrente(user.uid, ruolo);

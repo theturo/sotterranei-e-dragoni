@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="assets/css/calendario.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="calendario">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -42,80 +42,86 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Calendario
-          </h1>
-        </div>
-        <div id="slot-utente" class="slot-utente"></div>
-      </div>
-
-      <div id="nessuna-campagna" class="panel-wide" hidden>
-        <p id="testo-nessuna-campagna" class="scheda-testo-libero"></p>
-      </div>
-
-      <div id="corpo-calendario" hidden>
-        <div id="banner-oggi" class="banner-oggi" role="status" hidden></div>
-
-        <div class="calendario-layout">
-          <div class="panel-wide calendario-mese">
-            <div class="calendario-intestazione">
-              <button type="button" id="mese-precedente" class="btn-tabella" aria-label="Mese precedente">‹</button>
-              <h3 id="titolo-mese"></h3>
-              <button type="button" id="mese-successivo" class="btn-tabella" aria-label="Mese successivo">›</button>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <p id="rd-riga-campagna" class="rd-riga-campagna" hidden></p>
+              <h1 class="rd-titolo-pagina">Calendario</h1>
             </div>
-            <div class="griglia-calendario" id="griglia-calendario" role="grid"></div>
-            <div class="legenda-calendario">
-              <span class="evento-cal evento-programmata">Programmata</span>
-              <span class="evento-cal evento-proposta">Data proposta</span>
-              <span class="evento-cal evento-giocata">Giocata</span>
-            </div>
+            <div class="rd-comandi-pagina"></div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
+
+          <div id="nessuna-campagna" class="panel-wide" hidden>
+            <p id="testo-nessuna-campagna" class="scheda-testo-libero"></p>
           </div>
 
-          <div class="calendario-colonna">
-            <div class="panel-wide">
-              <h3 style="margin-top:0;">Prossime sessioni</h3>
-              <ul id="lista-prossime" class="lista-calendario"></ul>
-              <p id="prossime-vuoto" class="scheda-testo-libero" hidden>Nessuna sessione in programma.</p>
-            </div>
+          <div id="corpo-calendario" hidden>
+            <div id="banner-oggi" class="banner-oggi" role="status" hidden></div>
 
-            <div class="panel-wide">
-              <h3 style="margin-top:0;">Date proposte</h3>
-              <div id="lista-proposte"></div>
-              <p id="proposte-vuoto" class="scheda-testo-libero" hidden>Nessuna proposta aperta.</p>
-            </div>
+            <div class="calendario-layout">
+              <div class="panel-wide calendario-mese">
+                <div class="calendario-intestazione">
+                  <button type="button" id="mese-precedente" class="btn-tabella" aria-label="Mese precedente">‹</button>
+                  <h3 id="titolo-mese"></h3>
+                  <button type="button" id="mese-successivo" class="btn-tabella" aria-label="Mese successivo">›</button>
+                </div>
+                <div class="griglia-calendario" id="griglia-calendario" role="grid"></div>
+                <div class="legenda-calendario">
+                  <span class="evento-cal evento-programmata">Programmata</span>
+                  <span class="evento-cal evento-proposta">Data proposta</span>
+                  <span class="evento-cal evento-giocata">Giocata</span>
+                </div>
+              </div>
 
-            <div id="strumenti-dm" class="panel-wide" hidden>
-              <h3 style="margin-top:0;">Organizza la prossima sessione</h3>
-              <form id="form-proposta" class="form-calendario">
-                <div class="field">
-                  <label for="proposta-titolo">Titolo (opzionale)</label>
-                  <input type="text" id="proposta-titolo" maxlength="80" placeholder="Es. Nella palude di Kalkash" />
+              <div class="calendario-colonna">
+                <div class="panel-wide">
+                  <h3 style="margin-top:0;">Prossime sessioni</h3>
+                  <ul id="lista-prossime" class="lista-calendario"></ul>
+                  <p id="prossime-vuoto" class="scheda-testo-libero" hidden>Nessuna sessione in programma.</p>
                 </div>
-                <div class="field">
-                  <label for="proposta-note">Note per i giocatori (opzionale)</label>
-                  <input type="text" id="proposta-note" maxlength="500" placeholder="Es. si gioca da Marco" />
+
+                <div class="panel-wide">
+                  <h3 style="margin-top:0;">Date proposte</h3>
+                  <div id="lista-proposte"></div>
+                  <p id="proposte-vuoto" class="scheda-testo-libero" hidden>Nessuna proposta aperta.</p>
                 </div>
-                <div id="opzioni-proposta" class="opzioni-proposta"></div>
-                <div class="azioni-selettore">
-                  <button type="button" id="btn-aggiungi-opzione" class="btn-tabella">+ Aggiungi data</button>
-                  <button type="button" id="btn-fissa-data" class="btn-tabella" title="Fissa subito la prima data, senza chiedere ai giocatori">Fissa la data</button>
-                  <button type="submit" class="btn-tabella btn-tabella-evidenza">Proponi ai giocatori</button>
+
+                <div id="strumenti-dm" class="panel-wide" hidden>
+                  <h3 style="margin-top:0;">Organizza la prossima sessione</h3>
+                  <form id="form-proposta" class="form-calendario">
+                    <div class="field">
+                      <label for="proposta-titolo">Titolo (opzionale)</label>
+                      <input type="text" id="proposta-titolo" maxlength="80" placeholder="Es. Nella palude di Kalkash" />
+                    </div>
+                    <div class="field">
+                      <label for="proposta-note">Note per i giocatori (opzionale)</label>
+                      <input type="text" id="proposta-note" maxlength="500" placeholder="Es. si gioca da Marco" />
+                    </div>
+                    <div id="opzioni-proposta" class="opzioni-proposta"></div>
+                    <div class="azioni-selettore">
+                      <button type="button" id="btn-aggiungi-opzione" class="btn-tabella">+ Aggiungi data</button>
+                      <button type="button" id="btn-fissa-data" class="btn-tabella" title="Fissa subito la prima data, senza chiedere ai giocatori">Fissa la data</button>
+                      <button type="submit" class="btn-tabella btn-tabella-evidenza">Proponi ai giocatori</button>
+                    </div>
+                  </form>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+  
+      </main>
     </div>
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/calendario.js"></script>
 </body>

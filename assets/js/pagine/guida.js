@@ -3,7 +3,7 @@
 // l'indice, la ricerca, le domande per capitolo sul telefono e le schermate
 // ingrandite.
 import { proteggiPagina } from "../auth.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
@@ -125,7 +125,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 proteggiPagina((user, profilo) => {
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
   daIndirizzo();
   aggiorna();
   veil.style.display = "none";

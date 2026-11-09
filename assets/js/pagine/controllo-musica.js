@@ -3,7 +3,7 @@
 import { proteggiPaginaDM } from "../auth.js";
 import { ottieniCampagnaCorrente } from "../dati/campagne.js";
 import { ottieniStatoMusica, salvaStatoMusica, salvaStatoSpotify, ottieniLinkMusica, salvaLinkMusica } from "../dati/musica.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { esc, escUrl, mostraToast } from "../utils.js";
 import { ICONA_COPERTINA, ICONA_PRECEDENTE, ICONA_PAUSA, ICONA_RIPRODUCI, ICONA_SUCCESSIVO, icona } from "../icone.js";
 import * as Spotify from "../spotify.js";
@@ -423,7 +423,7 @@ elencoLink.addEventListener("keydown", (evento) => {
 // ---------- Avvio pagina ----------
 
 proteggiPaginaDM(async (user, profilo) => {
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
 
   const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo, { soloDM: true });
   if (!campagna) {

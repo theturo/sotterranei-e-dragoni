@@ -4,9 +4,9 @@ import { proteggiPagina } from "../auth.js";
 import { creditiLivello, migraCreditiProfilo } from "../dati/livelli.js";
 import { ottieniCampagnaCorrente } from "../dati/campagne.js";
 import { elencaSchedePersonaggio, impostaSchedaAttiva, eliminaScheda, riordinaSchede } from "../dati/schede.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { esc, mostraToast } from "../utils.js";
-import { icona } from "../icone.js";
+import { icona, ICONA_MODIFICA, ICONA_SI } from "../icone.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK, nomeRazzaCompleto } from "../dati-srd.js";
 
 const veil = document.getElementById("veil");
@@ -75,22 +75,27 @@ async function caricaSchede() {
 
 proteggiPagina(async (user, profilo) => {
   uidCorrente = user.uid;
-  montaMenuUtente({
-    contenitore: document.getElementById("slot-utente"),
-    user,
-    profilo,
-    onModificaOrdine: (attivo) => {
-      modoOrdinamento = attivo;
-      griglia.classList.toggle("riordino-attivo", attivo);
-      document.getElementById("suggerimento-riordino").hidden = !attivo;
-      griglia.querySelectorAll(".scheda-card").forEach((card) => (card.draggable = attivo));
-    },
+  montaGuscio({ user, profilo });
+  // Riordino delle card: «Riordina» sopra l'elenco (prima era la matita
+  // nell'intestazione condivisa).
+  const btnRiordina = document.getElementById("btn-riordina-personaggi");
+  btnRiordina.innerHTML = `${ICONA_MODIFICA}<span>Riordina</span>`;
+  btnRiordina.addEventListener("click", () => {
+    const attivo = !modoOrdinamento;
+    modoOrdinamento = attivo;
+    griglia.classList.toggle("riordino-attivo", attivo);
+    document.getElementById("suggerimento-riordino").hidden = !attivo;
+    griglia.querySelectorAll(".scheda-card").forEach((card) => (card.draggable = attivo));
+    btnRiordina.setAttribute("aria-pressed", String(attivo));
+    btnRiordina.classList.toggle("attivo", attivo);
+    btnRiordina.innerHTML = `${attivo ? ICONA_SI : ICONA_MODIFICA}<span>${attivo ? "Fatto" : "Riordina"}</span>`;
   });
 
   const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
   if (!campagna) {
     document.getElementById("nessuna-campagna").hidden = false;
     document.getElementById("pannello-schede").hidden = true;
+    document.querySelector(".rd-sopra-elenco").hidden = true;
     document.getElementById("link-nuovo-personaggio").hidden = true;
     veil.style.display = "none";
     contenuto.style.display = "block";

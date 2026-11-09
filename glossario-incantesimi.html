@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="assets/css/dm.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="glossario-incant">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -43,61 +43,65 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Glossario incantesimi
-          </h1>
-        </div>
-        <div class="intestazione-destra">
-          <span class="role-badge">SRD 5.1</span>
-          <div id="slot-utente" class="slot-utente"></div>
-        </div>
-      </div>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <h1 class="rd-titolo-pagina">Glossario incantesimi</h1>
+            </div>
+            <div class="rd-comandi-pagina">
+              <span class="role-badge">SRD 5.1</span>
+            </div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
 
-      <div class="panel-wide">
-        <div class="glossario-controlli">
-          <input type="text" id="ricerca-glossario" class="input-ricerca" placeholder="Cerca un incantesimo…" autocomplete="off" />
-          <select id="filtro-classe" class="select-filtro">
-            <option value="">Tutte le classi</option>
-            <option value="bardo">Bardo</option>
-            <option value="chierico">Chierico</option>
-            <option value="druido">Druido</option>
-            <option value="guerriero">Guerriero</option>
-            <option value="ladro">Ladro</option>
-            <option value="mago">Mago</option>
-            <option value="monaco">Monaco</option>
-            <option value="paladino">Paladino</option>
-            <option value="ranger">Ranger</option>
-            <option value="stregone">Stregone</option>
-            <option value="warlock">Warlock</option>
-          </select>
-          <select id="filtro-livello" class="select-filtro">
-            <option value="">Tutti i livelli</option>
-            <option value="0">Trucchetto</option>
-            <option value="1">1° livello</option>
-            <option value="2">2° livello</option>
-            <option value="3">3° livello</option>
-            <option value="4">4° livello</option>
-            <option value="5">5° livello</option>
-            <option value="6">6° livello</option>
-            <option value="7">7° livello</option>
-            <option value="8">8° livello</option>
-            <option value="9">9° livello</option>
-          </select>
+          <div class="panel-wide">
+            <div class="glossario-controlli">
+              <input type="text" id="ricerca-glossario" class="input-ricerca" placeholder="Cerca un incantesimo…" autocomplete="off" />
+              <select id="filtro-classe" class="select-filtro">
+                <option value="">Tutte le classi</option>
+                <option value="bardo">Bardo</option>
+                <option value="chierico">Chierico</option>
+                <option value="druido">Druido</option>
+                <option value="guerriero">Guerriero</option>
+                <option value="ladro">Ladro</option>
+                <option value="mago">Mago</option>
+                <option value="monaco">Monaco</option>
+                <option value="paladino">Paladino</option>
+                <option value="ranger">Ranger</option>
+                <option value="stregone">Stregone</option>
+                <option value="warlock">Warlock</option>
+              </select>
+              <select id="filtro-livello" class="select-filtro">
+                <option value="">Tutti i livelli</option>
+                <option value="0">Trucchetto</option>
+                <option value="1">1° livello</option>
+                <option value="2">2° livello</option>
+                <option value="3">3° livello</option>
+                <option value="4">4° livello</option>
+                <option value="5">5° livello</option>
+                <option value="6">6° livello</option>
+                <option value="7">7° livello</option>
+                <option value="8">8° livello</option>
+                <option value="9">9° livello</option>
+              </select>
+            </div>
+            <div id="risultati-glossario" class="glossario-risultati"></div>
+            <p id="glossario-vuoto" class="scheda-testo-libero" hidden>Nessun incantesimo trovato: prova un altro termine.</p>
+            <p id="glossario-suggerimento" class="scheda-testo-libero">
+              Digita un termine di ricerca, oppure scegli una classe o un livello qui sopra per sfogliare.
+            </p>
+          </div>
         </div>
-        <div id="risultati-glossario" class="glossario-risultati"></div>
-        <p id="glossario-vuoto" class="scheda-testo-libero" hidden>Nessun incantesimo trovato: prova un altro termine.</p>
-        <p id="glossario-suggerimento" class="scheda-testo-libero">
-          Digita un termine di ricerca, oppure scegli una classe o un livello qui sopra per sfogliare.
-        </p>
-      </div>
+  
+      </main>
     </div>
   </div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/glossario-incantesimi.js"></script>
 </body>
