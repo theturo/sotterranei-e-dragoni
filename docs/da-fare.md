@@ -12,6 +12,12 @@ indicativo. Si aggiorna man mano che si completano.
 La tela di design "Grafica di Base e Caricamento" è la fonte di verità: si
 integra solo ciò che è segnato ✅, con una pull request per lotto.
 
+- **Redesign dell'interfaccia** (blu notte, dipinto del drago e del D20): fatta
+  la dashboard. Prossimi passi, ognuno con le sue tavole: la barra laterale e
+  la testata compatta sulle altre pagine (al posto di «← Torna alla dashboard»
+  e della fila di icone), Calendario, Sessione, il velo di caricamento ancora
+  col vecchio d20, una famiglia di icone nuova. I colori sono già in base.css
+  (variabili `--rd-*`).
 - **Animazioni in JavaScript** (da valutare insieme): fatti il dado di
   caricamento, il tiro dei PF e il cambio turno nel tracker; l'annuncio di
   livello resta in CSS (scelta della tela). Da valutare: eventuali risorse
@@ -202,6 +208,16 @@ Nessuna in sospeso.
   (drago e D20 nella zona sicura), favicon sul D20 (16 e 32 px, al posto della
   favicon vettoriale), icona per iPhone. Colore dell'app blu notte (#0c1f2f) nel
   manifest e nelle pagine.
+- Dashboard ridisegnata: blu notte con il dipinto del drago e del D20, barra
+  laterale con le stesse voci delle tessere (segue il ruolo nella campagna;
+  Amministrazione il ruolo dell'account, con il numero degli iscritti in
+  attesa), testata con campagna, targhette DM/Giocatore e Admin e la sola
+  campanella, «● Sessione in corso» quando il tavolo è aperto, saluto e
+  sessione in un unico pannello, riepilogo su pergamena, «Riordina» accanto
+  agli strumenti. Barra a sole icone tra 900 e 1199 px; sotto i 900 px
+  testata del telefono, «Da fare» prima del party, strumenti su due colonne e
+  pannello ⚙️ come foglio dal basso. Le altre pagine restano com'erano
+  (l'intestazione condivisa ha una variante compatta usata solo qui).
 - Logo nuovo nel sito: emblema e titolo in Cinzel (gli stessi file dell'intro)
   nelle pagine prima dell'accesso, al posto del logo orizzontale e dello stemma;
   nell'intestazione della dashboard l'emblema con la scritta in Cinzel come

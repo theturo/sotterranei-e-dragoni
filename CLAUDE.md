@@ -88,6 +88,10 @@ CI (`.github/workflows/test.yml`) esegue le tre suite su ogni PR e su `main`.
   (registrazione, controllo aggiornamenti, banner «nuova versione»).
 - **CSS**: `assets/css/base.css` (comune) + fogli per area (`scheda`, `sessione`,
   `gioco`, `dm`, …). Le pagine caricano più fogli: l'ordine conta.
+  Redesign in corso (blu notte): i colori sono le variabili `--rd-*` di `base.css`;
+  per ora li usa solo la dashboard (`body.pagina-ridisegnata`, regole in
+  `dashboard.css`), che monta l'intestazione condivisa in variante compatta
+  (`montaMenuUtente({ compatto: true })`).
 - **Librerie incluse**: librerie del PDF in `assets/vendor/pdf/`, font del PDF in `assets/fonts/pdf/`.
 - **Intro** (`intro.js` → worker `intro-worker.js` → `intro-motore.js`, scena pura in
   `intro-scena.js` testata in `test/pagine/`): pezzi dipinti in `assets/img/intro/`, misure in

@@ -19,14 +19,14 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "6c22862121b6";
+const VERSIONE = "0b03a62c6865";
 const DATA_VERSIONE = "2026-11-09";
 const FILE = {
   "./admin-utenti.html": "e961c02cf6fa",
   "./archivio.html": "afcf7df72938",
-  "./assets/css/base.css": "d393a199e7e4",
+  "./assets/css/base.css": "2832e058313c",
   "./assets/css/calendario.css": "b7f8d6336144",
-  "./assets/css/dashboard.css": "09b34c359400",
+  "./assets/css/dashboard.css": "af507612dc73",
   "./assets/css/dm.css": "ac39fd0be665",
   "./assets/css/gioco.css": "d816ddd3eb92",
   "./assets/css/guida.css": "b6e84121ae34",
@@ -71,6 +71,8 @@ const FILE = {
   "./assets/img/intro/vortice_quadrato.webp": "65cf19334bca",
   "./assets/img/intro/zampa_ant.webp": "714536bee26f",
   "./assets/img/intro/zampa_post.webp": "df342e05cbb7",
+  "./assets/img/sfondi/dashboard-telefono.webp": "40ede2b8e636",
+  "./assets/img/sfondi/dashboard.webp": "a4b37917dbfc",
   "./assets/js/aree-incantesimi.js": "1ff9cb09620d",
   "./assets/js/auth.js": "f54e89ea6ce2",
   "./assets/js/bestiario-calcoli.js": "3110364e2ddd",
@@ -82,7 +84,7 @@ const FILE = {
   "./assets/js/comparsa-contenuti.js": "386de312d62b",
   "./assets/js/condizioni.js": "7798031d4694",
   "./assets/js/contenuti.js": "bc0640a2e0f3",
-  "./assets/js/cruscotto-calcoli.js": "610babaca0d6",
+  "./assets/js/cruscotto-calcoli.js": "00e2a2c6b5fe",
   "./assets/js/dadi-base.js": "d1ee4ec14672",
   "./assets/js/dadi.js": "c32fc3581542",
   "./assets/js/dado-caricamento.js": "223a69f9bc5e",
@@ -124,7 +126,7 @@ const FILE = {
   "./assets/js/mappa-strumenti.js": "4334765dc777",
   "./assets/js/mappa-vista.js": "8c0cce095302",
   "./assets/js/mappa.js": "ec14017c5d2f",
-  "./assets/js/menu-utente.js": "2f34e9cba029",
+  "./assets/js/menu-utente.js": "83fd51be4ea6",
   "./assets/js/mostri-srd.js": "ddbfb68e0be4",
   "./assets/js/musica-stato.js": "d35aa49ed95e",
   "./assets/js/notifiche-push.js": "eefd4466c27c",
@@ -136,7 +138,7 @@ const FILE = {
   "./assets/js/pagine/campagna.js": "86590380335b",
   "./assets/js/pagine/controllo-musica.js": "364c8186bd52",
   "./assets/js/pagine/crea-personaggio.js": "9e149e62852e",
-  "./assets/js/pagine/dashboard.js": "22dc6496b393",
+  "./assets/js/pagine/dashboard.js": "2af159356ca4",
   "./assets/js/pagine/dm-party.js": "3b36dc8f7828",
   "./assets/js/pagine/glossario-equipaggiamento.js": "017f9c070127",
   "./assets/js/pagine/glossario-incantesimi.js": "e93b517f737b",
@@ -172,7 +174,7 @@ const FILE = {
   "./campagna.html": "4bacfb9a0ace",
   "./controllo-musica.html": "c85fc9974130",
   "./crea-personaggio.html": "3b8926472e4e",
-  "./dashboard.html": "15e60678895f",
+  "./dashboard.html": "7c659a1fedd7",
   "./dm-party.html": "99c926976e98",
   "./glossario-equipaggiamento.html": "568976c27e32",
   "./glossario-incantesimi.html": "39fc5189bc3b",

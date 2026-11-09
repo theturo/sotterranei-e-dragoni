@@ -33,11 +33,7 @@ import {
 } from "./notifiche-push.js";
 import { impostazioniSuoni, salvaImpostazioniSuoni, provaSuono } from "./suoni.js";
 
-const HTML_MENU = `
-  <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">${ICONA_HOME}</a>
-  <button id="mu-btn-modifica-ordine" class="btn-campanella" aria-label="Modifica ordinamento" title="Modifica ordinamento" type="button" hidden>${ICONA_MODIFICA}</button>
-  <a id="mu-link-sessione" href="sessione.html" class="btn-campanella" aria-label="Sessione" title="Sessione" hidden>${ICONA_SESSIONE}</a>
-  <a href="calendario.html" class="btn-campanella" aria-label="Calendario" title="Calendario">${ICONA_CALENDARIO}</a>
+const HTML_CAMPANELLA = `
   <div class="notifiche-wrap">
     <button id="mu-btn-campanella" class="btn-campanella" aria-label="Notifiche" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -50,8 +46,9 @@ const HTML_MENU = `
       <div id="mu-lista-notifiche"></div>
       <p id="mu-nessuna-notifica" class="dropdown-notifiche-vuoto" hidden>Nessuna notifica.</p>
     </div>
-  </div>
-  <span id="mu-badge-ruolo" class="role-badge nascosto-telefono"></span>
+  </div>`;
+
+const HTML_INGRANAGGIO = `
   <button id="mu-btn-impostazioni" class="btn-campanella" aria-label="Impostazioni" title="Impostazioni" type="button">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="12" r="6.3" fill="none" stroke="currentColor" stroke-width="3.5"/>
@@ -64,9 +61,25 @@ const HTML_MENU = `
       <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(270 12 12)"/>
       <rect x="10.36" y="1.63" width="3.29" height="3.29" transform="rotate(315 12 12)"/>
     </svg>
-  </button>
+  </button>`;
+
+const HTML_MENU = `
+  <a href="dashboard.html" class="btn-campanella" aria-label="Torna alla dashboard" title="Torna alla dashboard">${ICONA_HOME}</a>
+  <button id="mu-btn-modifica-ordine" class="btn-campanella" aria-label="Modifica ordinamento" title="Modifica ordinamento" type="button" hidden>${ICONA_MODIFICA}</button>
+  <a id="mu-link-sessione" href="sessione.html" class="btn-campanella" aria-label="Sessione" title="Sessione" hidden>${ICONA_SESSIONE}</a>
+  <a href="calendario.html" class="btn-campanella" aria-label="Calendario" title="Calendario">${ICONA_CALENDARIO}</a>
+  ${HTML_CAMPANELLA}
+  <span id="mu-badge-ruolo" class="role-badge nascosto-telefono"></span>
+  ${HTML_INGRANAGGIO}
   <button id="mu-btn-logout" class="btn btn-ghost nascosto-telefono" type="button">Esci</button>
 `;
+
+// Comandi dell'intestazione usati anche dalla barra laterale della dashboard
+// ridisegnata (Impostazioni ed Esci stanno lì al computer).
+let apriPannelloImpostazioni = null;
+let esciCorrente = null;
+export const apriImpostazioni = () => apriPannelloImpostazioni?.();
+export const esciDalSito = () => esciCorrente?.();
 
 const HTML_MODALE = `
   <div id="mu-modal-impostazioni" class="modal-overlay" style="display:none;">
@@ -361,11 +374,11 @@ function inizializzaImpostazioni() {
   const msgEmail = document.getElementById("mu-messaggio-email");
 
   const versione = montaVersione();
-  document.getElementById("mu-btn-impostazioni").addEventListener("click", () => {
+  apriPannelloImpostazioni = () => {
     mostraSchermata("mu-schermata-scelta");
     modale.style.display = "flex";
     versione.aggiorna();
-  });
+  };
 
   document.getElementById("mu-chiudi-impostazioni").addEventListener("click", () => {
     modale.style.display = "none";
@@ -555,6 +568,8 @@ async function caricaCampagneAttive(uid, ruolo) {
   return campagneAttive;
 }
 
+export const campagneAttiveConTitolo = (uid, ruolo) => caricaCampagneAttive(uid, ruolo);
+
 export async function riempiSelettoreCampagna(select, uid, ruolo) {
   const [attive, corrente] = await Promise.all([caricaCampagneAttive(uid, ruolo), ottieniCampagnaCorrente(uid, ruolo)]);
   if (attive.length < 2) return false;
@@ -582,6 +597,7 @@ export async function riempiSelettoreCampagna(select, uid, ruolo) {
 // la apre nel frattempo.
 async function inizializzaLinkSessione(uid, ruolo) {
   const link = document.getElementById("mu-link-sessione");
+  if (!link) return;
   if (ruolo === ROLES.DM || ruolo === ROLES.ADMIN) {
     link.hidden = false;
     return;
@@ -604,9 +620,13 @@ async function inizializzaLinkSessione(uid, ruolo) {
 // ancora normalizzate). onModificaOrdine, se passata, fa comparire la matita che attiva/
 // disattiva il riordinamento sulla pagina corrente (trasformandosi in una spunta):
 // riceve true quando si entra in modalità modifica, false quando si conferma.
-export async function montaMenuUtente({ contenitore, user, profilo, onModificaOrdine }) {
-  contenitore.innerHTML = HTML_MENU;
+// compatto: solo campanella e ingranaggio (dashboard ridisegnata: casetta,
+// calendario e sessione sono doppioni, il riordino sta accanto agli strumenti,
+// ruolo ed Esci nella barra laterale o nel pannello ⚙️).
+export async function montaMenuUtente({ contenitore, user, profilo, onModificaOrdine, compatto = false }) {
+  contenitore.innerHTML = compatto ? HTML_CAMPANELLA + HTML_INGRANAGGIO : HTML_MENU;
   attivaDescrizioni();
+  document.getElementById("mu-btn-impostazioni").addEventListener("click", () => apriImpostazioni());
 
   if (!document.getElementById("mu-modal-impostazioni")) {
     document.body.insertAdjacentHTML("beforeend", HTML_MODALE);
@@ -614,13 +634,16 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
   }
 
   const ruolo = profilo?.ruolo || "player";
+  const etichettaRuolo = ETICHETTE_RUOLO[ruolo] || ruolo;
   const elementoBadgeRuolo = document.getElementById("mu-badge-ruolo");
-  elementoBadgeRuolo.textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
-  elementoBadgeRuolo.dataset.ruolo = ruolo;
+  if (elementoBadgeRuolo) {
+    elementoBadgeRuolo.textContent = etichettaRuolo;
+    elementoBadgeRuolo.dataset.ruolo = ruolo;
+  }
 
   // Sui telefoni ruolo ed "Esci" stanno nel pannello delle impostazioni.
   const ruoloAccount = document.getElementById("mu-ruolo-account");
-  ruoloAccount.textContent = elementoBadgeRuolo.textContent;
+  ruoloAccount.textContent = etichettaRuolo;
   ruoloAccount.dataset.ruolo = ruolo;
   document.getElementById("mu-nome-account").textContent = profilo?.nome || user.email || "";
 
@@ -629,7 +652,8 @@ export async function montaMenuUtente({ contenitore, user, profilo, onModificaOr
     await esciUtente();
     window.location.href = "index.html";
   };
-  document.getElementById("mu-btn-logout").addEventListener("click", esci);
+  esciCorrente = esci;
+  document.getElementById("mu-btn-logout")?.addEventListener("click", esci);
   document.getElementById("mu-btn-logout-menu").onclick = esci;
 
   const btnInstalla = document.getElementById("mu-btn-installa");

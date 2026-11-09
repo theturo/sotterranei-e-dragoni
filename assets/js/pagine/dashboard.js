@@ -1,8 +1,9 @@
 // Script della pagina dashboard.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
-// In alto il cruscotto della campagna (sessione in evidenza, party o proprio
-// personaggio, avvisi "Da fare"), sotto gli strumenti raggruppati.
-import { proteggiPagina, ROLES } from "../auth.js";
+// Dashboard ridisegnata: barra laterale con la navigazione (computer), testata
+// con campagna, targhette e campanella, pannello della sessione sul dipinto,
+// riepilogo (party o proprio personaggio, avvisi "Da fare") e strumenti.
+import { proteggiPagina, ROLES, ETICHETTE_RUOLO } from "../auth.js";
 import { salvaOrdinePannelli, contaUtentiInAttesa } from "../dati/utenti.js";
 import { elencaCreditiCampagna, creditiLivello, migraCreditiProfilo } from "../dati/livelli.js";
 import { ottieniCampagnaCorrente, elencaMembriCampagna } from "../dati/campagne.js";
@@ -12,11 +13,11 @@ import { ottieniStatoSessione, elencaSessioniCampagna, apriSessione } from "../d
 import { riepilogoCalendario, elencaProposteAperte } from "../dati/calendario.js";
 import { contaContenutiCollegati } from "../dati/libreria.js";
 import { montaWidgetMusica } from "../widget-musica.js";
-import { montaMenuUtente, riempiSelettoreCampagna } from "../menu-utente.js";
+import { montaMenuUtente, riempiSelettoreCampagna, campagneAttiveConTitolo, apriImpostazioni, esciDalSito } from "../menu-utente.js";
 import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "../pwa.js";
 import { statoNotifichePush, attivaNotifichePush } from "../notifiche-push.js";
 import {
-  GRUPPI_DM, GRUPPO_ADMIN, GRUPPI_GIOCATORE, ordinaVoci, sessioneInEvidenza, avvisiDM, avvisiGiocatore, barraPf, testoPf,
+  gruppiStrumenti, colonneStrumenti, titoloCampagnaVisibile, ordinaVoci, sessioneInEvidenza, avvisiDM, avvisiGiocatore, barraPf, testoPf,
 } from "../cruscotto-calcoli.js";
 import { CLASSI, RAZZE, ICONA_CLASSE_FALLBACK } from "../dati-srd.js";
 import { creaChipCondizioni } from "../condizioni.js";
@@ -24,36 +25,115 @@ import { privilegiDelPersonaggio } from "../privilegi.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
 import { creaElemento } from "../contenuti.js";
 import { esc } from "../utils.js";
-import { icona } from "../icone.js";
+import { icona, ICONA_HOME, ICONA_MODIFICA, ICONA_SI } from "../icone.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
 const griglia = document.getElementById("griglia-pannelli");
+const nav = document.getElementById("rd-nav");
 
 let uidCorrente = null;
 let modoOrdinamento = false;
+let gruppiCorrenti = [];
+let ordineCorrente = {};
+// Iscritti da approvare (solo admin): letti una volta, ridisegnati col riordino.
+let promessaIscritti = Promise.resolve(0);
+
+// Icone fisse della pagina (barra laterale, titoli delle pergamene, Riordina).
+document.querySelectorAll("[data-rd-icona]").forEach((el) => { el.innerHTML = icona(el.dataset.rdIcona); });
+document.getElementById("rd-riordina-icona").innerHTML = ICONA_MODIFICA;
 
 const MANIGLIA = '<span class="maniglia-trascina" aria-hidden="true" title="Trascina per riordinare"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></span>';
 
-// Gruppi di strumenti: Prepara / Gioca / Consulta per il DM (più
-// Amministrazione per l'admin), uno solo per il giocatore. L'ordine dentro
-// ogni gruppo si cambia trascinando (matita nell'intestazione).
-// ruolo: quello nella campagna corrente; admin: se l'utente è admin della
-// piattaforma (Gestione utenti resta sempre).
-function renderStrumenti(ruolo, ordinePannelli, admin = false) {
-  const gruppi = [...(ruolo === ROLES.PLAYER ? GRUPPI_GIOCATORE : GRUPPI_DM), ...(admin ? [GRUPPO_ADMIN] : [])];
-  griglia.classList.toggle("strumenti-giocatore", ruolo === ROLES.PLAYER);
-  griglia.innerHTML = gruppi.map((g) => `
-    <section class="gruppo-strumenti" aria-label="${esc(g.titolo)}">
-      <div class="sezione-titolo">${esc(g.titolo)}</div>
-      <div class="dashboard-grid strumenti-griglia" data-sezione="${esc(g.id)}">
-        ${ordinaVoci(g.voci, ordinePannelli?.[g.id]).map((v) => `
-          <a class="strumento" href="${esc(v.link)}" data-chiave="${esc(v.chiave)}">
-            ${MANIGLIA}<span class="strumento-icona" aria-hidden="true">${icona(v.icona)}</span>
-            <span class="strumento-testo"><b>${esc(v.titolo)}</b><small>${esc(v.testo)}</small></span>
-          </a>`).join("")}
-      </div>
-    </section>`).join("");
+// Contatori che alcune voci portano con sé (barra laterale e tessere).
+const extraVoce = (chiave) =>
+  (chiave === "sessione" ? '<span class="rd-punto-live" data-sessione-live hidden></span>' : "")
+  + (chiave === "utenti" ? '<span class="rd-conta" data-conta-utenti hidden></span>' : "");
+
+// Strumenti: Prepara / Gioca / Consulta per il DM (più Amministrazione per
+// l'admin), uno solo per il giocatore. L'ordine dentro ogni gruppo si cambia
+// trascinando («Riordina» accanto al titolo); al computer le colonne mettono
+// Amministrazione sotto Gioca, sul telefono i gruppi tornano in fila.
+function renderStrumenti() {
+  const giocatore = gruppiCorrenti.length && gruppiCorrenti[0].id === "giocatore";
+  griglia.classList.toggle("rd-gruppi-giocatore", giocatore);
+  document.getElementById("rd-titolo-strumenti").textContent = giocatore ? "I tuoi strumenti" : "Strumenti della campagna";
+  griglia.innerHTML = colonneStrumenti(gruppiCorrenti).map((colonna) => `
+    <div class="rd-colonna">${colonna.map((g) => `
+      <section class="gruppo-strumenti rd-gruppo" data-gruppo="${esc(g.id)}" aria-label="${esc(g.titolo)}">
+        ${giocatore ? "" : `<h3 class="rd-gruppo-titolo">${esc(g.titolo)}</h3>`}
+        <div class="strumenti-griglia rd-voci" data-sezione="${esc(g.id)}">
+          ${ordinaVoci(g.voci, ordineCorrente[g.id]).map((v) => `
+            <a class="strumento rd-tessera" href="${esc(v.link)}" data-chiave="${esc(v.chiave)}">
+              ${MANIGLIA}<span class="rd-tessera-icona" aria-hidden="true">${icona(v.icona)}</span>
+              <span class="rd-tessera-testo"><b>${esc(v.titolo)}</b><small>${esc(v.testo)}</small></span>
+              ${extraVoce(v.chiave)}<span class="rd-tessera-vai" aria-hidden="true">→</span>
+            </a>`).join("")}
+        </div>
+      </section>`).join("")}
+    </div>`).join("");
+  griglia.querySelectorAll(".strumento").forEach((pannello) => (pannello.draggable = modoOrdinamento));
+}
+
+// Barra laterale: le stesse voci e lo stesso ordine delle tessere, così le due
+// liste non si disallineano mai. Il title resta per la barra a sole icone.
+function renderNavigazione() {
+  nav.innerHTML = `
+    <a class="rd-voce attiva" href="dashboard.html" aria-current="page" title="Dashboard"><span class="rd-voce-icona" aria-hidden="true">${ICONA_HOME}</span><span class="rd-voce-testo">Dashboard</span></a>
+    ${gruppiCorrenti.map((g) => `
+      <p class="rd-nav-gruppo">${esc(g.titolo)}</p>
+      ${ordinaVoci(g.voci, ordineCorrente[g.id]).map((v) => `
+        <a class="rd-voce" href="${esc(v.link)}" title="${esc(v.titolo)}"><span class="rd-voce-icona" aria-hidden="true">${icona(v.icona)}</span><span class="rd-voce-testo">${esc(v.titolo)}</span>${extraVoce(v.chiave)}</a>`).join("")}`).join("")}`;
+}
+
+// «● Sessione in corso» nella testata (computer) e accanto a Sessione.
+function segnaSessioneInCorso(azione) {
+  document.getElementById("rd-live-azione").textContent = azione;
+  document.getElementById("rd-live").hidden = false;
+  document.querySelectorAll("[data-sessione-live]").forEach((punto) => { punto.hidden = false; });
+}
+
+function mostraIscrittiInAttesa(quanti) {
+  document.querySelectorAll("[data-conta-utenti]").forEach((conta) => {
+    conta.textContent = String(quanti);
+    conta.hidden = !quanti;
+    conta.title = quanti === 1 ? "1 iscritto da approvare" : `${quanti} iscritti da approvare`;
+  });
+}
+
+function impostaRiordino(attivo) {
+  modoOrdinamento = attivo;
+  griglia.classList.toggle("riordino-attivo", attivo);
+  griglia.querySelectorAll(".strumento").forEach((pannello) => (pannello.draggable = attivo));
+  const bottone = document.getElementById("rd-btn-riordina");
+  bottone.setAttribute("aria-pressed", String(attivo));
+  bottone.classList.toggle("attivo", attivo);
+  document.getElementById("rd-riordina-icona").innerHTML = attivo ? ICONA_SI : ICONA_MODIFICA;
+  document.getElementById("rd-riordina-testo").textContent = attivo ? "Fatto" : "Riordina";
+}
+document.getElementById("rd-btn-riordina").addEventListener("click", () => impostaRiordino(!modoOrdinamento));
+
+// Testata: nome della campagna (su due righe al massimo sul telefono), ruolo
+// in questa campagna e, per l'admin, la targhetta del ruolo dell'account.
+async function montaCampagna(uid, ruoloAccount, campagna, ruoloCampagna) {
+  document.getElementById("rd-targhetta-admin").hidden = ruoloAccount !== ROLES.ADMIN;
+  const titolo = document.getElementById("rd-titolo-campagna");
+  titolo.textContent = titoloCampagnaVisibile(campagna);
+  if (!campagna) return;
+  const ruolo = document.getElementById("rd-ruolo-campagna");
+  ruolo.textContent = ruoloCampagna === ROLES.PLAYER ? "Giocatore" : "DM";
+  ruolo.hidden = false;
+  const select = document.getElementById("select-campagna-dashboard");
+  const [piuDiUna, attive] = await Promise.all([
+    riempiSelettoreCampagna(select, uid, ruoloAccount),
+    campagneAttiveConTitolo(uid, ruoloAccount),
+  ]);
+  // Il DM legge il titolo vero anche quando è ancora provvisorio.
+  const conTitolo = attive.find((c) => c.id === campagna.id);
+  if (conTitolo?.titolo) titolo.textContent = conTitolo.titolo;
+  select.hidden = !piuDiUna;
+  document.getElementById("rd-campagna-nome").classList.toggle("rd-con-scelta", piuDiUna);
+  document.getElementById("rd-etichetta-campagna").textContent = piuDiUna ? "Campagna attiva" : "Campagna";
 }
 
 // ---------- Cruscotto ----------
@@ -65,13 +145,19 @@ function bottoneLink(testo, href, classe = "btn-tabella") {
 }
 
 // Riquadro della sessione: { etichetta, titolo, riga, azioni: [nodi], classe }.
+// Nel pannello: il primo comando è quello principale (cremisi, con la freccia),
+// gli altri restano sobri.
 function disegnaSessione({ etichetta, titolo, riga, azioni = [], classe = "" }) {
   const box = document.getElementById("cruscotto-sessione");
-  box.className = `cruscotto-box cruscotto-sessione ${classe}`.trim();
-  const testi = creaElemento("div", "cruscotto-sessione-testi");
-  testi.append(creaElemento("p", "cruscotto-etichetta", etichetta), creaElemento("h2", null, titolo));
-  if (riga) testi.append(creaElemento("p", "cruscotto-riga", riga));
-  const comandi = creaElemento("div", "cruscotto-azioni");
+  box.className = `rd-sessione ${classe}`.trim();
+  const testi = creaElemento("div", "rd-sessione-testi");
+  testi.append(creaElemento("p", "rd-etichetta rd-stato", etichetta), creaElemento("h2", "rd-sessione-titolo", titolo));
+  if (riga) testi.append(creaElemento("p", "rd-sessione-riga", riga));
+  azioni.forEach((azione, i) => {
+    azione.className = i === 0 ? "rd-btn rd-btn-primario" : "rd-btn rd-btn-secondario";
+    if (i === 0) azione.append(creaElemento("span", "rd-btn-freccia", "→"));
+  });
+  const comandi = creaElemento("div", "rd-azioni");
   comandi.append(...azioni);
   box.replaceChildren(testi, comandi);
 }
@@ -144,7 +230,7 @@ function disegnaParty(party, livelli) {
   }));
 }
 
-async function cruscottoDM(campagna, admin) {
+async function cruscottoDM(campagna, promessaInAttesa) {
   document.getElementById("cruscotto-party").hidden = false;
   document.getElementById("titolo-avvisi").textContent = "Da fare";
   const [stato, sessioni, proposte, membri, inAttesa, crediti] = await Promise.all([
@@ -152,7 +238,7 @@ async function cruscottoDM(campagna, admin) {
     elencaSessioniCampagna(campagna.id),
     elencaProposteAperte(campagna.id),
     elencaMembriCampagna(campagna.id),
-    admin ? contaUtentiInAttesa() : Promise.resolve(0),
+    promessaInAttesa,
     elencaCreditiCampagna(campagna.id).catch(() => new Map()),
   ]);
   const evidenza = sessioneInEvidenza({ inCorso: stato.inCorso ? stato : null, sessioni, proposte, membri: membri.length });
@@ -162,15 +248,16 @@ async function cruscottoDM(campagna, admin) {
 
   if (evidenza.tipo === "corso") {
     const ora = oraDa(evidenza.sessione?.apertaIl);
+    segnaSessioneInCorso("Vai alla sessione");
     disegnaSessione({
       classe: "in-corso", etichetta: "● Sessione in corso", titolo: evidenza.titolo, riga: ora ? `Aperta alle ${ora}.` : "",
-      azioni: [bottoneLink("Vai alla sessione", "sessione.html", "btn-tabella btn-grande"), bottoneLink("Schermo del tavolo", "tavolo.html")],
+      azioni: [bottoneLink("Vai alla sessione", "sessione.html"), bottoneLink("Schermo del tavolo", "tavolo.html")],
     });
   } else if (evidenza.tipo === "oggi" || evidenza.tipo === "prossima") {
     const contenuti = contenutiProssima == null ? "" : ` · ${contenutiProssima === 1 ? "1 contenuto collegato" : `${contenutiProssima} contenuti collegati`}`;
     const azioni = [];
     if (evidenza.tipo === "oggi") {
-      const apri = creaElemento("button", "btn-tabella btn-grande", "Apri la sessione di oggi");
+      const apri = creaElemento("button", null, "Apri la sessione di oggi");
       apri.type = "button";
       apri.addEventListener("click", async () => {
         apri.disabled = true;
@@ -184,7 +271,7 @@ async function cruscottoDM(campagna, admin) {
       });
       azioni.push(apri);
     } else {
-      azioni.push(bottoneLink("Apri il calendario", "calendario.html", "btn-tabella btn-grande"));
+      azioni.push(bottoneLink("Apri il calendario", "calendario.html"));
     }
     azioni.push(bottoneLink("Contenuti della sessione", "campagna.html#sessioni"));
     disegnaSessione({
@@ -197,13 +284,13 @@ async function cruscottoDM(campagna, admin) {
   } else if (evidenza.tipo === "proposta") {
     disegnaSessione({
       etichetta: "Nessuna sessione in programma", titolo: evidenza.titolo, riga: evidenza.riga,
-      azioni: [bottoneLink("Apri il calendario", "calendario.html", "btn-tabella btn-grande")],
+      azioni: [bottoneLink("Apri il calendario", "calendario.html")],
     });
   } else {
     disegnaSessione({
       etichetta: "Nessuna sessione in programma", titolo: "Organizza la prossima sessione",
       riga: "Proponi delle date ai giocatori o fissala direttamente.",
-      azioni: [bottoneLink("Apri il calendario", "calendario.html", "btn-tabella btn-grande")],
+      azioni: [bottoneLink("Apri il calendario", "calendario.html")],
     });
   }
 
@@ -235,8 +322,10 @@ function disegnaMioPersonaggio(scheda, uid) {
   const sottorazza = razza?.sottorazze?.[scheda.sottorazza]?.nome;
   const blocco = creaElemento("div", "cruscotto-mio");
   const info = creaElemento("div", "cruscotto-mio-info");
+  const nome = creaElemento("h3", null, scheda.nome || "—");
+  nome.append(" ", creaElemento("span", "rd-chip-livello", `Liv. ${scheda.livello || 1}`));
   info.append(
-    creaElemento("h3", null, scheda.nome || "—"),
+    nome,
     creaElemento("p", "cruscotto-pg-sotto", [sottorazza || razza?.nome, `${classe?.nome || "—"} ${scheda.livello || 1}`].filter(Boolean).join(" · ")),
   );
   const pf = creaElemento("div", "cruscotto-mio-pf");
@@ -266,55 +355,48 @@ async function cruscottoGiocatore(campagna, uid, profilo) {
     ottieniSchedaAttiva(uid, campagna.id),
     creditiLivello(campagna.id, uid).catch(() => 0),
   ]);
-  // Il livello mostrato accanto al nome è quello del personaggio attivo in
-  // questa campagna.
-  if (scheda) {
-    const badgeLivello = document.getElementById("badge-livello");
-    badgeLivello.textContent = `Livello ${scheda.livello || 1}`;
-    badgeLivello.style.display = "inline-block";
-  }
   const evidenza = sessioneInEvidenza({ inCorso: stato.inCorso ? stato : null, sessioni: calendario.sessioni });
   if (evidenza.tipo === "corso") {
+    segnaSessioneInCorso("Raggiungi il tavolo");
     disegnaSessione({
       classe: "in-corso", etichetta: "● Sessione in corso", titolo: evidenza.titolo, riga: "Il DM ha aperto la sessione: raggiungi il tavolo.",
-      azioni: [bottoneLink("Raggiungi il tavolo", "sessione.html", "btn-tabella btn-grande")],
+      azioni: [bottoneLink("Raggiungi il tavolo", "sessione.html")],
     });
   } else if (evidenza.tipo === "oggi" || evidenza.tipo === "prossima") {
     disegnaSessione({
       classe: evidenza.tipo === "oggi" ? "oggi" : "",
       etichetta: evidenza.tipo === "oggi" ? `Oggi${evidenza.ora ? ` alle ${evidenza.ora}` : ""}` : `Prossima sessione · ${evidenza.distanza}`,
       titolo: evidenza.titolo, riga: evidenza.quando,
-      azioni: [bottoneLink("Calendario", "calendario.html", "btn-tabella btn-grande")],
+      azioni: [bottoneLink("Calendario", "calendario.html")],
     });
   } else if (calendario.daRispondere > 0) {
     disegnaSessione({
       etichetta: "Nessuna sessione in programma", titolo: "Il DM ha proposto delle date", riga: "Segna quando puoi esserci.",
-      azioni: [bottoneLink("Rispondi alle date", "calendario.html", "btn-tabella btn-grande")],
+      azioni: [bottoneLink("Rispondi alle date", "calendario.html")],
     });
   } else {
     disegnaSessione({
       etichetta: "Nessuna sessione in programma", titolo: "In attesa della prossima data",
       riga: calendario.aperte ? "Hai già risposto alle date proposte." : "Il DM non ha ancora fissato la prossima sessione.",
-      azioni: [bottoneLink("Calendario", "calendario.html", "btn-tabella btn-grande")],
+      azioni: [bottoneLink("Calendario", "calendario.html")],
     });
   }
   disegnaMioPersonaggio(scheda, uid);
   disegnaAvvisi(avvisiGiocatore({ crediti, scheda, daRispondere: calendario.daRispondere }), "Nessun avviso.");
 }
 
-async function montaCruscotto(user, profilo, campagna, ruolo) {
-  const sezione = document.getElementById("cruscotto");
-  sezione.hidden = false;
+async function montaCruscotto(user, profilo, campagna, ruolo, promessaInAttesa) {
   if (!campagna) {
-    document.getElementById("cruscotto-avvisi").hidden = true;
+    document.getElementById("rd-etichetta-pannello").textContent = "Sotterranei & Dragoni";
     disegnaSessione(ruolo === ROLES.PLAYER
       ? { etichetta: "Benvenuto", titolo: "Non sei ancora in una campagna", riga: "Chiedi al tuo Dungeon Master di aggiungerti al party." }
       : { etichetta: "Benvenuto", titolo: "Crea la tua prima campagna", riga: "Da lì in poi sessioni, personaggi e registro nasceranno dentro la campagna.",
-        azioni: [bottoneLink("Gestione campagna", "campagna.html", "btn-tabella btn-grande")] });
+        azioni: [bottoneLink("Gestione campagna", "campagna.html")] });
     return;
   }
+  document.getElementById("cruscotto").hidden = false;
   if (ruolo === ROLES.PLAYER) await cruscottoGiocatore(campagna, user.uid, profilo);
-  else await cruscottoDM(campagna, profilo?.ruolo === ROLES.ADMIN);
+  else await cruscottoDM(campagna, promessaInAttesa);
 }
 
 proteggiPagina(async (user, profilo) => {
@@ -322,26 +404,36 @@ proteggiPagina(async (user, profilo) => {
   const nome = profilo?.nome || user.displayName || user.email;
   const ruolo = profilo?.ruolo || ROLES.PLAYER;
 
+  const admin = ruolo === ROLES.ADMIN;
   document.getElementById("nome-utente").textContent = nome;
-  // Cruscotto e strumenti seguono il ruolo nella campagna corrente: DM in
-  // quella che guida, giocatore in quella di un altro (anche da admin).
+  document.getElementById("rd-account-nome").textContent = nome;
+  document.getElementById("rd-account-iniziale").textContent = (nome || "?").trim().charAt(0).toUpperCase();
+  document.getElementById("rd-account-ruolo").textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
+  document.getElementById("rd-btn-impostazioni").addEventListener("click", () => apriImpostazioni());
+  document.getElementById("rd-btn-esci").addEventListener("click", () => esciDalSito());
+
+  // Cruscotto, strumenti e barra laterale seguono il ruolo nella campagna
+  // corrente: DM in quella che guida, giocatore in quella di un altro (anche
+  // da admin). Amministrazione segue il ruolo dell'account.
   const campagna = await ottieniCampagnaCorrente(user.uid, ruolo).catch((errore) => {
     console.error(errore);
     return null;
   });
   const ruoloCampagna = campagna ? campagna.mioRuolo : ruolo === ROLES.PLAYER ? ROLES.PLAYER : ROLES.DM;
-  renderStrumenti(ruoloCampagna, profilo?.ordinePannelli, ruolo === ROLES.ADMIN);
-  montaCruscotto(user, profilo, campagna, ruoloCampagna).catch((errore) => console.error(errore));
+  gruppiCorrenti = gruppiStrumenti(ruoloCampagna, admin);
+  ordineCorrente = { ...(profilo?.ordinePannelli || {}) };
+  renderStrumenti();
+  renderNavigazione();
+  if (admin) promessaIscritti = contaUtentiInAttesa().catch(() => 0);
+  promessaIscritti.then(mostraIscrittiInAttesa);
+  montaCampagna(user.uid, ruolo, campagna, ruoloCampagna).catch((errore) => console.error(errore));
+  montaCruscotto(user, profilo, campagna, ruoloCampagna, promessaIscritti).catch((errore) => console.error(errore));
 
   const notifiche = await montaMenuUtente({
     contenitore: document.getElementById("slot-utente"),
     user,
     profilo,
-    onModificaOrdine: (attivo) => {
-      modoOrdinamento = attivo;
-      griglia.classList.toggle("riordino-attivo", attivo);
-      griglia.querySelectorAll(".strumento").forEach((pannello) => (pannello.draggable = attivo));
-    },
+    compatto: true,
   });
 
   const livelliNonLetti = notifiche.filter((n) => !n.letta && n.tipo === "livello_su");
@@ -369,13 +461,8 @@ proteggiPagina(async (user, profilo) => {
 
   mostraInvitoInstallazione();
   mostraInvitoNotifiche(user.uid);
-  riempiSelettoreCampagna(document.getElementById("select-campagna-dashboard"), user.uid, profilo?.ruolo || "player")
-    .then((mostra) => {
-      document.getElementById("selettore-campagna").hidden = !mostra;
-    })
-    .catch((errore) => console.error(errore));
   veil.style.display = "none";
-  contenuto.style.display = "block";
+  contenuto.style.display = "";
 });
 
 // Invito a installare l'app: finché non è installata o finché non lo si chiude
@@ -442,8 +529,8 @@ function mostraInvitoNotifiche(uid) {
 }
 
 // Riordino dei pannelli via trascinamento, come per "I miei personaggi": attivo
-// solo in modalità modifica (matita nell'header), limitato ai pannelli della
-// stessa sezione (non si mescolano Area DM e Area Giocatore).
+// solo in modalità modifica («Riordina»), limitato ai pannelli dello stesso
+// gruppo. La barra laterale segue lo stesso ordine.
 let pannelloTrascinato = null;
 
 griglia.addEventListener("dragstart", (evento) => {
@@ -465,8 +552,8 @@ griglia.addEventListener("dragover", (evento) => {
   evento.preventDefault();
   const bersaglio = evento.target.closest(".strumento");
   if (!bersaglio || bersaglio === pannelloTrascinato) return;
-  const contenitoreTrascinato = pannelloTrascinato.closest(".dashboard-grid");
-  if (bersaglio.closest(".dashboard-grid") !== contenitoreTrascinato) return;
+  const contenitoreTrascinato = pannelloTrascinato.closest(".rd-voci");
+  if (bersaglio.closest(".rd-voci") !== contenitoreTrascinato) return;
   const elementi = [...contenitoreTrascinato.children];
   if (elementi.indexOf(pannelloTrascinato) < elementi.indexOf(bersaglio)) {
     bersaglio.after(pannelloTrascinato);
@@ -478,8 +565,13 @@ griglia.addEventListener("dragover", (evento) => {
 griglia.addEventListener("drop", async (evento) => {
   if (!pannelloTrascinato) return;
   evento.preventDefault();
-  const contenitore = pannelloTrascinato.closest(".dashboard-grid");
+  const contenitore = pannelloTrascinato.closest(".rd-voci");
   const ordineChiavi = [...contenitore.children].map((el) => el.dataset.chiave);
+  ordineCorrente[contenitore.dataset.sezione] = ordineChiavi;
+  const liveAcceso = !document.getElementById("rd-live").hidden;
+  renderNavigazione();
+  if (liveAcceso) document.querySelectorAll("#rd-nav [data-sessione-live]").forEach((punto) => { punto.hidden = false; });
+  promessaIscritti.then(mostraIscrittiInAttesa);
   try {
     await salvaOrdinePannelli(uidCorrente, contenitore.dataset.sezione, ordineChiavi);
   } catch (errore) {

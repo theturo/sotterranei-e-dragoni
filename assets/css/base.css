@@ -26,6 +26,27 @@
 
   --radius-md: 10px;
   --shadow-deep: 0 10px 30px rgba(0, 0, 0, 0.55);
+
+  /* Redesign (blu notte, dal mockup approvato): per ora li usa la dashboard;
+     le altre pagine li adotteranno quando verranno ridisegnate. */
+  --rd-fondo: #101e2a;
+  --rd-barra: #132331;
+  --rd-pannello: #182b3a;
+  --rd-testata: #142635;
+  --rd-selezione: #263948;
+  --rd-selezione-rapida: #293b46;
+  --rd-bordo: #3b4d56;
+  --rd-bordo-scuro: #22323e;
+  --rd-bronzo: #a77a4d;
+  --rd-oro: #edbb76;
+  --rd-pergamena: #f2e4cd;
+  --rd-avorio: #fff0d6;
+  --rd-testo-2: #c6c8c0;
+  --rd-inchiostro: #252c31;
+  --rd-inchiostro-2: #4f565b;
+  --rd-cremisi: #873c39;
+  --rd-cremisi-bordo: #b86657;
+  --rd-link-pergamena: #772b30;
 }
 
 * {
