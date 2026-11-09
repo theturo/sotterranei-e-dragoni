@@ -202,6 +202,10 @@ Nessuna in sospeso.
   (drago e D20 nella zona sicura), favicon sul D20 (16 e 32 px, al posto della
   favicon vettoriale), icona per iPhone. Colore dell'app blu notte (#0c1f2f) nel
   manifest e nelle pagine.
+- Logo nuovo nel sito: emblema e titolo in Cinzel (gli stessi file dell'intro)
+  nelle pagine prima dell'accesso, al posto del logo orizzontale e dello stemma;
+  nell'intestazione della dashboard l'emblema con la scritta in Cinzel come
+  testo. Tolti i vecchi loghi oro e bordeaux.
 - Notifiche push: gli avvisi della campanella (livello, date proposte, sessione
   confermata e il nuovo "la sessione è iniziata") arrivano anche ad app chiusa,
   sul telefono (app installata; su iPhone da iOS 16.4) o sul computer;
