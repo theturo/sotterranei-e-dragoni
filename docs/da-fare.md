@@ -197,6 +197,11 @@ Nessuna in sospeso.
   login; si entra quando la dashboard è pronta. Disegno in un worker
   (OffscreenCanvas) dove c'è; un tocco salta; logo fermo con "riduci animazioni".
   Tolti Three.js e il Cinzel per il web, non più usati.
+- Icone nuove dal bozzetto del drago avvolto al D20: angoli trasparenti per
+  desktop e Android, maskable ricostruita con il vortice dipinto fino ai bordi
+  (drago e D20 nella zona sicura), favicon sul D20 (16 e 32 px, al posto della
+  favicon vettoriale), icona per iPhone. Colore dell'app blu notte (#0c1f2f) nel
+  manifest e nelle pagine.
 - Notifiche push: gli avvisi della campanella (livello, date proposte, sessione
   confermata e il nuovo "la sessione è iniziata") arrivano anche ad app chiusa,
   sul telefono (app installata; su iPhone da iOS 16.4) o sul computer;
