@@ -23,7 +23,7 @@ import {
   eliminaCreatura,
 } from "../dati/bestiario.js";
 import { aggiungiNemici, combattimentoAttivo, creatureInCombattimento } from "../dati/combattimento.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { creaElemento } from "../contenuti.js";
 import { elementoIcona } from "../icone.js";
 import { urlImmagine, scaricaImmagine, percorsiImmagineCampagna, ErroreImmagine } from "../immagini.js";
@@ -726,7 +726,7 @@ function pulisci(m) {
 
 // ---------- avvio ----------
 proteggiPaginaDM(async (user, profilo) => {
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
   utente = { uid: user.uid, nome: profilo?.nome || "DM" };
   const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo, { soloDM: true });
   veil.style.display = "none";

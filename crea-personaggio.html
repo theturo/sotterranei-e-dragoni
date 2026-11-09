@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="assets/css/scheda.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="personaggi">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -43,96 +43,100 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="i-miei-personaggi.html">&larr; I miei personaggi</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Nuovo personaggio
-          </h1>
-        </div>
-        <div class="intestazione-destra">
-          <span id="badge-passo" class="role-badge"></span>
-          <div id="slot-utente" class="slot-utente"></div>
-        </div>
-      </div>
-
-      <div class="panel-wide wizard-panel">
-
-        <!-- Passo 1: nome -->
-        <div class="wizard-step" id="passo-1">
-          <h2>Come si chiama il tuo personaggio?</h2>
-          <div class="field">
-            <label for="input-nome">Nome del personaggio</label>
-            <input type="text" id="input-nome" autocomplete="off" maxlength="60" />
-          </div>
-        </div>
-
-        <!-- Passo 2: razza -->
-        <div class="wizard-step" id="passo-2" hidden>
-          <h2>Scegli la razza</h2>
-          <div class="field">
-            <label for="select-razza">Razza</label>
-            <select id="select-razza"></select>
-          </div>
-          <div class="field" id="campo-sottorazza" hidden>
-            <label for="select-sottorazza">Sottorazza</label>
-            <select id="select-sottorazza"></select>
-          </div>
-          <div class="field-riga" id="campo-bonus-scelta" hidden>
-            <div class="field">
-              <label for="select-bonus-1">Prima caratteristica +1</label>
-              <select id="select-bonus-1"></select>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <h1 class="rd-titolo-pagina">Nuovo personaggio</h1>
             </div>
-            <div class="field">
-              <label for="select-bonus-2">Seconda caratteristica +1</label>
-              <select id="select-bonus-2"></select>
+            <div class="rd-comandi-pagina">
+              <span id="badge-passo" class="role-badge"></span>
+            </div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
+
+          <div class="panel-wide wizard-panel">
+
+            <!-- Passo 1: nome -->
+            <div class="wizard-step" id="passo-1">
+              <h2>Come si chiama il tuo personaggio?</h2>
+              <div class="field">
+                <label for="input-nome">Nome del personaggio</label>
+                <input type="text" id="input-nome" autocomplete="off" maxlength="60" />
+              </div>
+            </div>
+
+            <!-- Passo 2: razza -->
+            <div class="wizard-step" id="passo-2" hidden>
+              <h2>Scegli la razza</h2>
+              <div class="field">
+                <label for="select-razza">Razza</label>
+                <select id="select-razza"></select>
+              </div>
+              <div class="field" id="campo-sottorazza" hidden>
+                <label for="select-sottorazza">Sottorazza</label>
+                <select id="select-sottorazza"></select>
+              </div>
+              <div class="field-riga" id="campo-bonus-scelta" hidden>
+                <div class="field">
+                  <label for="select-bonus-1">Prima caratteristica +1</label>
+                  <select id="select-bonus-1"></select>
+                </div>
+                <div class="field">
+                  <label for="select-bonus-2">Seconda caratteristica +1</label>
+                  <select id="select-bonus-2"></select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Passo 3: classe -->
+            <div class="wizard-step" id="passo-3" hidden>
+              <h2>Scegli la classe</h2>
+              <div class="field">
+                <label for="select-classe">Classe</label>
+                <select id="select-classe"></select>
+              </div>
+            </div>
+
+            <!-- Passo 4: punteggi -->
+            <div class="wizard-step" id="passo-4" hidden>
+              <h2>Assegna i punteggi di caratteristica</h2>
+              <p class="card-tagline">
+                Assegna liberamente i valori 15, 14, 13, 12, 10 e 8 alle sei caratteristiche:
+                i bonus razziali si sommano automaticamente.
+              </p>
+              <table class="tabella-punteggi">
+                <thead>
+                  <tr><th>Caratteristica</th><th>Valore</th><th>Bonus razza</th><th>Totale</th><th>Modificatore</th></tr>
+                </thead>
+                <tbody id="corpo-punteggi"></tbody>
+              </table>
+            </div>
+
+            <!-- Passo 5: riepilogo -->
+            <div class="wizard-step" id="passo-5" hidden>
+              <h2>Riepilogo</h2>
+              <div id="riepilogo" class="riepilogo-lista"></div>
+            </div>
+
+            <div id="messaggio-wizard" class="message"></div>
+
+            <div class="wizard-nav">
+              <button id="btn-indietro" class="btn btn-ghost" type="button">Indietro</button>
+              <button id="btn-avanti" class="btn btn-secondary" type="button">Avanti</button>
+              <button id="btn-crea" class="btn btn-secondary" type="button" hidden>Crea personaggio</button>
             </div>
           </div>
         </div>
-
-        <!-- Passo 3: classe -->
-        <div class="wizard-step" id="passo-3" hidden>
-          <h2>Scegli la classe</h2>
-          <div class="field">
-            <label for="select-classe">Classe</label>
-            <select id="select-classe"></select>
-          </div>
-        </div>
-
-        <!-- Passo 4: punteggi -->
-        <div class="wizard-step" id="passo-4" hidden>
-          <h2>Assegna i punteggi di caratteristica</h2>
-          <p class="card-tagline">
-            Assegna liberamente i valori 15, 14, 13, 12, 10 e 8 alle sei caratteristiche:
-            i bonus razziali si sommano automaticamente.
-          </p>
-          <table class="tabella-punteggi">
-            <thead>
-              <tr><th>Caratteristica</th><th>Valore</th><th>Bonus razza</th><th>Totale</th><th>Modificatore</th></tr>
-            </thead>
-            <tbody id="corpo-punteggi"></tbody>
-          </table>
-        </div>
-
-        <!-- Passo 5: riepilogo -->
-        <div class="wizard-step" id="passo-5" hidden>
-          <h2>Riepilogo</h2>
-          <div id="riepilogo" class="riepilogo-lista"></div>
-        </div>
-
-        <div id="messaggio-wizard" class="message"></div>
-
-        <div class="wizard-nav">
-          <button id="btn-indietro" class="btn btn-ghost" type="button">Indietro</button>
-          <button id="btn-avanti" class="btn btn-secondary" type="button">Avanti</button>
-          <button id="btn-crea" class="btn btn-secondary" type="button" hidden>Crea personaggio</button>
-        </div>
-      </div>
+  
+      </main>
     </div>
   </div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/crea-personaggio.js"></script>
 </body>

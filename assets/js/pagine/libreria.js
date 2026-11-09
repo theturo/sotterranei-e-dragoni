@@ -13,7 +13,7 @@ import {
   eliminaContenuto,
   ascoltaLibreriaDM,
 } from "../dati/libreria.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import {
   TIPI_ACCETTATI,
   ErroreImmagine,
@@ -380,7 +380,7 @@ async function caricaSessioni() {
 }
 
 proteggiPaginaDM(async (user, profilo) => {
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
 
   const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo, { soloDM: true });
   if (!campagna) {

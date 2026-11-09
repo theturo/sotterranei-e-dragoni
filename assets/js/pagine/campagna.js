@@ -21,7 +21,7 @@ import { ascoltaLibreriaDM, collegaContenutiSessione } from "../dati/libreria.js
 import { ascoltaBestiario } from "../dati/bestiario.js";
 import { formattaDataOra, distanzaGiorni, etichettaSessione, dataBreveIso } from "../calendario.js";
 import { CLASSI } from "../dati-srd.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { esc, mostraToast } from "../utils.js";
 import { scegliContenuti } from "../contenuti.js";
 
@@ -547,7 +547,7 @@ mostraScheda(location.hash.slice(1));
 
 proteggiPaginaDM(async (user, profilo) => {
   uidCorrente = user.uid;
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
 
   try {
     await ricaricaTutto();

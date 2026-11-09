@@ -4,7 +4,7 @@ import { proteggiPagina } from "../auth.js";
 import { ottieniCampagnaCorrente } from "../dati/campagne.js";
 import { creaScheda } from "../dati/schede.js";
 import { esc, mostraAttesa } from "../utils.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import {
   RAZZE,
   CLASSI,
@@ -314,7 +314,7 @@ btnCrea.addEventListener("click", async () => {
 
 proteggiPagina(async (user, profilo) => {
   uidCorrente = user.uid;
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
 
   const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo);
   if (!campagna) {

@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="assets/css/dm.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="bestiario">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -43,66 +43,71 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Bestiario
-          </h1>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <h1 class="rd-titolo-pagina">Bestiario</h1>
+            </div>
+            <div class="rd-comandi-pagina"></div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
+
+          <div id="nessuna-campagna" class="panel-wide" hidden>
+            <p class="scheda-testo-libero">
+              Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>.
+            </p>
+          </div>
+
+          <div id="bestiario" class="bestiario" hidden>
+            <section class="panel-wide bestiario-elenco" aria-label="Elenco delle creature">
+              <div class="bestiario-barra">
+                <input type="search" id="filtro-testo" class="input-dadi" placeholder="Cerca per nome…" aria-label="Cerca per nome" />
+                <button type="button" id="btn-nuova" class="btn-tabella btn-tabella-evidenza">+ Nuova creatura</button>
+              </div>
+              <div class="bestiario-chips" role="group" aria-label="Fonte">
+                <button type="button" class="chip-filtro" data-fonte="">Tutte</button>
+                <button type="button" class="chip-filtro" data-fonte="srd">Mostri SRD</button>
+                <button type="button" class="chip-filtro" data-fonte="dm">Create da me</button>
+              </div>
+              <div class="bestiario-filtri">
+                <select id="filtro-gs" class="select-galleria" aria-label="Grado di sfida"></select>
+                <select id="filtro-tipo" class="select-galleria" aria-label="Tipo di creatura"></select>
+                <select id="filtro-taglia" class="select-galleria" aria-label="Taglia"></select>
+              </div>
+              <p id="bestiario-conteggio" class="bestiario-conteggio"></p>
+              <ul id="bestiario-lista" class="bestiario-lista"></ul>
+            </section>
+
+            <section class="panel-wide bestiario-dettaglio" id="bestiario-dettaglio" aria-live="polite">
+              <p class="sessione-placeholder">Scegli una creatura dall'elenco.</p>
+            </section>
+
+            <section class="panel-wide bestiario-tiri" aria-label="Tiri del bestiario">
+              <h3>Tiri</h3>
+              <label class="checkbox-scudo"><input type="checkbox" id="tiri-visibili" /> Visibili ai giocatori nel registro della sessione</label>
+              <p id="tiri-nota" class="bestiario-nota"></p>
+              <ul id="tiri-elenco" class="bestiario-tiri-elenco"></ul>
+            </section>
+          </div>
+
+          <p class="bestiario-licenza">
+            I mostri del bestiario vengono dal System Reference Document 5.1 di Wizards of the Coast LLC, disponibile con
+            licenza <a href="https://creativecommons.org/licenses/by/4.0/legalcode" rel="noopener" target="_blank">Creative Commons Attribution 4.0</a>
+            (CC-BY-4.0); traduzione e adattamento in metri di Sotterranei &amp; Dragoni.
+          </p>
         </div>
-        <div id="slot-utente" class="slot-utente"></div>
-      </div>
-
-      <div id="nessuna-campagna" class="panel-wide" hidden>
-        <p class="scheda-testo-libero">
-          Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>.
-        </p>
-      </div>
-
-      <div id="bestiario" class="bestiario" hidden>
-        <section class="panel-wide bestiario-elenco" aria-label="Elenco delle creature">
-          <div class="bestiario-barra">
-            <input type="search" id="filtro-testo" class="input-dadi" placeholder="Cerca per nome…" aria-label="Cerca per nome" />
-            <button type="button" id="btn-nuova" class="btn-tabella btn-tabella-evidenza">+ Nuova creatura</button>
-          </div>
-          <div class="bestiario-chips" role="group" aria-label="Fonte">
-            <button type="button" class="chip-filtro" data-fonte="">Tutte</button>
-            <button type="button" class="chip-filtro" data-fonte="srd">Mostri SRD</button>
-            <button type="button" class="chip-filtro" data-fonte="dm">Create da me</button>
-          </div>
-          <div class="bestiario-filtri">
-            <select id="filtro-gs" class="select-galleria" aria-label="Grado di sfida"></select>
-            <select id="filtro-tipo" class="select-galleria" aria-label="Tipo di creatura"></select>
-            <select id="filtro-taglia" class="select-galleria" aria-label="Taglia"></select>
-          </div>
-          <p id="bestiario-conteggio" class="bestiario-conteggio"></p>
-          <ul id="bestiario-lista" class="bestiario-lista"></ul>
-        </section>
-
-        <section class="panel-wide bestiario-dettaglio" id="bestiario-dettaglio" aria-live="polite">
-          <p class="sessione-placeholder">Scegli una creatura dall'elenco.</p>
-        </section>
-
-        <section class="panel-wide bestiario-tiri" aria-label="Tiri del bestiario">
-          <h3>Tiri</h3>
-          <label class="checkbox-scudo"><input type="checkbox" id="tiri-visibili" /> Visibili ai giocatori nel registro della sessione</label>
-          <p id="tiri-nota" class="bestiario-nota"></p>
-          <ul id="tiri-elenco" class="bestiario-tiri-elenco"></ul>
-        </section>
-      </div>
-
-      <p class="bestiario-licenza">
-        I mostri del bestiario vengono dal System Reference Document 5.1 di Wizards of the Coast LLC, disponibile con
-        licenza <a href="https://creativecommons.org/licenses/by/4.0/legalcode" rel="noopener" target="_blank">Creative Commons Attribution 4.0</a>
-        (CC-BY-4.0); traduzione e adattamento in metri di Sotterranei &amp; Dragoni.
-      </p>
+  
+      </main>
     </div>
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/bestiario.js"></script>
 </body>

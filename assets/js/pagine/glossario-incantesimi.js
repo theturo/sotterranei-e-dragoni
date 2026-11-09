@@ -1,7 +1,7 @@
 // Script della pagina glossario-incantesimi.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 import { proteggiPaginaDM } from "../auth.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { INCANTESIMI, cercaIncantesimi } from "../incantesimi-srd.js";
 
 const veil = document.getElementById("veil");
@@ -85,7 +85,7 @@ selectClasse.addEventListener("change", aggiorna);
 selectLivello.addEventListener("change", aggiorna);
 
 proteggiPaginaDM((user, profilo) => {
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
   veil.style.display = "none";
   contenuto.style.display = "block";
 });

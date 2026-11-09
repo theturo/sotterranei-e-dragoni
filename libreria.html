@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="assets/css/dm.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="libreria">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -43,98 +43,106 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Libreria dei contenuti
-          </h1>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <p id="rd-riga-campagna" class="rd-riga-campagna" hidden></p>
+              <h1 class="rd-titolo-pagina">Libreria dei contenuti</h1>
+            </div>
+            <div class="rd-comandi-pagina"></div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
+
+          <div id="nessuna-campagna" class="panel-wide" hidden>
+            <p class="scheda-testo-libero">
+              Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>.
+            </p>
+          </div>
+
+          <details id="pannello-carica" class="panel-wide pannello-carica" hidden>
+            <summary><h3>Carica un contenuto</h3></summary>
+            <p class="card-tagline" style="text-align:left;">
+              I giocatori non vedono nulla finché non lo mostri durante una sessione. Collegalo alle
+              sessioni da qui o da <a href="campagna.html">Gestione campagna</a>; se lo destini all'archivio,
+              alla chiusura della sessione in cui lo mostri entra nell'archivio di chi l'ha visto.
+            </p>
+            <form id="form-carica">
+              <div class="field">
+                <label for="carica-file">Immagine</label>
+                <input type="file" id="carica-file" required />
+              </div>
+              <div class="field-riga">
+                <div class="field">
+                  <label for="carica-titolo">Titolo (lo vedono i giocatori)</label>
+                  <input type="text" id="carica-titolo" maxlength="80" placeholder="Es. Mappa della palude di Kalkash" required />
+                </div>
+                <div class="field">
+                  <label for="carica-categoria">Categoria</label>
+                  <select id="carica-categoria" class="select-galleria"></select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="carica-descrizione">Descrizione per i giocatori (opzionale)</label>
+                <textarea id="carica-descrizione" maxlength="500" rows="2" class="textarea-galleria"></textarea>
+              </div>
+              <div class="field-riga">
+                <div class="field">
+                  <label for="carica-tag">Tag privati (separati da virgola)</label>
+                  <input type="text" id="carica-tag" placeholder="Es. palude, atto 2, traditore" />
+                </div>
+                <div class="field">
+                  <label for="carica-note">Note private</label>
+                  <textarea id="carica-note" maxlength="2000" rows="2" class="textarea-galleria"></textarea>
+                </div>
+              </div>
+              <label class="checkbox-scudo" style="margin-bottom:16px;">
+                <input type="checkbox" id="carica-archivio" />
+                Destinato all'archivio dei giocatori
+              </label>
+              <button type="submit" id="btn-carica" class="btn" style="width:auto; padding:10px 22px;">Carica</button>
+            </form>
+          </details>
+
+          <div id="pannello-libreria" class="panel-wide" hidden>
+            <div class="galleria-barra galleria-filtri">
+              <input type="search" id="filtro-testo" class="select-galleria" placeholder="Cerca per titolo, tag o note" aria-label="Cerca" />
+              <select id="filtro-categoria" class="select-galleria" aria-label="Categoria">
+                <option value="">Tutte le categorie</option>
+              </select>
+              <select id="filtro-tag" class="select-galleria" aria-label="Tag">
+                <option value="">Tutti i tag</option>
+              </select>
+              <select id="filtro-stato" class="select-galleria" aria-label="Stato">
+                <option value="">Qualsiasi stato</option>
+                <option value="mai">Mai mostrati</option>
+                <option value="ora">Mostrati ora</option>
+                <option value="archivio">Nell'archivio di qualcuno</option>
+                <option value="attesa">Destinati all'archivio, non ancora sbloccati</option>
+                <option value="riservati">Non destinati all'archivio</option>
+              </select>
+              <select id="filtro-sessione" class="select-galleria" aria-label="Sessione">
+                <option value="">Tutte le sessioni</option>
+                <option value="nessuna">Non collegati a sessioni</option>
+              </select>
+              <select id="filtro-ordine" class="select-galleria" aria-label="Ordine">
+                <option value="recenti">Più recenti</option>
+                <option value="vecchi">Meno recenti</option>
+                <option value="titolo">Per titolo</option>
+              </select>
+            </div>
+            <p id="conteggio" class="party-sessione-sub"></p>
+            <ul id="griglia-contenuti" class="griglia-immagini"></ul>
+            <p id="libreria-vuota" class="scheda-testo-libero" hidden></p>
+          </div>
         </div>
-        <div id="slot-utente" class="slot-utente"></div>
-      </div>
-
-      <div id="nessuna-campagna" class="panel-wide" hidden>
-        <p class="scheda-testo-libero">
-          Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>.
-        </p>
-      </div>
-
-      <details id="pannello-carica" class="panel-wide pannello-carica" hidden>
-        <summary><h3>Carica un contenuto</h3></summary>
-        <p class="card-tagline" style="text-align:left;">
-          I giocatori non vedono nulla finché non lo mostri durante una sessione. Collegalo alle
-          sessioni da qui o da <a href="campagna.html">Gestione campagna</a>; se lo destini all'archivio,
-          alla chiusura della sessione in cui lo mostri entra nell'archivio di chi l'ha visto.
-        </p>
-        <form id="form-carica">
-          <div class="field">
-            <label for="carica-file">Immagine</label>
-            <input type="file" id="carica-file" required />
-          </div>
-          <div class="field-riga">
-            <div class="field">
-              <label for="carica-titolo">Titolo (lo vedono i giocatori)</label>
-              <input type="text" id="carica-titolo" maxlength="80" placeholder="Es. Mappa della palude di Kalkash" required />
-            </div>
-            <div class="field">
-              <label for="carica-categoria">Categoria</label>
-              <select id="carica-categoria" class="select-galleria"></select>
-            </div>
-          </div>
-          <div class="field">
-            <label for="carica-descrizione">Descrizione per i giocatori (opzionale)</label>
-            <textarea id="carica-descrizione" maxlength="500" rows="2" class="textarea-galleria"></textarea>
-          </div>
-          <div class="field-riga">
-            <div class="field">
-              <label for="carica-tag">Tag privati (separati da virgola)</label>
-              <input type="text" id="carica-tag" placeholder="Es. palude, atto 2, traditore" />
-            </div>
-            <div class="field">
-              <label for="carica-note">Note private</label>
-              <textarea id="carica-note" maxlength="2000" rows="2" class="textarea-galleria"></textarea>
-            </div>
-          </div>
-          <label class="checkbox-scudo" style="margin-bottom:16px;">
-            <input type="checkbox" id="carica-archivio" />
-            Destinato all'archivio dei giocatori
-          </label>
-          <button type="submit" id="btn-carica" class="btn" style="width:auto; padding:10px 22px;">Carica</button>
-        </form>
-      </details>
-
-      <div id="pannello-libreria" class="panel-wide" hidden>
-        <div class="galleria-barra galleria-filtri">
-          <input type="search" id="filtro-testo" class="select-galleria" placeholder="Cerca per titolo, tag o note" aria-label="Cerca" />
-          <select id="filtro-categoria" class="select-galleria" aria-label="Categoria">
-            <option value="">Tutte le categorie</option>
-          </select>
-          <select id="filtro-tag" class="select-galleria" aria-label="Tag">
-            <option value="">Tutti i tag</option>
-          </select>
-          <select id="filtro-stato" class="select-galleria" aria-label="Stato">
-            <option value="">Qualsiasi stato</option>
-            <option value="mai">Mai mostrati</option>
-            <option value="ora">Mostrati ora</option>
-            <option value="archivio">Nell'archivio di qualcuno</option>
-            <option value="attesa">Destinati all'archivio, non ancora sbloccati</option>
-            <option value="riservati">Non destinati all'archivio</option>
-          </select>
-          <select id="filtro-sessione" class="select-galleria" aria-label="Sessione">
-            <option value="">Tutte le sessioni</option>
-            <option value="nessuna">Non collegati a sessioni</option>
-          </select>
-          <select id="filtro-ordine" class="select-galleria" aria-label="Ordine">
-            <option value="recenti">Più recenti</option>
-            <option value="vecchi">Meno recenti</option>
-            <option value="titolo">Per titolo</option>
-          </select>
-        </div>
-        <p id="conteggio" class="party-sessione-sub"></p>
-        <ul id="griglia-contenuti" class="griglia-immagini"></ul>
-        <p id="libreria-vuota" class="scheda-testo-libero" hidden></p>
-      </div>
+  
+      </main>
     </div>
   </div>
 
@@ -195,8 +203,6 @@
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/libreria.js"></script>
 </body>

@@ -21,7 +21,7 @@ import {
   annullaProposta,
   fissaSessione,
 } from "../dati/calendario.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { creaElemento } from "../contenuti.js";
 import { ICONA_SI, ICONA_FORSE, ICONA_NO } from "../icone.js";
 import {
@@ -394,7 +394,7 @@ proteggiPagina(async (user, profilo) => {
   uidCorrente = user.uid;
   nomeCorrente = profilo?.nome ?? null;
   const ruolo = profilo?.ruolo || ROLES.PLAYER;
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
 
   campagna = await ottieniCampagnaCorrente(user.uid, ruolo).catch(() => null);
   // DM solo della campagna che guida: in quella di un altro si risponde alle date.

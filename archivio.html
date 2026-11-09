@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="assets/css/dm.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="archivio">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -42,48 +42,54 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Archivio della campagna
-          </h1>
-        </div>
-        <div id="slot-utente" class="slot-utente"></div>
-      </div>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <p id="rd-riga-campagna" class="rd-riga-campagna" hidden></p>
+              <h1 class="rd-titolo-pagina">Archivio della campagna</h1>
+            </div>
+            <div class="rd-comandi-pagina"></div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
 
-      <div id="nessuna-campagna" class="panel-wide" hidden>
-        <p id="testo-nessuna-campagna" class="scheda-testo-libero"></p>
-      </div>
+          <div id="nessuna-campagna" class="panel-wide" hidden>
+            <p id="testo-nessuna-campagna" class="scheda-testo-libero"></p>
+          </div>
 
-      <div id="pannello-archivio" class="panel-wide" hidden>
-        <p class="card-tagline" style="text-align:left;">
-          Mappe, luoghi, personaggi e documenti incontrati durante l'avventura.
-        </p>
-        <div class="galleria-barra galleria-filtri">
-          <input type="search" id="filtro-testo" class="select-galleria" placeholder="Cerca per titolo" aria-label="Cerca" />
-          <select id="filtro-categoria" class="select-galleria" aria-label="Categoria">
-            <option value="">Tutte le categorie</option>
-          </select>
-          <select id="filtro-sessione" class="select-galleria" aria-label="Sessione">
-            <option value="">Tutte le sessioni</option>
-          </select>
-          <select id="filtro-ordine" class="select-galleria" aria-label="Ordine">
-            <option value="recenti">Più recenti</option>
-            <option value="vecchi">Meno recenti</option>
-            <option value="titolo">Per titolo</option>
-          </select>
+          <div id="pannello-archivio" class="panel-wide" hidden>
+            <p class="card-tagline" style="text-align:left;">
+              Mappe, luoghi, personaggi e documenti incontrati durante l'avventura.
+            </p>
+            <div class="galleria-barra galleria-filtri">
+              <input type="search" id="filtro-testo" class="select-galleria" placeholder="Cerca per titolo" aria-label="Cerca" />
+              <select id="filtro-categoria" class="select-galleria" aria-label="Categoria">
+                <option value="">Tutte le categorie</option>
+              </select>
+              <select id="filtro-sessione" class="select-galleria" aria-label="Sessione">
+                <option value="">Tutte le sessioni</option>
+              </select>
+              <select id="filtro-ordine" class="select-galleria" aria-label="Ordine">
+                <option value="recenti">Più recenti</option>
+                <option value="vecchi">Meno recenti</option>
+                <option value="titolo">Per titolo</option>
+              </select>
+            </div>
+            <ul id="griglia-archivio" class="griglia-immagini"></ul>
+            <p id="archivio-vuoto" class="scheda-testo-libero" hidden></p>
+          </div>
         </div>
-        <ul id="griglia-archivio" class="griglia-immagini"></ul>
-        <p id="archivio-vuoto" class="scheda-testo-libero" hidden></p>
-      </div>
+  
+      </main>
     </div>
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/archivio.js"></script>
 </body>

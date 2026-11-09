@@ -3,7 +3,7 @@
 // Dashboard ridisegnata: barra laterale con la navigazione (computer), testata
 // con campagna, targhette e campanella, pannello della sessione sul dipinto,
 // riepilogo (party o proprio personaggio, avvisi "Da fare") e strumenti.
-import { proteggiPagina, ROLES, ETICHETTE_RUOLO } from "../auth.js";
+import { proteggiPagina, ROLES } from "../auth.js";
 import { salvaOrdinePannelli, contaUtentiInAttesa } from "../dati/utenti.js";
 import { elencaCreditiCampagna, creditiLivello, migraCreditiProfilo } from "../dati/livelli.js";
 import { ottieniCampagnaCorrente, elencaMembriCampagna } from "../dati/campagne.js";
@@ -13,7 +13,8 @@ import { ottieniStatoSessione, elencaSessioniCampagna, apriSessione } from "../d
 import { riepilogoCalendario, elencaProposteAperte } from "../dati/calendario.js";
 import { contaContenutiCollegati } from "../dati/libreria.js";
 import { montaWidgetMusica } from "../widget-musica.js";
-import { montaMenuUtente, riempiSelettoreCampagna, campagneAttiveConTitolo, apriImpostazioni, esciDalSito } from "../menu-utente.js";
+import { riempiSelettoreCampagna, campagneAttiveConTitolo } from "../menu-utente.js";
+import { montaGuscio, extraVoce, segnaSessioneInCorso as accendiSessioneNellaBarra, aggiornaOrdineBarra } from "../guscio.js";
 import { statoInstallazione, quandoCambiaInstallazione, installaApp } from "../pwa.js";
 import { statoNotifichePush, attivaNotifichePush } from "../notifiche-push.js";
 import {
@@ -25,18 +26,17 @@ import { privilegiDelPersonaggio } from "../privilegi.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
 import { creaElemento } from "../contenuti.js";
 import { esc } from "../utils.js";
-import { icona, ICONA_HOME, ICONA_MODIFICA, ICONA_SI } from "../icone.js";
+import { icona, ICONA_MODIFICA, ICONA_SI } from "../icone.js";
 
 const veil = document.getElementById("veil");
 const contenuto = document.getElementById("contenuto");
 const griglia = document.getElementById("griglia-pannelli");
-const nav = document.getElementById("rd-nav");
 
 let uidCorrente = null;
 let modoOrdinamento = false;
 let gruppiCorrenti = [];
 let ordineCorrente = {};
-// Iscritti da approvare (solo admin): letti una volta, ridisegnati col riordino.
+// Iscritti da approvare (solo admin): letti una volta, per il cruscotto e il guscio.
 let promessaIscritti = Promise.resolve(0);
 
 // Icone fisse della pagina (barra laterale, titoli delle pergamene, Riordina).
@@ -44,11 +44,6 @@ document.querySelectorAll("[data-rd-icona]").forEach((el) => { el.innerHTML = ic
 document.getElementById("rd-riordina-icona").innerHTML = ICONA_MODIFICA;
 
 const MANIGLIA = '<span class="maniglia-trascina" aria-hidden="true" title="Trascina per riordinare"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></span>';
-
-// Contatori che alcune voci portano con sé (barra laterale e tessere).
-const extraVoce = (chiave) =>
-  (chiave === "sessione" ? '<span class="rd-punto-live" data-sessione-live hidden></span>' : "")
-  + (chiave === "utenti" ? '<span class="rd-conta" data-conta-utenti hidden></span>' : "");
 
 // Strumenti: Prepara / Gioca / Consulta per il DM (più Amministrazione per
 // l'admin), uno solo per il giocatore. L'ordine dentro ogni gruppo si cambia
@@ -75,30 +70,11 @@ function renderStrumenti() {
   griglia.querySelectorAll(".strumento").forEach((pannello) => (pannello.draggable = modoOrdinamento));
 }
 
-// Barra laterale: le stesse voci e lo stesso ordine delle tessere, così le due
-// liste non si disallineano mai. Il title resta per la barra a sole icone.
-function renderNavigazione() {
-  nav.innerHTML = `
-    <a class="rd-voce attiva" href="dashboard.html" aria-current="page" title="Dashboard"><span class="rd-voce-icona" aria-hidden="true">${ICONA_HOME}</span><span class="rd-voce-testo">Dashboard</span></a>
-    ${gruppiCorrenti.map((g) => `
-      <p class="rd-nav-gruppo">${esc(g.titolo)}</p>
-      ${ordinaVoci(g.voci, ordineCorrente[g.id]).map((v) => `
-        <a class="rd-voce" href="${esc(v.link)}" title="${esc(v.titolo)}"><span class="rd-voce-icona" aria-hidden="true">${icona(v.icona)}</span><span class="rd-voce-testo">${esc(v.titolo)}</span>${extraVoce(v.chiave)}</a>`).join("")}`).join("")}`;
-}
-
 // «● Sessione in corso» nella testata (computer) e accanto a Sessione.
 function segnaSessioneInCorso(azione) {
   document.getElementById("rd-live-azione").textContent = azione;
   document.getElementById("rd-live").hidden = false;
-  document.querySelectorAll("[data-sessione-live]").forEach((punto) => { punto.hidden = false; });
-}
-
-function mostraIscrittiInAttesa(quanti) {
-  document.querySelectorAll("[data-conta-utenti]").forEach((conta) => {
-    conta.textContent = String(quanti);
-    conta.hidden = !quanti;
-    conta.title = quanti === 1 ? "1 iscritto da approvare" : `${quanti} iscritti da approvare`;
-  });
+  accendiSessioneNellaBarra();
 }
 
 function impostaRiordino(attivo) {
@@ -406,11 +382,6 @@ proteggiPagina(async (user, profilo) => {
 
   const admin = ruolo === ROLES.ADMIN;
   document.getElementById("nome-utente").textContent = nome;
-  document.getElementById("rd-account-nome").textContent = nome;
-  document.getElementById("rd-account-iniziale").textContent = (nome || "?").trim().charAt(0).toUpperCase();
-  document.getElementById("rd-account-ruolo").textContent = ETICHETTE_RUOLO[ruolo] || ruolo;
-  document.getElementById("rd-btn-impostazioni").addEventListener("click", () => apriImpostazioni());
-  document.getElementById("rd-btn-esci").addEventListener("click", () => esciDalSito());
 
   // Cruscotto, strumenti e barra laterale seguono il ruolo nella campagna
   // corrente: DM in quella che guida, giocatore in quella di un altro (anche
@@ -423,18 +394,13 @@ proteggiPagina(async (user, profilo) => {
   gruppiCorrenti = gruppiStrumenti(ruoloCampagna, admin);
   ordineCorrente = { ...(profilo?.ordinePannelli || {}) };
   renderStrumenti();
-  renderNavigazione();
   if (admin) promessaIscritti = contaUtentiInAttesa().catch(() => 0);
-  promessaIscritti.then(mostraIscrittiInAttesa);
+  // Il guscio disegna subito la barra con questi gruppi; le notifiche arrivano dopo.
+  const guscio = montaGuscio({ user, profilo, voce: "dashboard", gruppi: gruppiCorrenti, iscritti: promessaIscritti });
   montaCampagna(user.uid, ruolo, campagna, ruoloCampagna).catch((errore) => console.error(errore));
   montaCruscotto(user, profilo, campagna, ruoloCampagna, promessaIscritti).catch((errore) => console.error(errore));
 
-  const notifiche = await montaMenuUtente({
-    contenitore: document.getElementById("slot-utente"),
-    user,
-    profilo,
-    compatto: true,
-  });
+  const { notifiche } = await guscio;
 
   const livelliNonLetti = notifiche.filter((n) => !n.letta && n.tipo === "livello_su");
   if (livelliNonLetti.length > 0) {
@@ -568,10 +534,7 @@ griglia.addEventListener("drop", async (evento) => {
   const contenitore = pannelloTrascinato.closest(".rd-voci");
   const ordineChiavi = [...contenitore.children].map((el) => el.dataset.chiave);
   ordineCorrente[contenitore.dataset.sezione] = ordineChiavi;
-  const liveAcceso = !document.getElementById("rd-live").hidden;
-  renderNavigazione();
-  if (liveAcceso) document.querySelectorAll("#rd-nav [data-sessione-live]").forEach((punto) => { punto.hidden = false; });
-  promessaIscritti.then(mostraIscrittiInAttesa);
+  aggiornaOrdineBarra(contenitore.dataset.sezione, ordineChiavi);
   try {
     await salvaOrdinePannelli(uidCorrente, contenitore.dataset.sezione, ordineChiavi);
   } catch (errore) {

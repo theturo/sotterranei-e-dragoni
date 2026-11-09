@@ -38,7 +38,7 @@ import {
 } from "../dati/libreria.js";
 import { tira, testoTiro } from "../dadi.js";
 import { oggiIso, formattaDataOra, etichettaSessione, dataBreve, oraBreve } from "../calendario.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { esc, creaScheletro, mostraAttesa, mostraToast } from "../utils.js";
 import { montaWidgetMusica } from "../widget-musica.js";
 import { CLASSI, ICONA_CLASSE_FALLBACK, applicaVariazionePf } from "../dati-srd.js";
@@ -818,7 +818,7 @@ proteggiPagina(async (user, profilo) => {
   nomeCorrente = profilo?.nome ?? null;
   const ruolo = profilo?.ruolo || ROLES.PLAYER;
 
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
 
   // Si è DM solo della campagna che si guida: in quella di un altro (anche da
   // admin) si gioca come tutti gli altri giocatori.

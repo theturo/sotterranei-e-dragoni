@@ -4111,3 +4111,1111 @@ a:not(.btn-tabella, .btn-campanella):active {
   margin-top: 10px;
   padding: 9px 12px;
 }
+
+/* =====================================================================
+   Guscio ridisegnato (blu notte): barra laterale al computer, cassetto sul
+   telefono, testata compatta. Lo usano le pagine con body.pagina-ridisegnata
+   (dashboard e pagine interne); il codice è in guscio.js. Le regole sui pezzi
+   condivisi (campanella, pannello ⚙️) valgono solo dentro quella classe.
+   Larghezze: ≥1200 px barra completa · 900–1199 barra a sole icone
+   (.rd-barra-compatta anche sopra) · <900 cassetto e testata del telefono.
+   ===================================================================== */
+html:has(body.pagina-ridisegnata) {
+  background-color: var(--rd-fondo);
+}
+
+/* Le variabili dei vecchi fondi marroni diventano blu (fumetti delle
+   descrizioni, banner «Aggiorna», pannello della guida, anteprime…). */
+.pagina-ridisegnata {
+  --color-bg-dark: #0b1620;
+  --color-bg-dark-2: var(--rd-barra);
+  background: var(--rd-fondo);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata :is(a, button, select):focus-visible {
+  outline: 2px solid var(--rd-oro);
+  outline-offset: 2px;
+}
+
+/* Etichetta in maiuscoletto dorato (campagna, pannello, strumenti, stato). */
+.rd-etichetta {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--rd-oro);
+}
+
+/* ---------- Guscio: barra laterale + area principale ---------- */
+.rd-guscio {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.rd-barra {
+  position: sticky;
+  top: 0;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: 248px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 22px 14px 16px;
+  overflow-y: auto;
+  background: var(--rd-barra);
+  border-right: 1px solid var(--rd-bordo-scuro);
+  scrollbar-width: thin;
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.rd-marchio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6px 16px;
+  text-decoration: none;
+}
+
+/* L'emblema senza il titolo dipinto: sotto i 50 px perderebbe il drago. */
+.rd-marchio img {
+  width: 54px;
+  height: 53px;
+  object-fit: cover;
+  object-position: top;
+  flex: none;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.rd-marchio-scritta {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.05;
+  letter-spacing: 0.4px;
+  color: var(--rd-avorio);
+}
+
+.rd-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rd-nav-gruppo {
+  margin: 0;
+  padding: 14px 10px 5px;
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--rd-bronzo);
+}
+
+.rd-voce {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--rd-testo-2);
+  font-family: var(--font-body);
+  font-size: 17px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .rd-voce:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--rd-avorio);
+  }
+}
+
+.rd-voce.attiva {
+  background: var(--rd-selezione);
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+  font-weight: 500;
+}
+
+.rd-voce-icona {
+  display: flex;
+  flex: none;
+  color: var(--rd-oro);
+}
+
+.rd-voce-icona svg {
+  width: 19px;
+  height: 19px;
+  fill: currentColor;
+}
+
+.rd-voce-testo {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rd-punto-live {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0574a;
+  box-shadow: 0 0 0 3px rgba(224, 87, 74, 0.25);
+}
+
+.rd-conta {
+  flex: none;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--rd-cremisi);
+  border: 1px solid var(--rd-cremisi-bordo);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 17px;
+  text-align: center;
+}
+
+.rd-account {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rd-bordo-scuro);
+}
+
+.rd-account-chi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 4px;
+  min-width: 0;
+}
+
+.rd-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #33506a;
+  border: 1px solid var(--rd-bronzo);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--rd-avorio);
+}
+
+.rd-account-testi {
+  min-width: 0;
+}
+
+.rd-account-testi b,
+.rd-account-testi small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rd-account-testi b {
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--rd-avorio);
+}
+
+.rd-account-testi small {
+  font-size: 14px;
+  color: var(--rd-oro);
+}
+
+.rd-account-azioni {
+  display: flex;
+  gap: 4px;
+}
+
+.rd-account-azioni .rd-voce {
+  flex: 1;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 15px;
+}
+
+.rd-account-azioni .rd-voce-icona svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* ---------- Area principale e dipinto ---------- */
+.rd-principale {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.rd-targhette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Contorno bronzo: il ruolo in questa campagna. Pieno oro: «Admin», il ruolo
+   dell'account (al computer sta anche nel riquadro in fondo alla barra). */
+.rd-targhetta {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  line-height: 1;
+  text-transform: uppercase;
+  padding: 6px 9px 5px;
+  border-radius: 6px;
+  color: var(--rd-oro);
+  background: rgba(20, 38, 53, 0.92);
+  border: 1px solid var(--rd-bronzo);
+}
+
+.rd-targhetta-admin {
+  color: var(--rd-inchiostro);
+  background: var(--rd-oro);
+  border-color: var(--rd-oro);
+}
+
+@media (min-width: 900px) {
+  .rd-targhetta-admin {
+    display: none;
+  }
+}
+
+/* Campanella e ingranaggio dell'intestazione condivisa (variante compatta). */
+.rd-slot {
+  gap: 10px;
+}
+
+.pagina-ridisegnata .rd-slot .btn-campanella {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: rgba(20, 38, 53, 0.9);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata .rd-slot .btn-campanella svg {
+  width: 22px;
+  height: 22px;
+}
+
+.pagina-ridisegnata .badge-non-lette {
+  top: -6px;
+  right: -6px;
+  background: var(--rd-cremisi);
+  border-color: var(--rd-cremisi-bordo);
+  font-family: var(--font-body);
+}
+
+/* Al computer Impostazioni sta nella barra laterale. */
+.pagina-ridisegnata #mu-btn-impostazioni {
+  display: none;
+}
+
+.pagina-ridisegnata .dropdown-notifiche {
+  top: calc(100% + 8px);
+  width: 360px;
+  background: var(--rd-barra);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-avorio);
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.pagina-ridisegnata .dropdown-notifiche-titolo {
+  color: var(--rd-oro);
+  border-bottom-color: var(--rd-bordo-scuro);
+}
+
+.pagina-ridisegnata .notifica-riga {
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata .notifica-riga.non-letta {
+  background: rgba(237, 187, 118, 0.12);
+}
+
+.pagina-ridisegnata .notifica-riga:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pagina-ridisegnata .notifica-data,
+.pagina-ridisegnata .dropdown-notifiche-vuoto {
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata .notifica-testo a {
+  color: var(--rd-oro);
+}
+
+/* ---------- Pulsanti del redesign ---------- */
+.rd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.rd-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.rd-btn-primario {
+  background: var(--rd-cremisi);
+  border: 1px solid var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
+}
+
+.rd-btn-secondario {
+  background: rgba(41, 59, 70, 0.85);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-avorio);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.rd-btn-piccolo {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 17px;
+}
+
+@media (hover: hover) {
+  .rd-btn-primario:not(:disabled):hover {
+    background: #9a4642;
+  }
+
+  .rd-btn-secondario:not(:disabled):hover {
+    border-color: var(--rd-bronzo);
+  }
+}
+
+/* ---------- Pannello ⚙️ (condiviso) nello stile della dashboard ---------- */
+.pagina-ridisegnata #mu-modal-impostazioni {
+  background: rgba(5, 10, 15, 0.62);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .modal-card {
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px 22px 20px;
+  text-align: left;
+  background: var(--rd-barra);
+  color: var(--rd-avorio);
+  border: 1px solid var(--rd-bordo);
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni h2 {
+  margin: 0 40px 8px 0;
+  font-size: 1.2rem;
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni :is(p, .card-tagline, .impostazioni-nota) {
+  color: var(--rd-testo-2);
+  opacity: 1;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .btn-chiudi-modal {
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-account {
+  justify-content: flex-start;
+  margin: 2px 0 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rd-bordo-scuro);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-account .role-badge {
+  color: var(--rd-oro);
+  border-color: var(--rd-bronzo);
+  background: transparent;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .field label {
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni :is(.field input, .field select) {
+  background: var(--rd-testata);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni :is(.field input, .field select):focus {
+  border-color: var(--rd-oro);
+  background: var(--rd-testata);
+}
+
+/* Le voci del pannello come elenco, con la freccia a destra. */
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni {
+  gap: 0;
+  margin-top: 6px;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 2px;
+  border: none;
+  border-bottom: 1px solid rgba(59, 77, 86, 0.45);
+  border-radius: 0;
+  background: none;
+  color: var(--rd-avorio);
+  font-family: var(--font-body);
+  font-size: 18px;
+  text-align: left;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella::after {
+  content: "›";
+  font-size: 22px;
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella-pericolo {
+  justify-content: center;
+  margin-top: 14px;
+  border: 1px solid var(--rd-cremisi-bordo);
+  border-radius: 8px;
+  color: #f2b4a8;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella-pericolo::after {
+  content: none;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .btn {
+  background: var(--rd-cremisi);
+  border-color: var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
+  box-shadow: none;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .btn-ghost {
+  background: rgba(41, 59, 70, 0.85);
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .btn-tabella {
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .preferenza-riga {
+  border-bottom-color: rgba(59, 77, 86, 0.45);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .preferenza-riga small {
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .preferenze-titolo {
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni input.interruttore {
+  background: #4a5a63;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni input.interruttore:checked {
+  background: #3f7a52;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .volume-suoni {
+  accent-color: var(--rd-oro);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .versione-app {
+  border: 1px solid var(--rd-bordo-scuro);
+  background: rgba(16, 30, 42, 0.6);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .versione-app-nome {
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .versione-app-stato {
+  color: var(--rd-testo-2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .versione-app-disponibile {
+  color: var(--rd-avorio);
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .rd-barra {
+    width: 76px;
+    padding: 20px 10px 14px;
+    align-items: center;
+  }
+
+  .rd-marchio {
+    padding: 0 0 12px;
+  }
+
+  .rd-marchio-scritta,
+  .rd-account-testi {
+    display: none;
+  }
+
+  /* Testo nascosto alla vista ma letto dai lettori di schermo. */
+  .rd-voce-testo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .rd-nav {
+    align-items: center;
+    width: 100%;
+  }
+
+  .rd-nav-gruppo {
+    width: 36px;
+    height: 1px;
+    margin: 9px 0;
+    padding: 0;
+    overflow: hidden;
+    font-size: 0;
+    background: var(--rd-bordo);
+  }
+
+  .rd-voce {
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+  }
+
+  .rd-voce .rd-punto-live,
+  .rd-voce .rd-conta {
+    position: absolute;
+    top: 2px;
+    right: 1px;
+  }
+
+  .rd-voce .rd-conta {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    font-size: 11px;
+    line-height: 14px;
+  }
+
+  .rd-account {
+    width: 100%;
+    align-items: center;
+  }
+
+  .rd-account-chi {
+    padding: 0 0 4px;
+  }
+
+  .rd-account-azioni {
+    flex-direction: column;
+  }
+
+  .rd-account-azioni .rd-voce {
+    flex: none;
+  }
+
+  .rd-btn {
+    gap: 10px;
+    padding: 0 16px;
+    font-size: 19px;
+  }
+
+  .rd-btn-secondario {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 899px) {
+  .rd-targhette {
+    gap: 5px;
+  }
+
+  .rd-targhetta {
+    padding: 4px 7px 3px;
+    font-size: 0.6rem;
+    letter-spacing: 1.2px;
+  }
+
+  .rd-slot {
+    gap: 8px;
+  }
+
+  .pagina-ridisegnata .rd-slot .btn-campanella {
+    width: 42px;
+    height: 42px;
+  }
+
+  .pagina-ridisegnata .rd-slot .btn-campanella svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .pagina-ridisegnata #mu-btn-impostazioni {
+    display: flex;
+  }
+
+  /* Le notifiche si aprono a tutta larghezza sotto la testata. */
+  .pagina-ridisegnata .rd-slot,
+  .pagina-ridisegnata .rd-slot .notifiche-wrap {
+    position: static;
+  }
+
+  .pagina-ridisegnata .dropdown-notifiche {
+    top: 100%;
+    left: calc(-1 * var(--rd-margine, 14px));
+    right: calc(-1 * var(--rd-margine, 14px));
+    width: auto;
+    max-width: none;
+    max-height: 60vh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Il pannello ⚙️ sale dal basso come un foglio. */
+  .pagina-ridisegnata #mu-modal-impostazioni {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .pagina-ridisegnata #mu-modal-impostazioni .modal-card {
+    max-width: none;
+    max-height: 88vh;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+    border-width: 1px 0 0;
+  }
+}
+
+/* Barra compatta (pagina Sessione): a sole icone anche sui computer larghi,
+   per lasciare spazio a mappa e combattimento. */
+@media (min-width: 1200px) {
+  .rd-barra-compatta .rd-barra {
+    width: 76px;
+    padding: 20px 10px 14px;
+    align-items: center;
+  }
+
+  .rd-barra-compatta .rd-marchio {
+    padding: 0 0 12px;
+  }
+
+  .rd-barra-compatta .rd-marchio-scritta,
+  .rd-barra-compatta .rd-account-testi {
+    display: none;
+  }
+
+  /* Testo nascosto alla vista ma letto dai lettori di schermo. */
+  .rd-barra-compatta .rd-voce-testo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .rd-barra-compatta .rd-nav {
+    align-items: center;
+    width: 100%;
+  }
+
+  .rd-barra-compatta .rd-nav-gruppo {
+    width: 36px;
+    height: 1px;
+    margin: 9px 0;
+    padding: 0;
+    overflow: hidden;
+    font-size: 0;
+    background: var(--rd-bordo);
+  }
+
+  .rd-barra-compatta .rd-voce {
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+  }
+
+  .rd-barra-compatta .rd-voce .rd-punto-live,
+  .rd-barra-compatta .rd-voce .rd-conta {
+    position: absolute;
+    top: 2px;
+    right: 1px;
+  }
+
+  .rd-barra-compatta .rd-voce .rd-conta {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    font-size: 11px;
+    line-height: 14px;
+  }
+
+  .rd-barra-compatta .rd-account {
+    width: 100%;
+    align-items: center;
+  }
+
+  .rd-barra-compatta .rd-account-chi {
+    padding: 0 0 4px;
+  }
+
+  .rd-barra-compatta .rd-account-azioni {
+    flex-direction: column;
+  }
+
+  .rd-barra-compatta .rd-account-azioni .rd-voce {
+    flex: none;
+  }
+}
+
+/* ---------- Testata compatta: ☰, testata delle pagine interne, cassetto ---------- */
+.rd-barra-testa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rd-barra-testa .rd-marchio {
+  flex: 1;
+  min-width: 0;
+}
+
+.rd-chiudi-cassetto {
+  display: none;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  color: var(--rd-testo-2);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Pulsante ☰ del cassetto (solo sotto i 900 px). */
+.rd-btn-menu {
+  display: none;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 10px;
+  background: rgba(20, 38, 53, 0.88);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-oro);
+  cursor: pointer;
+}
+
+.rd-menu-icona {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 20px;
+  height: 14px;
+}
+
+.rd-menu-icona i {
+  display: block;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+/* Pagine interne: fascia del dipinto attenuata dietro la testata, poi la
+   testata (riga campagna · ruolo, titolo, comandi della pagina, campanella). */
+.rd-fascia {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 240px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(180deg, rgba(16, 30, 42, 0.7) 0, rgba(16, 30, 42, 0.8) 120px, var(--rd-fondo) 236px),
+    url("../img/sfondi/dashboard.webp");
+  background-size: 100% 100%, 1672px auto;
+  background-position: 0 0, center -330px;
+  background-repeat: no-repeat;
+}
+
+.rd-pagina {
+  --rd-margine: 16px;
+  position: relative;
+  padding-top: 26px;
+}
+
+.rd-testata-pagina {
+  position: relative;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 12px 16px;
+  margin-bottom: 26px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(167, 122, 77, 0.35);
+}
+
+.rd-titoli {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rd-riga-campagna {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.rd-riga-campagna-nome {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--rd-oro);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rd-titolo-pagina {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 34px;
+  line-height: 1.1;
+  color: var(--rd-avorio);
+  overflow-wrap: anywhere;
+}
+
+.rd-comandi-pagina {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.rd-comandi-pagina:empty {
+  display: none;
+}
+
+.rd-testata-pagina .rd-slot {
+  grid-column: 3;
+}
+
+@media (max-width: 899px) {
+  .rd-btn-menu {
+    display: grid;
+  }
+
+  .rd-chiudi-cassetto {
+    display: grid;
+    place-items: center;
+  }
+
+  /* La barra diventa un cassetto che scorre da sinistra. */
+  .rd-barra {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 260;
+    width: min(300px, 86vw);
+    height: auto;
+    padding: 16px 12px calc(14px + env(safe-area-inset-bottom));
+    border-right: 1px solid var(--rd-bordo);
+    box-shadow: 12px 0 30px rgba(0, 0, 0, 0.5);
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  }
+
+  .rd-cassetto-aperto .rd-barra {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease;
+  }
+
+  .rd-cassetto-aperto {
+    overflow: hidden;
+  }
+
+  .rd-velo {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    background: rgba(5, 10, 15, 0.62);
+  }
+
+  .rd-barra .rd-voce {
+    min-height: 42px;
+  }
+
+  .rd-fascia {
+    height: 200px;
+    background-image:
+      linear-gradient(180deg, rgba(16, 30, 42, 0.72) 0, rgba(16, 30, 42, 0.82) 100px, var(--rd-fondo) 196px),
+      url("../img/sfondi/dashboard-telefono.webp");
+    background-size: 100% 100%, 900px auto;
+    background-position: 0 0, 40% -150px;
+  }
+
+  .rd-pagina {
+    padding-top: 0;
+  }
+
+  /* ☰ | titolo | campanella e ingranaggio; i comandi della pagina sotto. */
+  .rd-testata-pagina {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 11px 0 10px;
+    border-bottom: none;
+  }
+
+  .rd-testata-pagina .rd-btn-menu {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .rd-titoli {
+    grid-column: 2;
+    flex-direction: column-reverse;
+    gap: 3px;
+  }
+
+  .rd-testata-pagina .rd-slot {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .rd-comandi-pagina {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .rd-titolo-pagina {
+    max-width: 100%;
+    font-size: 18px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rd-riga-campagna {
+    gap: 6px;
+    max-width: 100%;
+  }
+
+  .rd-riga-campagna-nome {
+    font-size: 0.6rem;
+    letter-spacing: 1.6px;
+  }
+}
+
+@media (max-width: 899px) and (prefers-reduced-motion: reduce) {
+  .rd-barra,
+  .rd-cassetto-aperto .rd-barra {
+    transition: none;
+  }
+}
+
+/* «Riordina» (dashboard, I miei personaggi): attiva il trascinamento. */
+.rd-riordina {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: rgba(41, 59, 70, 0.7);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-testo-2);
+  font-family: var(--font-body);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.rd-riordina svg {
+  width: 15px;
+  height: 15px;
+  fill: var(--rd-oro);
+}
+
+.rd-riordina.attivo {
+  border-color: var(--rd-oro);
+  background: rgba(237, 187, 118, 0.12);
+  color: var(--rd-avorio);
+}
+
+.rd-sopra-elenco {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}

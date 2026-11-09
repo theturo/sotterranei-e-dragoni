@@ -1,7 +1,7 @@
 // Script della pagina glossario-equipaggiamento.html (spostato fuori dall'HTML per la Content Security Policy:
 // la policy consente solo script serviti dal sito stesso, niente script inline).
 import { proteggiPaginaDM } from "../auth.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { tuttiGliOggetti, ETICHETTE_CATEGORIA, cercaEquipaggiamento } from "../equipaggiamento-srd.js";
 
 const veil = document.getElementById("veil");
@@ -95,7 +95,7 @@ inputRicerca.addEventListener("input", aggiorna);
 selectCategoria.addEventListener("change", aggiorna);
 
 proteggiPaginaDM((user, profilo) => {
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
   veil.style.display = "none";
   contenuto.style.display = "block";
 });

@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="assets/css/dashboard.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body class="pagina-ridisegnata">
+<body class="pagina-ridisegnata" data-voce="dashboard">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -41,33 +41,18 @@
     </div>
   </div>
 
-  <!-- Dashboard ridisegnata: barra laterale (computer), testata con campagna e
-       campanella, pannello della sessione sul dipinto, riepilogo e strumenti.
-       Sotto i 900 px la barra sparisce e la testata diventa quella del telefono. -->
+  <!-- Dashboard ridisegnata: barra laterale del guscio comune (cassetto sotto i
+       900 px), testata con campagna e campanella, pannello della sessione sul
+       dipinto, riepilogo e strumenti. -->
   <div id="contenuto" class="rd-guscio" style="display:none;">
-    <aside class="rd-barra" aria-label="Navigazione">
-      <a class="rd-marchio" href="dashboard.html" aria-label="Sotterranei &amp; Dragoni, dashboard">
-        <img src="assets/img/intro/logo_emblema.webp" width="645" height="720" alt="" />
-        <span class="rd-marchio-scritta" aria-hidden="true">Sotterranei<br />&amp; Dragoni</span>
-      </a>
-      <nav id="rd-nav" class="rd-nav"></nav>
-      <div class="rd-account">
-        <div class="rd-account-chi">
-          <span id="rd-account-iniziale" class="rd-avatar" aria-hidden="true"></span>
-          <span class="rd-account-testi"><b id="rd-account-nome"></b><small id="rd-account-ruolo"></small></span>
-        </div>
-        <div class="rd-account-azioni">
-          <button type="button" id="rd-btn-impostazioni" class="rd-voce" title="Impostazioni"><span class="rd-voce-icona" data-rd-icona="impostazioni" aria-hidden="true"></span><span class="rd-voce-testo">Impostazioni</span></button>
-          <button type="button" id="rd-btn-esci" class="rd-voce" title="Esci"><span class="rd-voce-icona" data-rd-icona="porta" aria-hidden="true"></span><span class="rd-voce-testo">Esci</span></button>
-        </div>
-      </div>
-    </aside>
+    <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+    <div id="rd-velo" class="rd-velo" hidden></div>
 
     <main class="rd-principale">
       <div class="rd-dipinto" aria-hidden="true"></div>
       <div class="rd-contenuto">
         <header class="rd-testata">
-          <img class="rd-emblema-telefono" src="assets/img/intro/logo_emblema.webp" width="645" height="720" alt="Sotterranei &amp; Dragoni" />
+          <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
           <div class="rd-campagna">
             <p id="rd-etichetta-campagna" class="rd-etichetta rd-solo-computer">Campagna</p>
             <div class="rd-campagna-riga">

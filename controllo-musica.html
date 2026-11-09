@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="assets/css/dm.css" />
   <script type="module" src="assets/js/pwa.js"></script>
 </head>
-<body>
+<body class="pagina-ridisegnata pagina-interna" data-voce="musica-dm">
   <div id="veil" class="loading-veil">
     <div class="die-stage">
       <div class="die-shadow"></div>
@@ -42,97 +42,103 @@
   </div>
 
   <div id="contenuto" style="display:none;">
-    <div class="dashboard-wrap">
-      <div class="dashboard-header">
-        <div>
-          <a class="link-back" href="dashboard.html">&larr; Torna alla dashboard</a>
-          <h1 style="font-family: var(--font-heading); color: var(--color-gold-bright); margin:0;">
-            Controllo musica
-          </h1>
-        </div>
-        <div id="slot-utente" class="slot-utente"></div>
-      </div>
-
-      <div id="nessuna-campagna" class="panel-wide" hidden>
-        <p class="scheda-testo-libero">
-          Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>
-          prima di controllare la musica.
-        </p>
-      </div>
-
-      <div id="pannello-musica" class="panel-wide">
-        <div class="sorgente-toggle-riga">
-          <span>Sorgente trasmessa ai giocatori:</span>
-          <div class="sorgente-toggle">
-            <button type="button" data-sorgente-btn="">Nessuna</button>
-            <button type="button" data-sorgente-btn="spotify">Spotify</button>
-            <button type="button" data-sorgente-btn="youtube">YouTube</button>
-          </div>
-        </div>
-        <p id="sorgente-stato" class="sessione-placeholder" style="margin:-6px 0 18px;"></p>
-
-        <div class="musica-doppio-pannello">
-          <div>
-            <h3 style="margin-top:0;">Spotify</h3>
-
-            <div id="spotify-non-collegato">
-              <p class="card-tagline" style="text-align:left; margin-bottom:14px;">
-                Collega il tuo account Spotify (serve Premium per pilotare la riproduzione da qui;
-                senza Premium si può solo leggere cosa sta suonando).
-              </p>
-              <button type="button" id="btn-connetti-spotify" class="btn btn-secondary" style="width:auto; padding:10px 22px;">
-                Connetti Spotify
-              </button>
+    <div class="rd-guscio">
+      <aside id="rd-barra" class="rd-barra" aria-label="Navigazione"></aside>
+      <div id="rd-velo" class="rd-velo" hidden></div>
+      <main class="rd-principale">
+        <div class="rd-fascia" aria-hidden="true"></div>
+        <div class="dashboard-wrap rd-pagina">
+          <header class="rd-testata-pagina">
+            <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <div class="rd-titoli">
+              <p id="rd-riga-campagna" class="rd-riga-campagna" hidden></p>
+              <h1 class="rd-titolo-pagina">Controllo musica</h1>
             </div>
+            <div class="rd-comandi-pagina"></div>
+            <div id="slot-utente" class="slot-utente rd-slot"></div>
+          </header>
 
-            <div id="spotify-collegato" hidden>
-              <div id="spotify-now-playing"></div>
-              <p style="margin-top:16px;">
-                <a href="#" id="btn-disconnetti-spotify" class="btn-ghost" style="display:inline-block; text-decoration:none;">Disconnetti Spotify</a>
-              </p>
-            </div>
+          <div id="nessuna-campagna" class="panel-wide" hidden>
+            <p class="scheda-testo-libero">
+              Non hai ancora una campagna attiva: <a href="campagna.html">creane una dal pannello Gestione campagna</a>
+              prima di controllare la musica.
+            </p>
           </div>
 
-          <div>
-            <h3 style="margin-top:0;">YouTube</h3>
-            <form id="form-youtube" class="field" style="margin-bottom:0;">
-              <label for="campo-youtube-link">Link di un video o di una playlist</label>
-              <div style="display:flex; gap:8px;">
-                <input type="text" id="campo-youtube-link" placeholder="https://www.youtube.com/watch?v=… oppure …/playlist?list=…" style="flex:1;" />
-                <button type="submit" class="btn-tabella">Carica</button>
+          <div id="pannello-musica" class="panel-wide">
+            <div class="sorgente-toggle-riga">
+              <span>Sorgente trasmessa ai giocatori:</span>
+              <div class="sorgente-toggle">
+                <button type="button" data-sorgente-btn="">Nessuna</button>
+                <button type="button" data-sorgente-btn="spotify">Spotify</button>
+                <button type="button" data-sorgente-btn="youtube">YouTube</button>
               </div>
-            </form>
-            <p id="yt-messaggio" class="sessione-placeholder" hidden></p>
-            <div id="yt-now-playing" class="playlist-mini-info">
-              <p class="sessione-placeholder">Nessun video caricato.</p>
             </div>
-            <!-- YouTube riproduce solo in player di almeno 200×200 pixel. -->
-            <div style="margin-top:12px; max-width:356px;"><div id="yt-player"></div></div>
-            <div id="yt-salva" class="yt-salva" hidden>
-              <button type="button" id="btn-yt-salva" class="btn-tabella"><svg class="icona" aria-hidden="true" data-icona="stella" viewBox="0 0 24 24" fill="none" style="fill:none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L14.6 8.9 L21 9.5 L16.2 13.8 L17.6 20.2 L12 17 L6.4 20.2 L7.8 13.8 L3 9.5 L9.4 8.9 Z"/></svg> Salva nell'elenco</button>
-              <p id="yt-gia-salvato" class="yt-gia-salvato" hidden><svg class="icona" aria-hidden="true" data-icona="stella-piena" viewBox="0 0 24 24" fill="none" style="fill:none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L14.6 8.9 L21 9.5 L16.2 13.8 L17.6 20.2 L12 17 L6.4 20.2 L7.8 13.8 L3 9.5 L9.4 8.9 Z" fill="currentColor"/></svg> Già nel tuo elenco</p>
-              <form id="form-yt-salva" class="yt-salva-form" hidden>
-                <label for="campo-yt-nome">Nome nell'elenco</label>
-                <div class="yt-riga">
-                  <input type="text" id="campo-yt-nome" maxlength="80" />
-                  <button type="submit" class="btn-tabella btn-tabella-evidenza">Salva</button>
-                  <button type="button" id="btn-yt-salva-annulla" class="btn-tabella">Annulla</button>
+            <p id="sorgente-stato" class="sessione-placeholder" style="margin:-6px 0 18px;"></p>
+
+            <div class="musica-doppio-pannello">
+              <div>
+                <h3 style="margin-top:0;">Spotify</h3>
+
+                <div id="spotify-non-collegato">
+                  <p class="card-tagline" style="text-align:left; margin-bottom:14px;">
+                    Collega il tuo account Spotify (serve Premium per pilotare la riproduzione da qui;
+                    senza Premium si può solo leggere cosa sta suonando).
+                  </p>
+                  <button type="button" id="btn-connetti-spotify" class="btn btn-secondary" style="width:auto; padding:10px 22px;">
+                    Connetti Spotify
+                  </button>
                 </div>
-              </form>
+
+                <div id="spotify-collegato" hidden>
+                  <div id="spotify-now-playing"></div>
+                  <p style="margin-top:16px;">
+                    <a href="#" id="btn-disconnetti-spotify" class="btn-ghost" style="display:inline-block; text-decoration:none;">Disconnetti Spotify</a>
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h3 style="margin-top:0;">YouTube</h3>
+                <form id="form-youtube" class="field" style="margin-bottom:0;">
+                  <label for="campo-youtube-link">Link di un video o di una playlist</label>
+                  <div style="display:flex; gap:8px;">
+                    <input type="text" id="campo-youtube-link" placeholder="https://www.youtube.com/watch?v=… oppure …/playlist?list=…" style="flex:1;" />
+                    <button type="submit" class="btn-tabella">Carica</button>
+                  </div>
+                </form>
+                <p id="yt-messaggio" class="sessione-placeholder" hidden></p>
+                <div id="yt-now-playing" class="playlist-mini-info">
+                  <p class="sessione-placeholder">Nessun video caricato.</p>
+                </div>
+                <!-- YouTube riproduce solo in player di almeno 200×200 pixel. -->
+                <div style="margin-top:12px; max-width:356px;"><div id="yt-player"></div></div>
+                <div id="yt-salva" class="yt-salva" hidden>
+                  <button type="button" id="btn-yt-salva" class="btn-tabella"><svg class="icona" aria-hidden="true" data-icona="stella" viewBox="0 0 24 24" fill="none" style="fill:none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L14.6 8.9 L21 9.5 L16.2 13.8 L17.6 20.2 L12 17 L6.4 20.2 L7.8 13.8 L3 9.5 L9.4 8.9 Z"/></svg> Salva nell'elenco</button>
+                  <p id="yt-gia-salvato" class="yt-gia-salvato" hidden><svg class="icona" aria-hidden="true" data-icona="stella-piena" viewBox="0 0 24 24" fill="none" style="fill:none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L14.6 8.9 L21 9.5 L16.2 13.8 L17.6 20.2 L12 17 L6.4 20.2 L7.8 13.8 L3 9.5 L9.4 8.9 Z" fill="currentColor"/></svg> Già nel tuo elenco</p>
+                  <form id="form-yt-salva" class="yt-salva-form" hidden>
+                    <label for="campo-yt-nome">Nome nell'elenco</label>
+                    <div class="yt-riga">
+                      <input type="text" id="campo-yt-nome" maxlength="80" />
+                      <button type="submit" class="btn-tabella btn-tabella-evidenza">Salva</button>
+                      <button type="button" id="btn-yt-salva-annulla" class="btn-tabella">Annulla</button>
+                    </div>
+                  </form>
+                </div>
+                <h4 class="yt-elenco-titolo">I tuoi link</h4>
+                <p class="scheda-testo-libero" style="margin-top:0;">Solo tu vedi questo elenco. Un tocco sul nome carica il link e lo trasmette ai giocatori.</p>
+                <ul id="yt-elenco" class="yt-elenco"></ul>
+                <p id="yt-elenco-vuoto" class="sessione-placeholder" hidden>Nessun link salvato: carica un video o una playlist e premi «Salva nell'elenco».</p>
+              </div>
             </div>
-            <h4 class="yt-elenco-titolo">I tuoi link</h4>
-            <p class="scheda-testo-libero" style="margin-top:0;">Solo tu vedi questo elenco. Un tocco sul nome carica il link e lo trasmette ai giocatori.</p>
-            <ul id="yt-elenco" class="yt-elenco"></ul>
-            <p id="yt-elenco-vuoto" class="sessione-placeholder" hidden>Nessun link salvato: carica un video o una playlist e premi «Salva nell'elenco».</p>
           </div>
         </div>
-      </div>
+  
+      </main>
     </div>
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <footer class="site-footer">Sotterranei &amp; Dragoni — portale di campagna per il gruppo</footer>
 
   <script type="module" src="assets/js/pagine/controllo-musica.js"></script>
 </body>

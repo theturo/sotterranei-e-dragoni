@@ -4,7 +4,7 @@ import { proteggiPaginaDM } from "../auth.js";
 import { impostaLivelloPartenza, concediLivelli, annullaLivello, ascoltaCreditiCampagna } from "../dati/livelli.js";
 import { ottieniCampagnaCorrente, elencaMembriCampagna } from "../dati/campagne.js";
 import { ottieniSchedaAttiva } from "../dati/schede.js";
-import { montaMenuUtente } from "../menu-utente.js";
+import { montaGuscio } from "../guscio.js";
 import { esc, mostraToast } from "../utils.js";
 import { CLASSI, nomeRazzaCompleto } from "../dati-srd.js";
 import { mostraImmagine, percorsiRitratto } from "../immagini.js";
@@ -102,7 +102,7 @@ async function caricaDatiRiga(riga) {
 }
 
 proteggiPaginaDM(async (user, profilo) => {
-  montaMenuUtente({ contenitore: document.getElementById("slot-utente"), user, profilo });
+  montaGuscio({ user, profilo });
 
   const campagna = await ottieniCampagnaCorrente(user.uid, profilo?.ruolo, { soloDM: true });
   if (!campagna) {
