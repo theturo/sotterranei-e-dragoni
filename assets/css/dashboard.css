@@ -1,396 +1,724 @@
-/* dashboard.css — Dashboard: cruscotto della campagna e strumenti raggruppati.
-   Caricato dopo base.css da: dashboard.
+/* dashboard.css — Dashboard ridisegnata (blu notte): barra laterale, testata con
+   campagna e campanella, pannello della sessione sul dipinto, riepilogo su
+   pergamena e strumenti.
+   Caricato dopo base.css da: dashboard. I colori sono le variabili --rd-* di
+   base.css. Le regole su pezzi condivisi (campanella, pannello ⚙️) valgono
+   solo dentro .pagina-ridisegnata: le altre pagine restano com'erano.
    Una regola nuova va nel file dell'area che la usa; in base.css se serve a
-   pagine di aree diverse. */
+   pagine di aree diverse.
+   Larghezze: ≥1200 px barra completa · 900–1199 barra a sole icone ·
+   <900 testata del telefono (niente barra) · <640 strumenti senza descrizione. */
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  margin-bottom: 28px;
+html:has(body.pagina-ridisegnata) {
+  background-color: var(--rd-fondo);
 }
 
-@media (min-width: 640px) {
-  .dashboard-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.pagina-ridisegnata {
+  background: var(--rd-fondo);
+  color: var(--rd-avorio);
 }
 
-@media (min-width: 1300px) {
-  .dashboard-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.pagina-ridisegnata :is(a, button, select):focus-visible {
+  outline: 2px solid var(--rd-oro);
+  outline-offset: 2px;
 }
 
-/* Separatore che indica il "cambio di area di competenza" quando un utente
-   vede più sezioni in cascata (es. admin che vede anche gli strumenti da DM
-   e da giocatore). */
-.sezione-titolo {
+/* Etichetta in maiuscoletto dorato (campagna, pannello, strumenti, stato). */
+.rd-etichetta {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--rd-oro);
+}
+
+/* ---------- Guscio: barra laterale + area principale ---------- */
+.rd-guscio {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.rd-barra {
+  position: sticky;
+  top: 0;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: 248px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 22px 14px 16px;
+  overflow-y: auto;
+  background: var(--rd-barra);
+  border-right: 1px solid var(--rd-bordo-scuro);
+  scrollbar-width: thin;
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.rd-marchio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6px 16px;
+  text-decoration: none;
+}
+
+/* L'emblema senza il titolo dipinto: sotto i 50 px perderebbe il drago. */
+.rd-marchio img {
+  width: 54px;
+  height: 53px;
+  object-fit: cover;
+  object-position: top;
+  flex: none;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.rd-marchio-scritta {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.05;
+  letter-spacing: 0.4px;
+  color: var(--rd-avorio);
+}
+
+.rd-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rd-nav-gruppo {
+  margin: 0;
+  padding: 14px 10px 5px;
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--rd-bronzo);
+}
+
+.rd-voce {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: var(--font-heading);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 1.4px;
-  color: var(--color-gold-bright);
-  margin: 0 0 14px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--rd-testo-2);
+  font-family: var(--font-body);
+  font-size: 17px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
 }
 
+@media (hover: hover) {
+  .rd-voce:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--rd-avorio);
+  }
+}
+
+.rd-voce.attiva {
+  background: var(--rd-selezione);
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+  font-weight: 500;
+}
+
+.rd-voce-icona {
+  display: flex;
+  flex: none;
+  color: var(--rd-oro);
+}
+
+.rd-voce-icona svg {
+  width: 19px;
+  height: 19px;
+  fill: currentColor;
+}
+
+.rd-voce-testo {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rd-punto-live {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0574a;
+  box-shadow: 0 0 0 3px rgba(224, 87, 74, 0.25);
+}
+
+.rd-conta {
+  flex: none;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--rd-cremisi);
+  border: 1px solid var(--rd-cremisi-bordo);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 17px;
+  text-align: center;
+}
+
+.rd-account {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rd-bordo-scuro);
+}
+
+.rd-account-chi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 4px;
+  min-width: 0;
+}
+
+.rd-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #33506a;
+  border: 1px solid var(--rd-bronzo);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--rd-avorio);
+}
+
+.rd-account-testi {
+  min-width: 0;
+}
+
+.rd-account-testi b,
+.rd-account-testi small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rd-account-testi b {
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--rd-avorio);
+}
+
+.rd-account-testi small {
+  font-size: 14px;
+  color: var(--rd-oro);
+}
+
+.rd-account-azioni {
+  display: flex;
+  gap: 4px;
+}
+
+.rd-account-azioni .rd-voce {
+  flex: 1;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 15px;
+}
+
+.rd-account-azioni .rd-voce-icona svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* ---------- Area principale e dipinto ---------- */
+.rd-principale {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Il master del drago e del D20: testa del drago dietro il pannello, D20 alla
+   sua destra; sfuma nel blu sotto il riepilogo. */
+.rd-dipinto {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 800px;
+  pointer-events: none;
+  background-color: var(--rd-fondo);
+  background-image:
+    linear-gradient(180deg, rgba(16, 30, 42, 0.62) 0, rgba(16, 30, 42, 0.22) 140px, rgba(16, 30, 42, 0.18) 380px, rgba(16, 30, 42, 0.72) 560px, var(--rd-fondo) 760px),
+    url("../img/sfondi/dashboard.webp");
+  background-size: 100% 100%, max(1672px, 100%) auto;
+  background-position: 0 0, 0 -180px;
+  background-repeat: no-repeat;
+}
+
+.rd-contenuto {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1320px;
+  padding: 26px 40px 48px;
+}
+
+/* ---------- Testata ---------- */
+.rd-testata {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.rd-emblema-telefono {
+  display: none;
+}
+
+.rd-campagna {
+  min-width: 0;
+}
+
+.rd-campagna .rd-etichetta {
+  margin-bottom: 7px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.rd-campagna-riga {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.rd-campagna-nome {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--rd-avorio);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.rd-campagna-titolo {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.rd-campagna-freccia {
+  display: none;
+  flex: none;
+  font-size: 15px;
+  color: var(--rd-oro);
+}
+
+/* Con più campagne il nome diventa un riquadro che apre la scelta. */
+.rd-campagna-nome.rd-con-scelta {
+  min-height: 46px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: rgba(20, 38, 53, 0.9);
+  border: 1px solid var(--rd-bordo);
+  text-shadow: none;
+}
+
+.rd-con-scelta .rd-campagna-freccia {
+  display: inline;
+}
+
+.rd-con-scelta:focus-within {
+  outline: 2px solid var(--rd-oro);
+  outline-offset: 2px;
+}
+
+.rd-campagna-scelta {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.rd-targhette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Contorno bronzo: il ruolo in questa campagna. Pieno oro: «Admin», il ruolo
+   dell'account (al computer sta anche nel riquadro in fondo alla barra). */
+.rd-targhetta {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  line-height: 1;
+  text-transform: uppercase;
+  padding: 6px 9px 5px;
+  border-radius: 6px;
+  color: var(--rd-oro);
+  background: rgba(20, 38, 53, 0.92);
+  border: 1px solid var(--rd-bronzo);
+}
+
+.rd-targhetta-admin {
+  color: var(--rd-inchiostro);
+  background: var(--rd-oro);
+  border-color: var(--rd-oro);
+}
+
+@media (min-width: 900px) {
+  .rd-targhetta-admin {
+    display: none;
+  }
+}
+
+.rd-testata-destra {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 18px;
+}
+
+.rd-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  background: rgba(135, 60, 57, 0.92);
+  border: 1px solid var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
+  font-size: 17px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.rd-live .rd-punto-live {
+  background: #ffb3a8;
+  box-shadow: 0 0 0 3px rgba(255, 179, 168, 0.25);
+}
+
+.rd-live b {
+  font-weight: 600;
+}
+
+/* Campanella e ingranaggio dell'intestazione condivisa (variante compatta). */
+.rd-slot {
+  gap: 10px;
+}
+
+.pagina-ridisegnata .rd-slot .btn-campanella {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: rgba(20, 38, 53, 0.9);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata .rd-slot .btn-campanella svg {
+  width: 22px;
+  height: 22px;
+}
+
+.pagina-ridisegnata .badge-non-lette {
+  top: -6px;
+  right: -6px;
+  background: var(--rd-cremisi);
+  border-color: var(--rd-cremisi-bordo);
+  font-family: var(--font-body);
+}
+
+/* Al computer Impostazioni sta nella barra laterale. */
+.pagina-ridisegnata #mu-btn-impostazioni {
+  display: none;
+}
+
+.pagina-ridisegnata .dropdown-notifiche {
+  top: calc(100% + 8px);
+  width: 360px;
+  background: var(--rd-barra);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-avorio);
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.pagina-ridisegnata .dropdown-notifiche-titolo {
+  color: var(--rd-oro);
+  border-bottom-color: var(--rd-bordo-scuro);
+}
+
+.pagina-ridisegnata .notifica-riga {
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata .notifica-riga.non-letta {
+  background: rgba(237, 187, 118, 0.12);
+}
+
+.pagina-ridisegnata .notifica-riga:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pagina-ridisegnata .notifica-data,
+.pagina-ridisegnata .dropdown-notifiche-vuoto {
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata .notifica-testo a {
+  color: var(--rd-oro);
+}
+
+/* ---------- Inviti (installa l'app, attiva le notifiche) ---------- */
 .invito-installa {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 22px;
-  padding: 12px 12px 12px 14px;
-  border: 1px solid var(--color-gold);
-  border-radius: var(--radius-md);
-  background: rgba(201, 162, 39, 0.1);
-  color: var(--color-parchment);
-}
-
-@media (max-width: 639px) {
-  .invito-installa {
-    flex-wrap: wrap;
-  }
-}
-
-.selettore-campagna {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-bottom: 22px;
-}
-
-/* ---------- Dashboard: cruscotto e strumenti raggruppati ---------- */
-.cruscotto {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 16px;
-  margin-bottom: 26px;
-}
-
-.cruscotto[hidden] {
-  display: none;
-}
-
-.cruscotto-box {
-  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
-  color: var(--color-ink);
-  border-radius: var(--radius-md);
-  border: 2px solid var(--color-gold);
-  padding: 16px 18px;
-  box-shadow: var(--shadow-deep);
-  min-width: 0;
-}
-
-.cruscotto-titolo {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  font-family: var(--font-heading);
-  font-size: 1.05rem;
-  color: var(--color-burgundy);
-  margin: 0 0 8px;
-}
-
-.cruscotto-sessione {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.cruscotto-azioni {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.cruscotto-pg {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 7px 0;
-  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
-}
-
-.cruscotto-pg-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.cruscotto-pg-pf {
-  font-family: var(--font-heading);
-  font-size: 0.9rem;
-  white-space: nowrap;
-  align-self: flex-start;
-  margin-top: 2px;
-}
-
-.cruscotto-avviso {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 7px 0;
-  border-bottom: 1px dashed rgba(122, 31, 43, 0.22);
-}
-
-.cruscotto-avviso-icona {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-burgundy);
-}
-
-.cruscotto-avviso-testo {
-  flex: 1;
-}
-
-.cruscotto-mio {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-}
-
-.cruscotto-mio-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.cruscotto-contatori {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 8px;
-}
-
-.strumenti-gruppi {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.strumento {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  background: linear-gradient(180deg, var(--color-parchment) 0%, var(--color-parchment-dark) 100%);
-  color: var(--color-ink);
-  border: 1px solid var(--color-gold);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-
-.strumento:hover,
-.strumento:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
-}
-
-.strumento-icona {
-  width: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--color-burgundy);
-}
-
-.strumento-testo b {
-  display: block;
-  font-family: var(--font-heading);
-  font-size: 0.95rem;
-  color: var(--color-burgundy);
-}
-
-.strumento-testo small {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--color-ink-soft);
-}
-
-@media (max-width: 900px) {
-  .cruscotto,
-  .strumenti-gruppi {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .cruscotto-sessione {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-@media (max-width: 640px) {
-  .strumento {
-    flex-direction: column;
-    text-align: center;
-    gap: 2px;
-    padding: 10px 6px;
-  }
-}
-
-/* ---------- Marchio nell'intestazione della dashboard ---------- */
-/* L'emblema del logo (la parte alta dell'immagine, senza il titolo dipinto) e accanto
-   la scritta in Cinzel come testo, nitida a ogni misura. Sotto i 60 px l'emblema
-   perderebbe il drago. */
-.marchio-intestazione {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 8px -4px;
-}
-
-.marchio-intestazione img {
-  width: 80px;
-  height: 78px;
-  object-fit: cover;
-  object-position: top;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
-}
-
-.marchio-scritta {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 22px;
-  line-height: 1.05;
-  letter-spacing: 0.5px;
-  color: var(--color-gold-bright);
-  text-shadow: 0 2px 0 #000, 0 0 18px rgba(201, 162, 39, 0.3);
-}
-
-@media (max-width: 639px) {
-  .marchio-intestazione img {
-    width: 62px;
-    height: 60px;
-  }
-
-  .marchio-scritta {
-    font-size: 17px;
-  }
-}
-
-.sezione-titolo::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: rgba(201, 162, 39, 0.35);
-}
-
-@media (max-width: 639px) {
-  .dashboard-header .site-subtitle {
-    font-size: 0.8rem;
-  }
-}
-
-.invito-installa[hidden] {
-  display: none;
+  max-width: 900px;
+  padding: 10px 12px 10px 14px;
+  border-radius: 10px;
+  background: rgba(20, 38, 53, 0.92);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-avorio);
 }
 
 .invito-installa img {
-  flex-shrink: 0;
-  border-radius: 10px;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
 }
 
 .invito-installa p {
   flex: 1;
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 17px;
 }
 
-@media (max-width: 639px) {
-  .invito-installa p {
-    flex-basis: calc(100% - 62px);
-  }
+.invito-installa .banner-app-chiudi {
+  color: var(--rd-testo-2);
 }
 
-@media (max-width: 639px) {
-  .invito-installa #btn-installa {
-    flex: 1;
-  }
-}
-
-.selettore-campagna label {
-  color: var(--color-gold-bright);
-  font-family: var(--font-heading);
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.cruscotto-titolo a {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  color: var(--color-burgundy);
-  white-space: nowrap;
-}
-
-.cruscotto-sessione.oggi {
-  border-width: 3px;
-}
-
-.cruscotto-sessione.in-corso {
-  background: linear-gradient(180deg, #e3f0e2 0%, #cfe2cb 100%);
-  border-color: var(--color-emerald);
-}
-
-.cruscotto-etichetta {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: 0.75rem;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--color-burgundy);
-}
-
-.in-corso .cruscotto-etichetta {
-  color: var(--color-emerald);
-}
-
-.cruscotto-sessione h2 {
-  font-family: var(--font-heading);
-  font-size: 1.35rem;
-  margin: 2px 0;
-  color: var(--color-ink);
-}
-
-.cruscotto-riga {
-  margin: 0;
-  color: var(--color-ink-soft);
-}
-
-.cruscotto-azioni a.btn-tabella {
-  text-decoration: none;
+/* ---------- Pulsanti del redesign ---------- */
+.rd-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.1;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.btn-grande {
-  background: var(--color-burgundy);
-  color: var(--color-parchment);
-  border-color: #4a1219;
-  font-size: 1rem;
-  padding: 10px 18px;
+.rd-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
-.in-corso .btn-grande {
-  background: var(--color-emerald);
-  border-color: #1f4a36;
+.rd-btn-primario {
+  background: var(--rd-cremisi);
+  border: 1px solid var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
+}
+
+.rd-btn-secondario {
+  background: rgba(41, 59, 70, 0.85);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-avorio);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.rd-btn-piccolo {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 17px;
+}
+
+@media (hover: hover) {
+  .rd-btn-primario:not(:disabled):hover {
+    background: #9a4642;
+  }
+
+  .rd-btn-secondario:not(:disabled):hover {
+    border-color: var(--rd-bronzo);
+  }
+}
+
+/* ---------- Pannello: saluto e sessione ---------- */
+.rd-pannello {
+  width: min(620px, 100%);
+  padding: 30px 34px;
+  border-radius: 12px;
+  /* Solo il fondo è trasparente: testi e comandi restano pieni. */
+  background: rgba(20, 38, 53, 0.87);
+  border: 1px solid var(--rd-bronzo);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+}
+
+.rd-saluto {
+  margin: 12px 0 0;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 44px;
+  line-height: 1.1;
+  color: var(--rd-avorio);
+  overflow-wrap: anywhere;
+}
+
+.rd-filetto {
+  width: 120px;
+  height: 1px;
+  margin: 22px 0;
+  background: var(--rd-oro);
+  opacity: 0.7;
+}
+
+.rd-stato {
+  font-size: 0.68rem;
+}
+
+.in-corso .rd-stato {
+  color: #ff9d8f;
+}
+
+.rd-sessione-titolo {
+  margin: 8px 0 4px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 1.15;
+  color: var(--rd-avorio);
+}
+
+.rd-sessione-riga {
+  margin: 0;
+  font-size: 19px;
+  color: var(--rd-testo-2);
+}
+
+.rd-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.rd-azioni:empty {
+  display: none;
+}
+
+/* Musica di sessione (giocatore): nascosta finché non suona nulla. */
+.rd-musica {
+  margin-top: 18px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(16, 30, 42, 0.75);
+  border: 1px solid var(--rd-bordo);
+}
+
+.rd-musica:has(.stato-vuoto-riga),
+.rd-musica:has(#corpo-musica-giocatore > .sessione-placeholder:only-child) {
+  display: none;
+}
+
+.rd-musica .sessione-placeholder,
+.rd-musica .musica-sottotitolo {
+  color: var(--rd-testo-2);
+}
+
+.rd-musica .musica-titolo-brano {
+  color: var(--rd-avorio);
+}
+
+/* ---------- Riepilogo su pergamena ---------- */
+.rd-riepilogo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.rd-pergamena {
+  min-width: 0;
+  padding: 16px 20px 18px;
+  border-radius: 10px;
+  background: var(--rd-pergamena);
+  color: var(--rd-inchiostro);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+
+.rd-pergamena-titolo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: var(--rd-inchiostro);
+}
+
+.rd-pergamena-titolo > span:first-child {
+  display: flex;
+  color: var(--rd-cremisi);
+}
+
+.rd-pergamena-titolo svg {
+  width: 20px;
+  height: 20px;
+}
+
+.rd-pergamena-titolo a {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0;
+  color: var(--rd-link-pergamena);
+  white-space: nowrap;
 }
 
 .cruscotto-party,
@@ -400,7 +728,16 @@
   padding: 0;
 }
 
-.cruscotto-pg:last-child {
+.cruscotto-pg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(37, 44, 49, 0.12);
+}
+
+.cruscotto-pg:last-child,
+.cruscotto-avviso:last-child {
   border-bottom: none;
 }
 
@@ -410,133 +747,874 @@
   height: 40px;
 }
 
+.cruscotto-pg-info,
+.cruscotto-mio-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .cruscotto-pg-nome {
   font-weight: 600;
-  font-size: 1.02rem;
+  font-size: 18px;
 }
 
 .cruscotto-pg.senza .cruscotto-pg-nome {
-  font-weight: 400;
+  font-weight: 500;
   font-style: italic;
-  color: var(--color-ink-soft);
+  color: #6b7176;
 }
 
 .cruscotto-pg-sotto {
-  font-size: 0.85rem;
-  color: var(--color-ink-soft);
   margin: 0;
+  font-size: 15px;
+  color: var(--rd-inchiostro-2);
+}
+
+.cruscotto-pg-pf {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: 14px;
+  white-space: nowrap;
+  color: var(--rd-inchiostro-2);
 }
 
 .cruscotto-pill {
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  font-weight: 400;
-  border: 1px solid #b8860b;
-  color: #7a5200;
-  background: rgba(232, 198, 90, 0.35);
+  display: inline-block;
+  padding: 1px 8px;
   border-radius: 999px;
-  padding: 0 7px;
-  vertical-align: middle;
+  border: 1px solid rgba(135, 60, 57, 0.35);
+  background: rgba(135, 60, 57, 0.12);
+  color: var(--rd-cremisi);
+  font-size: 13px;
+  font-weight: 600;
+  vertical-align: 2px;
 }
 
-.cruscotto-avviso:last-child {
-  border-bottom: none;
+.cruscotto-avviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(37, 44, 49, 0.12);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.cruscotto-avviso-icona {
+  display: flex;
+  flex: none;
+  margin-top: 2px;
+  color: var(--rd-cremisi);
 }
 
 .cruscotto-avviso-icona svg {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
+}
+
+.cruscotto-avviso-icona:has([data-icona="tutto-ok"]) {
+  color: #3f7a52;
+}
+
+.cruscotto-avviso-testo {
+  flex: 1;
 }
 
 .cruscotto-avviso-link {
-  font-size: 0.85rem;
-  color: var(--color-burgundy);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--rd-link-pergamena);
   white-space: nowrap;
 }
 
 .cruscotto-vuoto {
+  margin: 0;
   font-style: italic;
-  color: var(--color-ink-soft);
+  color: var(--rd-inchiostro-2);
 }
 
-#cruscotto-musica {
-  margin-bottom: 14px;
+.cruscotto-mio {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .party-avatar.cruscotto-mio-avatar {
-  flex-basis: 76px;
-  width: 76px;
-  height: 76px;
+  flex-basis: 64px;
+  width: 64px;
+  height: 64px;
 }
 
 .cruscotto-mio-info h3 {
-  font-family: var(--font-heading);
   margin: 0;
-  font-size: 1.25rem;
+  font-family: var(--font-heading);
+  font-size: 22px;
+}
+
+.rd-chip-livello {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--rd-inchiostro);
+  color: var(--rd-oro);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  vertical-align: 4px;
 }
 
 .cruscotto-mio-pf {
   display: flex;
   justify-content: space-between;
   margin-top: 6px;
-  font-size: 0.95rem;
+  font-size: 15px;
+  color: var(--rd-inchiostro-2);
+}
+
+.cruscotto-contatori {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
 }
 
 .cruscotto-contatori span {
-  font-size: 0.8rem;
-  border: 1px solid rgba(122, 31, 43, 0.4);
-  border-radius: 6px;
   padding: 1px 6px;
+  border: 1px solid rgba(135, 60, 57, 0.4);
+  border-radius: 6px;
+  font-size: 14px;
 }
 
 .cruscotto-contatori span.esaurito {
   opacity: 0.5;
 }
 
-.strumenti-gruppi.strumenti-giocatore {
-  grid-template-columns: minmax(0, 1fr);
+/* ---------- Strumenti ---------- */
+.rd-strumenti-testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 12px;
 }
 
-.strumenti-gruppi .dashboard-grid.strumenti-griglia {
-  grid-template-columns: minmax(0, 1fr);
+.rd-riordina {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 0;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: rgba(41, 59, 70, 0.7);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-testo-2);
+  font-family: var(--font-body);
+  font-size: 16px;
+  cursor: pointer;
 }
 
-.strumenti-giocatore .dashboard-grid.strumenti-griglia {
+.rd-riordina svg {
+  width: 15px;
+  height: 15px;
+  fill: var(--rd-oro);
+}
+
+.rd-riordina.attivo {
+  border-color: var(--rd-oro);
+  background: rgba(237, 187, 118, 0.12);
+  color: var(--rd-avorio);
+}
+
+.rd-gruppi {
+  display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
 }
 
-.strumento-icona svg {
-  width: 26px;
-  height: 26px;
-}
-
-.strumento-testo {
+.rd-colonna {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 
-@media (max-width: 640px) {
-  .cruscotto-azioni {
+.rd-gruppo + .rd-gruppo {
+  margin-top: 14px;
+}
+
+.rd-gruppo-titolo {
+  margin: 0 0 12px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 25px;
+  color: var(--rd-avorio);
+}
+
+.rd-voci {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rd-gruppi-giocatore {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rd-gruppi-giocatore .rd-voci {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 18px;
+}
+
+.rd-tessera {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 66px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 8px;
+  background: rgba(24, 43, 58, 0.94);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-avorio);
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .rd-tessera:hover {
+    border-color: var(--rd-bronzo);
+  }
+}
+
+.rd-tessera-icona {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+  background: rgba(16, 30, 42, 0.7);
+  border: 1px solid #2f414d;
+  color: var(--rd-oro);
+}
+
+.rd-tessera-icona svg {
+  width: 21px;
+  height: 21px;
+}
+
+.rd-tessera-testo {
+  flex: 1;
+  min-width: 0;
+}
+
+.rd-tessera-testo b {
+  display: block;
+  font-weight: 500;
+  font-size: 21px;
+  line-height: 1.15;
+}
+
+.rd-tessera-testo small {
+  display: block;
+  font-size: 16px;
+  color: var(--rd-testo-2);
+}
+
+.rd-tessera-vai {
+  color: var(--rd-testo-2);
+  font-size: 20px;
+}
+
+.rd-tessera .maniglia-trascina {
+  color: var(--rd-bronzo);
+}
+
+.riordino-attivo .rd-tessera {
+  border-style: dashed;
+  border-color: var(--rd-bronzo);
+  cursor: grab;
+}
+
+.riordino-attivo .rd-tessera-vai {
+  display: none;
+}
+
+/* ---------- Pannello ⚙️ (condiviso) nello stile della dashboard ---------- */
+.pagina-ridisegnata #mu-modal-impostazioni {
+  background: rgba(5, 10, 15, 0.62);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .modal-card {
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px 22px 20px;
+  text-align: left;
+  background: var(--rd-barra);
+  color: var(--rd-avorio);
+  border: 1px solid var(--rd-bordo);
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni h2 {
+  margin: 0 40px 8px 0;
+  font-size: 1.2rem;
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni :is(p, .card-tagline, .impostazioni-nota) {
+  color: var(--rd-testo-2);
+  opacity: 1;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .btn-chiudi-modal {
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-account {
+  justify-content: flex-start;
+  margin: 2px 0 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rd-bordo-scuro);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-account .role-badge {
+  color: var(--rd-oro);
+  border-color: var(--rd-bronzo);
+  background: transparent;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .field label {
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni :is(.field input, .field select) {
+  background: var(--rd-testata);
+  border: 1px solid var(--rd-bordo);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni :is(.field input, .field select):focus {
+  border-color: var(--rd-oro);
+  background: var(--rd-testata);
+}
+
+/* Le voci del pannello come elenco, con la freccia a destra. */
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni {
+  gap: 0;
+  margin-top: 6px;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 2px;
+  border: none;
+  border-bottom: 1px solid rgba(59, 77, 86, 0.45);
+  border-radius: 0;
+  background: none;
+  color: var(--rd-avorio);
+  font-family: var(--font-body);
+  font-size: 18px;
+  text-align: left;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella::after {
+  content: "›";
+  font-size: 22px;
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella-pericolo {
+  justify-content: center;
+  margin-top: 14px;
+  border: 1px solid var(--rd-cremisi-bordo);
+  border-radius: 8px;
+  color: #f2b4a8;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .impostazioni-opzioni .btn-tabella-pericolo::after {
+  content: none;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .btn {
+  background: var(--rd-cremisi);
+  border-color: var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
+  box-shadow: none;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .btn-ghost {
+  background: rgba(41, 59, 70, 0.85);
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .btn-tabella {
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .preferenza-riga {
+  border-bottom-color: rgba(59, 77, 86, 0.45);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .preferenza-riga small {
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .preferenze-titolo {
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni input.interruttore {
+  background: #4a5a63;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni input.interruttore:checked {
+  background: #3f7a52;
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .volume-suoni {
+  accent-color: var(--rd-oro);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .versione-app {
+  border: 1px solid var(--rd-bordo-scuro);
+  background: rgba(16, 30, 42, 0.6);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .versione-app-nome {
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .versione-app-stato {
+  color: var(--rd-testo-2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pagina-ridisegnata #mu-modal-impostazioni .versione-app-disponibile {
+  color: var(--rd-avorio);
+}
+
+/* ---------- 900–1199 px: barra a sole icone ---------- */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .rd-barra {
+    width: 76px;
+    padding: 20px 10px 14px;
+    align-items: center;
+  }
+
+  .rd-marchio {
+    padding: 0 0 12px;
+  }
+
+  .rd-marchio-scritta,
+  .rd-account-testi {
+    display: none;
+  }
+
+  /* Testo nascosto alla vista ma letto dai lettori di schermo. */
+  .rd-voce-testo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .rd-nav {
+    align-items: center;
+    width: 100%;
+  }
+
+  .rd-nav-gruppo {
+    width: 36px;
+    height: 1px;
+    margin: 9px 0;
+    padding: 0;
+    overflow: hidden;
+    font-size: 0;
+    background: var(--rd-bordo);
+  }
+
+  .rd-voce {
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+  }
+
+  .rd-voce .rd-punto-live,
+  .rd-voce .rd-conta {
+    position: absolute;
+    top: 2px;
+    right: 1px;
+  }
+
+  .rd-voce .rd-conta {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    font-size: 11px;
+    line-height: 14px;
+  }
+
+  .rd-account {
+    width: 100%;
+    align-items: center;
+  }
+
+  .rd-account-chi {
+    padding: 0 0 4px;
+  }
+
+  .rd-account-azioni {
     flex-direction: column;
   }
-}
 
-@media (max-width: 640px) {
-  .cruscotto-azioni .btn-tabella {
-    justify-content: center;
+  .rd-account-azioni .rd-voce {
+    flex: none;
+  }
+
+  .rd-dipinto {
+    background-position: 0 0, -90px -180px;
+  }
+
+  .rd-contenuto {
+    padding: 22px 30px 40px;
+  }
+
+  .rd-pannello {
+    width: min(580px, 100%);
+    padding: 28px 30px;
+  }
+
+  .rd-saluto {
+    font-size: 38px;
+  }
+
+  .rd-btn {
+    gap: 10px;
+    padding: 0 16px;
+    font-size: 19px;
+  }
+
+  .rd-btn-secondario {
+    font-size: 17px;
   }
 }
 
-@media (max-width: 640px) {
-  .strumenti-gruppi .dashboard-grid.strumenti-griglia,
-  .strumenti-giocatore .dashboard-grid.strumenti-griglia {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .strumento-testo small {
+/* ---------- Sotto i 900 px: telefono e tablet ---------- */
+@media (max-width: 899px) {
+  .rd-barra {
     display: none;
+  }
+
+  /* Il dipinto in una fascia in alto: drago a sinistra, D20 a destra (le
+     percentuali tengono il D20 allo stesso punto a ogni larghezza). */
+  .rd-dipinto {
+    height: 330px;
+    background-image:
+      linear-gradient(180deg, rgba(16, 30, 42, 0.85) 0, rgba(16, 30, 42, 0.55) 64px, rgba(16, 30, 42, 0.2) 96px, rgba(16, 30, 42, 0.08) 140px, rgba(16, 30, 42, 0.6) 240px, var(--rd-fondo) 318px),
+      url("../img/sfondi/dashboard-telefono.webp");
+    background-size: 100% 100%, 200% auto;
+    background-position: 0 0, 27% calc(130px - 57.4vw);
+  }
+
+  .rd-contenuto {
+    gap: 14px;
+    padding: 0 14px 28px;
+  }
+
+  .rd-testata {
+    gap: 10px;
+    min-height: 64px;
+    margin: 0 0 92px;
+    padding: 11px 0 8px;
+  }
+
+  .rd-emblema-telefono {
+    display: block;
+    flex: none;
+    width: 42px;
+    height: 41px;
+    object-fit: cover;
+    object-position: top;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  }
+
+  .rd-campagna {
+    flex: 1;
+    padding-top: 1px;
+  }
+
+  .rd-solo-computer,
+  .rd-live {
+    display: none;
+  }
+
+  .rd-campagna-riga {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .rd-campagna-nome,
+  .rd-campagna-nome.rd-con-scelta {
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: 18px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  }
+
+  .rd-campagna-freccia {
+    margin-top: 3px;
+    font-size: 13px;
+  }
+
+  .rd-targhette {
+    gap: 5px;
+  }
+
+  .rd-targhetta {
+    padding: 4px 7px 3px;
+    font-size: 0.6rem;
+    letter-spacing: 1.2px;
+  }
+
+  .rd-testata-destra {
+    padding-top: 0;
+  }
+
+  .rd-slot {
+    gap: 8px;
+  }
+
+  .pagina-ridisegnata .rd-slot .btn-campanella {
+    width: 42px;
+    height: 42px;
+  }
+
+  .pagina-ridisegnata .rd-slot .btn-campanella svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .pagina-ridisegnata #mu-btn-impostazioni {
+    display: flex;
+  }
+
+  /* Le notifiche si aprono a tutta larghezza sotto la testata. */
+  .pagina-ridisegnata .rd-slot,
+  .pagina-ridisegnata .rd-slot .notifiche-wrap {
+    position: static;
+  }
+
+  .pagina-ridisegnata .dropdown-notifiche {
+    top: 100%;
+    left: -14px;
+    right: -14px;
+    width: auto;
+    max-width: none;
+    max-height: 60vh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .rd-pannello {
+    width: auto;
+    padding: 20px;
+  }
+
+  .rd-saluto {
+    margin-top: 8px;
+    font-size: 27px;
+    line-height: 1.12;
+  }
+
+  .rd-filetto {
+    width: 90px;
+    margin: 14px 0;
+  }
+
+  .rd-sessione-titolo {
+    margin: 6px 0 3px;
+    font-size: 23px;
+  }
+
+  .rd-sessione-riga {
+    font-size: 17px;
+    line-height: 1.3;
+  }
+
+  .rd-azioni {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .rd-azioni .rd-btn {
+    width: 100%;
+    gap: 12px;
+    font-size: 19px;
+  }
+
+  .rd-azioni .rd-btn-secondario {
+    font-size: 17px;
+  }
+
+  /* Prima quello su cui agire: «Da fare» / «Avvisi», poi party o personaggio. */
+  .rd-riepilogo {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .rd-riepilogo-avvisi {
+    order: -1;
+  }
+
+  .rd-pergamena {
+    padding: 13px 15px 14px;
+  }
+
+  .rd-pergamena-titolo {
+    font-size: 16px;
+  }
+
+  .rd-pergamena-titolo a,
+  .cruscotto-avviso-link {
+    font-size: 15px;
+  }
+
+  .cruscotto-avviso {
+    font-size: 16px;
+  }
+
+  .rd-strumenti-testa {
+    margin: 8px 0 4px;
+  }
+
+  /* I gruppi in fila (Amministrazione in fondo), tessere su due colonne. */
+  .rd-gruppi {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .rd-colonna {
+    display: contents;
+  }
+
+  .rd-gruppo[data-gruppo="prepara"] { order: 1; }
+  .rd-gruppo[data-gruppo="gioca"] { order: 2; }
+  .rd-gruppo[data-gruppo="consulta"] { order: 3; }
+  .rd-gruppo[data-gruppo="admin"] { order: 4; }
+
+  .rd-gruppo + .rd-gruppo {
+    margin-top: 0;
+  }
+
+  .rd-gruppo-titolo {
+    margin: 14px 0 8px;
+    font-size: 19px;
+  }
+
+  .rd-voci,
+  .rd-gruppi-giocatore .rd-voci {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .rd-tessera {
+    gap: 10px;
+    min-height: 56px;
+    padding: 8px 10px;
+  }
+
+  .rd-tessera-icona {
+    width: 34px;
+    height: 34px;
+  }
+
+  .rd-tessera-icona svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .rd-tessera-testo b {
+    font-size: 16px;
+  }
+
+  .rd-tessera-vai {
+    display: none;
+  }
+
+  .rd-tessera .rd-conta {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+  }
+}
+
+/* Tablet: dipinto più definito e descrizioni ancora visibili. */
+@media (min-width: 640px) and (max-width: 899px) {
+  .rd-dipinto {
+    height: 420px;
+    background-image:
+      linear-gradient(180deg, rgba(16, 30, 42, 0.85) 0, rgba(16, 30, 42, 0.55) 64px, rgba(16, 30, 42, 0.2) 96px, rgba(16, 30, 42, 0.08) 140px, rgba(16, 30, 42, 0.6) 300px, var(--rd-fondo) 410px),
+      url("../img/sfondi/dashboard.webp");
+  }
+
+  .rd-voci,
+  .rd-gruppi-giocatore .rd-voci {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .rd-tessera-testo small {
+    display: none;
+  }
+
+  .invito-installa {
+    gap: 10px;
+    padding: 10px 8px 10px 12px;
+  }
+
+  .invito-installa img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .invito-installa p {
+    font-size: 15px;
+    line-height: 1.25;
+  }
+
+  /* Il pannello ⚙️ sale dal basso come un foglio. */
+  .pagina-ridisegnata #mu-modal-impostazioni {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .pagina-ridisegnata #mu-modal-impostazioni .modal-card {
+    max-width: none;
+    max-height: 88vh;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+    border-width: 1px 0 0;
   }
 }

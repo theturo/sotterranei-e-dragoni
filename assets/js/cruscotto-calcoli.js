@@ -58,6 +58,28 @@ export const GRUPPI_GIOCATORE = [
   },
 ];
 
+// Gruppi della dashboard e della barra laterale: seguono il ruolo nella
+// campagna corrente (chi gioca nella campagna di un altro vede quelli del
+// giocatore), mentre «Amministrazione» segue il ruolo dell'account.
+export function gruppiStrumenti(ruoloCampagna, admin = false) {
+  return [...(ruoloCampagna === "player" ? GRUPPI_GIOCATORE : GRUPPI_DM), ...(admin ? [GRUPPO_ADMIN] : [])];
+}
+
+// Colonne degli strumenti al computer: Prepara | Gioca (+ Amministrazione,
+// dove resta spazio libero) | Consulta. Il giocatore ha un solo gruppo.
+export function colonneStrumenti(gruppi) {
+  if (gruppi.length === 1) return [gruppi];
+  const per = (...id) => gruppi.filter((g) => id.includes(g.id));
+  return [per("prepara"), per("gioca", "admin"), per("consulta")].filter((c) => c.length);
+}
+
+// Il titolo che si può mostrare: quello provvisorio resta segreto ai giocatori
+// (nel documento pubblico è null; il DM lo legge dal documento privato).
+export function titoloCampagnaVisibile(campagna) {
+  if (!campagna) return "Nessuna campagna attiva";
+  return campagna.titolo || (campagna.mioRuolo === "player" ? "Titolo ancora segreto" : "Campagna senza titolo");
+}
+
 // Ordine personalizzato (per gruppo): le voci salvate per prime, le altre in
 // coda nell'ordine predefinito.
 export function ordinaVoci(voci, ordineSalvato) {

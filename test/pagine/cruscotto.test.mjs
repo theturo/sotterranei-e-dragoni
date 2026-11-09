@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import {
-  GRUPPI_DM, GRUPPI_GIOCATORE, GRUPPO_ADMIN, ordinaVoci, sessioneInEvidenza, avvisiDM, avvisiGiocatore, barraPf, testoPf,
+  GRUPPI_DM, GRUPPI_GIOCATORE, GRUPPO_ADMIN, ordinaVoci, gruppiStrumenti, colonneStrumenti, titoloCampagnaVisibile, sessioneInEvidenza, avvisiDM, avvisiGiocatore, barraPf, testoPf,
 } from "../../assets/js/cruscotto-calcoli.js";
 
 const radice = new URL("../../", import.meta.url);
@@ -22,6 +22,21 @@ test("strumenti: link esistenti e chiavi uniche per gruppo", () => {
   const voci = GRUPPI_DM[0].voci;
   assert.deepEqual(ordinaVoci(voci, ["bestiario", "calendario"]).map((v) => v.chiave), ["bestiario", "calendario", "libreria", "impostazioni-campagna"]);
   assert.equal(ordinaVoci(voci, null), voci);
+});
+
+test("gruppi per ruolo nella campagna, colonne e titolo visibile", () => {
+  const ids = (gruppi) => gruppi.map((g) => g.id);
+  assert.deepEqual(ids(gruppiStrumenti("dm")), ["prepara", "gioca", "consulta"]);
+  assert.deepEqual(ids(gruppiStrumenti("dm", true)), ["prepara", "gioca", "consulta", "admin"]);
+  // L'admin che gioca nella campagna di un altro: strumenti da giocatore + Amministrazione.
+  assert.deepEqual(ids(gruppiStrumenti("player", true)), ["giocatore", "admin"]);
+  assert.deepEqual(colonneStrumenti(gruppiStrumenti("dm", true)).map(ids), [["prepara"], ["gioca", "admin"], ["consulta"]]);
+  assert.deepEqual(colonneStrumenti(gruppiStrumenti("dm")).map(ids), [["prepara"], ["gioca"], ["consulta"]]);
+  assert.deepEqual(colonneStrumenti(gruppiStrumenti("player")).map(ids), [["giocatore"]]);
+  assert.equal(titoloCampagnaVisibile({ titolo: "La cripta", mioRuolo: "player" }), "La cripta");
+  assert.equal(titoloCampagnaVisibile({ titolo: null, mioRuolo: "player" }), "Titolo ancora segreto");
+  assert.equal(titoloCampagnaVisibile({ titolo: null, mioRuolo: "dm" }), "Campagna senza titolo");
+  assert.equal(titoloCampagnaVisibile(null), "Nessuna campagna attiva");
 });
 
 test("sessione in evidenza: in corso, oggi, prossima, proposta, nessuna", () => {
