@@ -27,7 +27,7 @@ test("ogni pagina collega manifest, icone e pwa.js", () => {
     const html = leggi(pagina);
     assert.match(html, /<link rel="manifest" href="manifest.webmanifest" \/>/, `${pagina}: manca il manifest`);
     assert.match(html, /<link rel="apple-touch-icon" href="assets\/icone\/apple-touch-icon.png" \/>/, `${pagina}: manca l'icona per iPhone`);
-    assert.match(html, /<meta name="theme-color" content="#150d08" \/>/, `${pagina}: manca il theme-color`);
+    assert.match(html, /<meta name="theme-color" content="#0c1f2f" \/>/, `${pagina}: manca il theme-color`);
     assert.match(html, /<script type="module" src="assets\/js\/pwa.js"><\/script>/, `${pagina}: manca pwa.js`);
   }
 });
