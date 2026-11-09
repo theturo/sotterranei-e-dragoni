@@ -327,12 +327,16 @@ html:has(body.pagina-ridisegnata) {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
+/* Interlinea più ampia del resto della testata: con il limite di due righe il
+   riquadro nasconde ciò che sborda, e a 1,15 le lettere che scendono sotto il
+   rigo (g, p, q) dell'EB Garamond restavano tagliate. */
 .rd-campagna-titolo {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
   overflow-wrap: anywhere;
+  line-height: 1.4;
 }
 
 .rd-campagna-freccia {

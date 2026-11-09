@@ -15,7 +15,8 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - **Redesign dell'interfaccia** (blu notte, dipinto del drago e del D20): fatta
   la dashboard. Prossimi passi, ognuno con le sue tavole: la barra laterale e
   la testata compatta sulle altre pagine (al posto di «← Torna alla dashboard»
-  e della fila di icone), Calendario, Sessione, il velo di caricamento ancora
+  e della fila di icone), Calendario, Sessione, scheda personaggio, login
+  (e le altre pagine prima dell'accesso), il velo di caricamento ancora
   col vecchio d20, una famiglia di icone nuova. I colori sono già in base.css
   (variabili `--rd-*`).
 - **Animazioni in JavaScript** (da valutare insieme): fatti il dado di
