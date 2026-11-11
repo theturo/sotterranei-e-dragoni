@@ -22,20 +22,34 @@ function caricaVaschetta() {
   return modulo;
 }
 
-// Prepara una vaschetta dentro `contenitore` (nascosto finché non si tira).
+// Prepara una vaschetta dentro `contenitore` (nascosto finché non serve).
 // lancia(voci, opzioni) fa rotolare i dadi e si risolve quando sono fermi; se
 // la vaschetta non c'è (dado non previsto, come il d100, o modulo non
 // scaricato) si risolve subito: chi chiama mostra comunque il risultato.
-export function montaVaschetta(contenitore) {
+// vuota() la mostra senza dadi. `scelte` sono le opzioni di creaVaschetta
+// (per esempio l'altezza).
+export function montaVaschetta(contenitore, scelte = {}) {
   let vaschetta = null;
   caricaVaschetta().catch(() => {});
   return {
+    async vuota() {
+      try {
+        const { creaVaschetta } = await caricaVaschetta();
+        contenitore.hidden = false;
+        vaschetta ??= creaVaschetta(contenitore, scelte);
+        await vaschetta.vuota();
+        return true;
+      } catch (errore) {
+        console.error(errore);
+        return false;
+      }
+    },
     async lancia(voci, opzioni) {
       try {
         const { creaVaschetta, lanciabili } = await caricaVaschetta();
         if (!lanciabili(voci.dadi)) return false;
         contenitore.hidden = false;
-        vaschetta ??= creaVaschetta(contenitore);
+        vaschetta ??= creaVaschetta(contenitore, scelte);
         return await vaschetta.lancia(voci, opzioni);
       } catch (errore) {
         console.error(errore);

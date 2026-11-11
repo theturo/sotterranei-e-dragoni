@@ -99,8 +99,8 @@ CI (`.github/workflows/test.yml`) esegue le tre suite su ogni PR e su `main`.
   `intro-scena.js` testata in `test/pagine/`): pezzi dipinti in `assets/img/intro/`, misure in
   `intro-pezzi.js` (generato, non modificare a mano). Parte da `pwa.js`.
   Niente npm per il sito.
-- **Vaschetta dei dadi** (`dadi.js` e `riposo.js` → `vaschetta.js`, scaricata al primo
-  tiro): il risultato lo decide sempre `dadi-base.js`; `fisica-dadi.js` calcola prima
+- **Vaschetta dei dadi** (`dadi.js`, `riposo.js` e, nella Sessione, `lanciatore-dadi.js`
+  → `vaschetta.js`, scaricata al primo uso): il risultato lo decide sempre `dadi-base.js`; `fisica-dadi.js` calcola prima
   tutto il lancio, `poliedri.js` ha i sei solidi e la simmetria che porta il risultato
   sulla faccia in alto, `scena-dadi.js` disegna su canvas. Moduli puri testati in
   `test/pagine/vaschetta.test.mjs`. Le animazioni nuove partono da `movimento.js`
