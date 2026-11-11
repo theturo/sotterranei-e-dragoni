@@ -9,7 +9,8 @@
 // I privilegi di classe si ricaricano secondo privilegi.js.
 import { CLASSI, TIPO_LANCIATORE, modificatore, formattaModificatore } from "./dati-srd.js";
 import { creaElemento } from "./contenuti.js";
-import { creaVassoio } from "./dadi.js";
+import { montaVaschetta } from "./dadi.js";
+import { suona } from "./suoni.js";
 import { privilegiDelPersonaggio, usiDopoRiposoBreve } from "./privilegi.js";
 
 export const dadoVitaClasse = (classe) => CLASSI[classe]?.dadoVita || 8;
@@ -202,8 +203,10 @@ export function apriRiposoBreve(scheda, { sottotitolo = null } = {}) {
     campoSomma.hidden = true;
     finestra.append(campoSomma);
 
-    const { vassoio, esito } = creaVassoio(`Dadi vita — d${dadoVita}`);
-    finestra.append(vassoio);
+    const palco = creaElemento("div", "vaschetta-tiro");
+    palco.hidden = true;
+    finestra.append(palco);
+    const vaschetta = montaVaschetta(palco);
     const risultato = creaElemento("div", "risultato-pf");
     risultato.setAttribute("role", "status");
     risultato.hidden = true;
@@ -250,7 +253,7 @@ export function apriRiposoBreve(scheda, { sottotitolo = null } = {}) {
       inputSomma.focus();
       aggiorna();
     });
-    tiraApp.addEventListener("click", () => {
+    tiraApp.addEventListener("click", async () => {
       const dadi = dadiScelti();
       if (!dadi) return;
       const tiri = tiraDadiVita(dadi, dadoVita);
@@ -261,24 +264,20 @@ export function apriRiposoBreve(scheda, { sottotitolo = null } = {}) {
       scelta.hidden = true;
       conferma.disabled = true;
       annulla.disabled = true;
-      esito.hidden = true;
       risultato.hidden = true;
-      vassoio.hidden = false;
-      vassoio.classList.remove("in-lancio");
-      void vassoio.offsetWidth;
-      vassoio.classList.add("in-lancio");
-      const durata = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 300 : 3400;
-      setTimeout(() => {
-        esito.textContent = String(tiri.reduce((a, b) => a + b, 0));
-        esito.hidden = false;
-        const bonus = modCostituzione ? ` ${modCostituzione > 0 ? "+" : "−"} ${Math.abs(modCostituzione)} per dado` : "";
-        risultato.textContent = `Tiri: ${tiri.join(", ")}${bonus} → +${pf} PF`;
-        risultato.hidden = false;
-        esitoCorrente = { dadi, tiri, pf };
-        conferma.disabled = false;
-        // Il tiro è fatto: resta solo da confermarlo.
-        annulla.hidden = true;
-      }, durata);
+      // Tutti i dadi vita rotolano insieme nella vaschetta, ognuno sul suo
+      // valore; il risultato si legge a dadi fermi.
+      await vaschetta.lancia(
+        { dadi: tiri.map((valore) => ({ facce: dadoVita, risultato: valore })), modo: "normale" },
+        { suInizio: (durata) => suona("dado", durata / 1000) }
+      );
+      const bonus = modCostituzione ? ` ${modCostituzione > 0 ? "+" : "−"} ${Math.abs(modCostituzione)} per dado` : "";
+      risultato.textContent = `Tiri: ${tiri.join(", ")}${bonus} → +${pf} PF`;
+      risultato.hidden = false;
+      esitoCorrente = { dadi, tiri, pf };
+      conferma.disabled = false;
+      // Il tiro è fatto: resta solo da confermarlo.
+      annulla.hidden = true;
     });
 
     const fine = (valore) => {

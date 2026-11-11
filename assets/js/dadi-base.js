@@ -48,6 +48,15 @@ export function tira({ etichetta, quanti = 1, facce = 20, modificatore = 0, modo
   };
 }
 
+// I dadi di un tiro così come devono rotolare nella vaschetta: uno per dado
+// tirato; con vantaggio e svantaggio anche il d20 scartato, e il modo dice
+// quale dei due si tiene.
+export function dadiPerVaschetta(tiro, facce) {
+  const dadi = tiro.dadi.map((risultato) => ({ facce, risultato }));
+  if (tiro.scartato != null) dadi.push({ facce, risultato: tiro.scartato });
+  return { dadi, modo: tiro.scartato != null ? tiro.modo : "normale" };
+}
+
 const NOMI_MODO = { vantaggio: "vantaggio", svantaggio: "svantaggio", critico: "critico" };
 
 // "Eroe — Atletica: 19 (1d20+5: 14; vantaggio, scartato 7) · 20 naturale!"

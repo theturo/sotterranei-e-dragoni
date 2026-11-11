@@ -20,9 +20,13 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   col vecchio d20, una famiglia di icone nuova. I colori sono già in base.css
   (variabili `--rd-*`).
 - **Animazioni in JavaScript** (da valutare insieme): fatti il dado di
-  caricamento, il tiro dei PF e il cambio turno nel tracker; l'annuncio di
-  livello resta in CSS (scelta della tela). Da valutare: eventuali risorse
-  aggiuntive (sprite, particelle).
+  caricamento, il tiro dei PF, il cambio turno nel tracker e la vaschetta dei
+  dadi; l'annuncio di livello resta in CSS (scelta della tela). Da valutare:
+  la vaschetta anche per il lanciatore libero della Sessione (oggi mostra solo
+  un avviso) e per il dado vita del passaggio di livello; il suono di ogni
+  urto sul fondo; danni e cure sui PF. `turno-animato.js` e
+  `comparsa-contenuti.js` hanno ancora la loro copia di molla e curve: possono
+  passare a `movimento.js`.
 
 ## Funzioni per il tavolo
 
@@ -292,3 +296,15 @@ Nessuna in sospeso.
   nei pulsanti, icone delle azioni, scrollbar dorata, righe segnaposto nel
   registro; annuncio di livello con raggiera e tiro dei PF nel vassoio (un solo
   lancio per finestra: riaprendola si può ritirare, limite accettato).
+- Vaschetta dei dadi: nella finestra del tiro (dalla scheda e dalla scheda
+  rapida) e nel riposo breve i dadi sono solidi veri, dal d4 al d20, cremisi
+  con spigoli e numeri d'oro come il D20 dell'intro. Cadono in una vaschetta
+  di legno con il fondo rivestito, rimbalzano su fondo e pareti, si urtano e
+  si fermano appoggiati su una faccia con il risultato in alto; con più dadi
+  rotolano tutti insieme. Vantaggio e svantaggio: due d20, quello scartato si
+  spegne. 20 naturale con lampo d'oro e scintille, 1 naturale con il dado che
+  si incrina e perde schegge. Il risultato resta quello tirato dall'app e
+  scritto nel registro. In ⚙️ → Dadi si scelgono il rivestimento (feltro blu
+  notte, verde o cremisi, cuoio, legno) e la vista (di tre quarti o
+  dall'alto), salvati sul dispositivo. Con "riduci animazioni" i dadi
+  compaiono già fermi. Il d100 mostra solo il risultato, come prima.

@@ -32,6 +32,7 @@ import {
   riconfermaNotifichePush,
 } from "./notifiche-push.js";
 import { impostazioniSuoni, salvaImpostazioniSuoni, provaSuono } from "./suoni.js";
+import { MATERIALI, VISTE, scelteVaschetta, salvaScelteVaschetta } from "./vaschetta-scelte.js";
 
 const HTML_CAMPANELLA = `
   <div class="notifiche-wrap">
@@ -99,6 +100,7 @@ const HTML_MODALE = `
           <button id="mu-btn-installa" class="btn-tabella" type="button" hidden>Installa l'app</button>
           <button class="btn-tabella" data-apri="notifiche" type="button">Notifiche</button>
           <button class="btn-tabella" data-apri="suoni" type="button">Effetti sonori</button>
+          <button class="btn-tabella" data-apri="dadi" type="button">Dadi</button>
           <a class="btn-tabella" href="guida.html">Guida e FAQ</a>
           <button id="mu-btn-logout-menu" class="btn-tabella btn-tabella-pericolo solo-telefono" type="button">Esci</button>
         </div>
@@ -160,6 +162,17 @@ const HTML_MODALE = `
           <button type="button" class="btn-tabella" id="mu-suoni-prova">Prova</button>
         </div>
         <p class="impostazioni-nota">Valgono per questo dispositivo. Nessun suono sullo schermo del tavolo né a pagina nascosta.</p>
+        <div class="impostazioni-azioni">
+          <button type="button" class="btn btn-ghost" data-indietro>Indietro</button>
+        </div>
+      </form>
+
+      <form id="mu-form-dadi" class="impostazioni-schermata" hidden novalidate>
+        <h2>Dadi</h2>
+        <p class="card-tagline">La vaschetta in cui rotolano i dadi dei tuoi tiri.</p>
+        <div class="field"><label for="mu-dadi-materiale">Rivestimento</label><select id="mu-dadi-materiale"></select></div>
+        <div class="field"><label for="mu-dadi-vista">Vista</label><select id="mu-dadi-vista"></select></div>
+        <p class="impostazioni-nota">Valgono per questo dispositivo, dal prossimo tiro.</p>
         <div class="impostazioni-azioni">
           <button type="button" class="btn btn-ghost" data-indietro>Indietro</button>
         </div>
@@ -405,6 +418,17 @@ function inizializzaImpostazioni() {
   attivi.addEventListener("change", () => { salvaImpostazioniSuoni({ attivi: attivi.checked }); mostraSuoni(); });
   volume.addEventListener("input", () => { salvaImpostazioniSuoni({ volume: Number(volume.value) / 100 }); mostraSuoni(); });
   document.getElementById("mu-suoni-prova").addEventListener("click", provaSuono);
+
+  // Vaschetta dei dadi (vaschetta-scelte.js): rivestimento e vista, salvati sul dispositivo.
+  const materialeDadi = document.getElementById("mu-dadi-materiale");
+  const vistaDadi = document.getElementById("mu-dadi-vista");
+  for (const [chiave, m] of Object.entries(MATERIALI)) materialeDadi.append(new Option(m.nome, chiave));
+  for (const [chiave, x] of Object.entries(VISTE)) vistaDadi.append(new Option(x.nome, chiave));
+  const scelteDadi = scelteVaschetta();
+  materialeDadi.value = scelteDadi.materiale;
+  vistaDadi.value = scelteDadi.vista;
+  materialeDadi.addEventListener("change", () => salvaScelteVaschetta({ materiale: materialeDadi.value }));
+  vistaDadi.addEventListener("change", () => salvaScelteVaschetta({ vista: vistaDadi.value }));
 
   modale.querySelectorAll("[data-indietro]").forEach((bottone) => {
     bottone.addEventListener("click", () => {
