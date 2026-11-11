@@ -1,36 +1,58 @@
 // Lancio dei dadi condiviso: tiri (con vantaggio/svantaggio sui d20 e critici
-// sui danni), testo per il registro della sessione e finestra con il vassoio.
-// Le scritture (appunti, tiri nascosti, iniziativa) le fanno le pagine.
+// sui danni), testo per il registro della sessione e finestra con la vaschetta
+// in cui i dadi rotolano. Le scritture (appunti, tiri nascosti, iniziativa) le
+// fanno le pagine.
 import { creaElemento } from "./contenuti.js";
 
-import { FACCE, conSegno, formula, leggiFormula, tira, testoTiro } from "./dadi-base.js";
+import { FACCE, conSegno, formula, leggiFormula, tira, testoTiro, dadiPerVaschetta } from "./dadi-base.js";
 import { suonaTiro } from "./suoni.js";
 
 export { FACCE, conSegno, formula, leggiFormula, tira, testoTiro };
 
-// ---------- Finestra di tiro ----------
-
-const SVG_DADO = '<svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 4 L90 27 L90 73 L50 96 L10 73 L10 27 Z" stroke="#e8c65a" stroke-width="3" stroke-linejoin="round"/><path d="M50 4 L50 46 M10 27 L50 46 M90 27 L50 46 M50 46 L10 73 M50 46 L90 73 M50 46 L50 96" stroke="#e8c65a" stroke-width="1.3" opacity="0.5"/></svg>';
-
-// Vassoio del dado (etichetta, dado che ruota e numero dell'esito), nascosto
-// finché non si tira. Usato dalla finestra del tiro e da quella del riposo breve.
-export function creaVassoio(etichetta) {
-  const vassoio = creaElemento("div", "vassoio-tiro");
-  vassoio.hidden = true;
-  const stage = creaElemento("div", "vassoio-stage");
-  const dado = creaElemento("div", "vassoio-dado");
-  dado.innerHTML = SVG_DADO;
-  const esito = creaElemento("div", "esito-numero");
-  esito.hidden = true;
-  stage.append(creaElemento("div", "vassoio-ombra"), dado, esito);
-  vassoio.append(creaElemento("div", "vassoio-etichetta", etichetta), stage);
-  return { vassoio, esito };
+// ---------- Vaschetta ----------
+// La vaschetta (fisica e disegno, vaschetta.js) si scarica solo quando serve
+// la prima volta: le pagine che non tirano dadi non la caricano.
+let modulo = null;
+function caricaVaschetta() {
+  modulo ??= import("./vaschetta.js").catch((errore) => {
+    // Si riprova al prossimo tiro (per esempio se mancava la rete).
+    modulo = null;
+    throw errore;
+  });
+  return modulo;
 }
 
+// Prepara una vaschetta dentro `contenitore` (nascosto finché non si tira).
+// lancia(voci, opzioni) fa rotolare i dadi e si risolve quando sono fermi; se
+// la vaschetta non c'è (dado non previsto, come il d100, o modulo non
+// scaricato) si risolve subito: chi chiama mostra comunque il risultato.
+export function montaVaschetta(contenitore) {
+  let vaschetta = null;
+  caricaVaschetta().catch(() => {});
+  return {
+    async lancia(voci, opzioni) {
+      try {
+        const { creaVaschetta, lanciabili } = await caricaVaschetta();
+        if (!lanciabili(voci.dadi)) return false;
+        contenitore.hidden = false;
+        vaschetta ??= creaVaschetta(contenitore);
+        return await vaschetta.lancia(voci, opzioni);
+      } catch (errore) {
+        console.error(errore);
+        return false;
+      }
+    },
+    ferma: () => vaschetta?.ferma(),
+  };
+}
+
+// ---------- Finestra di tiro ----------
+
 // Chiede come tirare (vantaggio/svantaggio sui d20, critico sui danni),
-// tira, chiama subito onTiro(tiro) (per il registro) e mostra il risultato nel
-// vassoio. onTiro può restituire (anche con una promessa) una riga da mostrare
-// sotto il risultato, es. "Solo per te: nessuna sessione in corso".
+// tira, chiama subito onTiro(tiro) (per il registro) e fa rotolare i dadi
+// nella vaschetta; a dadi fermi mostra il risultato. onTiro può restituire
+// (anche con una promessa) una riga da mostrare sotto il risultato, es. "Solo
+// per te: nessuna sessione in corso".
 export function apriTiro({ etichetta, quanti = 1, facce = 20, modificatore = 0, tipo = "d20", onTiro }) {
   const sfondo = creaElemento("div", "modal-overlay");
   const finestra = creaElemento("div", "modal-card modal-riposo modal-tiro");
@@ -54,7 +76,11 @@ export function apriTiro({ etichetta, quanti = 1, facce = 20, modificatore = 0, 
   });
   finestra.append(scelte);
 
-  const { vassoio, esito } = creaVassoio(`d${facce}`);
+  const palco = creaElemento("div", "vaschetta-tiro");
+  palco.hidden = true;
+  const vaschetta = montaVaschetta(palco);
+  const totale = creaElemento("div", "tiro-totale");
+  totale.hidden = true;
   const risultato = creaElemento("div", "risultato-pf");
   risultato.setAttribute("role", "status");
   risultato.hidden = true;
@@ -62,12 +88,13 @@ export function apriTiro({ etichetta, quanti = 1, facce = 20, modificatore = 0, 
   chiudi.type = "button";
   const azioni = creaElemento("div", "azioni-selettore");
   azioni.append(chiudi);
-  finestra.append(vassoio, risultato, azioni);
+  finestra.append(palco, totale, risultato, azioni);
   sfondo.append(finestra);
   document.body.append(sfondo);
 
   const fine = () => {
     document.removeEventListener("keydown", tasto);
+    vaschetta.ferma();
     sfondo.remove();
   };
   const tasto = (evento) => {
@@ -79,27 +106,27 @@ export function apriTiro({ etichetta, quanti = 1, facce = 20, modificatore = 0, 
     if (evento.target === sfondo) fine();
   });
 
-  scelte.addEventListener("click", (evento) => {
+  scelte.addEventListener("click", async (evento) => {
     const b = evento.target.closest("[data-modo]");
     if (!b) return;
     const tiro = tira({ etichetta, quanti, facce, modificatore, modo: b.dataset.modo });
     scelte.hidden = true;
     const nota = Promise.resolve(onTiro?.(tiro)).catch(() => null);
-    vassoio.hidden = false;
-    vassoio.classList.add("in-lancio", "lancio-rapido");
-    const durata = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 200 : 1300;
-    suonaTiro(tiro, durata);
-    setTimeout(() => {
-      esito.textContent = String(tiro.totale);
-      esito.hidden = false;
-      risultato.textContent = testoTiro(null, tiro).replace(`${tiro.etichetta}: `, "");
-      risultato.classList.toggle("tiro-critico", tiro.critico === "successo");
-      risultato.classList.toggle("tiro-fallimento", tiro.critico === "fallimento");
-      risultato.hidden = false;
-      nota.then((testo) => {
-        if (testo) finestra.insertBefore(creaElemento("p", "riposo-nota", testo), azioni);
-      });
-    }, durata);
+    // Il suono del dado dura quanto il lancio nella vaschetta.
+    const rotolati = await vaschetta.lancia(dadiPerVaschetta(tiro, facce), { suInizio: (durata) => suonaTiro(tiro, durata) });
+    if (!sfondo.isConnected) return;
+    if (!rotolati) suonaTiro(tiro, 200);
+    totale.textContent = String(tiro.totale);
+    totale.classList.toggle("tiro-critico", tiro.critico === "successo");
+    totale.classList.toggle("tiro-fallimento", tiro.critico === "fallimento");
+    totale.hidden = false;
+    risultato.textContent = testoTiro(null, tiro).replace(`${tiro.etichetta}: `, "");
+    risultato.classList.toggle("tiro-critico", tiro.critico === "successo");
+    risultato.classList.toggle("tiro-fallimento", tiro.critico === "fallimento");
+    risultato.hidden = false;
+    nota.then((testo) => {
+      if (testo) finestra.insertBefore(creaElemento("p", "riposo-nota", testo), azioni);
+    });
   });
   scelte.querySelector('[data-modo="normale"]').focus();
 }

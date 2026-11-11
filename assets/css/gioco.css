@@ -178,14 +178,6 @@
   display: block;
 }
 
-.vassoio-tiro.in-lancio .vassoio-dado {
-  animation: vassoio-lancio 3.4s cubic-bezier(.45, .05, .55, .95) 1 forwards;
-}
-
-.vassoio-tiro.in-lancio .vassoio-ombra {
-  animation: vassoio-ombra 3.4s cubic-bezier(.45, .05, .55, .95) 1 forwards;
-}
-
 .esito-numero {
   position: absolute;
   inset: 0;
@@ -201,13 +193,6 @@
 
 .esito-numero[hidden] {
   display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .vassoio-tiro.in-lancio .vassoio-dado,
-  .vassoio-tiro.in-lancio .vassoio-ombra {
-    animation: none;
-  }
 }
 
 .modal-riposo h2 {
@@ -242,12 +227,90 @@
   font-family: var(--font-heading);
 }
 
-.risultato-pf.tiro-critico {
+.risultato-pf.tiro-critico,
+.tiro-totale.tiro-critico {
   color: #2f6b2c;
 }
 
-.risultato-pf.tiro-fallimento {
+.risultato-pf.tiro-fallimento,
+.tiro-totale.tiro-fallimento {
   color: var(--color-danger);
+}
+
+/* ---------- Vaschetta dei dadi (vaschetta.js) ---------- */
+/* Il riquadro nella finestra del tiro e del riposo breve: nascosto finché non
+   si tira. La vaschetta lo occupa da un lato all'altro. */
+.vaschetta-tiro {
+  margin-bottom: 10px;
+}
+
+.vaschetta-tiro[hidden] {
+  display: none;
+}
+
+.vaschetta {
+  position: relative;
+}
+
+/* La tela sporge un po' sopra la vaschetta (per i dadi che rimbalzano oltre
+   il bordo): non deve rubare i tocchi a ciò che copre. */
+.vaschetta-tela {
+  display: block;
+  position: relative;
+  width: 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+}
+
+.vaschetta-effetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dadi-alone,
+.dadi-anello,
+.dadi-scintilla,
+.dadi-scheggia {
+  position: absolute;
+  pointer-events: none;
+}
+
+.dadi-alone {
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 236, 170, 0.95), rgba(237, 187, 118, 0.5) 42%, transparent 70%);
+}
+
+.dadi-anello {
+  border-radius: 50%;
+  border: 2px solid rgba(255, 224, 150, 0.9);
+  box-shadow: 0 0 14px rgba(237, 187, 118, 0.7);
+}
+
+.dadi-scintilla {
+  background: #ffe2a0;
+  box-shadow: 0 0 6px 1px rgba(237, 187, 118, 0.9);
+}
+
+/* Le schegge dipinte per l'intro: la posizione nell'immagine la dà effetti-dadi.js. */
+.dadi-scheggia {
+  background-image: url("../img/intro/schegge.webp");
+  background-repeat: no-repeat;
+}
+
+/* Il totale, a dadi fermi. */
+.tiro-totale {
+  text-align: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 2.2rem;
+  line-height: 1.1;
+  color: var(--color-burgundy);
+  animation: vassoio-esito 0.5s ease-out;
+}
+
+.tiro-totale[hidden] {
+  display: none;
 }
 
 .input-dadi,
@@ -639,28 +702,6 @@
   color: rgba(230, 211, 163, 0.55);
 }
 
-@keyframes vassoio-lancio {
-  0% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(-4deg) scale(1, 1); filter: blur(0); }
-  6% { transform: translateY(1px) rotateX(-8deg) rotateY(-6deg) rotateZ(-8deg) scale(1.06, 0.9); filter: blur(0); }
-  22% { transform: translateY(-24px) rotateX(180deg) rotateY(95deg) rotateZ(60deg) scale(0.97, 1.04); filter: blur(0.6px); }
-  40% { transform: translateY(-32px) rotateX(320deg) rotateY(190deg) rotateZ(140deg) scale(1, 1); filter: blur(0); }
-  58% { transform: translateY(-10px) rotateX(500deg) rotateY(280deg) rotateZ(250deg) scale(1.02, 0.97); filter: blur(0.7px); }
-  70% { transform: translateY(3px) rotateX(640deg) rotateY(345deg) rotateZ(340deg) scale(1.06, 0.88); filter: blur(0); }
-  78% { transform: translateY(-4px) rotateX(700deg) rotateY(355deg) rotateZ(358deg) scale(0.98, 1.03); filter: blur(0); }
-  100% { transform: translateY(0) rotateX(720deg) rotateY(360deg) rotateZ(356deg) scale(1, 1); filter: blur(0); }
-}
-
-@keyframes vassoio-ombra {
-  0% { opacity: 0.5; transform: scale(1, 1); }
-  6% { opacity: 0.55; transform: scale(1.05, 1); }
-  22% { opacity: 0.24; transform: scale(0.6, 0.6); }
-  40% { opacity: 0.16; transform: scale(0.48, 0.48); }
-  58% { opacity: 0.34; transform: scale(0.72, 0.72); }
-  70% { opacity: 0.55; transform: scale(1.08, 1); }
-  78% { opacity: 0.42; transform: scale(0.92, 1); }
-  100% { opacity: 0.5; transform: scale(1, 1); }
-}
-
 @keyframes vassoio-esito {
   0% { opacity: 0; transform: scale(0.4); }
   65% { opacity: 1; transform: scale(1.18); }
@@ -706,10 +747,6 @@
   font-size: 0.92rem;
 }
 
-.modal-riposo .vassoio-tiro {
-  text-align: center;
-}
-
 .pallini-privilegio {
   display: inline-flex;
   flex-wrap: wrap;
@@ -721,11 +758,6 @@
   color: var(--color-burgundy);
   min-width: 56px;
   text-align: right;
-}
-
-.vassoio-tiro.in-lancio.lancio-rapido .vassoio-dado,
-.vassoio-tiro.in-lancio.lancio-rapido .vassoio-ombra {
-  animation-duration: 1.3s;
 }
 
 .btn-tiro {
