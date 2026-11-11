@@ -70,7 +70,7 @@
 
           <!-- Due colonne sul computer (appunti e contenuti a sinistra, party e
                musica a destra); una sola colonna sul telefono, nell'ordine
-               combattimento (se in corso), appunti, party, contenuti, musica (vedi
+               combattimento (se in corso), appunti, dadi, party, contenuti, musica (vedi
                .sessione-colonna in sessione.css). La mappa sta sopra gli appunti
                (per i giocatori solo quando il DM ne ha messa una in tavola). -->
           <div id="hub-sessione" class="sessione-layout">
@@ -91,8 +91,16 @@
                   <textarea id="campo-appunto" class="textarea-libero" rows="2" placeholder="Scrivi un appunto..." maxlength="2000" required></textarea>
                   <button type="submit" class="btn azione-aggiungi" style="width:auto; padding:10px 22px;">Aggiungi</button>
                 </form>
+              </div>
+
+              <!-- I tiri finiscono negli appunti qui sopra, ma il lanciatore ha
+                   il suo pannello: i campi, la vaschetta in cui rotolano i dadi
+                   (bassa, sempre in vista) e il risultato. -->
+              <div class="panel sessione-pannello-dadi" id="pannello-dadi">
+                <div class="sessione-appunti-intestazione">
+                  <h3>Vaschetta dei dadi</h3>
+                </div>
                 <form id="lanciatore-dadi" class="lanciatore-dadi" aria-label="Lancio dei dadi">
-                  <span class="lanciatore-titolo">Dadi</span>
                   <input type="number" id="dadi-quanti" class="input-dadi" min="1" max="20" value="1" aria-label="Numero di dadi" />
                   <select id="dadi-facce" class="select-dadi" aria-label="Tipo di dado">
                     <option value="4">d4</option><option value="6">d6</option><option value="8">d8</option>
@@ -107,6 +115,8 @@
                   <label id="dadi-nascosto-wrap" class="checkbox-scudo" hidden><input type="checkbox" id="dadi-nascosto" /> Nascosto</label>
                   <button type="submit" class="btn-tabella btn-tabella-evidenza">Tira</button>
                 </form>
+                <div id="vaschetta-dadi" class="vaschetta-sessione"></div>
+                <div id="esito-dadi" class="esito-dadi" role="status"></div>
               </div>
 
               <div class="panel sessione-pannello-contenuti" id="pannello-contenuti">

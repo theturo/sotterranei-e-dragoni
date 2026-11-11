@@ -19,7 +19,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "987e7a36693e";
+const VERSIONE = "ef3e809d4963";
 const DATA_VERSIONE = "2026-11-11";
 const FILE = {
   "./admin-utenti.html": "67eb21be5117",
@@ -31,7 +31,7 @@ const FILE = {
   "./assets/css/gioco.css": "f4355402f5f2",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "8cba156ce1df",
-  "./assets/css/sessione.css": "0edb39bef843",
+  "./assets/css/sessione.css": "059e9d8f412f",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
   "./assets/fonts/pdf/cinzel-700.woff": "83ea41e439a2",
   "./assets/fonts/pdf/eb-garamond-400-italic.woff": "ee21466cc9fc",
@@ -86,7 +86,7 @@ const FILE = {
   "./assets/js/contenuti.js": "bc0640a2e0f3",
   "./assets/js/cruscotto-calcoli.js": "00e2a2c6b5fe",
   "./assets/js/dadi-base.js": "13e3dc7d507b",
-  "./assets/js/dadi.js": "b9e1dfb187b4",
+  "./assets/js/dadi.js": "3b333af0fc8d",
   "./assets/js/dado-caricamento.js": "223a69f9bc5e",
   "./assets/js/dado-pf.js": "8e31050df550",
   "./assets/js/dati-srd.js": "2ca98999c43e",
@@ -124,6 +124,7 @@ const FILE = {
   "./assets/js/intro-vortice.js": "6f40a7137c42",
   "./assets/js/intro-worker.js": "e15a108f093e",
   "./assets/js/intro.js": "6f29a35f7961",
+  "./assets/js/lanciatore-dadi.js": "370287fd02c4",
   "./assets/js/mappa-calcoli.js": "bbb1481c0a4a",
   "./assets/js/mappa-pedine.js": "0680c86d6cc2",
   "./assets/js/mappa-strumenti.js": "4334765dc777",
@@ -153,7 +154,7 @@ const FILE = {
   "./assets/js/pagine/offline.js": "66f6add61755",
   "./assets/js/pagine/register.js": "d351cfe15864",
   "./assets/js/pagine/scheda-personaggio.js": "4f30a2b887d1",
-  "./assets/js/pagine/sessione.js": "2bbbe9e100d1",
+  "./assets/js/pagine/sessione.js": "ef0758599a79",
   "./assets/js/pagine/tavolo.js": "f38a46e915a7",
   "./assets/js/pagine/verifica-email.js": "9160b11d3edd",
   "./assets/js/pdf-scheda.js": "ab909d461890",
@@ -170,7 +171,7 @@ const FILE = {
   "./assets/js/turno-animato.js": "d2822bb9a2d0",
   "./assets/js/utils.js": "bfba4f8d663e",
   "./assets/js/vaschetta-scelte.js": "3743a40bc6dc",
-  "./assets/js/vaschetta.js": "aafcf69a85d6",
+  "./assets/js/vaschetta.js": "9fdc425df4a9",
   "./assets/js/versione.js": "10e8c49db420",
   "./assets/js/widget-musica.js": "c2be39beebf8",
   "./assets/js/youtube.js": "31a2b419c9ed",
@@ -194,7 +195,7 @@ const FILE = {
   "./offline.html": "db6483bdcfa1",
   "./register.html": "03a7cf2e4704",
   "./scheda-personaggio.html": "cdc3e12b5ce6",
-  "./sessione.html": "19953a2f9d86",
+  "./sessione.html": "994f486f44e8",
   "./tavolo.html": "24b0ce5bc660",
   "./verifica-email.html": "374faa034a5b",
 };

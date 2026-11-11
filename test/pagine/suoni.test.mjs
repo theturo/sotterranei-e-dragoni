@@ -23,7 +23,8 @@ test("i suoni sono agganciati dove dice la tela", () => {
   assert.match(leggi("assets/js/comparsa-contenuti.js"), /suona\("rivela"\)/);
   assert.match(leggi("assets/js/dado-pf.js"), /suona\("dado", \(TUMBLE \+ SETTLE\) \/ 1000\)/);
   assert.match(leggi("assets/js/dadi.js"), /suonaTiro\(tiro, durata\)/);
-  assert.match(leggi("assets/js/pagine/sessione.js"), /suonaTiro\(tiro\)/);
+  assert.match(leggi("assets/js/lanciatore-dadi.js"), /suonaTiro\(tiro, durata\)/);
+  assert.match(leggi("assets/js/lanciatore-dadi.js"), /suonaTiro\(tiro\)/);
   assert.match(leggi("assets/js/pagine/scheda-personaggio.js"), /suona\("livello"\)/);
   assert.match(leggi("assets/js/mappa-strumenti.js"), /suona\("ping"\)/);
   assert.doesNotMatch(leggi("assets/js/mappa-strumenti.js"), /AudioContext/);

@@ -11,6 +11,8 @@
 //    mostra gli effetti di vantaggio, 20 e 1 naturali (effetti-dadi.js).
 // Con «riduci animazioni» i dadi compaiono già fermi nella vaschetta.
 // Rivestimento e vista sono quelli scelti in ⚙️ → Dadi (vaschetta-scelte.js).
+// La vaschetta è larga quanto il suo contenitore; l'altezza la decide chi la
+// crea: più è bassa, meno spazio hanno i dadi per rimbalzare.
 import { v, q } from "./geometria-3d.js";
 import { poliedro, TIPI, elementoDi, elementoInAlto, simmetria } from "./poliedri.js";
 import { simulaBene } from "./fisica-dadi.js";
@@ -32,7 +34,10 @@ function el(tag, classe) {
   return nodo;
 }
 
-export function creaVaschetta(radice) {
+// Altezza della vaschetta nelle finestre (tiro e riposo breve), dalla larghezza.
+const altezzaFinestra = (larghezza, vista) => Math.round(Math.min(400, Math.max(220, larghezza * (vista === "alto" ? 0.56 : 0.6))));
+
+export function creaVaschetta(radice, { altezza = altezzaFinestra } = {}) {
   radice.classList.add("vaschetta");
   const tela = el("canvas", "vaschetta-tela");
   tela.setAttribute("aria-hidden", "true");
@@ -73,6 +78,31 @@ export function creaVaschetta(radice) {
     return { tenuto, naturale, protagonista: tenuto ?? 0 };
   }
 
+  // Misura la tela sul contenitore per `quanti` dadi, con le scelte di chi gioca.
+  function prepara(quanti) {
+    const scelte = scelteVaschetta();
+    const larghezza = radice.clientWidth || 320;
+    // La tela sporge un po' sopra la vaschetta: lì passano i dadi che rimbalzano
+    // più in alto del bordo di fondo, senza togliere spazio alla vaschetta.
+    const sopra = scelte.vista === "alto" ? 0 : SOPRA;
+    const misure = scena.prepara({ quanti, vista: scelte.vista, larghezza, altezza: altezza(larghezza, scelte.vista), sopra });
+    tela.style.top = `${-sopra}px`;
+    tela.style.marginBottom = `${-sopra}px`;
+    return { scelte, sopra, misure };
+  }
+
+  // La vaschetta vuota: dove sta sempre in vista (pagina Sessione) si vede
+  // anche prima del primo tiro.
+  async function vuota() {
+    inCorso?.ferma();
+    inCorso = null;
+    await scena.pronta;
+    strato.replaceChildren();
+    radice.classList.remove("vaschetta-venti", "vaschetta-uno");
+    const { scelte } = prepara(1);
+    scena.disegna([], scelte.materiale);
+  }
+
   // tiro: { dadi: [{ facce, risultato }], modo: "normale" | "vantaggio" | "svantaggio" }
   //   (con vantaggio e svantaggio i dadi sono due d20: quello tenuto e lo scartato).
   // suInizio(durataMs): chiamata quando i dadi partono, con la durata del lancio
@@ -84,15 +114,7 @@ export function creaVaschetta(radice) {
     strato.replaceChildren();
     radice.classList.remove("vaschetta-venti", "vaschetta-uno");
 
-    const scelte = scelteVaschetta();
-    const larghezza = radice.clientWidth || 320;
-    const altezza = Math.round(Math.min(400, Math.max(220, larghezza * (scelte.vista === "alto" ? 0.56 : 0.6))));
-    // La tela sporge un po' sopra la vaschetta: lì passano i dadi che rimbalzano
-    // più in alto del bordo di fondo, senza togliere spazio alla vaschetta.
-    const sopra = scelte.vista === "alto" ? 0 : SOPRA;
-    const misure = scena.prepara({ quanti: tiro.dadi.length, vista: scelte.vista, larghezza, altezza, sopra });
-    tela.style.top = `${-sopra}px`;
-    tela.style.marginBottom = `${-sopra}px`;
+    const { scelte, sopra, misure } = prepara(tiro.dadi.length);
 
     const sim = simulaBene({ tipi: tiro.dadi.map((d) => d.facce), W: misure.W, D: misure.D, seme });
 
@@ -163,5 +185,5 @@ export function creaVaschetta(radice) {
     return true;
   }
 
-  return { lancia, ferma: () => inCorso?.ferma() };
+  return { lancia, vuota, ferma: () => inCorso?.ferma() };
 }

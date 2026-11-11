@@ -36,7 +36,8 @@ import {
   mostraContenuto,
   collegaContenutiSessione,
 } from "../dati/libreria.js";
-import { tira, testoTiro } from "../dadi.js";
+import { testoTiro } from "../dadi.js";
+import { montaLanciatoreDadi } from "../lanciatore-dadi.js";
 import { oggiIso, formattaDataOra, etichettaSessione, dataBreve, oraBreve } from "../calendario.js";
 import { montaGuscio } from "../guscio.js";
 import { esc, creaScheletro, mostraAttesa, mostraToast } from "../utils.js";
@@ -56,7 +57,6 @@ import { montaCombattimento } from "../combattimento.js";
 import { montaMappa } from "../mappa.js";
 import { montaSchedaRapida } from "../scheda-rapida.js";
 import { montaComparsaContenuti } from "../comparsa-contenuti.js";
-import { suonaTiro } from "../suoni.js";
 import { privilegiDelPersonaggio, NOMI_RICARICA } from "../privilegi.js";
 import {
   apriRiposoBreve,
@@ -962,29 +962,18 @@ async function registraTiro(chi, tiro, nascosto = false) {
   }
 }
 
-document.getElementById("dadi-facce").addEventListener("change", (evento) => {
-  const modo = document.getElementById("dadi-modo");
-  modo.disabled = evento.target.value !== "20";
-  if (modo.disabled) modo.value = "normale";
-});
-
-document.getElementById("lanciatore-dadi").addEventListener("submit", async (evento) => {
-  evento.preventDefault();
-  const valore = (id) => Math.trunc(Number(document.getElementById(id).value)) || 0;
-  const tiro = tira({
-    etichetta: document.getElementById("dadi-etichetta").value.trim() || "Tiro",
-    quanti: Math.max(1, valore("dadi-quanti")),
-    facce: valore("dadi-facce"),
-    modificatore: valore("dadi-modificatore"),
-    modo: document.getElementById("dadi-modo").value,
-  });
-  suonaTiro(tiro);
-  const mio = ultimoParty.find((r) => r.uid === uidCorrente);
-  const chi = puoModerare ? null : mio?.nomePersonaggio || nomeCorrente;
-  const nascosto = puoModerare && document.getElementById("dadi-nascosto").checked;
-  const registrato = await registraTiro(chi, tiro, nascosto);
-  mostraAvvisoContenuto(`${registrato ? "" : "Solo per te — "}${testoTiro(null, tiro)}`);
-  document.getElementById("dadi-etichetta").value = "";
+// Il lanciatore libero, nel pannello «Vaschetta dei dadi» (lanciatore-dadi.js):
+// qui si decide solo a nome di chi va il tiro e se è nascosto.
+montaLanciatoreDadi({
+  modulo: document.getElementById("lanciatore-dadi"),
+  palco: document.getElementById("vaschetta-dadi"),
+  esito: document.getElementById("esito-dadi"),
+  registra: (tiro) => {
+    const mio = ultimoParty.find((r) => r.uid === uidCorrente);
+    const chi = puoModerare ? null : mio?.nomePersonaggio || nomeCorrente;
+    const nascosto = puoModerare && document.getElementById("dadi-nascosto").checked;
+    return registraTiro(chi, tiro, nascosto);
+  },
 });
 
 // Registro storico: elenco delle sessioni passate, con gli appunti di ognuna

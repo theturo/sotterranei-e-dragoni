@@ -246,6 +246,28 @@ test("la finestra del tiro e il riposo breve usano la vaschetta, che si scarica 
   assert.doesNotMatch(leggi("assets/css/gioco.css"), /in-lancio|vassoio-lancio/);
 });
 
+test("in Sessione il lanciatore ha il suo pannello «Vaschetta dei dadi», fuori dagli appunti", () => {
+  const html = leggi("sessione.html");
+  const inizioDadi = html.indexOf('id="pannello-dadi"');
+  const appunti = html.slice(html.indexOf("sessione-pannello-appunti"), inizioDadi);
+  assert.ok(inizioDadi > 0 && appunti.length > 0);
+  assert.doesNotMatch(appunti, /lanciatore-dadi/);
+  const dadi = html.slice(inizioDadi, html.indexOf('id="pannello-contenuti"'));
+  assert.match(dadi, /<h3>Vaschetta dei dadi<\/h3>/);
+  // I campi di prima, più la vaschetta e la riga del risultato.
+  for (const id of ["lanciatore-dadi", "dadi-quanti", "dadi-facce", "dadi-modificatore", "dadi-modo", "dadi-etichetta", "dadi-nascosto", "vaschetta-dadi", "esito-dadi"]) {
+    assert.match(dadi, new RegExp(`id="${id}"`), id);
+  }
+  assert.match(leggi("assets/js/pagine/sessione.js"), /montaLanciatoreDadi\(\{/);
+  // La vaschetta della Sessione è bassa e la pagina le tiene il posto con le stesse misure.
+  assert.match(leggi("assets/js/lanciatore-dadi.js"), /Math\.min\(240, Math\.max\(170, larghezza \* 0\.5\)\)/);
+  const stili = leggi("assets/css/sessione.css");
+  assert.match(stili, /\.vaschetta-sessione \{[^}]*min-height: 170px;/);
+  assert.match(stili, /@media \(min-width: 560px\) \{\s+\.vaschetta-sessione \{\s+min-height: 240px;/);
+  // Sul telefono sta subito dopo gli appunti.
+  assert.match(stili, /\.sessione-pannello-dadi \{ order: 1; \}/);
+});
+
 test("il pannello ⚙️ ha la scelta di rivestimento e vista, senza caricare il disegno della vaschetta", () => {
   const menu = leggi("assets/js/menu-utente.js");
   assert.match(menu, /data-apri="dadi"/);

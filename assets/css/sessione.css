@@ -32,7 +32,7 @@
 
 /* ---------- Pagina Sessione ---------- */
 /* Sul telefono le due colonne si sciolgono in una sola, in quest'ordine:
-   combattimento, mappa, appunti, party, contenuti, musica. */
+   combattimento, mappa, appunti, dadi, party, contenuti, musica. */
 @media (max-width: 899px) {
   .sessione-layout > .sessione-colonna {
     display: contents;
@@ -943,6 +943,11 @@
   .sessione-pannello-appunti { order: 1; }
 }
 
+/* Subito dopo gli appunti, dove finiscono i tiri. */
+@media (max-width: 899px) {
+  .sessione-pannello-dadi { order: 1; }
+}
+
 @media (max-width: 899px) {
   .sessione-pannello-party { order: 2; }
 }
@@ -1686,21 +1691,70 @@
   opacity: 0.7;
 }
 
-/* Lanciatore della pagina Sessione */
+/* Pannello «Vaschetta dei dadi» della pagina Sessione: i campi del lanciatore,
+   la vaschetta e il risultato (lanciatore-dadi.js). */
 .lanciatore-dadi {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed rgba(122, 31, 43, 0.3);
 }
 
-.lanciatore-titolo {
+/* Larga quanto il pannello ma bassa: metà della larghezza, tra 170 e 240 px
+   (altezzaBassa in lanciatore-dadi.js). Il posto è già occupato prima che la
+   vaschetta si disegni, così la pagina non salta: 170 px sul telefono, 240 px
+   dove il pannello è largo almeno il doppio. */
+.vaschetta-sessione {
+  margin-top: 16px;
+  min-height: 170px;
+}
+
+@media (min-width: 560px) {
+  .vaschetta-sessione {
+    min-height: 240px;
+  }
+}
+
+.esito-dadi {
+  min-height: 2.4rem;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.esito-dadi-riga {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px 12px;
+  margin: 0;
   font-family: var(--font-heading);
   color: var(--color-burgundy);
-  margin-right: 4px;
+}
+
+.esito-dadi-riga.tiro-critico {
+  color: #2f6b2c;
+}
+
+.esito-dadi-riga.tiro-fallimento {
+  color: var(--color-danger);
+}
+
+.esito-dadi-totale {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.esito-dadi-testo {
+  font-size: 1rem;
+}
+
+.esito-dadi-invito,
+.esito-dadi-nota {
+  margin: 0;
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--color-ink-soft);
 }
 
 .input-dadi-etichetta {

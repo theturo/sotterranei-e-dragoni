@@ -22,9 +22,8 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - **Animazioni in JavaScript** (da valutare insieme): fatti il dado di
   caricamento, il tiro dei PF, il cambio turno nel tracker e la vaschetta dei
   dadi; l'annuncio di livello resta in CSS (scelta della tela). Da valutare:
-  la vaschetta anche per il lanciatore libero della Sessione (oggi mostra solo
-  un avviso) e per il dado vita del passaggio di livello; il suono di ogni
-  urto sul fondo; danni e cure sui PF. `turno-animato.js` e
+  la vaschetta anche per il dado vita del passaggio di livello; il suono di
+  ogni urto sul fondo; danni e cure sui PF. `turno-animato.js` e
   `comparsa-contenuti.js` hanno ancora la loro copia di molla e curve: possono
   passare a `movimento.js`.
 
@@ -308,3 +307,10 @@ Nessuna in sospeso.
   notte, verde o cremisi, cuoio, legno) e la vista (di tre quarti o
   dall'alto), salvati sul dispositivo. Con "riduci animazioni" i dadi
   compaiono già fermi. Il d100 mostra solo il risultato, come prima.
+- Vaschetta dei dadi nella Sessione: il lanciatore libero esce dagli appunti e
+  ha il suo pannello, «Vaschetta dei dadi», subito sotto (sul telefono dopo
+  gli appunti e prima del party). Sotto i campi c'è la vaschetta, sempre in
+  vista anche vuota: larga quanto il pannello ma bassa (170 px sul telefono,
+  240 px sul computer). I dadi ci rotolano dentro e a dadi fermi il risultato
+  compare sotto, al posto dell'avviso; un tiro nuovo prende il posto di quello
+  in corso. Il tiro va negli appunti come prima, anche nascosto per il DM.
