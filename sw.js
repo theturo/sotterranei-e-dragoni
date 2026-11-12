@@ -19,8 +19,8 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "ef3e809d4963";
-const DATA_VERSIONE = "2026-11-11";
+const VERSIONE = "9864ab4ab615";
+const DATA_VERSIONE = "2026-11-12";
 const FILE = {
   "./admin-utenti.html": "67eb21be5117",
   "./archivio.html": "05a524f56a2e",
@@ -28,7 +28,7 @@ const FILE = {
   "./assets/css/calendario.css": "b7f8d6336144",
   "./assets/css/dashboard.css": "eb68da7900fc",
   "./assets/css/dm.css": "ac39fd0be665",
-  "./assets/css/gioco.css": "f4355402f5f2",
+  "./assets/css/gioco.css": "29cedb3c547e",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "8cba156ce1df",
   "./assets/css/sessione.css": "059e9d8f412f",
@@ -80,7 +80,7 @@ const FILE = {
   "./assets/js/bestiario-scheda.js": "9a1f509ff4c4",
   "./assets/js/calcoli-scheda.js": "660e3a9ce65d",
   "./assets/js/calendario.js": "e6cf8e5bd2ed",
-  "./assets/js/combattimento.js": "f564f5c8bc4f",
+  "./assets/js/combattimento.js": "e394af6b855b",
   "./assets/js/comparsa-contenuti.js": "386de312d62b",
   "./assets/js/condizioni.js": "7798031d4694",
   "./assets/js/contenuti.js": "bc0640a2e0f3",
@@ -105,6 +105,7 @@ const FILE = {
   "./assets/js/dati/utenti.js": "cef6301d4201",
   "./assets/js/descrizioni.js": "ebc456fbe5a1",
   "./assets/js/effetti-dadi.js": "55e4c071b95a",
+  "./assets/js/effetti-pf.js": "19e6035c2108",
   "./assets/js/equipaggiamento-srd.js": "f76aa365ff02",
   "./assets/js/esporta-scheda.js": "426e98cb61b2",
   "./assets/js/firebase-config.js": "a02623ecb818",
@@ -126,9 +127,9 @@ const FILE = {
   "./assets/js/intro.js": "6f29a35f7961",
   "./assets/js/lanciatore-dadi.js": "370287fd02c4",
   "./assets/js/mappa-calcoli.js": "bbb1481c0a4a",
-  "./assets/js/mappa-pedine.js": "0680c86d6cc2",
+  "./assets/js/mappa-pedine.js": "6595b6501777",
   "./assets/js/mappa-strumenti.js": "4334765dc777",
-  "./assets/js/mappa-vista.js": "8c0cce095302",
+  "./assets/js/mappa-vista.js": "13425a496b19",
   "./assets/js/mappa.js": "ec14017c5d2f",
   "./assets/js/menu-utente.js": "ff8766faf855",
   "./assets/js/mostri-srd.js": "ddbfb68e0be4",
@@ -154,7 +155,7 @@ const FILE = {
   "./assets/js/pagine/offline.js": "66f6add61755",
   "./assets/js/pagine/register.js": "d351cfe15864",
   "./assets/js/pagine/scheda-personaggio.js": "4f30a2b887d1",
-  "./assets/js/pagine/sessione.js": "ef0758599a79",
+  "./assets/js/pagine/sessione.js": "f6adae5f87a0",
   "./assets/js/pagine/tavolo.js": "f38a46e915a7",
   "./assets/js/pagine/verifica-email.js": "9160b11d3edd",
   "./assets/js/pdf-scheda.js": "ab909d461890",
@@ -164,7 +165,7 @@ const FILE = {
   "./assets/js/riposo.js": "d633ca3f1737",
   "./assets/js/ritaglio.js": "047db73fdef2",
   "./assets/js/scena-dadi.js": "300077db83f6",
-  "./assets/js/scheda-rapida.js": "e7462585c3b8",
+  "./assets/js/scheda-rapida.js": "a0c94af60aa0",
   "./assets/js/spotify-config.js": "2cd119a39d39",
   "./assets/js/spotify.js": "608a6de358de",
   "./assets/js/suoni.js": "c89c1d1ef463",

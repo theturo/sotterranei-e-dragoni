@@ -105,6 +105,10 @@ CI (`.github/workflows/test.yml`) esegue le tre suite su ogni PR e su `main`.
   sulla faccia in alto, `scena-dadi.js` disegna su canvas. Moduli puri testati in
   `test/pagine/vaschetta.test.mjs`. Le animazioni nuove partono da `movimento.js`
   (curve, molla, particelle, «riduci animazioni»).
+- **Danni e cure** (`effetti-pf.js`): chi mostra dei PF (party in `pagine/sessione.js`,
+  `combattimento.js`, `mappa-vista.js`, `scheda-rapida.js`) dopo ogni ridisegno chiama
+  `aggiorna` con i PF correnti; il modulo ricorda quelli di prima e anima il cambio.
+  Dei nemici i giocatori conoscono solo la salute vaga: lì si passa la quota, senza numero.
 
 ## Documenti
 

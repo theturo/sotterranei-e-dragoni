@@ -38,6 +38,8 @@ import { CLASSI, ICONA_CLASSE_FALLBACK } from "./dati-srd.js";
 import { ICONA_MASCHERA, icona, elementoIcona } from "./icone.js";
 import { creaChipCondizioni, creaEditorCondizioni } from "./condizioni.js";
 import { montaTurnoAnimato } from "./turno-animato.js";
+import { creaEffettiPf } from "./effetti-pf.js";
+import { BARRA_SALUTE } from "./mappa-pedine.js";
 import { suona } from "./suoni.js";
 
 const SALUTE = {
@@ -87,6 +89,7 @@ export function montaCombattimento({
   let combattenti = [];
   let ordinati = [];
   const righe = new Map();
+  const effettiPf = creaEffettiPf();
   let bonusMio = null;
   let turnoPrecedente = null;
   let eraAttivo = null;
@@ -623,6 +626,19 @@ export function montaCombattimento({
     }
   }
 
+  // I PF da dare agli effetti di danni e cure: veri per i personaggi, per gli
+  // alleati e, al DM, per i nemici. Dei nemici i giocatori sanno solo la salute
+  // vaga: l'effetto parte quando cambia quella, senza numero.
+  function pfPerEffetti(c) {
+    if (c.tipo === "pg") {
+      const r = party().find((x) => x.uid === c.uid);
+      return r?.hp ? { chiave: `${c.id}:${r.schedaId}`, pf: { attuali: r.hp.attuali ?? 0, massimi: r.hp.massimi ?? 0 }, numeri: true } : null;
+    }
+    if (isDM && c.dm) return { chiave: c.id, pf: { attuali: c.dm.pfAttuali, massimi: c.dm.pfMassimi }, numeri: true };
+    if (c.alleato && c.pf) return { chiave: c.id, pf: { attuali: c.pf.attuali, massimi: c.pf.massimi }, numeri: true };
+    return { chiave: c.id, pf: { quota: BARRA_SALUTE[c.salute || "illeso"] ?? 1 }, numeri: false };
+  }
+
   function render() {
     ordinati = ordinaCombattenti(combattenti);
     const attivo = stato.attivo;
@@ -664,6 +680,11 @@ export function montaCombattimento({
       aggiornaRiga(li, c, indice);
       elenco.append(li);
     });
+    // Danni e cure, a righe già riordinate: il numero parte da dove sta la riga.
+    for (const c of ordinati) {
+      const voce = pfPerEffetti(c);
+      if (voce) effettiPf.aggiorna(voce.chiave, voce.pf, { bersaglio: righe.get(c.id) }, { numeri: voce.numeri });
+    }
 
     // Avvisi per il giocatore: inizio combattimento e proprio turno.
     const mioTurno = attivo && stato.round > 0 && ordinati.find((c) => c.id === stato.turno)?.uid === uid;

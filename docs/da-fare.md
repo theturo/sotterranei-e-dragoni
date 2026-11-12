@@ -23,7 +23,8 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   caricamento, il tiro dei PF, il cambio turno nel tracker e la vaschetta dei
   dadi; l'annuncio di livello resta in CSS (scelta della tela). Da valutare:
   la vaschetta anche per il dado vita del passaggio di livello; il suono di
-  ogni urto sul fondo; danni e cure sui PF. `turno-animato.js` e
+  ogni urto sul fondo; danni e cure anche nella scheda completa e nel
+  cruscotto della dashboard, e un loro suono. `turno-animato.js` e
   `comparsa-contenuti.js` hanno ancora la loro copia di molla e curve: possono
   passare a `movimento.js`.
 
@@ -314,3 +315,14 @@ Nessuna in sospeso.
   240 px sul computer). I dadi ci rotolano dentro e a dadi fermi il risultato
   compare sotto, al posto dell'avviso; un tiro nuovo prende il posto di quello
   in corso. Il tiro va negli appunti come prima, anche nascosto per il DM.
+- Danni e cure: quando cambiano i PF si vede, nel party e nel tracker della
+  Sessione, sulle pedine della mappa (anche sullo schermo del tavolo) e nella
+  scheda rapida. Al danno il bersaglio ha una scossa e un lampo rosso, la
+  barra scatta al nuovo valore e il pezzo perso resta chiaro un attimo prima
+  di consumarsi, il numero («−7») schizza fuori, ricade, rimbalza e svanisce;
+  alla cura alone verde, la parte di barra guadagnata entra con un'onda di
+  luce e il numero («+5») salta fuori allo stesso modo. La forza è in
+  proporzione al colpo (mezzi PF massimi in un colpo solo sono il massimo);
+  a 0 PF la pedina cade con un tonfo. Dei nemici i giocatori vedono l'effetto
+  solo quando cambia la salute vaga, e mai il numero. Con "riduci animazioni"
+  niente scosse né voli: il numero compare fermo e svanisce.

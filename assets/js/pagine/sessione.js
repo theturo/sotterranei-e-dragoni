@@ -38,6 +38,7 @@ import {
 } from "../dati/libreria.js";
 import { testoTiro } from "../dadi.js";
 import { montaLanciatoreDadi } from "../lanciatore-dadi.js";
+import { creaEffettiPf } from "../effetti-pf.js";
 import { oggiIso, formattaDataOra, etichettaSessione, dataBreve, oraBreve } from "../calendario.js";
 import { montaGuscio } from "../guscio.js";
 import { esc, creaScheletro, mostraAttesa, mostraToast } from "../utils.js";
@@ -219,6 +220,7 @@ function creaRigaParty(riepilogo) {
 // scrivendo al loro interno; il pannello "Stato" aperto resta aperto.
 const righeParty = new Map();
 const firmeParty = new Map();
+const effettiPfParty = creaEffettiPf();
 const statoAperto = new Set();
 let trackerCombattimento = null;
 let pannelloMappa = null;
@@ -252,6 +254,15 @@ function renderParty(party) {
       firmeParty.set(riepilogo.uid, nuovaFirma);
     }
     lista.appendChild(righeParty.get(riepilogo.uid));
+  });
+  // Danni e cure: ogni riga dice i suoi PF agli effetti (per personaggio:
+  // cambiando quello attivo non parte nessun effetto).
+  party.forEach((riepilogo) => {
+    if (!riepilogo.schedaId || !riepilogo.hp) return;
+    const li = righeParty.get(riepilogo.uid);
+    effettiPfParty.aggiorna(`${riepilogo.uid}:${riepilogo.schedaId}`,
+      { attuali: riepilogo.hp.attuali ?? 0, massimi: riepilogo.hp.massimi ?? 0 },
+      { bersaglio: li, barra: li.querySelector(".barra-pf") });
   });
   trackerCombattimento?.ridisegna();
   pannelloMappa?.ridisegna();
