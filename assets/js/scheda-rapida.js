@@ -17,6 +17,7 @@ import { creaChipCondizioni } from "./condizioni.js";
 import { mostraImmagine, percorsiRitratto } from "./immagini.js";
 import { esc } from "./utils.js";
 import { ICONA_SESSIONE } from "./icone.js";
+import { creaEffettiPf } from "./effetti-pf.js";
 
 
 const SCHEDE = [
@@ -40,6 +41,7 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
   let lancioAperto = null;
   let ridisegnoRinviato = false;
   let timerEsito = null;
+  const effettiPf = creaEffettiPf();
 
   const bottone = document.createElement("button");
   bottone.type = "button";
@@ -205,6 +207,9 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
         <input type="number" min="0" inputmode="numeric" class="input-pf-nemico" data-campo="temporanei" value="${temporanei}" aria-label="PF temporanei" />
       </div>`}`;
     pf.append(creaChipCondizioni(scheda.condizioni || [], scheda.esaurimento || 0));
+    // Danni e cure sul riquadro dei PF (per scheda: passando a un altro
+    // personaggio non parte nessun effetto).
+    effettiPf.aggiorna(scheda.id, { attuali, massimi }, { bersaglio: pf.querySelector(".scheda-rapida-pf-riga"), barra: pf.querySelector(".barra-pf") });
   }
 
   function schedeDisponibili(dati) {

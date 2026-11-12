@@ -32,6 +32,7 @@ import {
 } from "./mappa-calcoli.js";
 import { icona } from "./icone.js";
 import { applicaRitaglio } from "./ritaglio.js";
+import { creaEffettiPf } from "./effetti-pf.js";
 
 let contatoreViste = 0;
 
@@ -250,8 +251,20 @@ export function creaVistaMappa(contenitore, opzioni = {}) {
     return el;
   }
 
+  // Le pedine si ridisegnano da capo; dopo, ognuna dice i suoi PF agli effetti
+  // di danni e cure: i PF veri dove si conoscono, altrimenti la quota della
+  // salute vaga, senza numero.
+  const effettiPf = creaEffettiPf();
   function disegnaPedine() {
-    strato.replaceChildren(...(mappa ? pedine.map(disegnaPedina) : []));
+    const elementi = mappa ? pedine.map(disegnaPedina) : [];
+    strato.replaceChildren(...elementi);
+    elementi.forEach((el, i) => {
+      const p = pedine[i];
+      if (p.quotaPf == null) return;
+      effettiPf.aggiorna(p.id, p.pfVeri ?? { quota: p.quotaPf },
+        { bersaglio: el, barra: el.querySelector(".pedina-pf"), volto: el.querySelector(".pedina-volto") },
+        { numeri: Boolean(p.pfVeri) });
+    });
   }
 
   function disegnaMisura() {

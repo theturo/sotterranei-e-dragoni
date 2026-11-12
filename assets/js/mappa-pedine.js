@@ -70,8 +70,8 @@ export function creaCacheImmagini(campagnaId, aggiorna) {
   return (immagineId) => (immagineId ? url(percorsiImmagineCampagna(campagnaId, immagineId).mini) : null);
 }
 
-// Salute vaga dei nemici, come barra: quanto è piena e di che colore.
-const BARRA_SALUTE = { illeso: 1, ferito: 0.66, grave: 0.33, "a terra": 0 };
+// Salute vaga dei nemici, come barra: quanto è piena.
+export const BARRA_SALUTE = { illeso: 1, ferito: 0.66, grave: 0.33, "a terra": 0 };
 
 // ID del combattente di turno → ID della pedina (i personaggi sono "pg-{uid}").
 export function pedinaDiTurno(stato) {
@@ -101,8 +101,9 @@ export function costruisciPedine({
       const salute = c?.salute || p.salute || "illeso";
       const alleato = Boolean(c?.alleato || p.alleato);
       // PF veri: al DM sempre, a tutti per gli alleati.
-      const pf = perDM && c?.dm?.pfMassimi > 0 ? c.dm.pfAttuali / c.dm.pfMassimi
-        : alleato && c?.pf?.massimi > 0 ? c.pf.attuali / c.pf.massimi : null;
+      const veri = perDM && c?.dm?.pfMassimi > 0 ? { attuali: c.dm.pfAttuali, massimi: c.dm.pfMassimi }
+        : alleato && c?.pf?.massimi > 0 ? { attuali: c.pf.attuali, massimi: c.pf.massimi } : null;
+      const pf = veri ? veri.attuali / veri.massimi : null;
       return {
         id: p.id,
         c: p.c,
@@ -113,6 +114,8 @@ export function costruisciPedine({
         ritrattoUrl: immagine(p.immagineId),
         ritaglio: p.immagineId ? p.ritaglio || c?.ritaglio || null : null,
         quotaPf: pf ?? BARRA_SALUTE[salute] ?? 1,
+        // Per gli effetti di danni e cure: senza PF veri non si mostrano numeri.
+        pfVeri: veri,
         aTerra: salute === "a terra",
         condizioni: bolliniCondizioni(c?.condizioni || p.condizioni || []),
         nemico: true,
@@ -141,6 +144,7 @@ export function pedineDaParty({ party, pedine, mioUid = null, ritratto = () => n
         iniziali: iniziali(r.nomePersonaggio || r.nomeGiocatore),
         ritrattoUrl: ritratto(r),
         quotaPf: massimi > 0 ? attuali / massimi : null,
+        pfVeri: massimi > 0 ? { attuali, massimi } : null,
         aTerra: massimi > 0 && attuali <= 0,
         condizioni: bolliniCondizioni(r.condizioni, r.esaurimento),
         mia: (p.uid || p.id) === mioUid,

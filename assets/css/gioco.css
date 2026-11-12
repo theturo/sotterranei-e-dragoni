@@ -892,3 +892,85 @@
     animation: none;
   }
 }
+
+/* ---------- Danni e cure (effetti-pf.js) ---------- */
+/* Lo strato dove volano numeri e gocce: sopra tutto, senza prendere tocchi. */
+.pf-strato {
+  position: fixed;
+  inset: 0;
+  /* Sopra la scheda rapida (150), sotto le finestre modali (200). */
+  z-index: 195;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Il velo sul bersaglio. */
+.pf-lampo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.pf-lampo-danno {
+  background: rgba(190, 40, 52, 0.55);
+}
+
+.pf-lampo-cura {
+  background: rgba(70, 190, 110, 0.4);
+  box-shadow: 0 0 14px 2px rgba(90, 210, 130, 0.65);
+}
+
+/* Il pezzo di barra perso o guadagnato. */
+.pf-fantasma {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+.pf-perso {
+  background: #fff0d6;
+  box-shadow: 0 0 6px rgba(255, 240, 214, 0.9);
+}
+
+.pf-guadagnato {
+  background: linear-gradient(90deg, #8be29c, #f1ffe6);
+  box-shadow: 0 0 8px rgba(140, 230, 160, 0.9);
+}
+
+/* Il numero che schizza e ricade. */
+.pf-numero {
+  position: absolute;
+  font-family: var(--font-heading, "Cinzel", serif);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.05em rgba(20, 8, 6, 0.9);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.55);
+  will-change: transform, opacity;
+}
+
+.pf-numero-danno {
+  color: #ff5a4f;
+}
+
+.pf-numero-cura {
+  color: #7be08f;
+}
+
+.pf-goccia {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.pf-goccia-danno {
+  background: #c2303a;
+}
+
+.pf-goccia-cura {
+  background: #8be29c;
+  box-shadow: 0 0 5px rgba(140, 230, 160, 0.9);
+}
