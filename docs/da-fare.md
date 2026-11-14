@@ -17,8 +17,11 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   su tutte le pagine interne e i contenuti della Sessione (pannelli blu e
   pergamena, «scena + tavolo» sul computer, tre schede sul telefono) e della
   scheda personaggio (testata blu, schede Combattimento / Caratteristiche /
-  Magia / Zaino / Storia, barra fissa coi PF). Prossimi passi, ognuno con le
-  sue tavole: scheda rapida della Sessione, Calendario, login
+  Magia / Zaino / Storia, barra fissa coi PF) e del Calendario (prossima
+  sessione in evidenza, mese blu, date da scegliere e altre sessioni in
+  pergamena, mese compatto sul telefono, finestra «Organizza una sessione»
+  per il DM). Prossimi passi, ognuno con le
+  sue tavole: scheda rapida della Sessione, login
   (e le altre pagine prima dell'accesso), il velo di caricamento ancora
   col vecchio d20, una famiglia di icone nuova. I colori sono già in base.css
   (variabili `--rd-*`).

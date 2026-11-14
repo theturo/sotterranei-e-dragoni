@@ -54,64 +54,54 @@
               <p id="rd-riga-campagna" class="rd-riga-campagna" hidden></p>
               <h1 class="rd-titolo-pagina">Calendario</h1>
             </div>
-            <div class="rd-comandi-pagina"></div>
+            <div class="rd-comandi-pagina">
+              <button type="button" id="btn-organizza" class="rd-btn rd-btn-primario rd-btn-piccolo" aria-haspopup="dialog" aria-controls="finestra-organizza" hidden>+ Organizza una sessione</button>
+            </div>
             <div id="slot-utente" class="slot-utente rd-slot"></div>
           </header>
 
-          <div id="nessuna-campagna" class="panel-wide" hidden>
+          <div id="nessuna-campagna" class="panel rd-perg" hidden>
             <p id="testo-nessuna-campagna" class="scheda-testo-libero"></p>
           </div>
 
-          <div id="corpo-calendario" hidden>
-            <div id="banner-oggi" class="banner-oggi" role="status" hidden></div>
+          <div id="corpo-calendario" class="calendario-ridisegnato" hidden>
+            <section id="hero-prossima" class="calendario-hero" aria-labelledby="hero-titolo">
+              <div class="calendario-hero-testi">
+                <span id="hero-etichetta" class="calendario-etichetta">Prossima sessione</span>
+                <h2 id="hero-titolo"></h2>
+                <p id="hero-quando" class="calendario-hero-quando"></p>
+                <p id="hero-note" class="calendario-hero-note" hidden></p>
+              </div>
+              <div id="hero-azioni" class="calendario-hero-azioni"></div>
+            </section>
 
             <div class="calendario-layout">
-              <div class="panel-wide calendario-mese">
+              <section class="panel rd-blu calendario-mese" aria-labelledby="titolo-mese">
                 <div class="calendario-intestazione">
-                  <button type="button" id="mese-precedente" class="btn-tabella" aria-label="Mese precedente">‹</button>
+                  <button type="button" id="mese-precedente" class="calendario-freccia" aria-label="Mese precedente">‹</button>
                   <h3 id="titolo-mese"></h3>
-                  <button type="button" id="mese-successivo" class="btn-tabella" aria-label="Mese successivo">›</button>
+                  <button type="button" id="mese-successivo" class="calendario-freccia" aria-label="Mese successivo">›</button>
                 </div>
-                <div class="griglia-calendario" id="griglia-calendario" role="grid"></div>
+                <div class="griglia-calendario" id="griglia-calendario"></div>
+                <div id="giorno-scelto" class="calendario-giorno-scelto" aria-live="polite"></div>
                 <div class="legenda-calendario">
                   <span class="evento-cal evento-programmata">Programmata</span>
                   <span class="evento-cal evento-proposta">Data proposta</span>
                   <span class="evento-cal evento-giocata">Giocata</span>
                 </div>
-              </div>
+              </section>
 
               <div class="calendario-colonna">
-                <div class="panel-wide">
-                  <h3 style="margin-top:0;">Prossime sessioni</h3>
-                  <ul id="lista-prossime" class="lista-calendario"></ul>
-                  <p id="prossime-vuoto" class="scheda-testo-libero" hidden>Nessuna sessione in programma.</p>
-                </div>
-
-                <div class="panel-wide">
-                  <h3 style="margin-top:0;">Date proposte</h3>
+                <section id="pannello-proposte" class="panel rd-perg calendario-proposte" aria-labelledby="titolo-proposte" hidden>
+                  <h3 id="titolo-proposte">Scegli le date</h3>
                   <div id="lista-proposte"></div>
-                  <p id="proposte-vuoto" class="scheda-testo-libero" hidden>Nessuna proposta aperta.</p>
-                </div>
+                </section>
 
-                <div id="strumenti-dm" class="panel-wide" hidden>
-                  <h3 style="margin-top:0;">Organizza la prossima sessione</h3>
-                  <form id="form-proposta" class="form-calendario">
-                    <div class="field">
-                      <label for="proposta-titolo">Titolo (opzionale)</label>
-                      <input type="text" id="proposta-titolo" maxlength="80" placeholder="Es. Nella palude di Kalkash" />
-                    </div>
-                    <div class="field">
-                      <label for="proposta-note">Note per i giocatori (opzionale)</label>
-                      <input type="text" id="proposta-note" maxlength="500" placeholder="Es. si gioca da Marco" />
-                    </div>
-                    <div id="opzioni-proposta" class="opzioni-proposta"></div>
-                    <div class="azioni-selettore">
-                      <button type="button" id="btn-aggiungi-opzione" class="btn-tabella">+ Aggiungi data</button>
-                      <button type="button" id="btn-fissa-data" class="btn-tabella" title="Fissa subito la prima data, senza chiedere ai giocatori">Fissa la data</button>
-                      <button type="submit" class="btn-tabella btn-tabella-evidenza">Proponi ai giocatori</button>
-                    </div>
-                  </form>
-                </div>
+                <section class="panel rd-perg calendario-prossime" aria-labelledby="titolo-prossime">
+                  <h3 id="titolo-prossime">Poi in calendario</h3>
+                  <ul id="lista-prossime" class="lista-calendario"></ul>
+                  <p id="prossime-vuoto" class="calendario-vuoto" hidden>Nessun'altra sessione in programma.</p>
+                </section>
               </div>
             </div>
           </div>
@@ -120,6 +110,31 @@
       </main>
     </div>
   </div>
+
+  <dialog id="finestra-organizza" class="calendario-finestra" aria-labelledby="titolo-organizza">
+    <form id="form-proposta" class="form-calendario">
+      <div class="calendario-finestra-testa">
+        <h3 id="titolo-organizza">Organizza una sessione</h3>
+        <button type="button" id="btn-chiudi-organizza" class="btn-chiudi-modal" aria-label="Chiudi">×</button>
+      </div>
+      <div class="field">
+        <label for="proposta-titolo">Titolo (facoltativo)</label>
+        <input type="text" id="proposta-titolo" maxlength="80" placeholder="Es. Nella palude di Kalkash" />
+      </div>
+      <div class="field">
+        <label for="proposta-note">Note per i giocatori (facoltativo)</label>
+        <input type="text" id="proposta-note" maxlength="500" placeholder="Es. si gioca da Marco" />
+      </div>
+      <p class="calendario-finestra-etichetta" id="etichetta-date">Date</p>
+      <div id="opzioni-proposta" class="opzioni-proposta" role="group" aria-labelledby="etichetta-date"></div>
+      <p id="errore-organizza" class="calendario-finestra-errore" role="alert" hidden></p>
+      <button type="button" id="btn-aggiungi-opzione" class="rd-btn rd-btn-secondario rd-btn-piccolo calendario-aggiungi-data">+ Aggiungi data</button>
+      <div class="calendario-finestra-azioni">
+        <button type="button" id="btn-fissa-data" class="rd-btn rd-btn-secondario rd-btn-piccolo" title="Fissa subito la prima data, senza chiedere ai giocatori">Fissa la data</button>
+        <button type="submit" class="rd-btn rd-btn-primario rd-btn-piccolo">Proponi ai giocatori</button>
+      </div>
+    </form>
+  </dialog>
 
   <div id="toast" class="toast"></div>
 

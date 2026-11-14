@@ -19,19 +19,19 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "b93da34db3c1";
+const VERSIONE = "c717c84a83af";
 const DATA_VERSIONE = "2026-11-14";
 const FILE = {
   "./admin-utenti.html": "67eb21be5117",
   "./archivio.html": "05a524f56a2e",
-  "./assets/css/base.css": "d3b056bb8816",
-  "./assets/css/calendario.css": "b7f8d6336144",
+  "./assets/css/base.css": "dacef8ce222b",
+  "./assets/css/calendario.css": "4a5307f160f0",
   "./assets/css/dashboard.css": "eb68da7900fc",
   "./assets/css/dm.css": "ac39fd0be665",
   "./assets/css/gioco.css": "29cedb3c547e",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "9f072d7de5c6",
-  "./assets/css/sessione.css": "eb724797838e",
+  "./assets/css/sessione.css": "c350ba802e1f",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
   "./assets/fonts/pdf/cinzel-700.woff": "83ea41e439a2",
   "./assets/fonts/pdf/eb-garamond-400-italic.woff": "ee21466cc9fc",
@@ -91,7 +91,7 @@ const FILE = {
   "./assets/js/dado-pf.js": "8e31050df550",
   "./assets/js/dati-srd.js": "2ca98999c43e",
   "./assets/js/dati/bestiario.js": "da85ce1ef009",
-  "./assets/js/dati/calendario.js": "4ee54ec1e983",
+  "./assets/js/dati/calendario.js": "31ec1a7bf491",
   "./assets/js/dati/campagne.js": "dd9d2897281c",
   "./assets/js/dati/combattimento.js": "1f374f7107b8",
   "./assets/js/dati/comuni.js": "a9d88c523a5a",
@@ -101,7 +101,7 @@ const FILE = {
   "./assets/js/dati/musica.js": "2e7248a4e025",
   "./assets/js/dati/party.js": "f9d4dca97659",
   "./assets/js/dati/schede.js": "a0545974417e",
-  "./assets/js/dati/sessioni.js": "bae2cb5a9721",
+  "./assets/js/dati/sessioni.js": "6f4104b516d9",
   "./assets/js/dati/utenti.js": "cef6301d4201",
   "./assets/js/descrizioni.js": "ebc456fbe5a1",
   "./assets/js/effetti-dadi.js": "55e4c071b95a",
@@ -140,7 +140,7 @@ const FILE = {
   "./assets/js/pagine/archivio.js": "43defa5d0800",
   "./assets/js/pagine/attesa-approvazione.js": "1f9b02510e75",
   "./assets/js/pagine/bestiario.js": "2e46459da3fa",
-  "./assets/js/pagine/calendario.js": "cf25072d09d2",
+  "./assets/js/pagine/calendario.js": "3d1136243e0e",
   "./assets/js/pagine/campagna.js": "bded17816a7d",
   "./assets/js/pagine/controllo-musica.js": "27e2cf131694",
   "./assets/js/pagine/crea-personaggio.js": "ef1d76e44880",
@@ -180,7 +180,7 @@ const FILE = {
   "./assets/vendor/pdf/pdf-lib-fontkit.min.js": "2a73af96da27",
   "./attesa-approvazione.html": "46dd7ac6fe50",
   "./bestiario.html": "8efe3810076f",
-  "./calendario.html": "bc3da68af6db",
+  "./calendario.html": "236067a8492e",
   "./campagna.html": "9e9d9bcf07ea",
   "./controllo-musica.html": "9a9b127571b5",
   "./crea-personaggio.html": "99e8cff41a70",

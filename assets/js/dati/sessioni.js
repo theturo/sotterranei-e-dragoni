@@ -74,9 +74,10 @@ async function prenotaNumero(transazione, campagnaId, sessioni) {
 
 // Il DM programma una sessione futura: nasce come voce di registro con stato
 // "programmata" e una data, ma senza appunti — diventerà quella "in corso"
-// quando arriverà il momento (vedi apriSessione). Solo admin/DM (vedi
+// quando arriverà il momento (vedi apriSessione). "note" sono quelle per i
+// giocatori, mostrate nel Calendario. Solo admin/DM (vedi
 // firestore.rules).
-export async function creaSessioneProgrammata(campagnaId, { titolo, dataProgrammata, oraProgrammata = null }) {
+export async function creaSessioneProgrammata(campagnaId, { titolo, note = null, dataProgrammata, oraProgrammata = null }) {
   const sessioni = await elencaSessioniCampagna(campagnaId);
   const nuova = doc(collection(db, "registroSessioni"));
   const numero = await runTransaction(db, async (transazione) => {
@@ -86,6 +87,7 @@ export async function creaSessioneProgrammata(campagnaId, { titolo, dataProgramm
       campagnaId,
       numero,
       titolo: titolo || null,
+      note: note || null,
       stato: "programmata",
       dataProgrammata,
       oraProgrammata: oraProgrammata || null,

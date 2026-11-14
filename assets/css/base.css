@@ -2395,42 +2395,8 @@ table.tabella-punteggi select {
   font-family: var(--font-body);
 }
 
-.calendario-colonna .panel-wide,
-.calendario-layout > .panel-wide {
-  margin-bottom: 0;
-}
-
-.btn-disponibilita[aria-pressed="true"].disponibilita-si {
-  background: #3d6b3a;
-  border-color: #3d6b3a;
-  color: #fff;
-}
-
-.btn-disponibilita[aria-pressed="true"].disponibilita-forse {
-  background: var(--color-gold);
-  border-color: var(--color-gold);
-  color: var(--color-ink);
-}
-
-.btn-disponibilita[aria-pressed="true"].disponibilita-no {
-  background: var(--color-burgundy);
-  border-color: var(--color-burgundy);
-  color: var(--color-parchment);
-}
-
 .notifica-testo a {
   color: var(--color-burgundy);
-}
-
-.banner-oggi .btn-tabella {
-  background: var(--color-gold);
-  border-color: var(--color-gold);
-  color: var(--color-ink);
-  text-decoration: none;
-}
-
-.form-calendario .azioni-selettore {
-  flex-wrap: wrap;
 }
 
 /* ---------- Telefoni ----------
@@ -4470,6 +4436,54 @@ html:has(body.pagina-ridisegnata) {
 
 .pagina-ridisegnata .notifica-testo a {
   color: var(--rd-oro);
+}
+
+/* ---------- Pannelli del redesign ----------
+   .panel.rd-blu per gli strumenti, .panel.rd-perg per ciò che si legge. Dentro
+   i pannelli blu le variabili del tema (--color-ink, --color-burgundy…)
+   diventano quelle del blu notte: i componenti interni si adattano da soli. */
+.pagina-ridisegnata .panel.rd-blu {
+  --color-ink: var(--rd-avorio);
+  --color-ink-soft: var(--rd-testo-2);
+  --color-burgundy: var(--rd-oro);
+  --color-burgundy-bright: #f4cf96;
+  --color-gold: var(--rd-bronzo);
+  --color-gold-bright: var(--rd-oro);
+  --color-parchment: var(--rd-avorio);
+  --color-parchment-dark: var(--rd-testo-2);
+  background: rgba(24, 43, 58, 0.94);
+  color: var(--rd-avorio);
+  border: 1px solid var(--rd-bordo);
+  border-radius: 10px;
+  padding: 16px 18px 18px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.pagina-ridisegnata .panel.rd-perg {
+  --color-ink: var(--rd-inchiostro);
+  --color-ink-soft: var(--rd-inchiostro-2);
+  --color-burgundy: var(--rd-cremisi);
+  background: var(--rd-pergamena);
+  color: var(--rd-inchiostro);
+  border: none;
+  border-radius: 10px;
+  padding: 16px 18px 18px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+
+.pagina-ridisegnata .panel.rd-blu h3 {
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata .panel.rd-perg h3 {
+  color: var(--rd-inchiostro);
+}
+
+.pagina-ridisegnata .rd-blu :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]), select, textarea) {
+  background: #0f1b24;
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
 }
 
 /* ---------- Pulsanti del redesign ---------- */
