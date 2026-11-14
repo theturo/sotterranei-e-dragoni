@@ -844,55 +844,6 @@
   background: var(--color-burgundy-bright);
 }
 
-.scheda-rapida {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 150;
-  width: min(440px, 100vw);
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  border-right: none;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  overflow: hidden;
-  animation: scheda-rapida-entra 0.22s ease-out;
-}
-
-.scheda-rapida[hidden] {
-  display: none;
-}
-
-@keyframes scheda-rapida-entra {
-  from { transform: translateX(40px); opacity: 0; }
-  to { transform: none; opacity: 1; }
-}
-
-@media (max-width: 760px) {
-  .scheda-rapida {
-    left: 0;
-    width: 100vw;
-    border: none;
-    border-radius: 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    animation-name: scheda-rapida-sale;
-  }
-}
-
-@media (max-width: 760px) {
-  @keyframes scheda-rapida-sale {
-    from { transform: translateY(60px); opacity: 0; }
-    to { transform: none; opacity: 1; }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .scheda-rapida {
-    animation: none;
-  }
-}
-
 /* ---------- Danni e cure (effetti-pf.js) ---------- */
 /* Lo strato dove volano numeri e gocce: sopra tutto, senza prendere tocchi. */
 .pf-strato {

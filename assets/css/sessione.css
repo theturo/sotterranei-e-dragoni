@@ -2327,10 +2327,12 @@
   margin: 3px 0;
 }
 
-/* ---------- Scheda rapida nella Sessione (scheda-rapida.js) ---------- */
-/* Bottone fisso «La mia scheda» e pannello a destra (sul computer la mappa
-   resta visibile); sul telefono il pannello occupa lo schermo. Sotto le
-   finestre modali (200): la finestra dei dadi si apre sopra la scheda. */
+/* ---------- Scheda rapida nella Sessione (scheda-rapida.js) ----------
+   Stesso aspetto della scheda completa: testata blu (ritratto, numeri, PF) e
+   sezioni in pergamena. Sul computer è un cassetto a destra che lascia
+   visibili combattimento e mappa; sotto i 760 px sale dal basso come un
+   foglio, la pagina dietro si vela e, scorrendo, resta una barra compatta.
+   Sotto le finestre modali (200): la finestra dei dadi si apre sopra. */
 .btn-scheda-rapida {
   position: fixed;
   right: 20px;
@@ -2351,19 +2353,134 @@
   flex-shrink: 0;
 }
 
-.scheda-rapida-testa {
-  padding: 18px 20px 12px;
-  border-bottom: 1px solid rgba(122, 31, 43, 0.2);
+.scheda-rapida {
+  --color-ink: var(--rd-avorio);
+  --color-ink-soft: var(--rd-testo-2);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 150;
+  width: min(470px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--rd-fondo);
+  color: var(--rd-avorio);
+  border-left: 1px solid var(--rd-bronzo);
+  box-shadow: -18px 0 40px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-body);
+  scrollbar-color: var(--rd-bordo) transparent;
+  animation: scheda-rapida-entra 0.22s ease-out;
 }
 
-.scheda-rapida-maniglia {
+.scheda-rapida[hidden] {
   display: none;
+}
+
+@keyframes scheda-rapida-entra {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Testata blu */
+.scheda-rapida-testa {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 14px;
+  background: linear-gradient(180deg, rgba(31, 54, 73, 0.98), rgba(20, 38, 53, 0.98));
+  border-bottom: 1px solid var(--rd-bronzo);
+}
+
+.scheda-rapida-maniglia,
+.scheda-rapida-compatta {
+  display: none;
+}
+
+.scheda-rapida-personaggi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.scheda-rapida-chip-pg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px 0 4px;
+  border: 1px solid var(--rd-bordo);
+  border-radius: 999px;
+  background: rgba(16, 30, 42, 0.6);
+  color: var(--rd-testo-2);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.scheda-rapida-chip-pg span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #33506a;
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--rd-avorio);
+}
+
+.scheda-rapida-chip-pg[aria-pressed="true"] {
+  border-color: var(--rd-oro);
+  background: rgba(237, 187, 118, 0.14);
+  color: var(--rd-avorio);
+}
+
+.scheda-rapida-sola {
+  margin-left: auto;
+  padding: 4px 8px;
+  border: 1px solid #d98a94;
+  border-radius: 6px;
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #ffb3a8;
 }
 
 .scheda-rapida-titolo {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.scheda-rapida-ritratto {
+  position: relative;
+  flex: none;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 40% 35%, #4b6a86, #22394d);
+  border: 2px solid var(--rd-oro);
+  color: var(--rd-oro);
+}
+
+.scheda-rapida-ritratto .icona-classe svg {
+  width: 30px;
+  height: 30px;
+  fill: currentColor;
+}
+
+.scheda-rapida-ritratto .party-ritratto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .scheda-rapida-nomi {
@@ -2373,79 +2490,91 @@
 
 .scheda-rapida-nomi h3 {
   margin: 0;
-  font-size: 1.25rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  color: var(--rd-avorio);
   overflow-wrap: anywhere;
 }
 
 .scheda-rapida-sotto {
-  font-size: 0.92rem;
-  color: var(--color-ink-soft);
+  margin-top: 3px;
+  font-size: 0.95rem;
+  color: var(--rd-testo-2);
 }
 
 .scheda-rapida-chiudi {
-  min-width: 40px;
-  min-height: 40px;
-  font-size: 1rem;
-  align-self: flex-start;
-}
-
-.scheda-rapida-personaggi {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.scheda-rapida-personaggi .btn-tabella[aria-pressed="true"] {
-  background: var(--color-burgundy);
-  border-color: #4a1219;
-  color: var(--color-parchment);
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rd-bordo);
+  border-radius: 9px;
+  background: rgba(41, 59, 70, 0.85);
+  color: var(--rd-avorio);
+  font: inherit;
+  font-size: 1.05rem;
+  cursor: pointer;
 }
 
 .scheda-rapida-numeri {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 14px;
+  gap: 7px;
 }
 
 .scheda-rapida-numero {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 6px 2px;
-  border: 1px solid rgba(122, 31, 43, 0.3);
+  padding: 7px 4px 6px;
+  border: 1px solid var(--rd-bordo);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.35);
-  color: var(--color-ink);
+  background: rgba(16, 30, 42, 0.6);
+  color: var(--rd-avorio);
   font: inherit;
-}
-
-button.scheda-rapida-numero {
-  cursor: pointer;
-}
-
-button.scheda-rapida-numero:hover,
-button.scheda-rapida-numero:focus-visible {
-  border-color: var(--color-burgundy);
-  background: rgba(122, 31, 43, 0.06);
 }
 
 .scheda-rapida-numero b {
   font-family: var(--font-heading);
-  font-size: 1.15rem;
+  font-size: 1.3rem;
+  line-height: 1.1;
 }
 
 .scheda-rapida-numero small {
+  margin-top: 2px;
   font-family: var(--font-heading);
-  font-size: 0.62rem;
-  letter-spacing: 0.5px;
+  font-size: 0.56rem;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--color-ink-soft);
+  color: var(--rd-oro);
+}
+
+/* L'iniziativa si tira toccandola: bordo d'oro e un dado nell'angolo. */
+.scheda-rapida-numero.tira {
+  border-color: var(--rd-oro);
+  background: rgba(237, 187, 118, 0.1);
+  cursor: pointer;
+}
+
+.scheda-rapida-numero.tira::after {
+  content: "🎲";
+  position: absolute;
+  top: -8px;
+  right: -5px;
+  font-size: 0.8rem;
+}
+
+@media (hover: hover) {
+  .scheda-rapida-numero.tira:hover {
+    background: rgba(237, 187, 118, 0.2);
+  }
 }
 
 .scheda-rapida-pf {
-  margin-top: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2457,23 +2586,123 @@ button.scheda-rapida-numero:focus-visible {
   gap: 10px;
 }
 
+.scheda-rapida-pf-etichetta {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: var(--rd-oro);
+}
+
 .scheda-rapida-pf-riga .barra-pf {
   flex: 1;
-  height: 9px;
+  height: 8px;
   margin-top: 0;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
 }
 
 .scheda-rapida-pf-valore {
   font-family: var(--font-heading);
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #ffd3c9;
   white-space: nowrap;
 }
 
+.scheda-rapida-pf-valore small {
+  margin-left: 4px;
+  font-size: 0.85rem;
+  color: #9fd0ff;
+}
+
+.scheda-rapida-pf-comandi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.scheda-rapida .scheda-rapida-campo {
+  width: 58px;
+  height: 38px;
+  margin: 0;
+  padding: 0 8px;
+  border: 1px solid var(--rd-bordo);
+  border-radius: 7px;
+  background: #0f1b24;
+  color: var(--rd-avorio);
+  font: inherit;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.scheda-rapida-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--rd-bordo);
+  border-radius: 7px;
+  background: rgba(41, 59, 70, 0.85);
+  color: var(--rd-avorio);
+  font: inherit;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.scheda-rapida-btn.danno {
+  background: rgba(135, 60, 57, 0.9);
+  border-color: var(--rd-cremisi-bordo);
+}
+
+.scheda-rapida-btn.cura {
+  background: rgba(58, 96, 62, 0.9);
+  border-color: #6fae6a;
+}
+
+.scheda-rapida-temp {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--rd-testo-2);
+}
+
+.scheda-rapida-temp .scheda-rapida-campo {
+  width: 46px;
+}
+
+.scheda-rapida-testa .chip-condizioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+}
+
+.scheda-rapida-testa .chip-condizione {
+  padding: 3px 8px;
+  border: 1px solid var(--rd-cremisi-bordo);
+  border-radius: 6px;
+  background: rgba(135, 60, 57, 0.35);
+  color: #ffcabf;
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Sezioni */
 .scheda-rapida-schede {
   display: flex;
-  padding: 0 12px;
-  border-bottom: 1px solid rgba(122, 31, 43, 0.2);
-  background: rgba(122, 31, 43, 0.05);
+  gap: 3px;
+  padding: 5px;
+  background: rgba(19, 35, 49, 0.99);
+  border-bottom: 1px solid var(--rd-bordo-scuro);
 }
 
 .scheda-rapida-schede:empty {
@@ -2482,45 +2711,73 @@ button.scheda-rapida-numero:focus-visible {
 
 .scheda-rapida-scheda {
   flex: 1;
-  padding: 10px 4px 8px;
-  border: none;
-  border-bottom: 3px solid transparent;
-  background: transparent;
+  min-height: 40px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--rd-testo-2);
   font-family: var(--font-heading);
-  font-size: 0.82rem;
-  color: var(--color-ink-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   white-space: nowrap;
   cursor: pointer;
 }
 
-.scheda-rapida-scheda:hover {
-  color: var(--color-burgundy);
-}
-
 .scheda-rapida-scheda.scelta {
-  color: var(--color-burgundy);
-  font-weight: 700;
-  border-bottom-color: var(--color-gold);
+  background: var(--rd-selezione);
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+  box-shadow: inset 0 -2px 0 var(--rd-oro);
 }
 
+@media (hover: hover) {
+  .scheda-rapida-scheda:not(.scelta):hover {
+    color: var(--rd-avorio);
+  }
+}
+
+/* Corpo in pergamena */
 .scheda-rapida-corpo {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 14px 20px 18px;
+  padding: 14px;
+}
+
+.scheda-rapida-pergamena {
+  --color-ink: var(--rd-inchiostro);
+  --color-ink-soft: var(--rd-inchiostro-2);
+  padding: 4px 14px 14px;
+  border-radius: 10px;
+  background: var(--rd-pergamena);
+  color: var(--rd-inchiostro);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
 }
 
 .scheda-rapida-sezione {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 14px 0 7px;
   font-family: var(--font-heading);
-  font-size: 0.78rem;
+  font-size: 0.7rem;
+  font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--color-burgundy);
-  margin: 18px 0 6px;
+  color: var(--rd-link-pergamena);
 }
 
-.scheda-rapida-sezione:first-child {
-  margin-top: 0;
+.scheda-rapida-sezione small {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--rd-inchiostro-2);
 }
 
 .scheda-rapida-lista {
@@ -2529,83 +2786,188 @@ button.scheda-rapida-numero:focus-visible {
   padding: 0;
 }
 
-.scheda-rapida-lista .inventario-riga {
+.scheda-rapida-riga {
+  display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(37, 44, 49, 0.13);
 }
 
-.scheda-rapida-lista .inventario-nome small {
+.scheda-rapida-riga:first-child {
+  border-top: none;
+}
+
+.scheda-rapida-voce {
+  flex: 1;
+  min-width: 0;
+}
+
+.scheda-rapida-voce b {
   display: block;
-  color: var(--color-ink-soft);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
-.scheda-rapida-lista .btn-tiro {
-  margin-left: 0;
+.scheda-rapida-voce small {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--rd-inchiostro-2);
 }
 
 .scheda-rapida-bonus {
+  min-width: 30px;
   font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--rd-cremisi);
+  text-align: right;
+}
+
+.scheda-rapida-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.scheda-rapida-pbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(37, 44, 49, 0.28);
+  border-radius: 7px;
+  background: rgba(37, 44, 49, 0.06);
+  color: var(--rd-inchiostro);
+  font: inherit;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.scheda-rapida-pbtn.pri {
+  background: var(--rd-cremisi);
+  border-color: var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
+}
+
+.scheda-rapida-pbtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .scheda-rapida-pbtn:not(:disabled, .pri):hover {
+    background: rgba(37, 44, 49, 0.12);
+  }
+}
+
+.scheda-rapida-scelta-slot {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  padding: 5px 6px;
+  border: 1px dashed rgba(135, 60, 57, 0.5);
+  border-radius: 8px;
+  background: rgba(135, 60, 57, 0.08);
+}
+
+.scheda-rapida-scelta-slot > span {
   font-size: 0.85rem;
-  padding: 1px 8px;
-  border: 1px solid rgba(122, 31, 43, 0.3);
-  border-radius: 999px;
-  color: var(--color-ink-soft);
+  color: var(--rd-inchiostro-2);
 }
 
 .scheda-rapida-prove {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 14px;
+  gap: 5px;
 }
 
 .scheda-rapida-prova {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 2px;
-  border: none;
-  border-bottom: 1px dotted rgba(122, 31, 43, 0.3);
-  background: transparent;
-  color: var(--color-ink);
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 9px;
+  border: 1px solid rgba(37, 44, 49, 0.18);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--rd-inchiostro);
   font: inherit;
-  font-size: 1rem;
+  font-size: 0.95rem;
   text-align: left;
+}
+
+div.scheda-rapida-prova {
+  min-height: 30px;
+  padding: 0 2px;
+  border-color: transparent;
+  background: none;
 }
 
 button.scheda-rapida-prova {
   cursor: pointer;
 }
 
-button.scheda-rapida-prova:hover,
-button.scheda-rapida-prova:focus-visible {
-  background: rgba(122, 31, 43, 0.06);
+@media (hover: hover) {
+  button.scheda-rapida-prova:hover,
+  button.scheda-rapida-caratteristica:hover {
+    border-color: var(--rd-cremisi);
+    background: rgba(135, 60, 57, 0.06);
+  }
+}
+
+.scheda-rapida-punto {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--rd-inchiostro-2);
+  border-radius: 50%;
+}
+
+.scheda-rapida-prova.competente .scheda-rapida-punto {
+  background: var(--rd-cremisi);
+  border-color: var(--rd-cremisi);
+}
+
+.scheda-rapida-prova.competente .scheda-rapida-prova-nome {
+  font-weight: 600;
 }
 
 .scheda-rapida-prova-nome {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scheda-rapida-prova b {
   font-family: var(--font-heading);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .scheda-rapida-caratteristiche {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
 }
 
 .scheda-rapida-caratteristica {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 6px 2px 8px;
-  border: 1px solid rgba(122, 31, 43, 0.3);
+  padding: 7px 4px;
+  border: 1px solid rgba(37, 44, 49, 0.2);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.35);
-  color: var(--color-ink);
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--rd-inchiostro);
   font: inherit;
 }
 
@@ -2613,83 +2975,141 @@ button.scheda-rapida-caratteristica {
   cursor: pointer;
 }
 
-button.scheda-rapida-caratteristica:hover,
-button.scheda-rapida-caratteristica:focus-visible {
-  border-color: var(--color-burgundy);
-  background: rgba(122, 31, 43, 0.06);
-}
-
 .scheda-rapida-caratteristica small {
   font-family: var(--font-heading);
-  font-size: 0.72rem;
-  color: var(--color-ink-soft);
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--rd-link-pergamena);
 }
 
 .scheda-rapida-caratteristica b {
   font-family: var(--font-heading);
-  font-size: 1.3rem;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--rd-cremisi);
 }
 
 .scheda-rapida-nota,
 .scheda-rapida-vuoto {
   margin: 10px 0 0;
   font-size: 0.95rem;
-  color: var(--color-ink-soft);
+  color: var(--rd-inchiostro-2);
+}
+
+.scheda-rapida-nota b {
+  font-family: var(--font-heading);
+  color: var(--rd-cremisi);
 }
 
 .scheda-rapida-vuoto {
   font-style: italic;
 }
 
-.scheda-rapida-statistiche {
-  margin-top: 0;
+.scheda-rapida-slot-riga {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 0;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
 }
 
-.scheda-rapida-slot button.pallino {
-  width: 18px;
-  height: 18px;
+.scheda-rapida-slot-livello {
+  width: 26px;
+}
+
+.scheda-rapida-slot-riga small {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--rd-inchiostro-2);
+}
+
+.scheda-rapida-pallino {
+  flex: none;
+  width: 20px;
+  height: 20px;
   padding: 0;
+  border: 1.5px solid var(--rd-cremisi);
+  border-radius: 50%;
   background: transparent;
 }
 
-.scheda-rapida-slot button.pallino.competente {
-  background: var(--color-burgundy);
+button.scheda-rapida-pallino {
+  cursor: pointer;
 }
 
-.scheda-rapida-privilegio .inventario-nome {
-  min-width: 55%;
+.scheda-rapida-pallino.pieno {
+  background: var(--rd-cremisi);
+}
+
+.scheda-rapida-pallini {
+  display: flex;
+  gap: 4px;
+}
+
+.scheda-rapida-pallini i {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--rd-cremisi);
+  border-radius: 50%;
+}
+
+.scheda-rapida-pallini i.pieno {
+  background: var(--rd-cremisi);
+}
+
+.scheda-rapida-conteggio {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  color: var(--rd-cremisi);
 }
 
 .scheda-rapida .scheda-rapida-esito {
-  margin: 0 20px 10px;
-  padding: 8px 12px;
+  margin: 0 14px 10px;
+  padding: 9px 12px;
+  border: 1px solid #6fae6a;
   border-radius: 8px;
-  border: 1px solid var(--color-gold);
-  background: var(--color-ink);
-  color: var(--color-parchment);
-  font-size: 0.92rem;
+  background: rgba(58, 96, 62, 0.95);
+  color: var(--rd-avorio);
+  font-size: 0.95rem;
 }
 
 .scheda-rapida .scheda-rapida-esito.errore {
-  border-color: var(--color-danger);
+  border-color: var(--rd-cremisi-bordo);
+  background: rgba(135, 60, 57, 0.95);
 }
 
 .scheda-rapida-piede {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px 14px;
-  border-top: 1px solid rgba(122, 31, 43, 0.2);
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--rd-bordo-scuro);
+  background: rgba(19, 35, 49, 0.99);
 }
 
 .scheda-rapida-piede p {
   flex: 1;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-style: italic;
-  line-height: 1.35;
+  line-height: 1.3;
+  color: var(--rd-testo-2);
 }
 
+.scheda-rapida-link {
+  flex: none;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--rd-oro);
+  text-decoration: none;
+}
+
+/* Telefono: il foglio sale dal basso, la pagina dietro si vela. */
 @media (max-width: 760px) {
   .btn-scheda-rapida {
     right: 14px;
@@ -2697,67 +3117,167 @@ button.scheda-rapida-caratteristica:focus-visible {
     padding: 10px 16px;
     font-size: 0.95rem;
   }
-}
 
-@media (max-width: 760px) {
-  .scheda-rapida-testa {
-    padding: 8px 16px 12px;
-    touch-action: none;
+  .scheda-rapida {
+    top: max(28px, env(safe-area-inset-top));
+    left: 0;
+    width: 100vw;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-left: none;
+    border-top: 1px solid var(--rd-bronzo);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 0 0 100vmax rgba(5, 10, 14, 0.55);
+    padding-bottom: env(safe-area-inset-bottom);
+    animation-name: scheda-rapida-sale;
   }
-}
 
-@media (max-width: 760px) {
+  /* Scorre tutto il foglio: nessun pezzo si stringe, il piede resta in fondo. */
+  .scheda-rapida > * {
+    flex-shrink: 0;
+  }
+
+  .scheda-rapida-testa {
+    padding: 6px 14px 12px;
+    gap: 10px;
+    border-radius: 18px 18px 0 0;
+  }
+
   .scheda-rapida-maniglia {
     display: block;
     width: 44px;
     height: 5px;
-    margin: 0 auto 10px;
+    margin: 2px auto 0;
     border-radius: 3px;
-    background: rgba(122, 31, 43, 0.3);
+    background: rgba(237, 187, 118, 0.55);
   }
-}
 
-@media (max-width: 760px) {
-  .scheda-rapida-corpo {
-    padding: 12px 16px 16px;
+  .scheda-rapida-ritratto {
+    width: 50px;
+    height: 50px;
   }
-}
 
-@media (max-width: 760px) {
+  /* La barra compatta non occupa posto: compare sopra quando la testata esce. */
+  .scheda-rapida-compatta {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    height: 48px;
+    margin-bottom: -48px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    background: rgba(20, 38, 53, 0.99);
+    border-bottom: 1px solid var(--rd-bordo);
+    visibility: hidden;
+  }
+
+  .scheda-rapida.testa-fuori .scheda-rapida-compatta {
+    visibility: visible;
+  }
+
+  .scheda-rapida-tondo {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #33506a;
+    border: 1px solid var(--rd-oro);
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .scheda-rapida-compatta-nome {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .scheda-rapida-compatta-pf {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #ffd3c9;
+    white-space: nowrap;
+  }
+
+  .scheda-rapida-compatta-ca {
+    padding: 3px 7px;
+    border: 1px solid var(--rd-bordo);
+    border-radius: 6px;
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    color: var(--rd-oro);
+    white-space: nowrap;
+  }
+
+  .scheda-rapida-compatta .scheda-rapida-chiudi {
+    width: 34px;
+    height: 34px;
+    font-size: 0.95rem;
+  }
+
   .scheda-rapida-schede {
-    padding: 0 6px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 4px;
   }
-}
 
-@media (max-width: 760px) {
+  .scheda-rapida.testa-fuori .scheda-rapida-schede {
+    top: 48px;
+  }
+
   .scheda-rapida-scheda {
-    font-size: 0.78rem;
     min-height: 44px;
+    font-size: 0.76rem;
   }
-}
 
-@media (max-width: 760px) {
-  .scheda-rapida-prove {
+  .scheda-rapida-corpo {
+    flex: 1 0 auto;
+    overflow: visible;
+    padding: 12px 10px 16px;
+  }
+
+  .scheda-rapida-pergamena {
+    padding: 4px 12px 12px;
+  }
+
+  .scheda-rapida-abilita {
     grid-template-columns: minmax(0, 1fr);
   }
-}
 
-@media (max-width: 760px) {
   .scheda-rapida-prova {
     min-height: 44px;
   }
-}
 
-@media (max-width: 760px) {
   .scheda-rapida-piede {
-    padding: 10px 16px 12px;
+    padding: 12px 14px 18px;
   }
-}
 
-@media (max-width: 760px) {
+  @keyframes scheda-rapida-sale {
+    from { transform: translateY(60px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
   /* Con la scheda aperta la pagina sotto non scorre. */
   body.scheda-rapida-aperta {
     overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scheda-rapida {
+    animation: none;
   }
 }
 

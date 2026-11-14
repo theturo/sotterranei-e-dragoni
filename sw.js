@@ -19,7 +19,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "c717c84a83af";
+const VERSIONE = "256c76416c51";
 const DATA_VERSIONE = "2026-11-14";
 const FILE = {
   "./admin-utenti.html": "67eb21be5117",
@@ -28,10 +28,10 @@ const FILE = {
   "./assets/css/calendario.css": "4a5307f160f0",
   "./assets/css/dashboard.css": "eb68da7900fc",
   "./assets/css/dm.css": "ac39fd0be665",
-  "./assets/css/gioco.css": "29cedb3c547e",
+  "./assets/css/gioco.css": "7b716999f525",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "9f072d7de5c6",
-  "./assets/css/sessione.css": "c350ba802e1f",
+  "./assets/css/sessione.css": "0aaa0e0e51d1",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
   "./assets/fonts/pdf/cinzel-700.woff": "83ea41e439a2",
   "./assets/fonts/pdf/eb-garamond-400-italic.woff": "ee21466cc9fc",
@@ -165,7 +165,7 @@ const FILE = {
   "./assets/js/riposo.js": "d633ca3f1737",
   "./assets/js/ritaglio.js": "047db73fdef2",
   "./assets/js/scena-dadi.js": "300077db83f6",
-  "./assets/js/scheda-rapida.js": "dfaf86cb59b4",
+  "./assets/js/scheda-rapida.js": "e3b6d81a7ab6",
   "./assets/js/spotify-config.js": "2cd119a39d39",
   "./assets/js/spotify.js": "608a6de358de",
   "./assets/js/suoni.js": "c89c1d1ef463",
