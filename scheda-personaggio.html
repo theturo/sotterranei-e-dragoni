@@ -57,18 +57,21 @@
             <div class="rd-comandi-pagina">
               <button type="button" id="btn-guida" class="btn-tabella btn-guida" hidden>Guida</button>
               <button type="button" id="btn-esporta" class="btn-tabella btn-esporta" hidden>Esporta</button>
-              <span id="badge-stato" class="role-badge"></span>
+              <span id="badge-stato" class="scheda-sola-lettura" hidden>Sola lettura</span>
             </div>
             <div id="slot-utente" class="slot-utente rd-slot"></div>
           </header>
 
-          <!-- ===================== SCHEDA ===================== -->
-          <div class="scheda">
+          <!-- ===================== SCHEDA =====================
+               Testata del personaggio (blu) con i numeri chiave, poi le schede
+               Combattimento, Caratteristiche, Magia (solo per chi lancia
+               incantesimi), Zaino e Storia, ognuna su più colonne di riquadri
+               in pergamena. La barra fissa compare quando la testata esce
+               dallo schermo (D-032). -->
+          <div class="scheda scheda-ridisegnata">
 
-            <!-- Intestazione personaggio -->
-            <div class="scheda-intestazione">
-              <div class="scheda-intestazione-riga">
-                <figure class="ritratto-scheda">
+            <section id="scheda-testata" class="scheda-testata" aria-label="Personaggio">
+              <figure class="ritratto-scheda">
                   <img id="ritratto-img" alt="Ritratto del personaggio" hidden />
                   <div id="ritratto-vuoto" class="ritratto-vuoto" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 21c1.5-4.2 4.5-6.2 8-6.2s6.5 2 8 6.2"/></svg>
@@ -82,12 +85,9 @@
                     <button type="button" id="btn-rimuovi-ritratto" class="btn-tabella btn-tabella-pericolo" hidden>Rimuovi</button>
                   </figcaption>
                 </figure>
-                <div class="scheda-nome">
-                  <label>Nome del personaggio</label>
-                  <div id="scheda-nome-valore" class="scheda-nome-valore"></div>
-                </div>
-              </div>
-              <div class="scheda-sottotitoli">
+              <div class="scheda-testata-chi">
+                <h2 id="scheda-nome-valore" class="scheda-nome-valore"></h2>
+                <div class="scheda-sottotitoli">
                 <div>
                   <label>Classe e livello</label>
                   <span>
@@ -106,96 +106,52 @@
                   <label>Allineamento</label>
                   <button type="button" id="btn-allineamento" class="btn-allineamento-trigger">—</button>
                 </div>
-                <div><label>Punti Esperienza</label><span>0</span></div>
+                </div>
               </div>
+              <div class="scheda-numeri">
+                <div class="scheda-numero">
+                  <div id="valore-ca" class="valore-grande">10</div>
+                  <div class="valore-grande-etichetta">Classe armatura</div>
+                </div>
+                <div class="scheda-numero scheda-numero-tiro" id="box-iniziativa" title="Tira l'iniziativa">
+                  <div id="valore-iniziativa" class="valore-grande">+0</div>
+                  <div class="valore-grande-etichetta">Iniziativa</div>
+                </div>
+                <div class="scheda-numero">
+                  <div id="valore-velocita" class="valore-grande">9 m</div>
+                  <div class="valore-grande-etichetta">Velocità</div>
+                </div>
+                <div class="scheda-numero scheda-numero-pf">
+                  <div id="testata-pf" class="valore-grande">—</div>
+                  <div class="valore-grande-etichetta">Punti ferita</div>
+                  <div class="scheda-mini-barra" aria-hidden="true"><i id="testata-pf-barra"></i></div>
+                </div>
+              </div>
+            </section>
+
+            <div class="scheda-fissa">
+              <div id="scheda-barra-fissa" class="scheda-barra-fissa" hidden>
+                <span id="barra-fissa-nome" class="scheda-barra-nome"></span>
+                <span class="scheda-barra-pf">
+                  <button type="button" id="btn-pf-meno" class="scheda-barra-btn" aria-label="Togli un punto ferita">−</button>
+                  <span id="barra-fissa-pf"></span>
+                  <button type="button" id="btn-pf-piu" class="scheda-barra-btn" aria-label="Aggiungi un punto ferita">+</button>
+                </span>
+                <span id="barra-fissa-ca" class="scheda-barra-ca"></span>
+              </div>
+              <nav id="scheda-schede" class="scheda-schede" aria-label="Sezioni della scheda">
+                <button type="button" class="scheda-scheda" data-scheda-vai="comb" aria-pressed="true">Combattimento</button>
+                <button type="button" class="scheda-scheda" data-scheda-vai="car" aria-pressed="false">Caratteristiche</button>
+                <button type="button" class="scheda-scheda" data-scheda-vai="magia" aria-pressed="false" hidden>Magia</button>
+                <button type="button" class="scheda-scheda" data-scheda-vai="zaino" aria-pressed="false">Zaino</button>
+                <button type="button" class="scheda-scheda" data-scheda-vai="storia" aria-pressed="false">Storia</button>
+              </nav>
             </div>
 
-            <!-- Corpo a tre colonne -->
-            <div class="scheda-corpo">
+            <div id="scheda-pannelli" class="scheda-pannelli" data-scheda="comb">
 
-              <!-- Colonna sinistra: caratteristiche, salvezze, abilità -->
-              <div class="scheda-colonna">
-
-                <div class="scheda-box scheda-box-centrale">
-                  <div id="valore-bonus-competenza" class="valore-grande" title="Bonus di competenza">+2</div>
-                  <div class="valore-grande-etichetta">Bonus di competenza</div>
-                </div>
-
-                <div class="griglia-caratteristiche" id="griglia-caratteristiche">
-                  <div class="caratteristica" data-chiave="forza">
-                    <div class="caratteristica-nome">Forza</div>
-                    <div class="caratteristica-mod"></div>
-                    <div class="caratteristica-punteggio"></div>
-                  </div>
-                  <div class="caratteristica" data-chiave="destrezza">
-                    <div class="caratteristica-nome">Destrezza</div>
-                    <div class="caratteristica-mod"></div>
-                    <div class="caratteristica-punteggio"></div>
-                  </div>
-                  <div class="caratteristica" data-chiave="costituzione">
-                    <div class="caratteristica-nome">Costituzione</div>
-                    <div class="caratteristica-mod"></div>
-                    <div class="caratteristica-punteggio"></div>
-                  </div>
-                  <div class="caratteristica" data-chiave="intelligenza">
-                    <div class="caratteristica-nome">Intelligenza</div>
-                    <div class="caratteristica-mod"></div>
-                    <div class="caratteristica-punteggio"></div>
-                  </div>
-                  <div class="caratteristica" data-chiave="saggezza">
-                    <div class="caratteristica-nome">Saggezza</div>
-                    <div class="caratteristica-mod"></div>
-                    <div class="caratteristica-punteggio"></div>
-                  </div>
-                  <div class="caratteristica" data-chiave="carisma">
-                    <div class="caratteristica-nome">Carisma</div>
-                    <div class="caratteristica-mod"></div>
-                    <div class="caratteristica-punteggio"></div>
-                  </div>
-                </div>
-
-                <div class="scheda-box">
-                  <h3>Tiri salvezza</h3>
-                  <ul class="lista-competenze" id="lista-salvezze">
-                    <li data-chiave="forza"><span class="pallino"></span>Forza <b></b></li>
-                    <li data-chiave="destrezza"><span class="pallino"></span>Destrezza <b></b></li>
-                    <li data-chiave="costituzione"><span class="pallino"></span>Costituzione <b></b></li>
-                    <li data-chiave="intelligenza"><span class="pallino"></span>Intelligenza <b></b></li>
-                    <li data-chiave="saggezza"><span class="pallino"></span>Saggezza <b></b></li>
-                    <li data-chiave="carisma"><span class="pallino"></span>Carisma <b></b></li>
-                  </ul>
-                </div>
-
-                <div class="scheda-box">
-                  <h3>Abilità</h3>
-                  <ul class="lista-competenze" id="lista-abilita"></ul>
-                </div>
-
-                <div class="scheda-box scheda-box-centrale">
-                  <div id="valore-percezione-passiva" class="valore-grande">10</div>
-                  <div class="valore-grande-etichetta">Percezione passiva</div>
-                </div>
-
-              </div>
-
-              <!-- Colonna centrale: combattimento -->
-              <div class="scheda-colonna">
-
-                <div class="riga-tre-box">
-                  <div class="scheda-box scheda-box-centrale">
-                    <div id="valore-ca" class="valore-grande">10</div>
-                    <div class="valore-grande-etichetta">Classe Armatura</div>
-                  </div>
-                  <div class="scheda-box scheda-box-centrale">
-                    <div id="valore-iniziativa" class="valore-grande">+0</div>
-                    <div class="valore-grande-etichetta">Iniziativa</div>
-                  </div>
-                  <div class="scheda-box scheda-box-centrale">
-                    <div id="valore-velocita" class="valore-grande">9 m</div>
-                    <div class="valore-grande-etichetta">Velocità</div>
-                  </div>
-                </div>
-
+              <!-- Combattimento -->
+              <section class="scheda-pannello scheda-pannello-comb" data-pannello="comb">
                 <div class="scheda-box">
                   <h3>Punti Ferita</h3>
                   <div class="riga-hp">
@@ -241,35 +197,110 @@
                   </div>
                 </div>
 
-                <div id="box-privilegi" class="scheda-box" hidden>
-                  <h3>Privilegi di classe</h3>
-                  <ul id="lista-privilegi" class="lista-privilegi"></ul>
-                </div>
-
-                <div class="scheda-box tema-combattimento">
-                  <h3>Attacchi e incantesimi</h3>
-                  <table class="tabella-attacchi">
+                <div class="scheda-colonna">
+                  <div class="scheda-box tema-combattimento">
+                    <h3>Attacchi</h3>
+                    <table class="tabella-attacchi">
                     <thead>
                       <tr><th>Nome</th><th>Bonus attacco</th><th>Danno / Tipo</th><th class="colonna-tiri"><span class="sr-only">Tiri</span></th></tr>
                     </thead>
                     <tbody id="corpo-attacchi"></tbody>
                   </table>
                   <p id="attacchi-vuoto" class="scheda-testo-libero" hidden>Aggiungi un'arma all'equipaggiamento per vederla qui.</p>
+                  </div>
 
-                  <div id="sezione-incantesimi" hidden>
-                    <div class="divisore divisore-magia" aria-hidden="true"></div>
+                  <div id="box-privilegi" class="scheda-box" hidden>
+                  <h3>Privilegi di classe</h3>
+                  <ul id="lista-privilegi" class="lista-privilegi"></ul>
+                </div>
+                </div>
+              </section>
+
+              <!-- Caratteristiche -->
+              <section class="scheda-pannello scheda-pannello-car" data-pannello="car">
+                <div class="scheda-colonna">
+                  <div class="scheda-box">
+                    <h3>Caratteristiche</h3>
+                    <div class="griglia-caratteristiche" id="griglia-caratteristiche">
+                  <div class="caratteristica" data-chiave="forza">
+                    <div class="caratteristica-nome">Forza</div>
+                    <div class="caratteristica-mod"></div>
+                    <div class="caratteristica-punteggio"></div>
+                  </div>
+                  <div class="caratteristica" data-chiave="destrezza">
+                    <div class="caratteristica-nome">Destrezza</div>
+                    <div class="caratteristica-mod"></div>
+                    <div class="caratteristica-punteggio"></div>
+                  </div>
+                  <div class="caratteristica" data-chiave="costituzione">
+                    <div class="caratteristica-nome">Costituzione</div>
+                    <div class="caratteristica-mod"></div>
+                    <div class="caratteristica-punteggio"></div>
+                  </div>
+                  <div class="caratteristica" data-chiave="intelligenza">
+                    <div class="caratteristica-nome">Intelligenza</div>
+                    <div class="caratteristica-mod"></div>
+                    <div class="caratteristica-punteggio"></div>
+                  </div>
+                  <div class="caratteristica" data-chiave="saggezza">
+                    <div class="caratteristica-nome">Saggezza</div>
+                    <div class="caratteristica-mod"></div>
+                    <div class="caratteristica-punteggio"></div>
+                  </div>
+                  <div class="caratteristica" data-chiave="carisma">
+                    <div class="caratteristica-nome">Carisma</div>
+                    <div class="caratteristica-mod"></div>
+                    <div class="caratteristica-punteggio"></div>
+                  </div>
+                </div>
+                  </div>
+                  <div class="scheda-riga-due">
+                    <div class="scheda-box scheda-box-centrale">
+                      <div id="valore-bonus-competenza" class="valore-grande" title="Bonus di competenza">+2</div>
+                      <div class="valore-grande-etichetta">Bonus di competenza</div>
+                    </div>
+                    <div class="scheda-box scheda-box-centrale">
+                      <div id="valore-percezione-passiva" class="valore-grande">10</div>
+                      <div class="valore-grande-etichetta">Percezione passiva</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="scheda-box">
+                  <h3>Tiri salvezza</h3>
+                  <ul class="lista-competenze" id="lista-salvezze">
+                    <li data-chiave="forza"><span class="pallino"></span>Forza <b></b></li>
+                    <li data-chiave="destrezza"><span class="pallino"></span>Destrezza <b></b></li>
+                    <li data-chiave="costituzione"><span class="pallino"></span>Costituzione <b></b></li>
+                    <li data-chiave="intelligenza"><span class="pallino"></span>Intelligenza <b></b></li>
+                    <li data-chiave="saggezza"><span class="pallino"></span>Saggezza <b></b></li>
+                    <li data-chiave="carisma"><span class="pallino"></span>Carisma <b></b></li>
+                  </ul>
+                </div>
+
+                <div class="scheda-box">
+                  <h3>Abilità</h3>
+                  <ul class="lista-competenze" id="lista-abilita"></ul>
+                </div>
+              </section>
+
+              <!-- Magia (la scheda compare solo se il personaggio ha incantesimi) -->
+              <section class="scheda-pannello scheda-pannello-magia" data-pannello="magia">
+                <div id="sezione-incantesimi" class="scheda-magia" hidden>
                     <p id="statistiche-incantesimi" class="statistiche-incantesimi"></p>
 
-                    <h4 class="sottotitolo-box">Trucchetti conosciuti</h4>
+                    <div class="scheda-box magia-blocco" id="blocco-trucchetti">
+                    <h3>Trucchetti</h3>
                     <p id="trucchetti-limite" class="slot-incantesimo-riepilogo"></p>
                     <div id="ricerca-trucchetti-wrap" class="ricerca-equipaggiamento">
                       <input type="text" id="ricerca-trucchetti" class="input-ricerca" placeholder="Cerca un trucchetto…" autocomplete="off" />
                       <div id="risultati-trucchetti" class="risultati-ricerca" hidden></div>
                     </div>
                     <ul id="lista-trucchetti" class="inventario-lista"></ul>
+                    </div>
 
-                    <div id="blocco-conosciuti">
-                      <h4 class="sottotitolo-box" id="titolo-blocco-conosciuti">Incantesimi conosciuti</h4>
+                    <div id="blocco-conosciuti" class="scheda-box magia-blocco">
+                      <h3 id="titolo-blocco-conosciuti">Incantesimi conosciuti</h3>
                       <p id="incantesimi-limite" class="slot-incantesimo-riepilogo"></p>
                       <div id="ricerca-incantesimi-wrap" class="ricerca-equipaggiamento">
                         <input type="text" id="ricerca-incantesimi" class="input-ricerca" placeholder="Cerca un incantesimo…" autocomplete="off" />
@@ -280,8 +311,8 @@
                       <p id="incantesimi-vuoto" class="scheda-testo-libero" hidden>Nessun incantesimo conosciuto.</p>
                     </div>
 
-                    <div id="blocco-preparati" hidden>
-                      <h4 class="sottotitolo-box">Incantesimi preparati oggi</h4>
+                    <div id="blocco-preparati" class="scheda-box magia-blocco" hidden>
+                      <h3>Preparati oggi</h3>
                       <p id="preparati-limite" class="slot-incantesimo-riepilogo"></p>
                       <div id="ricerca-preparati-wrap" class="ricerca-equipaggiamento">
                         <input type="text" id="ricerca-preparati" class="input-ricerca" placeholder="Cerca da preparare…" autocomplete="off" />
@@ -292,33 +323,35 @@
                       <p id="preparati-vuoto" class="scheda-testo-libero" hidden>Nessun incantesimo preparato.</p>
                     </div>
 
-                    <h4 class="sottotitolo-box">Slot incantesimo</h4>
-                    <div id="pips-slot-incantesimo" class="pips-slot-incantesimo"></div>
+                    <div class="scheda-box magia-blocco" id="blocco-slot">
+                      <h3>Slot incantesimo</h3>
+                      <div id="pips-slot-incantesimo" class="pips-slot-incantesimo"></div>
+                    </div>
                   </div>
 
-                  <div id="sezione-incantesimi-razza" hidden>
-                    <h4 class="sottotitolo-box">Incantesimi di razza</h4>
+                <div id="sezione-incantesimi-razza" class="scheda-box" hidden>
+                    <h3>Incantesimi di razza</h3>
                     <p class="scheda-testo-libero">Tratti razziali innati: lanciabili una volta al giorno, senza consumare slot.</p>
                     <ul id="lista-incantesimi-razza" class="inventario-lista"></ul>
                   </div>
-                </div>
+              </section>
 
-                <div class="scheda-box">
-                  <h3>Equipaggiamento</h3>
-                  <div class="riga-monete">
+              <!-- Zaino -->
+              <section class="scheda-pannello scheda-pannello-zaino" data-pannello="zaino">
+                <div class="scheda-colonna">
+                  <div class="scheda-box">
+                    <h3>Monete</h3>
+                    <div class="riga-monete">
                     <div><label for="moneta-rame">MR</label><input type="number" id="moneta-rame" class="input-moneta" min="0" inputmode="numeric" /></div>
                     <div><label for="moneta-argento">MA</label><input type="number" id="moneta-argento" class="input-moneta" min="0" inputmode="numeric" /></div>
                     <div><label for="moneta-oro">MO</label><input type="number" id="moneta-oro" class="input-moneta" min="0" inputmode="numeric" /></div>
                     <div><label for="moneta-elettro">ME</label><input type="number" id="moneta-elettro" class="input-moneta" min="0" inputmode="numeric" /></div>
                     <div><label for="moneta-platino">MP</label><input type="number" id="moneta-platino" class="input-moneta" min="0" inputmode="numeric" /></div>
                   </div>
-                  <div id="ricerca-equip-wrap" class="ricerca-equipaggiamento">
-                    <input type="text" id="ricerca-equip" class="input-ricerca" placeholder="Cerca nel catalogo (es. spada, corda, pozione)…" autocomplete="off" />
-                    <div id="risultati-equip" class="risultati-ricerca" hidden></div>
                   </div>
-                  <ul id="lista-inventario" class="inventario-lista"></ul>
-                  <p id="inventario-vuoto" class="scheda-testo-libero" hidden>Nessun oggetto nell'inventario.</p>
-                  <div id="equip-indossato-wrap" class="equip-indossato">
+                  <div class="scheda-box">
+                    <h3>Indossato</h3>
+                    <div id="equip-indossato-wrap" class="equip-indossato">
                     <div class="field">
                       <label for="select-armatura-indossata">Armatura indossata</label>
                       <select id="select-armatura-indossata"></select>
@@ -327,31 +360,46 @@
                       <input type="checkbox" id="checkbox-scudo" /> Scudo imbracciato
                     </label>
                   </div>
-                </div>
-
-              </div>
-
-              <!-- Colonna destra: personalità e caratteristiche -->
-              <div class="scheda-colonna">
-
-                <div class="scheda-box tema-note">
-                  <h3>Tratti della personalità</h3>
-                  <textarea id="personalita-tratti" class="textarea-libero" rows="3" maxlength="2000" placeholder="Da definire."></textarea>
-                </div>
-                <div class="scheda-box tema-note">
-                  <h3>Ideali</h3>
-                  <textarea id="personalita-ideali" class="textarea-libero" rows="2" maxlength="2000" placeholder="Da definire."></textarea>
-                </div>
-                <div class="scheda-box tema-note">
-                  <h3>Legami</h3>
-                  <textarea id="personalita-legami" class="textarea-libero" rows="2" maxlength="2000" placeholder="Da definire."></textarea>
-                </div>
-                <div class="scheda-box tema-note">
-                  <h3>Difetti</h3>
-                  <textarea id="personalita-difetti" class="textarea-libero" rows="2" maxlength="2000" placeholder="Da definire."></textarea>
+                  </div>
                 </div>
 
                 <div class="scheda-box">
+                  <h3>Equipaggiamento</h3>
+                  <div id="ricerca-equip-wrap" class="ricerca-equipaggiamento">
+                    <input type="text" id="ricerca-equip" class="input-ricerca" placeholder="Cerca nel catalogo (es. spada, corda, pozione)…" autocomplete="off" />
+                    <div id="risultati-equip" class="risultati-ricerca" hidden></div>
+                  </div>
+                  <ul id="lista-inventario" class="inventario-lista"></ul>
+                  <p id="inventario-vuoto" class="scheda-testo-libero" hidden>Nessun oggetto nell'inventario.</p>
+                </div>
+              </section>
+
+              <!-- Storia -->
+              <section class="scheda-pannello scheda-pannello-storia" data-pannello="storia">
+                <div class="scheda-box tema-note">
+                  <h3>Personalità</h3>
+                  <div class="scheda-personalita">
+                    <div class="scheda-campo-testo">
+                      <label for="personalita-tratti">Tratti</label>
+                      <textarea id="personalita-tratti" class="textarea-libero" rows="3" maxlength="2000" placeholder="Da definire."></textarea>
+                    </div>
+                    <div class="scheda-campo-testo">
+                      <label for="personalita-ideali">Ideali</label>
+                      <textarea id="personalita-ideali" class="textarea-libero" rows="2" maxlength="2000" placeholder="Da definire."></textarea>
+                    </div>
+                    <div class="scheda-campo-testo">
+                      <label for="personalita-legami">Legami</label>
+                      <textarea id="personalita-legami" class="textarea-libero" rows="2" maxlength="2000" placeholder="Da definire."></textarea>
+                    </div>
+                    <div class="scheda-campo-testo">
+                      <label for="personalita-difetti">Difetti</label>
+                      <textarea id="personalita-difetti" class="textarea-libero" rows="2" maxlength="2000" placeholder="Da definire."></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="scheda-colonna">
+                  <div class="scheda-box">
                   <h3>Caratteristiche e talenti</h3>
                   <ol id="lista-talenti" class="lista-talenti"></ol>
                   <p id="talenti-vuoto" class="scheda-testo-libero" hidden>Da definire.</p>
@@ -361,13 +409,12 @@
                   </div>
                 </div>
 
-                <div class="scheda-box">
+                  <div class="scheda-box">
                   <h3>Competenze e linguaggi</h3>
                   <textarea id="competenze-linguaggi" class="textarea-libero" rows="3" maxlength="2000" placeholder="Da definire."></textarea>
                 </div>
-
-              </div>
-
+                </div>
+              </section>
             </div>
           </div>
           <!-- ===================== /SCHEDA ===================== -->
