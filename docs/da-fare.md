@@ -15,9 +15,10 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
 - **Redesign dell'interfaccia** (blu notte, dipinto del drago e del D20): fatti
   la dashboard, il guscio comune (barra laterale, cassetto, testata compatta)
   su tutte le pagine interne e i contenuti della Sessione (pannelli blu e
-  pergamena, «scena + tavolo» sul computer, tre schede sul telefono).
-  Prossimi passi, ognuno con le sue tavole: i contenuti di scheda personaggio
-  e scheda rapida, Calendario, login
+  pergamena, «scena + tavolo» sul computer, tre schede sul telefono) e della
+  scheda personaggio (testata blu, schede Combattimento / Caratteristiche /
+  Magia / Zaino / Storia, barra fissa coi PF). Prossimi passi, ognuno con le
+  sue tavole: scheda rapida della Sessione, Calendario, login
   (e le altre pagine prima dell'accesso), il velo di caricamento ancora
   col vecchio d20, una famiglia di icone nuova. I colori sono già in base.css
   (variabili `--rd-*`).

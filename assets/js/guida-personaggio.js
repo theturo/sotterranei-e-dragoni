@@ -289,6 +289,11 @@ export function montaGuida({ scheda, crediti, livelloObiettivo, azioni, apri = f
     stato = { ...stato, passo: idPasso };
     scriviStato(id, stato);
     const elemento = bersaglio(idPasso);
+    // La sezione può stare in un'altra scheda della pagina: prima la si apre.
+    const pannello = elemento?.closest("[data-pannello]");
+    if (pannello && getComputedStyle(pannello).display === "none") {
+      document.querySelector(`[data-scheda-vai="${pannello.dataset.pannello}"]`)?.click();
+    }
     evidenzia(elemento);
     fumetto.hidden = false;
     disegnaFumetto();

@@ -19,7 +19,7 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "66fd3a59cd9d";
+const VERSIONE = "b93da34db3c1";
 const DATA_VERSIONE = "2026-11-14";
 const FILE = {
   "./admin-utenti.html": "67eb21be5117",
@@ -30,7 +30,7 @@ const FILE = {
   "./assets/css/dm.css": "ac39fd0be665",
   "./assets/css/gioco.css": "29cedb3c547e",
   "./assets/css/guida.css": "b6e84121ae34",
-  "./assets/css/scheda.css": "8cba156ce1df",
+  "./assets/css/scheda.css": "9f072d7de5c6",
   "./assets/css/sessione.css": "eb724797838e",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
   "./assets/fonts/pdf/cinzel-700.woff": "83ea41e439a2",
@@ -112,7 +112,7 @@ const FILE = {
   "./assets/js/fisica-dadi.js": "2c1ccfb28d75",
   "./assets/js/geometria-3d.js": "cf8ca801bd2e",
   "./assets/js/guida-personaggio-dati.js": "c0ef4c32227a",
-  "./assets/js/guida-personaggio.js": "d4ebca6b833e",
+  "./assets/js/guida-personaggio.js": "a162c5dae778",
   "./assets/js/guscio.js": "75ce20308cba",
   "./assets/js/icone.js": "3940048bc896",
   "./assets/js/immagini.js": "c3c6402b078b",
@@ -154,7 +154,7 @@ const FILE = {
   "./assets/js/pagine/libreria.js": "dfa3e65f6946",
   "./assets/js/pagine/offline.js": "66f6add61755",
   "./assets/js/pagine/register.js": "d351cfe15864",
-  "./assets/js/pagine/scheda-personaggio.js": "4f30a2b887d1",
+  "./assets/js/pagine/scheda-personaggio.js": "db5bcfe4b2cd",
   "./assets/js/pagine/sessione.js": "709e2f81fb8a",
   "./assets/js/pagine/tavolo.js": "f38a46e915a7",
   "./assets/js/pagine/verifica-email.js": "9160b11d3edd",
@@ -195,7 +195,7 @@ const FILE = {
   "./manifest.webmanifest": "879337aa9851",
   "./offline.html": "db6483bdcfa1",
   "./register.html": "03a7cf2e4704",
-  "./scheda-personaggio.html": "cdc3e12b5ce6",
+  "./scheda-personaggio.html": "ad51a194297b",
   "./sessione.html": "60570f4db0a4",
   "./tavolo.html": "24b0ce5bc660",
   "./verifica-email.html": "374faa034a5b",

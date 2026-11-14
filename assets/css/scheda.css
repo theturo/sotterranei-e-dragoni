@@ -985,3 +985,452 @@ table.tabella-punteggi td {
 .btn-esporta[hidden] {
   display: none;
 }
+
+/* ---------- Scheda ridisegnata (D-032) ----------
+   Testata del personaggio in blu (come il pannello della dashboard), barra
+   fissa e schede, poi i riquadri in pergamena nuova senza la grande cornice. */
+.pagina-ridisegnata .scheda.scheda-ridisegnata {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: var(--rd-avorio);
+}
+
+.scheda-ridisegnata .scheda-pannelli {
+  --color-ink: var(--rd-inchiostro);
+  --color-ink-soft: var(--rd-inchiostro-2);
+  --color-burgundy: var(--rd-cremisi);
+}
+
+.pagina-ridisegnata .scheda-ridisegnata .scheda-box {
+  background: var(--rd-pergamena);
+  color: var(--rd-inchiostro);
+  border: none;
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  min-width: 0;
+}
+
+.pagina-ridisegnata .scheda-ridisegnata .scheda-box h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  color: var(--rd-inchiostro);
+}
+
+.pagina-ridisegnata .scheda-ridisegnata .scheda-box h3::after {
+  display: none;
+}
+
+/* Testata del personaggio */
+.scheda-testata {
+  --color-ink: var(--rd-avorio);
+  --color-ink-soft: var(--rd-testo-2);
+  --color-burgundy: var(--rd-oro);
+  --color-gold: var(--rd-oro);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px 22px;
+  padding: 18px 22px;
+  border-radius: 12px;
+  background: rgba(20, 38, 53, 0.87);
+  border: 1px solid var(--rd-bronzo);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+}
+
+.scheda-testata .ritratto-scheda img,
+.scheda-testata .ritratto-vuoto {
+  width: 92px;
+  height: 92px;
+  background: radial-gradient(circle at 40% 35%, #4b6a86, #22394d);
+  color: var(--rd-avorio);
+}
+
+.scheda-testata .ritratto-scheda figcaption .btn-tabella {
+  font-size: 0.72rem;
+  padding: 4px 8px;
+}
+
+.scheda-testata .btn-tabella.btn-tabella-pericolo {
+  color: #ff9d8f;
+  border-color: rgba(255, 157, 143, 0.7);
+}
+
+.scheda-testata-chi {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.scheda-ridisegnata .scheda-nome-valore {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 2.6vw, 1.95rem);
+  line-height: 1.15;
+  color: var(--rd-avorio);
+}
+
+.scheda-ridisegnata .scheda-sottotitoli {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin-top: 8px;
+}
+
+.scheda-ridisegnata .scheda-sottotitoli > div {
+  min-width: 0;
+}
+
+.scheda-ridisegnata .scheda-sottotitoli label {
+  color: var(--rd-oro);
+  font-size: 0.62rem;
+  letter-spacing: 1.4px;
+}
+
+.scheda-ridisegnata .scheda-sottotitoli span,
+.scheda-ridisegnata .scheda-sottotitoli .input-inline,
+.scheda-ridisegnata .scheda-sottotitoli .btn-allineamento-trigger {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: var(--rd-avorio);
+}
+
+.scheda-ridisegnata .scheda-sottotitoli .input-inline {
+  max-width: 180px;
+}
+
+.scheda-ridisegnata .icona-classe svg {
+  color: var(--rd-oro);
+}
+
+.scheda-numeri {
+  display: flex;
+  gap: 8px;
+}
+
+.scheda-numero {
+  min-width: 82px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-align: center;
+  background: rgba(16, 30, 42, 0.6);
+  border: 1px solid var(--rd-bordo);
+}
+
+.scheda-numero .valore-grande {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  color: var(--rd-avorio);
+}
+
+.scheda-numero .valore-grande-etichetta {
+  margin-top: 2px;
+  font-size: 0.6rem;
+  letter-spacing: 1.3px;
+  color: var(--rd-oro);
+}
+
+.scheda-numero-tiro {
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .scheda-numero-tiro:hover {
+    border-color: var(--rd-bronzo);
+  }
+}
+
+.scheda-numero-pf .valore-grande {
+  color: #ffd3c9;
+  white-space: nowrap;
+}
+
+.scheda-mini-barra {
+  height: 4px;
+  border-radius: 2px;
+  margin-top: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.scheda-mini-barra i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #6fae6a;
+}
+
+.scheda-mini-barra i.basso {
+  background: #c9574c;
+}
+
+.scheda-sola-lettura {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d98a94;
+  color: #ffb3a8;
+}
+
+/* Barra fissa e schede: restano in alto mentre si scorre. */
+.scheda-fissa {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: 16px 0;
+}
+
+.scheda-barra-fissa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px;
+  border-radius: 10px 10px 0 0;
+  background: rgba(20, 38, 53, 0.98);
+  border: 1px solid var(--rd-bronzo);
+  border-bottom: none;
+}
+
+.scheda-barra-nome {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scheda-barra-pf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: #ffd3c9;
+  white-space: nowrap;
+}
+
+.scheda-barra-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--rd-bordo);
+  background: rgba(41, 59, 70, 0.9);
+  color: var(--rd-avorio);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.scheda-barra-ca {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  color: var(--rd-oro);
+  padding: 3px 8px;
+  border: 1px solid var(--rd-bordo);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.scheda-schede {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 10px;
+  background: rgba(19, 35, 49, 0.97);
+  border: 1px solid var(--rd-bordo-scuro);
+}
+
+.scheda-barra-fissa:not([hidden]) + .scheda-schede {
+  border-radius: 0 0 10px 10px;
+  border-color: var(--rd-bronzo);
+  border-top-color: var(--rd-bordo);
+}
+
+.scheda-scheda {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--rd-testo-2);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.scheda-scheda[aria-pressed="true"] {
+  background: var(--rd-selezione);
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+  box-shadow: inset 0 -2px 0 var(--rd-oro);
+}
+
+/* Si vede solo la scheda scelta. */
+.scheda-pannelli[data-scheda="comb"] > [data-pannello]:not([data-pannello="comb"]),
+.scheda-pannelli[data-scheda="car"] > [data-pannello]:not([data-pannello="car"]),
+.scheda-pannelli[data-scheda="magia"] > [data-pannello]:not([data-pannello="magia"]),
+.scheda-pannelli[data-scheda="zaino"] > [data-pannello]:not([data-pannello="zaino"]),
+.scheda-pannelli[data-scheda="storia"] > [data-pannello]:not([data-pannello="storia"]) {
+  display: none;
+}
+
+.scheda-pannello,
+.scheda-magia {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.scheda-pannello-magia {
+  gap: 16px;
+}
+
+.scheda-riga-due {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.scheda-magia .statistiche-incantesimi {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--rd-oro);
+}
+
+.scheda-personalita {
+  display: grid;
+  gap: 12px;
+}
+
+/* Senza armature né scudo nello zaino il riquadro «Indossato» non serve. */
+.scheda-box:has(> #equip-indossato-wrap[hidden]) {
+  display: none;
+}
+
+.scheda-campo-testo label {
+  margin-bottom: 4px;
+}
+
+.scheda-ridisegnata .caratteristica {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(37, 44, 49, 0.18);
+}
+
+@media (min-width: 900px) {
+  .scheda-pannello-comb {
+    grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  }
+
+  .scheda-pannello-car {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(0, 1fr);
+  }
+
+  .scheda-magia {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .scheda-pannello-zaino {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
+  }
+
+  .scheda-pannello-storia {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+
+  .scheda-personalita {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Le caratteristiche in tre colonne quando c'è spazio. */
+  .scheda-pannello-car .griglia-caratteristiche {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 899px) {
+  .scheda-testata {
+    padding: 14px;
+    gap: 12px 14px;
+  }
+
+  .scheda-testata .ritratto-scheda img,
+  .scheda-testata .ritratto-vuoto {
+    width: 64px;
+    height: 64px;
+  }
+
+  .scheda-testata .ritratto-vuoto svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .scheda-numeri {
+    width: 100%;
+  }
+
+  .scheda-numero {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 4px;
+  }
+
+  .scheda-numero .valore-grande {
+    font-size: 1.2rem;
+  }
+
+  /* Le schede scorrono di lato e toccano i bordi dello schermo. */
+  .scheda-fissa {
+    margin: 12px -16px;
+  }
+
+  .scheda-schede {
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .scheda-schede::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scheda-scheda {
+    flex: none;
+    font-size: 0.8rem;
+  }
+
+  .scheda-barra-fissa {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .scheda-barra-fissa:not([hidden]) + .scheda-schede {
+    border-radius: 0;
+  }
+
+  .scheda-pannello,
+  .scheda-magia {
+    gap: 12px;
+  }
+}

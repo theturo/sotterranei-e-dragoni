@@ -798,6 +798,7 @@ function renderCA() {
   }
   if (scheda.scudoIndossato && possiedeScudo()) ca += ARMATURE.scudo.bonusScudo;
   document.getElementById("valore-ca").textContent = String(ca);
+  document.getElementById("barra-fissa-ca").textContent = `CA ${ca}`;
 }
 
 function renderEquipaggiamentoIndossato() {
@@ -1447,7 +1448,78 @@ function renderHp() {
   document.getElementById("hp-temporanei").value = scheda.hp.temporanei;
   document.getElementById("hp-attuali").disabled = soloLettura;
   document.getElementById("hp-temporanei").disabled = soloLettura;
+  aggiornaRiepilogoPf();
 }
+
+// ---------- Testata, barra fissa e schede (D-032) ----------
+// I PF compaiono anche nella testata e nella barra fissa, che si mostra
+// quando la testata esce dallo schermo.
+function aggiornaRiepilogoPf() {
+  const { attuali = 0, massimi = 0, temporanei = 0 } = scheda.hp || {};
+  const testo = `${attuali}/${massimi}${temporanei ? ` (+${temporanei})` : ""}`;
+  document.getElementById("testata-pf").textContent = testo;
+  document.getElementById("barra-fissa-pf").textContent = `PF ${testo}`;
+  const quota = massimi > 0 ? Math.max(0, Math.min(1, attuali / massimi)) : 0;
+  const barra = document.getElementById("testata-pf-barra");
+  barra.style.width = `${Math.round(quota * 100)}%`;
+  barra.classList.toggle("basso", quota <= 0.35);
+  document.getElementById("barra-fissa-nome").textContent = scheda.nome || "—";
+  document.getElementById("barra-fissa-ca").textContent = `CA ${document.getElementById("valore-ca").textContent}`;
+  document.querySelectorAll(".scheda-barra-btn").forEach((b) => { b.hidden = soloLettura; });
+}
+
+async function cambiaPf(delta) {
+  if (soloLettura) return;
+  const massimi = scheda.hp.massimi || 0;
+  const attuali = Math.max(0, Math.min(massimi, (scheda.hp.attuali || 0) + delta));
+  if (attuali === scheda.hp.attuali) return;
+  scheda.hp.attuali = attuali;
+  renderHp();
+  try {
+    await aggiornaHp(scheda, scheda.hp);
+  } catch (errore) {
+    console.error(errore);
+  }
+}
+document.getElementById("btn-pf-meno").addEventListener("click", () => cambiaPf(-1));
+document.getElementById("btn-pf-piu").addEventListener("click", () => cambiaPf(1));
+
+const pannelli = document.getElementById("scheda-pannelli");
+const chiaveScheda = () => `sd-scheda-tab-${scheda?.id || ""}`;
+
+function mostraPannello(nome) {
+  const bottone = document.querySelector(`[data-scheda-vai="${nome}"]`);
+  if (!bottone || bottone.hidden) nome = "comb";
+  pannelli.dataset.scheda = nome;
+  document.querySelectorAll("[data-scheda-vai]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.schedaVai === nome)));
+  try {
+    sessionStorage.setItem(chiaveScheda(), nome);
+  } catch {
+    // Senza memoria si riparte da «Combattimento».
+  }
+}
+
+document.getElementById("scheda-schede").addEventListener("click", (evento) => {
+  const bottone = evento.target.closest("[data-scheda-vai]");
+  if (!bottone) return;
+  mostraPannello(bottone.dataset.schedaVai);
+  // Con la testata fuori dallo schermo si torna all'inizio della scheda scelta.
+  const fissa = document.querySelector(".scheda-fissa");
+  if (fissa.getBoundingClientRect().top <= 1) fissa.scrollIntoView({ block: "start" });
+});
+
+// La scheda «Magia» c'è solo se il personaggio ha incantesimi (di classe o di razza).
+function aggiornaSchedaMagia() {
+  const senza = document.getElementById("sezione-incantesimi").hidden && document.getElementById("sezione-incantesimi-razza").hidden;
+  document.querySelector('[data-scheda-vai="magia"]').hidden = senza;
+  if (senza && pannelli.dataset.scheda === "magia") mostraPannello("comb");
+}
+new MutationObserver(aggiornaSchedaMagia).observe(document.getElementById("sezione-incantesimi"), { attributes: true, attributeFilter: ["hidden"] });
+new MutationObserver(aggiornaSchedaMagia).observe(document.getElementById("sezione-incantesimi-razza"), { attributes: true, attributeFilter: ["hidden"] });
+
+new IntersectionObserver(([voce]) => {
+  document.getElementById("scheda-barra-fissa").hidden = voce.isIntersecting || voce.boundingClientRect.top > 0;
+}).observe(document.getElementById("scheda-testata"));
 
 // Condizioni ed esaurimento: il proprietario le modifica, gli altri (es. il
 // DM che consulta la scheda) le vedono soltanto.
@@ -1730,17 +1802,9 @@ function renderRisultatiRicerca(testo) {
     .join("");
 }
 
+// Solo chi guarda la scheda di un altro (il DM) vede la targhetta.
 function renderBadgeStato() {
-  const badge = document.getElementById("badge-stato");
-  if (soloLettura) {
-    badge.textContent = "Sola lettura";
-    badge.style.borderColor = "var(--color-danger)";
-    badge.style.color = "#d98a94";
-  } else {
-    badge.textContent = "Alcuni campi non sono ancora modificabili";
-    badge.style.borderColor = "";
-    badge.style.color = "";
-  }
+  document.getElementById("badge-stato").hidden = !soloLettura;
 }
 
 proteggiPagina(async (user, profilo) => {
@@ -1814,6 +1878,16 @@ proteggiPagina(async (user, profilo) => {
   renderTalenti();
   renderMonete();
   renderPulsanteLivello();
+  aggiornaSchedaMagia();
+  {
+    let salvata = null;
+    try {
+      salvata = sessionStorage.getItem(chiaveScheda());
+    } catch {
+      // Nessuna scheda salvata.
+    }
+    mostraPannello(salvata || "comb");
+  }
   document.getElementById("azioni-riposo").hidden = soloLettura;
   ascoltaModificheEsterne();
   ascoltaInvitoRiposo();
@@ -2079,7 +2153,7 @@ document.getElementById("lista-abilita").addEventListener("click", (evento) => {
   });
 });
 
-document.getElementById("valore-iniziativa").closest(".scheda-box").addEventListener("click", () => {
+document.getElementById("box-iniziativa").addEventListener("click", () => {
   const bonus = modCaratteristica("destrezza");
   tiroDallaScheda({ etichetta: "Iniziativa", modificatore: bonus }, async (tiro) => {
     if (!scheda.attiva || !scheda.campagnaId) return null;
