@@ -1,8 +1,10 @@
 // Scheda rapida nella Sessione: il bottone fisso «La mia scheda» apre la
 // scheda del proprio personaggio pensata per il gioco (combattimento, prove,
-// magia, privilegi). Sul computer è un pannello a destra che lascia la mappa
-// visibile, sul telefono occupa lo schermo (si chiude con ✕, Esc o
-// trascinandolo verso il basso). I tiri passano dalla finestra dei dadi e
+// magia, privilegi), con lo stesso aspetto della scheda completa: testata blu
+// (ritratto, numeri, PF) e sezioni in pergamena. Sul computer è un cassetto a
+// destra che lascia visibili combattimento e mappa; sul telefono sale dal basso
+// (si chiude con ✕, Esc o trascinandolo verso il basso) e, scorrendo, la testata
+// lascia il posto a una barra con nome, PF e CA. I tiri passano dalla finestra dei dadi e
 // finiscono negli appunti; PF, slot e usi si salvano sulla scheda e nel party.
 // Il DM vede «Schede del party», sceglie un personaggio e lo guarda in sola
 // lettura. Creazione, equipaggiamento e livelli restano nella scheda completa.
@@ -30,6 +32,11 @@ const SCHEDE = [
 // Oltre questo numero di usi i privilegi mostrano il conteggio, non i pallini.
 const LIMITE_PALLINI = 10;
 const mod = formattaModificatore;
+// Due lettere per i tondi: iniziali di nome e cognome, o le prime del nome.
+const sigla = (nome = "") => {
+  const parole = nome.trim().split(/\s+/).filter(Boolean);
+  return (parole.length > 1 ? parole[0][0] + parole[1][0] : (parole[0] || "?").slice(0, 2)).toUpperCase();
+};
 
 export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }) {
   let aperta = false;
@@ -51,23 +58,30 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
   bottone.innerHTML = `${ICONA_SESSIONE}<span>${isDM ? "Schede del party" : "La mia scheda"}</span>`;
 
   const pannello = document.createElement("aside");
-  pannello.className = "panel scheda-rapida";
+  pannello.className = "scheda-rapida";
   pannello.id = "scheda-rapida";
   pannello.hidden = true;
   pannello.setAttribute("role", "dialog");
   pannello.setAttribute("aria-labelledby", "scheda-rapida-nome");
   pannello.innerHTML = `
+    <div class="scheda-rapida-compatta" aria-hidden="true">
+      <span class="scheda-rapida-tondo"></span>
+      <b class="scheda-rapida-compatta-nome"></b>
+      <span class="scheda-rapida-compatta-pf"></span>
+      <span class="scheda-rapida-compatta-ca"></span>
+      <button type="button" class="scheda-rapida-chiudi" data-azione="chiudi" tabindex="-1">✕</button>
+    </div>
     <div class="scheda-rapida-testa">
       <div class="scheda-rapida-maniglia" aria-hidden="true"></div>
+      <div class="scheda-rapida-personaggi" role="group" aria-label="Personaggio" hidden></div>
       <div class="scheda-rapida-titolo">
-        <span class="party-avatar"><span class="icona-classe" aria-hidden="true"></span></span>
+        <span class="scheda-rapida-ritratto"><span class="icona-classe" aria-hidden="true"></span></span>
         <div class="scheda-rapida-nomi">
           <h3 id="scheda-rapida-nome">—</h3>
           <div class="scheda-rapida-sotto"></div>
         </div>
-        <button type="button" class="btn-tabella scheda-rapida-chiudi" data-azione="chiudi" aria-label="Chiudi la scheda">✕</button>
+        <button type="button" class="scheda-rapida-chiudi" data-azione="chiudi" aria-label="Chiudi la scheda">✕</button>
       </div>
-      <div class="scheda-rapida-personaggi" role="group" aria-label="Personaggio" hidden></div>
       <div class="scheda-rapida-numeri"></div>
       <div class="scheda-rapida-pf"></div>
     </div>
@@ -76,7 +90,7 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
     <p class="scheda-rapida-esito" role="status" hidden></p>
     <div class="scheda-rapida-piede">
       <p></p>
-      <a class="link-intestazione" href="i-miei-personaggi.html">Scheda completa ↗</a>
+      <a class="scheda-rapida-link" href="i-miei-personaggi.html">Scheda completa ↗</a>
     </div>`;
   // Il bottone va nella testata della pagina se ha il suo posto (Sessione):
   // sul computer è un pulsante della testata, sul telefono resta fisso in basso.
@@ -131,7 +145,8 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
       $(".scheda-rapida-numeri").replaceChildren();
       $(".scheda-rapida-pf").replaceChildren();
       $(".scheda-rapida-schede").replaceChildren();
-      $(".scheda-rapida-corpo").innerHTML = schedaId ? "" : `<p class="sessione-placeholder">${isDM ? "Nessun personaggio nel party." : "Non hai un personaggio attivo in questa campagna."}</p>`;
+      $(".scheda-rapida-corpo").innerHTML = schedaId ? "" : `<div class="scheda-rapida-pergamena"><p class="scheda-rapida-vuoto">${isDM ? "Nessun personaggio nel party." : "Non hai un personaggio attivo in questa campagna."}</p></div>`;
+      $(".scheda-rapida-compatta-nome").textContent = "";
       piede.textContent = "";
       link.href = "i-miei-personaggi.html";
       link.textContent = isDM ? "Party e livelli ↗" : "I miei personaggi ↗";
@@ -143,8 +158,8 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
     renderSchede(dati);
     renderCorpo(dati);
     piede.textContent = isDM
-      ? "Sola lettura: PF e condizioni si cambiano dal pannello «Stato» del party."
-      : "Equipaggiamento, background e passaggi di livello sono nella scheda completa.";
+      ? "Sola lettura: PF e condizioni si cambiano dal pannello «Party»."
+      : "Equipaggiamento, storia e passaggi di livello sono nella scheda completa.";
     link.href = `scheda-personaggio.html?id=${encodeURIComponent(scheda.id)}`;
     link.textContent = "Scheda completa ↗";
   }
@@ -155,8 +170,9 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
     if (!isDM) return;
     contenitore.innerHTML = personaggi().map((r) => {
       const scelto = r.uid === sceltaDM;
-      return `<button type="button" class="btn-tabella" data-azione="scegli" data-uid="${esc(r.uid)}" aria-pressed="${scelto}">${esc(r.nomePersonaggio || r.nomeGiocatore || "Personaggio")}</button>`;
-    }).join("");
+      const nome = r.nomePersonaggio || r.nomeGiocatore || "Personaggio";
+      return `<button type="button" class="scheda-rapida-chip-pg" data-azione="scegli" data-uid="${esc(r.uid)}" aria-pressed="${scelto}"><span aria-hidden="true">${esc(sigla(nome))}</span>${esc(nome.split(" ")[0])}</button>`;
+    }).join("") + '<span class="scheda-rapida-sola">Sola lettura</span>';
   }
 
   function renderTesta(dati) {
@@ -165,7 +181,7 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
     const giocatore = isDM ? party().find((r) => r.schedaId === scheda.id)?.nomeGiocatore : null;
     $(".scheda-rapida-sotto").textContent = giocatore ? `${giocatore} · ${dati.sottotitolo}` : dati.sottotitolo;
 
-    const avatar = $(".party-avatar");
+    const avatar = $(".scheda-rapida-ritratto");
     avatar.querySelector(".party-ritratto")?.remove();
     const icona = avatar.querySelector(".icona-classe");
     icona.innerHTML = classe?.iconaSvg || ICONA_CLASSE_FALLBACK;
@@ -183,11 +199,11 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
 
     const numero = (valore, etichetta, attributi = "") => {
       const tag = attributi ? "button" : "div";
-      return `<${tag} class="scheda-rapida-numero"${attributi}${tag === "button" ? ' type="button"' : ""}><b>${esc(valore)}</b><small>${etichetta}</small></${tag}>`;
+      return `<${tag} class="scheda-rapida-numero${attributi ? " tira" : ""}"${attributi}${tag === "button" ? ' type="button"' : ""}><b>${esc(valore)}</b><small>${etichetta}</small></${tag}>`;
     };
     $(".scheda-rapida-numeri").innerHTML = [
       numero(dati.ca, "CA"),
-      numero(mod(dati.iniziativa), "Iniziativa", soloLettura() ? "" : ` data-azione="iniziativa" title="Tira l'iniziativa"`),
+      numero(mod(dati.iniziativa), "Iniziativa", soloLettura() ? "" : ` data-azione="iniziativa" title="Tira l'iniziativa" aria-label="Tira l'iniziativa (${mod(dati.iniziativa)})"`),
       numero(dati.velocita, "Velocità"),
       numero(`+${dati.competenza}`, "Competenza"),
     ].join("");
@@ -197,22 +213,29 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
     const pf = $(".scheda-rapida-pf");
     pf.innerHTML = `
       <div class="scheda-rapida-pf-riga">
-        <span class="etichetta-pf">PF</span>
+        <span class="scheda-rapida-pf-etichetta">PF</span>
         <div class="barra-pf" aria-hidden="true"><span style="width:${Math.round(quota * 100)}%" data-livello="${quota < 0.35 ? "basso" : quota < 0.6 ? "medio" : "alto"}"></span></div>
-        <span class="scheda-rapida-pf-valore">${attuali} / ${massimi}${temporanei > 0 ? ` (+${temporanei})` : ""}</span>
+        <span class="scheda-rapida-pf-valore">${attuali} / ${massimi}${temporanei > 0 ? `<small>+${temporanei} temp.</small>` : ""}</span>
       </div>
       ${soloLettura() ? "" : `
-      <div class="editor-pf">
-        <input type="number" min="0" inputmode="numeric" class="input-pf-nemico" data-campo="variazione" placeholder="±" aria-label="Danni o cure" />
-        <button type="button" class="btn-tabella" data-azione="danno">− Danno</button>
-        <button type="button" class="btn-tabella" data-azione="cura">+ Cura</button>
-        <span class="etichetta-pf">Temp.</span>
-        <input type="number" min="0" inputmode="numeric" class="input-pf-nemico" data-campo="temporanei" value="${temporanei}" aria-label="PF temporanei" />
+      <div class="scheda-rapida-pf-comandi">
+        <input type="number" min="0" inputmode="numeric" class="scheda-rapida-campo" data-campo="variazione" placeholder="±" aria-label="Danni o cure" />
+        <button type="button" class="scheda-rapida-btn danno" data-azione="danno">− Danno</button>
+        <button type="button" class="scheda-rapida-btn cura" data-azione="cura">+ Cura</button>
+        <label class="scheda-rapida-temp">Temp.
+          <input type="number" min="0" inputmode="numeric" class="scheda-rapida-campo" data-campo="temporanei" value="${temporanei}" aria-label="PF temporanei" />
+        </label>
       </div>`}`;
     pf.append(creaChipCondizioni(scheda.condizioni || [], scheda.esaurimento || 0));
     // Danni e cure sul riquadro dei PF (per scheda: passando a un altro
     // personaggio non parte nessun effetto).
     effettiPf.aggiorna(scheda.id, { attuali, massimi }, { bersaglio: pf.querySelector(".scheda-rapida-pf-riga"), barra: pf.querySelector(".barra-pf") });
+
+    // Barra compatta (telefono, testata fuori schermo): nome, PF e CA.
+    $(".scheda-rapida-tondo").textContent = sigla(dati.nome);
+    $(".scheda-rapida-compatta-nome").textContent = dati.nome;
+    $(".scheda-rapida-compatta-pf").textContent = `PF ${attuali}/${massimi}`;
+    $(".scheda-rapida-compatta-ca").textContent = `CA ${dati.ca}`;
   }
 
   function schedeDisponibili(dati) {
@@ -229,57 +252,60 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
 
   // Una prova (tiro salvezza, abilità): bottone per chi gioca, riga per il DM.
   function prova(tipo, voce, testo = voce.nome) {
-    const contenuto = `<span class="pallino${voce.competente ? " competente" : ""}" aria-hidden="true"></span><span class="scheda-rapida-prova-nome">${esc(testo)}</span><b>${mod(voce.mod)}</b>`;
-    if (soloLettura()) return `<div class="scheda-rapida-prova">${contenuto}</div>`;
-    return `<button type="button" class="scheda-rapida-prova" data-azione="prova" data-tipo="${tipo}" data-chiave="${esc(voce.chiave)}">${contenuto}</button>`;
+    const classi = `scheda-rapida-prova${voce.competente ? " competente" : ""}`;
+    const contenuto = `<span class="scheda-rapida-punto" aria-hidden="true"></span><span class="scheda-rapida-prova-nome">${esc(testo)}</span><b>${mod(voce.mod)}</b>`;
+    if (soloLettura()) return `<div class="${classi}">${contenuto}</div>`;
+    return `<button type="button" class="${classi}" data-azione="prova" data-tipo="${tipo}" data-chiave="${esc(voce.chiave)}"${voce.competente ? ' title="Competente"' : ""}>${contenuto}</button>`;
   }
+
+  // Titolo di una parte della sezione, con un suggerimento per chi gioca.
+  const sezione = (titolo, suggerimento = "") =>
+    `<h4 class="scheda-rapida-sezione">${titolo}${suggerimento && !soloLettura() ? `<small>${suggerimento}</small>` : ""}</h4>`;
+  // Riga di un elenco: nome (e sotto una riga di dettaglio), poi i comandi.
+  const riga = (nome, dettaglio, resto = "", attributiNome = "") =>
+    `<li class="scheda-rapida-riga"><span class="scheda-rapida-voce"${attributiNome}><b>${esc(nome)}</b>${dettaglio ? `<small>${esc(dettaglio)}</small>` : ""}</span>${resto}</li>`;
+  const pulsante = (testo, attributi, classe = "") => `<button type="button" class="scheda-rapida-pbtn${classe ? ` ${classe}` : ""}" ${attributi}>${testo}</button>`;
+  const pallini = (pieni, totale, etichetta) =>
+    `<span class="scheda-rapida-pallini" role="img" aria-label="${etichetta}">${Array.from({ length: totale }, (_, i) => `<i${i < pieni ? ' class="pieno"' : ""}></i>`).join("")}</span>`;
 
   function renderCorpo(dati) {
     const corpo = $(".scheda-rapida-corpo");
     const sola = soloLettura();
+    let html;
     if (tab === "combattimento") {
       const armi = dati.armi.length
-        ? `<ul class="scheda-rapida-lista">${dati.armi.map((a) => `
-          <li class="inventario-riga">
-            <span class="inventario-nome">${esc(a.nome)}${a.testoDanno ? ` <small>${esc(a.testoDanno)}</small>` : ""}</span>
-            <span class="scheda-rapida-bonus" title="Bonus per colpire">${mod(a.bonus)}</span>
-            ${sola ? "" : `<button type="button" class="btn-tabella btn-tiro" data-azione="colpire" data-chiave="${esc(a.chiave)}">Colpire</button>${a.danno ? `<button type="button" class="btn-tabella btn-tiro" data-azione="danni" data-chiave="${esc(a.chiave)}">Danno</button>` : ""}`}
-          </li>`).join("")}</ul>`
+        ? `<ul class="scheda-rapida-lista">${dati.armi.map((a) => riga(a.nome, a.testoDanno,
+          `<span class="scheda-rapida-bonus" title="Bonus per colpire">${mod(a.bonus)}</span>${sola ? "" : `<span class="scheda-rapida-azioni">${pulsante("Colpire", `data-azione="colpire" data-chiave="${esc(a.chiave)}"`)}${a.danno ? pulsante("Danno", `data-azione="danni" data-chiave="${esc(a.chiave)}"`) : ""}</span>`}`)).join("")}</ul>`
         : '<p class="scheda-rapida-vuoto">Nessuna arma nell\'inventario.</p>';
-      corpo.innerHTML = `
-        <h4 class="scheda-rapida-sezione">Attacchi</h4>${armi}
-        <h4 class="scheda-rapida-sezione">Tiri salvezza</h4>
+      html = `${sezione("Attacchi")}${armi}
+        ${sezione("Tiri salvezza", "tocca per tirare")}
         <div class="scheda-rapida-prove">${dati.salvezze.map((s) => prova("salvezza", s)).join("")}</div>`;
     } else if (tab === "prove") {
-      corpo.innerHTML = `
-        <h4 class="scheda-rapida-sezione">Caratteristiche</h4>
+      html = `${sezione("Caratteristiche", "tocca per una prova")}
         <div class="scheda-rapida-caratteristiche">${dati.caratteristiche.map((c) => {
           const contenuto = `<small>${esc(c.abbr)} ${c.punteggio}</small><b>${mod(c.mod)}</b>`;
           return sola
             ? `<div class="scheda-rapida-caratteristica">${contenuto}</div>`
             : `<button type="button" class="scheda-rapida-caratteristica" data-azione="prova" data-tipo="caratteristica" data-chiave="${c.chiave}" aria-label="Prova di ${esc(c.nome)} ${mod(c.mod)}">${contenuto}</button>`;
         }).join("")}</div>
-        <h4 class="scheda-rapida-sezione">Abilità</h4>
-        <div class="scheda-rapida-prove">${dati.abilita.map((a) => prova("abilita", a, `${a.nome} (${a.abbr})`)).join("")}</div>
-        <p class="scheda-rapida-nota">Percezione passiva ${dati.percezionePassiva}</p>`;
+        ${sezione("Abilità")}
+        <div class="scheda-rapida-prove scheda-rapida-abilita">${dati.abilita.map((a) => prova("abilita", a, `${a.nome} (${a.abbr})`)).join("")}</div>
+        <p class="scheda-rapida-nota">Percezione passiva <b>${dati.percezionePassiva}</b></p>`;
     } else if (tab === "magia") {
-      corpo.innerHTML = renderMagia(dati.magia, sola);
+      html = renderMagia(dati.magia, sola);
     } else {
-      corpo.innerHTML = `<ul class="scheda-rapida-lista">${dati.privilegi.map((p) => {
+      html = `${sezione("Privilegi di classe")}<ul class="scheda-rapida-lista">${dati.privilegi.map((p) => {
         const finito = Number.isFinite(p.max);
-        const pallini = finito && p.max <= LIMITE_PALLINI
-          ? `<span class="pallini-privilegio" aria-label="${p.rimasti} su ${p.max} disponibili">${Array.from({ length: p.max }, (_, i) =>
-            `<span class="pallino${i < p.rimasti ? " competente" : ""}"></span>`).join("")}</span>`
-          : `<span class="privilegio-conteggio">${finito ? `${p.rimasti} / ${p.max}` : "illimitato"}</span>`;
-        const azioni = sola || !finito ? "" : `
-          <button type="button" class="btn-tabella" data-azione="usa" data-chiave="${esc(p.chiave)}"${p.rimasti === 0 ? " disabled" : ""}>Usa</button>
-          <button type="button" class="btn-tabella" data-azione="recupera" data-chiave="${esc(p.chiave)}"${p.usati === 0 ? " disabled" : ""}>Recupera</button>`;
-        return `<li class="inventario-riga scheda-rapida-privilegio">
-          <span class="inventario-nome con-descrizione" title="${esc(p.descrizione)}">${esc(p.nome)} <small>Si ricarica con un ${esc(NOMI_RICARICA[p.ricarica] || "riposo")}</small></span>
-          ${pallini}${azioni}
-        </li>`;
+        const usi = finito && p.max <= LIMITE_PALLINI
+          ? pallini(p.rimasti, p.max, `${p.rimasti} su ${p.max} disponibili`)
+          : `<span class="scheda-rapida-conteggio">${finito ? `${p.rimasti} / ${p.max}` : "illimitato"}</span>`;
+        const azioni = sola || !finito ? "" : `<span class="scheda-rapida-azioni">${
+          pulsante("Usa", `data-azione="usa" data-chiave="${esc(p.chiave)}"${p.rimasti === 0 ? " disabled" : ""}`)}${
+          pulsante("Recupera", `data-azione="recupera" data-chiave="${esc(p.chiave)}"${p.usati === 0 ? " disabled" : ""}`)}</span>`;
+        return riga(p.nome, `Si ricarica con un ${NOMI_RICARICA[p.ricarica] || "riposo"}`, usi + azioni, ` class="scheda-rapida-voce con-descrizione" title="${esc(p.descrizione)}"`);
       }).join("")}</ul>`;
     }
+    corpo.innerHTML = `<div class="scheda-rapida-pergamena">${html}</div>`;
   }
 
   function renderMagia(magia, sola) {
@@ -287,48 +313,44 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
     if (magia.incantatore) {
       html += `<p class="scheda-rapida-nota scheda-rapida-statistiche">Attacco con incantesimi <b>${mod(magia.attacco)}</b> · CD dei tiri salvezza <b>${magia.cd}</b></p>`;
       if (magia.slot.length) {
-        html += `<h4 class="scheda-rapida-sezione">Slot</h4><div class="scheda-rapida-slot">${magia.slot.map((s) =>
-          `<div class="riga-pip-slot"><span class="pip-slot-etichetta">${esc(s.etichetta)}</span>${Array.from({ length: s.max }, (_, i) => {
-            const libero = i < s.max - s.usati;
+        html += `${sezione("Slot", "tocca un pallino per segnarlo")}<div class="scheda-rapida-slot">${magia.slot.map((s) => {
+          const liberi = s.max - s.usati;
+          return `<div class="scheda-rapida-slot-riga"><span class="scheda-rapida-slot-livello">${esc(s.etichetta)}</span>${Array.from({ length: s.max }, (_, i) => {
+            const libero = i < liberi;
             return sola
-              ? `<span class="pallino${libero ? " competente" : ""}"></span>`
-              : `<button type="button" class="pallino pallino-cliccabile${libero ? " competente" : ""}" data-azione="slot" data-chiave="${s.chiave}" aria-label="Slot ${esc(s.etichetta)}: ${libero ? "libero, segna come usato" : "usato, segna come libero"}"></button>`;
-          }).join("")}</div>`).join("")}</div>`;
+              ? `<i class="scheda-rapida-pallino${libero ? " pieno" : ""}" aria-hidden="true"></i>`
+              : `<button type="button" class="scheda-rapida-pallino${libero ? " pieno" : ""}" data-azione="slot" data-chiave="${s.chiave}" data-libero="${libero}" aria-label="Slot ${esc(s.etichetta)}: ${libero ? "libero, segna come usato" : "usato, segna come libero"}"></button>`;
+          }).join("")}<small>${liberi} ${liberi === 1 ? "libero" : "liberi"} su ${s.max}</small></div>`;
+        }).join("")}</div>`;
       }
-      html += '<h4 class="scheda-rapida-sezione">Incantesimi</h4>';
+      html += sezione("Incantesimi pronti");
       html += magia.incantesimi.length
         ? `<ul class="scheda-rapida-lista">${magia.incantesimi.map((i) => {
           const tiri = sola ? "" : [
-            i.colpire ? `<button type="button" class="btn-tabella btn-tiro" data-azione="incantesimo" data-tipo="colpire" data-chiave="${esc(i.chiave)}">Colpire</button>` : "",
-            i.danno ? `<button type="button" class="btn-tabella btn-tiro" data-azione="incantesimo" data-tipo="danno" data-chiave="${esc(i.chiave)}">Danno</button>` : "",
-            i.cura ? `<button type="button" class="btn-tabella btn-tiro" data-azione="incantesimo" data-tipo="cura" data-chiave="${esc(i.chiave)}">Cura</button>` : "",
+            i.colpire ? pulsante("Colpire", `data-azione="incantesimo" data-tipo="colpire" data-chiave="${esc(i.chiave)}"`) : "",
+            i.danno ? pulsante("Danno", `data-azione="incantesimo" data-tipo="danno" data-chiave="${esc(i.chiave)}"`) : "",
+            i.cura ? pulsante("Cura", `data-azione="incantesimo" data-tipo="cura" data-chiave="${esc(i.chiave)}"`) : "",
           ].join("");
-          return `<li class="inventario-riga">
-            <span class="inventario-nome">${esc(i.nome)} <small>${i.livello === 0 ? "Trucchetto" : `${i.livello}° livello`}</small></span>
-            ${tiri}${sola || i.livello === 0 ? "" : controlloLancio(i.chiave)}
-          </li>`;
+          const scelta = !sola && i.livello > 0 && lancioAperto === i.chiave;
+          const lancia = sola || i.livello === 0 || scelta ? "" : pulsante("Lancia", `data-azione="lancia" data-chiave="${esc(i.chiave)}"`, "pri");
+          return riga(i.nome, i.livello === 0 ? "Trucchetto" : `${i.livello}° livello`,
+            `${tiri || lancia ? `<span class="scheda-rapida-azioni">${tiri}${lancia}</span>` : ""}${scelta ? sceltaSlot(i.chiave) : ""}`);
         }).join("")}</ul>`
         : '<p class="scheda-rapida-vuoto">Nessun incantesimo pronto: si scelgono dalla scheda completa.</p>';
     }
     if (magia.razziali.length) {
-      html += `<h4 class="scheda-rapida-sezione">Incantesimi di razza</h4><ul class="scheda-rapida-lista">${magia.razziali.map((r) => `
-        <li class="inventario-riga">
-          <span class="inventario-nome"><span class="pallino${r.usato ? "" : " competente"}" aria-hidden="true"></span> ${esc(r.nome)} <small>1 volta al giorno</small></span>
-          ${sola ? "" : r.usato ? '<span class="etichetta-incantesimo-razza-usato">Usato oggi</span>' : `<button type="button" class="btn-tabella btn-lancia-incantesimo" data-azione="razza" data-chiave="${esc(r.chiave)}">Lancia</button>`}
-        </li>`).join("")}</ul>`;
+      html += `${sezione("Incantesimi di razza")}<ul class="scheda-rapida-lista">${magia.razziali.map((r) => riga(r.nome, r.usato ? "Usato oggi" : "1 volta al giorno",
+        sola ? "" : r.usato ? "" : `<span class="scheda-rapida-azioni">${pulsante("Lancia", `data-azione="razza" data-chiave="${esc(r.chiave)}"`, "pri")}</span>`)).join("")}</ul>`;
     }
     return html;
   }
 
-  // «Lancia»: con più livelli di slot possibili si sceglie quale usare.
-  function controlloLancio(chiave) {
-    if (lancioAperto !== chiave) {
-      return `<button type="button" class="btn-tabella btn-lancia-incantesimo" data-azione="lancia" data-chiave="${esc(chiave)}">Lancia</button>`;
-    }
+  // «Lancia» con più livelli di slot possibili: si sceglie quale usare, su una riga sua.
+  function sceltaSlot(chiave) {
     const livelli = livelliDiLancio(scheda, chiave);
-    return `<span class="scelta-slot-incantesimo">${livelli.map((l) =>
-      `<button type="button" class="btn-tabella btn-slot-livello" data-azione="lancia-livello" data-chiave="${esc(chiave)}" data-slot="${l.chiaveSlot}">${l.livello}° (${l.disponibili})</button>`
-    ).join("")}<button type="button" class="btn-tabella btn-annulla-slot" data-azione="annulla-lancio" aria-label="Annulla">×</button></span>`;
+    return `<span class="scheda-rapida-scelta-slot" role="group" aria-label="Con quale slot?"><span>Con quale slot?</span>${livelli.map((l) =>
+      pulsante(`${l.livello}° · ${l.disponibili} ${l.disponibili === 1 ? "libero" : "liberi"}`, `data-azione="lancia-livello" data-chiave="${esc(chiave)}" data-slot="${l.chiaveSlot}"`)
+    ).join("")}${pulsante("×", 'data-azione="annulla-lancio" aria-label="Annulla"')}</span>`;
   }
 
   // ---------- Messaggi nel pannello ----------
@@ -460,7 +482,7 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
       lancioAperto = null;
       render();
     } else if (azione === "slot") {
-      const libero = bottoneAzione.classList.contains("competente");
+      const libero = bottoneAzione.dataset.libero === "true";
       const usati = { ...(scheda.slotIncantesimoUsati || {}) };
       usati[chiave] = libero ? (usati[chiave] || 0) + 1 : Math.max(0, (usati[chiave] || 0) - 1);
       scheda.slotIncantesimoUsati = usati;
@@ -507,6 +529,7 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
     bottone.hidden = true;
     bottone.setAttribute("aria-expanded", "true");
     document.body.classList.add("scheda-rapida-aperta");
+    pannello.scrollTop = 0;
     ascolta();
     $(".scheda-rapida-chiudi").focus();
   }
@@ -536,7 +559,8 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
   let inizioY = null;
   const testa = $(".scheda-rapida-testa");
   testa.addEventListener("touchstart", (evento) => {
-    if (evento.target.closest("button, input, a")) return;
+    // Solo con il foglio in cima: più giù il trascinamento fa scorrere.
+    if (evento.target.closest("button, input, a, label") || pannello.scrollTop > 0) return;
     inizioY = evento.touches[0].clientY;
   }, { passive: true });
   testa.addEventListener("touchmove", (evento) => {
@@ -551,6 +575,14 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
     if (spostamento > 90) chiudi();
     else pannello.style.transform = "";
   });
+
+  // Sul telefono il foglio scorre tutto: quando la testata esce, compare la
+  // barra compatta (sul computer scorre solo il corpo e la testata resta).
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([voce]) => {
+      pannello.classList.toggle("testa-fuori", !voce.isIntersecting && !pannello.hidden);
+    }, { root: pannello, rootMargin: "-56px 0px 0px 0px" }).observe(testa);
+  }
 
   function aggiornaBottone() {
     const disponibile = isDM ? personaggi().length > 0 : Boolean(party().find((r) => r.uid === uid)?.schedaId);

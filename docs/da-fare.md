@@ -20,8 +20,9 @@ integra solo ciò che è segnato ✅, con una pull request per lotto.
   Magia / Zaino / Storia, barra fissa coi PF) e del Calendario (prossima
   sessione in evidenza, mese blu, date da scegliere e altre sessioni in
   pergamena, mese compatto sul telefono, finestra «Organizza una sessione»
-  per il DM). Prossimi passi, ognuno con le
-  sue tavole: scheda rapida della Sessione, login
+  per il DM) e della scheda rapida della Sessione (testata blu e sezioni in
+  pergamena, cassetto a destra sul computer, foglio dal basso sul telefono).
+  Prossimi passi, ognuno con le sue tavole: login
   (e le altre pagine prima dell'accesso), il velo di caricamento ancora
   col vecchio d20, una famiglia di icone nuova. I colori sono già in base.css
   (variabili `--rd-*`).
