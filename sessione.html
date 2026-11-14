@@ -52,51 +52,91 @@
           <header class="rd-testata-pagina">
             <button type="button" id="rd-btn-menu" class="rd-btn-menu" aria-label="Apri il menu" aria-controls="rd-barra" aria-expanded="false"><span class="rd-menu-icona" aria-hidden="true"><i></i><i></i><i></i></span></button>
             <div class="rd-titoli">
-              <span id="badge-stato-sessione" class="role-badge rd-stato-pagina"></span>
+              <p id="rd-riga-campagna" class="rd-riga-campagna" hidden></p>
               <h1 class="rd-titolo-pagina">Sessione</h1>
             </div>
-            <div class="rd-comandi-pagina"></div>
+            <div class="rd-comandi-pagina">
+              <span id="badge-stato-sessione" class="sessione-chip-stato" hidden></span>
+              <button type="button" id="btn-chiudi-sessione" class="rd-btn rd-btn-secondario" hidden>Chiudi sessione</button>
+              <span id="slot-scheda-rapida" class="sessione-slot-scheda"></span>
+            </div>
             <div id="slot-utente" class="slot-utente rd-slot"></div>
           </header>
 
-          <div id="controlli-dm" style="display:flex; gap:12px; margin-bottom:24px;" hidden>
-            <button id="btn-apri-sessione" class="btn btn-secondary" style="width:auto; padding:10px 22px;">Apri nuova sessione</button>
-            <button id="btn-chiudi-sessione" class="btn btn-ghost btn-ghost-chiaro" hidden>Chiudi sessione</button>
-          </div>
+          <!-- Senza sessione: la prossima in calendario e, per il DM, l'azione per aprirla. -->
+          <section id="intro-sessione" class="sessione-intro" hidden>
+            <div class="sessione-intro-testi">
+              <span class="sessione-intro-etichetta">Nessuna sessione in corso</span>
+              <h2 id="intro-sessione-titolo"></h2>
+              <p id="intro-sessione-testo"></p>
+            </div>
+            <div class="sessione-intro-azioni">
+              <button type="button" id="btn-apri-sessione" class="rd-btn rd-btn-primario" hidden>Apri nuova sessione</button>
+              <a id="link-intro-calendario" href="calendario.html" class="rd-btn rd-btn-secondario" hidden>Apri il calendario</a>
+            </div>
+          </section>
+
+          <!-- Telefono, sessione in corso: le tre schede della pagina. -->
+          <nav id="schede-sessione" class="sessione-schede" aria-label="Sezioni della sessione" hidden>
+            <button type="button" class="sessione-scheda" data-scheda="tavolo" aria-pressed="true">Tavolo<span class="sessione-scheda-punto" hidden></span></button>
+            <button type="button" class="sessione-scheda" data-scheda="diario" aria-pressed="false">Diario<span class="sessione-scheda-punto" hidden></span></button>
+            <button type="button" class="sessione-scheda" data-scheda="party" aria-pressed="false">Party<span class="sessione-scheda-punto" hidden></span></button>
+          </nav>
 
           <div id="nessuna-campagna" class="panel-wide" hidden>
             <p class="scheda-testo-libero" id="testo-nessuna-campagna"></p>
           </div>
 
-          <!-- Due colonne sul computer (appunti e contenuti a sinistra, party e
-               musica a destra); una sola colonna sul telefono, nell'ordine
-               combattimento (se in corso), appunti, dadi, party, contenuti, musica (vedi
-               .sessione-colonna in sessione.css). La mappa sta sopra gli appunti
-               (per i giocatori solo quando il DM ne ha messa una in tavola). -->
+          <!-- Computer: a sinistra la «scena» (combattimento, mappa, contenuti,
+               musica), a destra la colonna del tavolo (party, vaschetta,
+               appunti) che resta in vista mentre si scorre. Telefono: con la
+               sessione in corso tre schede (Tavolo, Diario, Party, vedi
+               data-scheda); senza sessione una colonna corta (D-031). -->
           <div id="hub-sessione" class="sessione-layout">
-            <div class="sessione-colonna">
-              <div class="panel sessione-pannello-combattimento" id="pannello-combattimento" hidden></div>
+            <div class="sessione-colonna sessione-scena">
+              <div class="panel rd-blu sessione-pannello-combattimento" data-scheda="tavolo" id="pannello-combattimento" hidden></div>
 
-              <div class="panel sessione-pannello-mappa" id="pannello-mappa" hidden></div>
+              <div class="panel rd-blu sessione-pannello-mappa" data-scheda="tavolo" id="pannello-mappa" hidden></div>
 
-              <div class="panel sessione-pannello-appunti">
+              <div class="panel rd-blu sessione-pannello-contenuti" id="pannello-contenuti" data-scheda="diario">
                 <div class="sessione-appunti-intestazione">
-                  <h3>Appunti della sessione</h3>
-                  <button id="btn-apri-registro" class="btn-tabella" type="button">Registro</button>
+                  <h3 id="titolo-contenuti">Mostrati dal DM</h3>
+                  <div class="azioni-intestazione">
+                    <button id="btn-collega-contenuti" class="btn-tabella" type="button" hidden>+ Collega</button>
+                    <a id="link-contenuti" class="link-intestazione" hidden></a>
+                  </div>
                 </div>
-                <div id="lista-appunti" class="sessione-appunti-lista"></div>
-                <div id="appunti-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4 C13 4 6 10 4 20 C10 19 15 16 18 11"/><line x1="4" y1="20" x2="9" y2="15"/><path d="M13 9 C14.5 9.5 15.5 10.5 16 12" opacity="0.5"/></svg><p>Nessun appunto ancora per questa sessione.</p></div>
-                <div id="nessuna-sessione-msg" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9.5" y="10" width="5" height="11" rx="1"/><line x1="12" y1="10" x2="12" y2="7"/><path d="M12 7 C12 7 13.2 5.6 12.4 4.2" opacity="0.45"/><line x1="6" y1="21" x2="18" y2="21"/></svg><p>Nessuna sessione in corso: gli appunti si potranno scrivere quando il Dungeon Master ne aprirà una.</p></div>
-                <form id="form-appunto" class="sessione-appunti-form" hidden>
-                  <textarea id="campo-appunto" class="textarea-libero" rows="2" placeholder="Scrivi un appunto..." maxlength="2000" required></textarea>
-                  <button type="submit" class="btn azione-aggiungi" style="width:auto; padding:10px 22px;">Aggiungi</button>
-                </form>
+                <ul id="lista-contenuti-sessione" class="lista-contenuti-sessione"></ul>
+                <div id="contenuti-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 26 C14 14 22 8 32 8 C42 8 50 14 50 26 L50 34 C50 46 42 54 32 54 C22 54 14 46 14 34 Z"/><path d="M20 28 C22 25 26 25 28 28"/><path d="M36 28 C38 25 42 25 44 28"/><path d="M26 40 C29 43 35 43 38 40"/></svg><p></p></div>
               </div>
 
-              <!-- I tiri finiscono negli appunti qui sopra, ma il lanciatore ha
-                   il suo pannello: i campi, la vaschetta in cui rotolano i dadi
+              <div class="panel rd-blu sessione-pannello-musica" id="pannello-musica" data-scheda="party">
+                <div class="sessione-appunti-intestazione">
+                  <h3>Musica</h3>
+                  <a id="link-controllo-musica" href="controllo-musica.html" class="link-intestazione" hidden>Controllo musica</a>
+                </div>
+                <div id="corpo-musica-sessione"><p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>
+              </div>
+            </div>
+
+            <div class="sessione-colonna sessione-tavolo">
+              <div class="panel rd-perg sessione-pannello-party" id="pannello-party" data-scheda="party">
+                <div class="sessione-appunti-intestazione">
+                  <h3>Party</h3>
+                  <div id="azioni-riposo-party" class="azioni-intestazione" hidden>
+                    <button id="btn-riposo-breve-party" class="btn-tabella" type="button">Riposo breve</button>
+                    <button id="btn-riposo-lungo-party" class="btn-tabella" type="button">Riposo lungo</button>
+                  </div>
+                </div>
+                <div id="banner-riposo" class="banner-riposo" role="status" hidden></div>
+                <ul id="lista-party" class="lista-party-sessione"></ul>
+                <div id="party-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20 C3 15.5 5.5 13 8 13 C10.5 13 13 15.5 13 20"/><path d="M12 20 C12 15.8 14.2 13.4 16 13.4 C18.5 13.4 21 15.8 21 20" opacity="0.6"/></svg><p>Nessun giocatore registrato ancora.</p></div>
+              </div>
+
+              <!-- I tiri finiscono negli appunti, ma il lanciatore ha il suo
+                   pannello: i campi, la vaschetta in cui rotolano i dadi
                    (bassa, sempre in vista) e il risultato. -->
-              <div class="panel sessione-pannello-dadi" id="pannello-dadi">
+              <div class="panel rd-blu sessione-pannello-dadi" id="pannello-dadi" data-scheda="tavolo">
                 <div class="sessione-appunti-intestazione">
                   <h3>Vaschetta dei dadi</h3>
                 </div>
@@ -119,44 +159,22 @@
                 <div id="esito-dadi" class="esito-dadi" role="status"></div>
               </div>
 
-              <div class="panel sessione-pannello-contenuti" id="pannello-contenuti">
+              <div class="panel rd-perg sessione-pannello-appunti" id="pannello-appunti" data-scheda="diario">
                 <div class="sessione-appunti-intestazione">
-                  <h3 id="titolo-contenuti">Mostrati dal DM</h3>
-                  <div class="azioni-intestazione">
-                    <button id="btn-collega-contenuti" class="btn-tabella" type="button" hidden>+ Collega</button>
-                    <a id="link-contenuti" class="link-intestazione" hidden></a>
-                  </div>
+                  <h3>Appunti</h3>
+                  <button id="btn-apri-registro" class="btn-tabella" type="button">Registro</button>
                 </div>
-                <ul id="lista-contenuti-sessione" class="lista-contenuti-sessione"></ul>
-                <div id="contenuti-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 26 C14 14 22 8 32 8 C42 8 50 14 50 26 L50 34 C50 46 42 54 32 54 C22 54 14 46 14 34 Z"/><path d="M20 28 C22 25 26 25 28 28"/><path d="M36 28 C38 25 42 25 44 28"/><path d="M26 40 C29 43 35 43 38 40"/></svg><p></p></div>
-              </div>
-            </div>
-
-            <div class="sessione-colonna">
-              <div class="panel sessione-pannello-party">
-                <div class="sessione-appunti-intestazione">
-                  <h3>Party</h3>
-                  <div id="azioni-riposo-party" class="azioni-intestazione" hidden>
-                    <button id="btn-riposo-breve-party" class="btn-tabella" type="button">Riposo breve</button>
-                    <button id="btn-riposo-lungo-party" class="btn-tabella" type="button">Riposo lungo</button>
-                  </div>
-                </div>
-                <div id="banner-riposo" class="banner-riposo" role="status" hidden></div>
-                <ul id="lista-party" class="lista-party-sessione"></ul>
-                <div id="party-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20 C3 15.5 5.5 13 8 13 C10.5 13 13 15.5 13 20"/><path d="M12 20 C12 15.8 14.2 13.4 16 13.4 C18.5 13.4 21 15.8 21 20" opacity="0.6"/></svg><p>Nessun giocatore registrato ancora.</p></div>
-              </div>
-
-              <div class="panel sessione-pannello-musica">
-                <div class="sessione-appunti-intestazione">
-                  <h3>Musica</h3>
-                  <a id="link-controllo-musica" href="controllo-musica.html" class="link-intestazione" hidden>Controllo musica</a>
-                </div>
-                <div id="corpo-musica-sessione"><p class="sessione-placeholder">Nessuna musica in riproduzione.</p></div>
+                <div id="lista-appunti" class="sessione-appunti-lista"></div>
+                <div id="appunti-vuoto" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4 C13 4 6 10 4 20 C10 19 15 16 18 11"/><line x1="4" y1="20" x2="9" y2="15"/><path d="M13 9 C14.5 9.5 15.5 10.5 16 12" opacity="0.5"/></svg><p>Nessun appunto ancora per questa sessione.</p></div>
+                <div id="nessuna-sessione-msg" class="stato-vuoto-riga" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9.5" y="10" width="5" height="11" rx="1"/><line x1="12" y1="10" x2="12" y2="7"/><path d="M12 7 C12 7 13.2 5.6 12.4 4.2" opacity="0.45"/><line x1="6" y1="21" x2="18" y2="21"/></svg><p>Nessuna sessione in corso: gli appunti si potranno scrivere quando il Dungeon Master ne aprirà una.</p></div>
+                <form id="form-appunto" class="sessione-appunti-form" hidden>
+                  <textarea id="campo-appunto" class="textarea-libero" rows="2" placeholder="Scrivi un appunto..." maxlength="2000" required></textarea>
+                  <button type="submit" class="btn azione-aggiungi" style="width:auto; padding:10px 22px;">Aggiungi</button>
+                </form>
               </div>
             </div>
           </div>
         </div>
-  
       </main>
     </div>
   </div>

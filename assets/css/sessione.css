@@ -931,39 +931,31 @@
   margin-top: 12px;
 }
 
+/* Sul telefono, nell'ordine delle schede (D-031): Tavolo (combattimento,
+   mappa, vaschetta), Diario (appunti, contenuti), Party (party, musica). */
 @media (max-width: 899px) {
-  .sessione-pannello-combattimento { order: 0; }
-}
+  .sessione-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
 
-@media (max-width: 899px) {
-  .sessione-pannello-mappa { order: 1; }
-}
+  .sessione-pannello-combattimento { order: 1; }
+  .sessione-pannello-mappa { order: 2; }
+  .sessione-pannello-dadi { order: 3; }
+  .sessione-pannello-appunti { order: 4; }
+  .sessione-pannello-contenuti { order: 5; }
+  .sessione-pannello-party { order: 6; }
+  .sessione-pannello-musica { order: 7; }
 
-@media (max-width: 899px) {
-  .sessione-pannello-appunti { order: 1; }
-}
-
-/* Subito dopo gli appunti, dove finiscono i tiri. */
-@media (max-width: 899px) {
-  .sessione-pannello-dadi { order: 1; }
-}
-
-@media (max-width: 899px) {
-  .sessione-pannello-party { order: 2; }
-}
-
-@media (max-width: 899px) {
-  .sessione-pannello-contenuti { order: 3; }
-}
-
-@media (max-width: 899px) {
-  .sessione-pannello-musica { order: 4; }
+  /* Senza sessione: party subito dopo la mappa, prima della vaschetta. */
+  .senza-sessione .sessione-pannello-party { order: 2; }
 }
 
 /* La Sessione resta aperta al tavolo: sui computer usa più spazio. */
 @media (min-width: 1000px) {
   .dashboard-wrap:has(#hub-sessione) {
-    max-width: 1200px;
+    max-width: 1320px;
   }
 }
 
@@ -2834,5 +2826,409 @@ body:has(.btn-scheda-rapida:not([hidden])) .dashboard-wrap {
 @media (max-width: 760px) {
   body:has(.btn-scheda-rapida:not([hidden])) .toast {
     bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ---------- Sessione ridisegnata (D-031) ----------
+   Pannelli blu per gli strumenti (combattimento, mappa, contenuti, vaschetta,
+   musica), pergamena per ciò che si legge (party e appunti). I componenti
+   interni usano le variabili del tema: nei pannelli blu diventano quelle del
+   blu notte (testo avorio, accenti oro); i pochi elementi pieni restano cremisi. */
+.pagina-ridisegnata .panel.rd-blu {
+  --color-ink: var(--rd-avorio);
+  --color-ink-soft: var(--rd-testo-2);
+  --color-burgundy: var(--rd-oro);
+  --color-burgundy-bright: #f4cf96;
+  --color-gold: var(--rd-bronzo);
+  --color-gold-bright: var(--rd-oro);
+  --color-parchment: var(--rd-avorio);
+  --color-parchment-dark: var(--rd-testo-2);
+  background: rgba(24, 43, 58, 0.94);
+  color: var(--rd-avorio);
+  border: 1px solid var(--rd-bordo);
+  border-radius: 10px;
+  padding: 16px 18px 18px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.pagina-ridisegnata .panel.rd-perg {
+  --color-ink: var(--rd-inchiostro);
+  --color-ink-soft: var(--rd-inchiostro-2);
+  --color-burgundy: var(--rd-cremisi);
+  background: var(--rd-pergamena);
+  color: var(--rd-inchiostro);
+  border: none;
+  border-radius: 10px;
+  padding: 16px 18px 18px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+
+.pagina-ridisegnata .panel:is(.rd-blu, .rd-perg) .sessione-appunti-intestazione h3,
+.pagina-ridisegnata .panel:is(.rd-blu, .rd-perg) > .sessione-appunti-intestazione:first-child h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.6px;
+}
+
+.pagina-ridisegnata .panel.rd-blu h3 {
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata .panel.rd-perg h3 {
+  color: var(--rd-inchiostro);
+}
+
+.pagina-ridisegnata .rd-blu :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]), select, textarea) {
+  background: #0f1b24;
+  border-color: var(--rd-bordo);
+  color: var(--rd-avorio);
+}
+
+/* Tracker e righe nei pannelli blu. */
+.pagina-ridisegnata .rd-blu .riga-combattente {
+  background: rgba(16, 30, 42, 0.55);
+  border-color: #2c3d49;
+}
+
+.pagina-ridisegnata .rd-blu .riga-combattente.di-turno {
+  background: var(--rd-selezione);
+  border-color: var(--rd-bronzo);
+  box-shadow: 0 0 0 3px rgba(237, 187, 118, 0.18);
+}
+
+.pagina-ridisegnata .rd-blu .con-cornice .riga-combattente.di-turno {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.pagina-ridisegnata .rd-blu .combattente-sub[data-salute="ferito"] {
+  color: #f0c56e;
+}
+
+.pagina-ridisegnata .rd-blu .combattente-sub:is([data-salute="grave"], [data-salute="a terra"]) {
+  color: #ff9d8f;
+}
+
+.pagina-ridisegnata .rd-blu .btn-tabella.btn-tabella-pericolo {
+  color: #ff9d8f;
+  border-color: rgba(255, 157, 143, 0.7);
+}
+
+.pagina-ridisegnata .rd-blu .pill-tutti {
+  color: #9fd49a;
+}
+
+.pagina-ridisegnata .rd-blu .pill-alcuni {
+  color: var(--rd-oro);
+}
+
+.pagina-ridisegnata .rd-blu .pill-nascosto {
+  color: var(--rd-testo-2);
+}
+
+.pagina-ridisegnata .rd-blu :is(.input-dadi, .textarea-libero)::placeholder {
+  color: var(--rd-testo-2);
+  opacity: 0.8;
+}
+
+.pagina-ridisegnata .rd-blu .select-dadi option {
+  background: #0f1b24;
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata .rd-blu :is(.pedina-terra, .pedina-numero, .sigillo-nuovo, .banner-turno, .mappa-etichetta-misura.oltre, .bestiario-tag, .blocco-tiro, .toggle-condizione[aria-pressed="true"], .bestiario-chip-cond, .bestiario-pallino, .btn-tabella.btn-tabella-evidenza, .btn-azione.pieno) {
+  background: var(--rd-cremisi);
+  border-color: var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
+}
+
+.pagina-ridisegnata .rd-perg .btn.azione-aggiungi {
+  background: var(--rd-cremisi);
+  border-color: var(--rd-cremisi-bordo);
+  box-shadow: none;
+  color: var(--rd-avorio);
+}
+
+/* Testata: stato della sessione e comandi. */
+.sessione-chip-stato {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 21px;
+  background: rgba(135, 60, 57, 0.92);
+  border: 1px solid var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
+  font-size: 17px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.sessione-chip-stato i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffb3a8;
+  box-shadow: 0 0 0 3px rgba(255, 179, 168, 0.25);
+}
+
+.sessione-chip-stato b {
+  font-weight: 600;
+}
+
+.sessione-chip-stato span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pagina-ridisegnata .rd-comandi-pagina .rd-btn {
+  min-height: 42px;
+  padding: 0 16px;
+  font-size: 17px;
+}
+
+/* «La mia scheda» / «Schede del party»: il bottone sta nella testata. */
+.sessione-slot-scheda {
+  display: contents;
+}
+
+.pagina-ridisegnata .btn-scheda-rapida {
+  width: auto;
+  background: var(--rd-cremisi);
+  border: 1px solid var(--rd-cremisi-bordo);
+  border-radius: 22px;
+  color: var(--rd-avorio);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+@media (min-width: 900px) {
+  .pagina-ridisegnata .sessione-slot-scheda .btn-scheda-rapida {
+    position: static;
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: rgba(41, 59, 70, 0.85);
+    border-color: var(--rd-bordo);
+    box-shadow: none;
+    font-family: var(--font-body);
+    font-size: 17px;
+    letter-spacing: 0;
+  }
+
+  .pagina-ridisegnata .sessione-slot-scheda .btn-scheda-rapida svg {
+    width: 17px;
+    height: 17px;
+    color: var(--rd-oro);
+    fill: currentColor;
+  }
+
+  @media (hover: hover) {
+    .pagina-ridisegnata .sessione-slot-scheda .btn-scheda-rapida:hover {
+      border-color: var(--rd-bronzo);
+    }
+  }
+
+  body:has(.sessione-slot-scheda .btn-scheda-rapida) .dashboard-wrap {
+    padding-bottom: 0;
+  }
+}
+
+/* Senza sessione: la prossima in calendario, come il pannello della dashboard. */
+.sessione-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin-bottom: 20px;
+  padding: 24px 30px;
+  border-radius: 12px;
+  background: rgba(20, 38, 53, 0.87);
+  border: 1px solid var(--rd-bronzo);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+}
+
+.sessione-intro-testi {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.sessione-intro-etichetta {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--rd-oro);
+}
+
+.sessione-intro h2 {
+  margin: 6px 0 4px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.15;
+  color: var(--rd-avorio);
+}
+
+.sessione-intro p {
+  margin: 0;
+  font-size: 18px;
+  color: var(--rd-testo-2);
+}
+
+.sessione-intro-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Fuori sessione appunti, contenuti e musica non servono. */
+.senza-sessione :is(.sessione-pannello-appunti, .sessione-pannello-contenuti, .sessione-pannello-musica) {
+  display: none;
+}
+
+/* Le schede esistono solo sul telefono. */
+.sessione-schede {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  /* Scena larga a sinistra, colonna del tavolo a destra. */
+  .sessione-layout {
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 30vw, 400px);
+  }
+
+  .sessione-colonna {
+    gap: 18px;
+  }
+
+  .sessione-pannello-appunti .sessione-appunti-lista {
+    max-height: 220px;
+  }
+
+  /* Niente nella scena (giocatore senza sessione, mappa e combattimento):
+     party e vaschetta affiancati. */
+  .sessione-layout.senza-sessione:not(:has(:is(#pannello-combattimento, #pannello-mappa):not([hidden]))) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sessione-layout.senza-sessione:not(:has(:is(#pannello-combattimento, #pannello-mappa):not([hidden]))) > .sessione-scena {
+    display: none;
+  }
+
+  .sessione-layout.senza-sessione:not(:has(:is(#pannello-combattimento, #pannello-mappa):not([hidden]))) > .sessione-tavolo {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+/* La colonna del tavolo resta in vista mentre si scorre la scena; se è più
+   alta dello schermo scorre per conto suo. */
+@media (min-width: 900px) {
+  .sessione-layout:not(.senza-sessione) > .sessione-tavolo {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rd-bordo) transparent;
+    /* Spazio per le ombre dei pannelli, che lo scorrimento taglierebbe. */
+    margin: -6px -10px;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 899px) {
+  .sessione-chip-stato {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 15px;
+    max-width: 100%;
+  }
+
+  .pagina-ridisegnata .rd-comandi-pagina .rd-btn {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 15px;
+  }
+
+  .sessione-intro {
+    margin: 26px 0 14px;
+    padding: 18px;
+  }
+
+  .sessione-intro h2 {
+    font-size: 23px;
+  }
+
+  .sessione-intro p {
+    font-size: 16px;
+  }
+
+  .sessione-intro-azioni,
+  .sessione-intro-azioni .rd-btn {
+    width: 100%;
+  }
+
+  /* Le tre schede, fisse sotto la testata mentre si scorre. */
+  .sessione-schede:not([hidden]) {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin: 0 -16px 14px;
+    padding: 6px 10px;
+    background: rgba(19, 35, 49, 0.97);
+    border-top: 1px solid var(--rd-bordo-scuro);
+    border-bottom: 1px solid var(--rd-bordo-scuro);
+  }
+
+  .sessione-scheda {
+    position: relative;
+    min-height: 42px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: none;
+    color: var(--rd-testo-2);
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+  }
+
+  .sessione-scheda[aria-pressed="true"] {
+    background: var(--rd-selezione);
+    border-color: var(--rd-bordo);
+    color: var(--rd-avorio);
+    box-shadow: inset 0 -2px 0 var(--rd-oro);
+  }
+
+  .sessione-scheda-punto {
+    position: absolute;
+    top: 8px;
+    right: 14px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e0574a;
+    box-shadow: 0 0 0 3px rgba(224, 87, 74, 0.25);
+  }
+
+  /* Con le schede si vedono solo i pannelli della scheda scelta. */
+  .sessione-layout:not(.senza-sessione)[data-scheda="tavolo"] .panel[data-scheda]:not([data-scheda="tavolo"]),
+  .sessione-layout:not(.senza-sessione)[data-scheda="diario"] .panel[data-scheda]:not([data-scheda="diario"]),
+  .sessione-layout:not(.senza-sessione)[data-scheda="party"] .panel[data-scheda]:not([data-scheda="party"]) {
+    display: none;
   }
 }

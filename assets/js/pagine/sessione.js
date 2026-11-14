@@ -21,6 +21,7 @@ import {
   eliminaSessioni,
   elencaAppuntiSessione,
   elencaSessioniProgrammate,
+  sessioneInCorso,
   eliminaAppunto,
   avviaRiposoBreve,
   terminaRiposoBreve,
@@ -110,9 +111,9 @@ const istante = (a) => a.creatoIl?.toMillis?.() ?? Number.MAX_SAFE_INTEGER;
 
 function riceviAppunti(appunti) {
   if (appuntiGiaVisti) {
-    appunti
-      .filter((a) => !appuntiGiaVisti.has(a.id) && a.tipo === "tiro" && a.autoreUid !== uidCorrente)
-      .forEach((a) => mostraAvvisoContenuto(a.testo));
+    const nuovi = appunti.filter((a) => !appuntiGiaVisti.has(a.id) && a.autoreUid !== uidCorrente);
+    nuovi.filter((a) => a.tipo === "tiro").forEach((a) => mostraAvvisoContenuto(a.testo));
+    if (nuovi.length) segnaNovita("diario");
   }
   appuntiGiaVisti = new Set(appunti.map((a) => a.id));
   appuntiPubblici = appunti;
@@ -534,9 +535,63 @@ async function caricaParty() {
   });
 }
 
-function aggiornaBadgeStato(inCorso) {
+// ---------- Stato della sessione, schede del telefono ----------
+// Nella testata il chip «● In corso · Sessione 4 — titolo» (e per il DM
+// «Chiudi sessione»); senza sessione, il pannello con la prossima in calendario.
+const hub = document.getElementById("hub-sessione");
+const schede = document.getElementById("schede-sessione");
+const SCHEDA_SALVATA = "sd-sessione-scheda";
+
+async function aggiornaBadgeStato(inCorso) {
   const badge = document.getElementById("badge-stato-sessione");
-  badge.textContent = inCorso ? "Sessione in corso" : "Nessuna sessione in corso";
+  badge.hidden = !inCorso;
+  if (!inCorso) return;
+  badge.innerHTML = '<i aria-hidden="true"></i><b>In corso</b>';
+  try {
+    const sessione = await sessioneInCorso(campagnaIdCorrente);
+    if (sessione && sessioneAttivaId === sessione.id) {
+      badge.innerHTML = `<i aria-hidden="true"></i><b>In corso</b><span> · ${esc(etichettaSessione(sessione))}</span>`;
+    }
+  } catch (errore) {
+    console.error(errore);
+  }
+}
+
+function mostraScheda(scheda) {
+  hub.dataset.scheda = scheda;
+  schede.querySelectorAll("[data-scheda]").forEach((b) => {
+    const attiva = b.dataset.scheda === scheda;
+    b.setAttribute("aria-pressed", String(attiva));
+    if (attiva) b.querySelector(".sessione-scheda-punto").hidden = true;
+  });
+  try {
+    sessionStorage.setItem(SCHEDA_SALVATA, scheda);
+  } catch {
+    // Senza memoria della scheda si riparte da «Tavolo».
+  }
+}
+
+// Pallino sulla scheda (solo telefono, sessione in corso) quando arriva una
+// novità mentre se ne guarda un'altra: il turno su «Tavolo», appunti e
+// contenuti su «Diario».
+function segnaNovita(scheda) {
+  if (schede.hidden || hub.dataset.scheda === scheda) return;
+  schede.querySelector(`[data-scheda="${scheda}"] .sessione-scheda-punto`).hidden = false;
+}
+
+schede.addEventListener("click", (evento) => {
+  const bottone = evento.target.closest("[data-scheda]");
+  if (bottone) mostraScheda(bottone.dataset.scheda);
+});
+
+{
+  let salvata = null;
+  try {
+    salvata = sessionStorage.getItem(SCHEDA_SALVATA);
+  } catch {
+    // Nessuna scheda salvata.
+  }
+  mostraScheda(["tavolo", "diario", "party"].includes(salvata) ? salvata : "tavolo");
 }
 
 function fermaAscolto() {
@@ -562,34 +617,53 @@ function attivaAscolto(id) {
 function mostraStatoAttivo(id) {
   sessioneAttivaId = id;
   aggiornaBadgeStato(true);
+  hub.classList.remove("senza-sessione");
+  schede.hidden = false;
+  document.getElementById("intro-sessione").hidden = true;
   document.getElementById("btn-apri-sessione").hidden = true;
-  document.getElementById("btn-chiudi-sessione").hidden = false;
+  document.getElementById("btn-chiudi-sessione").hidden = !puoModerare;
   document.getElementById("nessuna-sessione-msg").hidden = true;
   document.getElementById("form-appunto").hidden = false;
   attivaAscolto(id);
   renderContenuti();
 }
 
-// Apertura guidata: il pulsante dice quale sessione programmata si aprirà
-// (la prima in calendario, vedi apriSessione).
-async function aggiornaEtichettaApri() {
+// Pannello senza sessione: la prima in calendario e, per il DM, il pulsante
+// che dice quale sessione programmata si aprirà (vedi apriSessione).
+async function aggiornaIntro() {
+  if (!campagnaIdCorrente) return;
+  const titolo = document.getElementById("intro-sessione-titolo");
+  const testo = document.getElementById("intro-sessione-testo");
   const bottone = document.getElementById("btn-apri-sessione");
-  if (!puoModerare || !campagnaIdCorrente) return;
+  let prima = null;
   try {
-    const [prima] = await elencaSessioniProgrammate(campagnaIdCorrente);
-    if (!prima) bottone.textContent = "Apri nuova sessione";
-    else if (prima.dataProgrammata === oggiIso()) bottone.textContent = `Apri la sessione di oggi (${etichettaSessione(prima)})`;
-    else bottone.textContent = `Apri la ${etichettaSessione(prima)} (programmata per ${formattaDataOra(prima.dataProgrammata, prima.oraProgrammata)})`;
+    [prima] = await elencaSessioniProgrammate(campagnaIdCorrente);
   } catch (errore) {
     console.error(errore);
   }
+  const oggi = prima?.dataProgrammata === oggiIso();
+  if (!prima) titolo.textContent = "Nessuna sessione in calendario";
+  else if (oggi) titolo.textContent = `Oggi${prima.oraProgrammata ? ` alle ${prima.oraProgrammata}` : ""} · ${etichettaSessione(prima)}`;
+  else titolo.textContent = `Prossima: ${formattaDataOra(prima.dataProgrammata, prima.oraProgrammata)} · ${etichettaSessione(prima)}`;
+  if (puoModerare) {
+    testo.textContent = oggi
+      ? "Quando il party è al tavolo, apri la sessione: appunti, tiri e contenuti mostrati tornano a funzionare."
+      : "Intanto puoi preparare mappa e contenuti.";
+    bottone.textContent = !prima ? "Apri nuova sessione" : oggi ? "Apri la sessione di oggi" : `Apri la sessione ${prima.numero ?? ""}`.trim();
+  } else {
+    testo.textContent = "Gli appunti si potranno scrivere quando il Dungeon Master aprirà la sessione. I dadi funzionano anche ora: il risultato lo vedi solo tu.";
+  }
+  bottone.hidden = !puoModerare;
+  document.getElementById("link-intro-calendario").hidden = puoModerare;
 }
 
 function mostraStatoInattivo() {
-  aggiornaEtichettaApri();
   sessioneAttivaId = null;
+  aggiornaIntro();
   aggiornaBadgeStato(false);
-  document.getElementById("btn-apri-sessione").hidden = false;
+  hub.classList.add("senza-sessione");
+  schede.hidden = true;
+  document.getElementById("intro-sessione").hidden = false;
   document.getElementById("btn-chiudi-sessione").hidden = true;
   document.getElementById("form-appunto").hidden = true;
   document.getElementById("nessuna-sessione-msg").hidden = false;
@@ -765,7 +839,10 @@ function renderContenuti() {
     const idOra = new Set(elenco.map((c) => c.id));
     if (contenutiGiaVisti) {
       const nuovi = elenco.filter((c) => !contenutiGiaVisti.has(c.id));
-      if (nuovi.length) mostraAvvisoContenuto(nuovi.length === 1 ? `Il DM ti mostra: ${nuovi[0].titolo}` : `Il DM ti mostra ${nuovi.length} contenuti`);
+      if (nuovi.length) {
+        mostraAvvisoContenuto(nuovi.length === 1 ? `Il DM ti mostra: ${nuovi[0].titolo}` : `Il DM ti mostra ${nuovi.length} contenuti`);
+        segnaNovita("diario");
+      }
     }
     contenutiGiaVisti = idOra;
     chiudiLightboxSeSparito(idOra);
@@ -841,14 +918,13 @@ proteggiPagina(async (user, profilo) => {
       ? "Non hai ancora una campagna attiva: creane una dal pannello Gestione campagna."
       : "Non sei ancora membro di una campagna attiva: chiedi al tuo Dungeon Master di aggiungerti.";
     document.getElementById("nessuna-campagna").hidden = false;
-    document.getElementById("hub-sessione").hidden = true;
+    hub.hidden = true;
     veil.style.display = "none";
     contenuto.style.display = "block";
     return;
   }
   campagnaIdCorrente = campagna.id;
 
-  document.getElementById("controlli-dm").hidden = !isDmOAdmin;
   document.getElementById("azioni-riposo-party").hidden = !isDmOAdmin;
   document.getElementById("dadi-nascosto-wrap").hidden = !isDmOAdmin;
   document.getElementById("link-controllo-musica").hidden = !isDmOAdmin;
@@ -879,7 +955,10 @@ proteggiPagina(async (user, profilo) => {
     isDM: isDmOAdmin,
     party: () => ultimoParty,
     libreria: () => contenuti,
-    avviso: (testo, errore = false) => mostraAvvisoContenuto(testo, errore),
+    avviso: (testo, errore = false) => {
+      mostraAvvisoContenuto(testo, errore);
+      if (testo === "Tocca a te!") segnaNovita("tavolo");
+    },
     // I tiri di iniziativa del DM (per i nemici) restano nascosti.
     registraTiro: (chi, tiro) => registraTiro(chi, tiro, isDmOAdmin),
     mappaInTavola: () => pannelloMappa?.haMappaInTavola() ?? false,
