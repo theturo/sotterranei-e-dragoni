@@ -32,12 +32,13 @@ export async function ottieniStatoSessione(campagnaId) {
   return snapshot.exists() ? snapshot.data() : { inCorso: false, sessioneAttivaId: null };
 }
 
-// La sessione in corso ({ id, numero }), o null se non ce n'è una.
+// La sessione in corso ({ id, numero, titolo }), o null se non ce n'è una.
 export async function sessioneInCorso(campagnaId) {
   const stato = await ottieniStatoSessione(campagnaId);
   if (!stato.inCorso || !stato.sessioneAttivaId) return null;
   const sessione = await getDoc(doc(db, "registroSessioni", stato.sessioneAttivaId));
-  return { id: stato.sessioneAttivaId, numero: sessione.exists() ? sessione.data().numero ?? null : null };
+  const dati = sessione.exists() ? sessione.data() : {};
+  return { id: stato.sessioneAttivaId, numero: dati.numero ?? null, titolo: dati.titolo ?? null };
 }
 
 // Tutte le sessioni (di ogni stato: programmata/in-corso/chiusa) di una

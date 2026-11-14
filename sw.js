@@ -19,8 +19,8 @@
 // L'elenco e la VERSIONE si rigenerano con: node strumenti/aggiorna-sw.mjs
 
 // === ELENCO GENERATO: node strumenti/aggiorna-sw.mjs ===
-const VERSIONE = "9864ab4ab615";
-const DATA_VERSIONE = "2026-11-12";
+const VERSIONE = "66fd3a59cd9d";
+const DATA_VERSIONE = "2026-11-14";
 const FILE = {
   "./admin-utenti.html": "67eb21be5117",
   "./archivio.html": "05a524f56a2e",
@@ -31,7 +31,7 @@ const FILE = {
   "./assets/css/gioco.css": "29cedb3c547e",
   "./assets/css/guida.css": "b6e84121ae34",
   "./assets/css/scheda.css": "8cba156ce1df",
-  "./assets/css/sessione.css": "059e9d8f412f",
+  "./assets/css/sessione.css": "eb724797838e",
   "./assets/fonts/pdf/LICENZE-OFL.txt": "63f277618d1c",
   "./assets/fonts/pdf/cinzel-700.woff": "83ea41e439a2",
   "./assets/fonts/pdf/eb-garamond-400-italic.woff": "ee21466cc9fc",
@@ -101,7 +101,7 @@ const FILE = {
   "./assets/js/dati/musica.js": "2e7248a4e025",
   "./assets/js/dati/party.js": "f9d4dca97659",
   "./assets/js/dati/schede.js": "a0545974417e",
-  "./assets/js/dati/sessioni.js": "4cd8c9e9633b",
+  "./assets/js/dati/sessioni.js": "bae2cb5a9721",
   "./assets/js/dati/utenti.js": "cef6301d4201",
   "./assets/js/descrizioni.js": "ebc456fbe5a1",
   "./assets/js/effetti-dadi.js": "55e4c071b95a",
@@ -155,7 +155,7 @@ const FILE = {
   "./assets/js/pagine/offline.js": "66f6add61755",
   "./assets/js/pagine/register.js": "d351cfe15864",
   "./assets/js/pagine/scheda-personaggio.js": "4f30a2b887d1",
-  "./assets/js/pagine/sessione.js": "f6adae5f87a0",
+  "./assets/js/pagine/sessione.js": "709e2f81fb8a",
   "./assets/js/pagine/tavolo.js": "f38a46e915a7",
   "./assets/js/pagine/verifica-email.js": "9160b11d3edd",
   "./assets/js/pdf-scheda.js": "ab909d461890",
@@ -165,7 +165,7 @@ const FILE = {
   "./assets/js/riposo.js": "d633ca3f1737",
   "./assets/js/ritaglio.js": "047db73fdef2",
   "./assets/js/scena-dadi.js": "300077db83f6",
-  "./assets/js/scheda-rapida.js": "a0c94af60aa0",
+  "./assets/js/scheda-rapida.js": "dfaf86cb59b4",
   "./assets/js/spotify-config.js": "2cd119a39d39",
   "./assets/js/spotify.js": "608a6de358de",
   "./assets/js/suoni.js": "c89c1d1ef463",
@@ -196,7 +196,7 @@ const FILE = {
   "./offline.html": "db6483bdcfa1",
   "./register.html": "03a7cf2e4704",
   "./scheda-personaggio.html": "cdc3e12b5ce6",
-  "./sessione.html": "994f486f44e8",
+  "./sessione.html": "60570f4db0a4",
   "./tavolo.html": "24b0ce5bc660",
   "./verifica-email.html": "374faa034a5b",
 };

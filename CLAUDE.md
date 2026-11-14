@@ -94,6 +94,10 @@ CI (`.github/workflows/test.yml`) esegue le tre suite su ogni PR e su `main`.
   laterale / cassetto sotto i 900 px, testata compatta, voce accesa da
   `body[data-voce]`. Ogni pagina chiama `montaGuscio({ user, profilo })` al posto
   di `montaMenuUtente`; `test/pagine/guscio.test.mjs` controlla la struttura.
+  Contenuti ridisegnati: nei pannelli `.panel.rd-blu` le variabili del tema
+  (`--color-ink`, `--color-burgundy`…) diventano quelle del blu notte, i
+  `.panel.rd-perg` sono la pergamena nuova (vedi la sezione «Sessione
+  ridisegnata» di `sessione.css`).
 - **Librerie incluse**: librerie del PDF in `assets/vendor/pdf/`, font del PDF in `assets/fonts/pdf/`.
 - **Intro** (`intro.js` → worker `intro-worker.js` → `intro-motore.js`, scena pura in
   `intro-scena.js` testata in `test/pagine/`): pezzi dipinti in `assets/img/intro/`, misure in

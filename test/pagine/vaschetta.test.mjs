@@ -249,10 +249,11 @@ test("la finestra del tiro e il riposo breve usano la vaschetta, che si scarica 
 test("in Sessione il lanciatore ha il suo pannello «Vaschetta dei dadi», fuori dagli appunti", () => {
   const html = leggi("sessione.html");
   const inizioDadi = html.indexOf('id="pannello-dadi"');
-  const appunti = html.slice(html.indexOf("sessione-pannello-appunti"), inizioDadi);
-  assert.ok(inizioDadi > 0 && appunti.length > 0);
+  const inizioAppunti = html.indexOf("sessione-pannello-appunti");
+  const appunti = html.slice(inizioAppunti, html.indexOf("</form>", html.indexOf('id="form-appunto"')));
+  assert.ok(inizioDadi > 0 && inizioAppunti > inizioDadi && appunti.length > 0);
   assert.doesNotMatch(appunti, /lanciatore-dadi/);
-  const dadi = html.slice(inizioDadi, html.indexOf('id="pannello-contenuti"'));
+  const dadi = html.slice(inizioDadi, inizioAppunti);
   assert.match(dadi, /<h3>Vaschetta dei dadi<\/h3>/);
   // I campi di prima, più la vaschetta e la riga del risultato.
   for (const id of ["lanciatore-dadi", "dadi-quanti", "dadi-facce", "dadi-modificatore", "dadi-modo", "dadi-etichetta", "dadi-nascosto", "vaschetta-dadi", "esito-dadi"]) {
@@ -264,8 +265,9 @@ test("in Sessione il lanciatore ha il suo pannello «Vaschetta dei dadi», fuori
   const stili = leggi("assets/css/sessione.css");
   assert.match(stili, /\.vaschetta-sessione \{[^}]*min-height: 170px;/);
   assert.match(stili, /@media \(min-width: 560px\) \{\s+\.vaschetta-sessione \{\s+min-height: 240px;/);
-  // Sul telefono sta subito dopo gli appunti.
-  assert.match(stili, /\.sessione-pannello-dadi \{ order: 1; \}/);
+  // Sul telefono sta nella scheda «Tavolo», dopo combattimento e mappa (D-031).
+  assert.match(html, /class="panel rd-blu sessione-pannello-dadi" id="pannello-dadi" data-scheda="tavolo"/);
+  assert.match(stili, /\.sessione-pannello-dadi \{ order: 3; \}/);
 });
 
 test("il pannello ⚙️ ha la scelta di rivestimento e vista, senza caricare il disegno della vaschetta", () => {

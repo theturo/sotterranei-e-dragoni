@@ -78,7 +78,10 @@ export function montaSchedaRapida({ campagnaId, uid, isDM, party, registraTiro }
       <p></p>
       <a class="link-intestazione" href="i-miei-personaggi.html">Scheda completa ↗</a>
     </div>`;
-  document.body.append(bottone, pannello);
+  // Il bottone va nella testata della pagina se ha il suo posto (Sessione):
+  // sul computer è un pulsante della testata, sul telefono resta fisso in basso.
+  (document.getElementById("slot-scheda-rapida") || document.body).append(bottone);
+  document.body.append(pannello);
 
   const $ = (selettore) => pannello.querySelector(selettore);
   const soloLettura = () => isDM || !scheda || scheda.proprietarioUid !== uid;
