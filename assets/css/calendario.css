@@ -1,205 +1,387 @@
 /* calendario.css — Calendario delle sessioni e proposte di date.
    Caricato dopo base.css da: calendario.
    Una regola nuova va nel file dell'area che la usa; in base.css se serve a
-   pagine di aree diverse. */
+   pagine di aree diverse.
 
-.calendario-intestazione h3 {
-  margin: 0;
-  text-transform: capitalize;
+   Calendario ridisegnato (D-033): in cima la prossima sessione in evidenza,
+   poi il mese in un pannello blu (.panel.rd-blu) e, in pergamena
+   (.panel.rd-perg), le date da scegliere e le altre sessioni. Sul telefono
+   prima ciò che chiede una risposta, il mese compatto in fondo. Il DM
+   organizza dalla finestra «Organizza una sessione». */
+
+/* Il pulsante del DM è l'unico comando: per i giocatori la riga sparisce. */
+.rd-comandi-pagina:not(:has(> :not([hidden]))) {
+  display: none;
 }
 
-.conteggi-opzione svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
+.calendario-ridisegnato {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
-.nomi-mancano {
-  font-style: italic;
+.calendario-ridisegnato[hidden] {
+  display: none;
 }
 
-.riga-opzione-form input {
-  padding: 6px 8px;
-  border: 1px solid var(--color-ink-soft);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.55);
-  font-family: var(--font-body);
+.calendario-etichetta {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--rd-oro);
+}
+
+/* ---------- Prossima sessione in evidenza ---------- */
+.calendario-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  padding: 22px 26px;
+  border-radius: 12px;
+  background: rgba(20, 38, 53, 0.87);
+  border: 1px solid var(--rd-bronzo);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+  color: var(--rd-avorio);
+}
+
+.calendario-hero-testi {
   min-width: 0;
 }
 
-.riga-opzione-form input[type="date"] {
-  flex: 1;
+.calendario-hero h2 {
+  margin: 6px 0 4px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.15;
+  color: var(--rd-avorio);
+  overflow-wrap: anywhere;
 }
 
-/* ---------- Calendario ---------- */
+.calendario-hero p {
+  margin: 0;
+  font-size: 17px;
+  color: var(--rd-testo-2);
+}
+
+.calendario-hero-note {
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.calendario-hero-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.calendario-hero-azioni:empty {
+  display: none;
+}
+
+.calendario-hero.in-corso .calendario-etichetta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffb3a8;
+}
+
+.calendario-hero.in-corso .calendario-etichetta::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffb3a8;
+  box-shadow: 0 0 0 3px rgba(255, 179, 168, 0.25);
+}
+
+.calendario-hero.senza-data h2 {
+  font-size: 23px;
+  color: var(--rd-testo-2);
+}
+
+/* ---------- Disposizione: mese a sinistra, liste a destra ---------- */
 .calendario-layout {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 32vw, 420px);
+  gap: 22px;
   align-items: start;
 }
 
 .calendario-colonna {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 22px;
 }
 
-@media (max-width: 900px) {
-  .calendario-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.calendario-ridisegnato .panel h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.4px;
 }
 
+/* ---------- Mese (pannello blu) ---------- */
 .calendario-intestazione {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+}
+
+.calendario-ridisegnato .calendario-intestazione h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  text-transform: capitalize;
+}
+
+.calendario-freccia {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--rd-bordo);
+  background: transparent;
+  color: var(--rd-oro);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .calendario-freccia:hover {
+    border-color: var(--rd-bronzo);
+    background: var(--rd-selezione);
+  }
 }
 
 .griglia-calendario {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
+  gap: 5px;
 }
 
 .giorno-settimana {
   font-family: var(--font-heading);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
   text-align: center;
-  color: var(--color-ink-soft);
-  padding-bottom: 4px;
+  color: var(--rd-oro);
+  padding-bottom: 2px;
+}
+
+.giorno-settimana-iniziale {
+  display: none;
 }
 
 .giorno-cal {
-  min-height: 78px;
-  padding: 4px;
-  border: 1px solid rgba(122, 31, 43, 0.18);
+  min-height: 74px;
+  min-width: 0;
+  padding: 4px 5px;
   border-radius: 6px;
+  background: rgba(16, 30, 42, 0.55);
+  border: 1px solid #2c3d49;
+  color: var(--rd-avorio);
+  font: inherit;
+  text-align: left;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: 3px;
-  min-width: 0;
+  cursor: default;
 }
 
 .giorno-cal.vuoto {
+  background: none;
   border-color: transparent;
 }
 
 .giorno-cal.oggi {
-  border-color: var(--color-gold);
-  box-shadow: inset 0 0 0 1px var(--color-gold);
-  background: rgba(201, 162, 39, 0.1);
+  border-color: var(--rd-oro);
+  box-shadow: inset 0 0 0 1px var(--rd-oro);
 }
 
 .numero-giorno {
-  font-family: var(--font-heading);
-  font-size: 0.8rem;
-  color: var(--color-ink-soft);
+  font-size: 0.82rem;
+  color: var(--rd-testo-2);
+}
+
+.giorno-cal.oggi .numero-giorno {
+  color: var(--rd-oro);
+  font-weight: 600;
 }
 
 .evento-cal {
-  display: inline-block;
-  font-size: 0.68rem;
-  line-height: 1.3;
+  display: block;
+  max-width: 100%;
   padding: 1px 5px;
   border-radius: 4px;
+  font-size: 0.75rem;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
-  cursor: default;
 }
 
 .evento-programmata {
-  background: var(--color-burgundy);
-  color: var(--color-parchment);
+  background: var(--rd-cremisi);
+  border: 1px solid var(--rd-cremisi-bordo);
+  color: var(--rd-avorio);
 }
 
 .evento-proposta {
-  border: 1px dashed var(--color-burgundy);
-  color: var(--color-burgundy);
+  border: 1px dashed var(--rd-oro);
+  color: var(--rd-oro);
 }
 
 .evento-giocata {
-  background: rgba(47, 58, 80, 0.14);
-  color: var(--color-ink-soft);
+  background: rgba(198, 200, 192, 0.18);
+  border: 1px solid transparent;
+  color: var(--rd-testo-2);
 }
 
 .legenda-calendario {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   margin-top: 10px;
 }
 
+.legenda-calendario .evento-cal {
+  display: inline-block;
+}
+
+/* Pallini e giorno scelto: solo nel mese compatto (telefono). */
+.pallini-giorno,
+.calendario-giorno-scelto {
+  display: none;
+}
+
+/* ---------- Liste in pergamena ---------- */
 .lista-calendario,
 .lista-opzioni {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+}
+
+.btn-calendario-piccolo {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 7px;
+  border-color: rgba(37, 44, 49, 0.25);
+  background: rgba(37, 44, 49, 0.06);
+  color: var(--rd-inchiostro);
+}
+
+.btn-calendario-piccolo.btn-tabella-pericolo {
+  color: #9b2f2a;
+  border-color: rgba(155, 47, 42, 0.5);
+  background: transparent;
 }
 
 .riga-calendario {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(122, 31, 43, 0.15);
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(37, 44, 49, 0.12);
+}
+
+.riga-calendario:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.riga-calendario-info {
+  min-width: 0;
+}
+
+.riga-calendario-info strong {
+  display: block;
+  font-size: 1.02rem;
+  font-weight: 600;
+}
+
+.riga-calendario-info .party-sessione-sub {
+  font-size: 0.85rem;
+  color: var(--rd-inchiostro-2);
 }
 
 .riga-calendario-azioni {
   display: flex;
+  flex: none;
   gap: 6px;
-  flex-wrap: wrap;
 }
 
-.scheda-proposta {
-  border: 1px solid rgba(122, 31, 43, 0.25);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
+.calendario-vuoto {
+  margin: 0;
+  font-style: italic;
+  color: var(--rd-inchiostro-2);
+}
+
+/* Proposte e disponibilità. */
+.scheda-proposta + .scheda-proposta {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 2px solid rgba(37, 44, 49, 0.18);
 }
 
 .proposta-titolo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+}
+
+.proposta-nome strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.proposta-nome small {
+  font-size: 0.88rem;
+  color: var(--rd-inchiostro-2);
 }
 
 .opzione-proposta {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 0;
-  border-top: 1px dashed rgba(122, 31, 43, 0.2);
+  margin-top: 8px;
+  padding: 10px 0 2px;
+  border-top: 1px solid rgba(37, 44, 49, 0.12);
 }
 
 .opzione-intestazione {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+.opzione-intestazione strong {
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .conteggi-opzione {
-  font-family: var(--font-heading);
-  font-size: 0.8rem;
-  color: var(--color-burgundy);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
 }
 
 .conteggi-opzione > span {
@@ -208,24 +390,175 @@
   gap: 3px;
 }
 
-.conteggi-punto {
-  color: rgba(122, 31, 43, 0.4);
+.conteggi-opzione svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.conteggio-si {
+  color: #3d6b3a;
+}
+
+.conteggio-forse {
+  color: #8a5a00;
+}
+
+.conteggio-no {
+  color: #9b2f2a;
 }
 
 .scelta-disponibilita {
   display: flex;
   gap: 6px;
+  margin-top: 8px;
+}
+
+.btn-disponibilita {
+  min-width: 54px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1px solid rgba(37, 44, 49, 0.25);
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--rd-inchiostro);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.btn-disponibilita:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@media (hover: hover) {
+  .btn-disponibilita:not(:disabled):hover {
+    border-color: rgba(37, 44, 49, 0.5);
+  }
+}
+
+.btn-disponibilita.disponibilita-si[aria-pressed="true"] {
+  background: #3d6b3a;
+  border-color: #3d6b3a;
+  color: #fff;
+}
+
+.btn-disponibilita.disponibilita-forse[aria-pressed="true"] {
+  background: #8a5a00;
+  border-color: #8a5a00;
+  color: #fff;
+}
+
+.btn-disponibilita.disponibilita-no[aria-pressed="true"] {
+  background: #9b2f2a;
+  border-color: #9b2f2a;
+  color: #fff;
 }
 
 .dettaglio-disponibilita {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.82rem;
-  color: var(--color-ink-soft);
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--rd-inchiostro-2);
 }
 
-.form-calendario .field {
-  margin-bottom: 10px;
+.dettaglio-disponibilita > span + span::before {
+  content: " · ";
+  font-style: normal;
+}
+
+.nomi-mancano {
+  font-style: italic;
+}
+
+.btn-conferma-data {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ---------- Finestra «Organizza una sessione» (DM) ---------- */
+.calendario-finestra {
+  --color-ink: var(--rd-avorio);
+  --color-ink-soft: var(--rd-testo-2);
+  --color-burgundy: var(--rd-oro);
+  --color-parchment: var(--rd-avorio);
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid var(--rd-bronzo);
+  background: var(--rd-barra);
+  color: var(--rd-avorio);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+  scrollbar-color: var(--rd-bordo) transparent;
+}
+
+.calendario-finestra > form {
+  padding: 18px 20px 20px;
+}
+
+.calendario-finestra::backdrop {
+  background: rgba(5, 10, 15, 0.62);
+}
+
+.calendario-finestra-testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.calendario-finestra-testa h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  color: var(--rd-avorio);
+}
+
+.calendario-finestra .btn-chiudi-modal {
+  color: var(--rd-testo-2);
+}
+
+.calendario-finestra .field {
+  margin: 10px 0 0;
+  text-align: left;
+}
+
+.calendario-finestra label,
+.calendario-finestra-etichetta {
+  display: block;
+  margin: 0 0 4px;
+  font-family: var(--font-heading);
+  font-size: 0.66rem;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--rd-oro);
+}
+
+.calendario-finestra-etichetta {
+  margin-top: 12px;
+}
+
+.calendario-finestra input {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  border: 1px solid var(--rd-bordo);
+  background: #0f1b24;
+  color: var(--rd-avorio);
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+
+.calendario-finestra input::placeholder {
+  color: var(--rd-testo-2);
+  font-style: italic;
+  opacity: 0.8;
 }
 
 .opzioni-proposta {
@@ -236,25 +569,214 @@
 
 .riga-opzione-form {
   display: flex;
-  gap: 6px;
   align-items: center;
+  gap: 6px;
 }
 
-.banner-oggi {
+.riga-opzione-form input[type="date"] {
+  flex: 1;
+}
+
+.riga-opzione-form input[type="time"] {
+  flex: 0 0 96px;
+}
+
+.calendario-finestra .btn-rimuovi-talento {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  border: 1px solid var(--rd-bordo);
+  background: none;
+  color: var(--rd-avorio);
+}
+
+.calendario-aggiungi-data {
+  margin-top: 8px;
+  min-height: 34px;
+  font-size: 15px;
+}
+
+.calendario-finestra-errore {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--rd-cremisi-bordo);
+  background: rgba(135, 60, 57, 0.3);
+  color: #ffd2c9;
+  font-size: 0.92rem;
+}
+
+.calendario-finestra-azioni {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--color-gold);
-  background: rgba(201, 162, 39, 0.16);
-  color: var(--color-parchment);
-  font-family: var(--font-heading);
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
 }
 
-.banner-oggi[hidden] {
-  display: none;
+/* ---------- Una colonna: prima ciò che chiede una risposta ---------- */
+@media (max-width: 899px) {
+  .calendario-ridisegnato {
+    gap: 14px;
+  }
+
+  .calendario-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .calendario-colonna {
+    display: contents;
+  }
+
+  .calendario-proposte {
+    order: 1;
+  }
+
+  .calendario-prossime {
+    order: 2;
+  }
+
+  .calendario-mese {
+    order: 3;
+  }
+
+  .calendario-hero {
+    padding: 16px 18px;
+    gap: 12px;
+  }
+
+  .calendario-hero h2 {
+    font-size: 22px;
+  }
+
+  .calendario-hero p {
+    font-size: 15px;
+  }
+
+  .calendario-hero-azioni {
+    width: 100%;
+  }
+
+  .calendario-hero-azioni .rd-btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* ---------- Mese compatto: pallini e dettaglio del giorno toccato ---------- */
+@media (max-width: 640px) {
+  .giorno-settimana-nome,
+  .giorno-cal .evento-cal {
+    display: none;
+  }
+
+  .giorno-settimana-iniziale {
+    display: inline;
+  }
+
+  .griglia-calendario {
+    gap: 4px;
+  }
+
+  .giorno-cal {
+    min-height: 40px;
+    padding: 2px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .giorno-cal.scelto {
+    background: var(--rd-selezione);
+    border-color: var(--rd-bronzo);
+  }
+
+  .pallini-giorno {
+    display: flex;
+    gap: 3px;
+    min-height: 7px;
+  }
+
+  .pallino {
+    width: 7px;
+    height: 7px;
+    box-sizing: border-box;
+    border-radius: 50%;
+  }
+
+  .pallino.evento-programmata {
+    background: #e07a6e;
+    border: 0;
+  }
+
+  .pallino.evento-proposta {
+    border: 1.5px dashed var(--rd-oro);
+  }
+
+  .pallino.evento-giocata {
+    background: var(--rd-testo-2);
+    border: 0;
+  }
+
+  .calendario-giorno-scelto {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--rd-bordo);
+    font-size: 0.95rem;
+  }
+
+  .calendario-giorno-scelto > b {
+    width: 100%;
+    font-weight: 600;
+  }
+
+  .calendario-giorno-scelto > b::first-letter {
+    text-transform: uppercase;
+  }
+
+  .giorno-scelto-evento {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    width: 100%;
+  }
+
+  .giorno-scelto-evento .evento-cal {
+    display: inline-block;
+  }
+
+  .giorno-scelto-evento small,
+  .giorno-scelto-vuoto {
+    color: var(--rd-testo-2);
+  }
+
+  .legenda-calendario .evento-cal {
+    font-size: 0.7rem;
+  }
+
+  /* La finestra del DM sale dal basso. */
+  .calendario-finestra {
+    width: 100%;
+    max-width: none;
+    margin: auto 0 0;
+    border-radius: 14px 14px 0 0;
+    border-bottom: 0;
+  }
+
+  .calendario-finestra > form {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+
+  .calendario-finestra-azioni .rd-btn {
+    flex: 1 1 auto;
+  }
 }

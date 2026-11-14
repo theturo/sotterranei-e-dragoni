@@ -58,6 +58,7 @@ export async function rispondiProposta(campagnaId, propostaId, uid, nome, rispos
 export async function confermaProposta(campagnaId, proposta, opzione) {
   const { id: sessioneId, numero } = await creaSessioneProgrammata(campagnaId, {
     titolo: proposta.titolo,
+    note: proposta.note,
     dataProgrammata: opzione.data,
     oraProgrammata: opzione.ora,
   });
@@ -72,8 +73,8 @@ export async function confermaProposta(campagnaId, proposta, opzione) {
 }
 
 // Il DM fissa direttamente una data (senza proposta), con avviso ai membri.
-export async function fissaSessione(campagnaId, { titolo, data, ora }) {
-  const risultato = await creaSessioneProgrammata(campagnaId, { titolo, dataProgrammata: data, oraProgrammata: ora });
+export async function fissaSessione(campagnaId, { titolo, note = null, data, ora }) {
+  const risultato = await creaSessioneProgrammata(campagnaId, { titolo, note, dataProgrammata: data, oraProgrammata: ora });
   await notificaMembri(campagnaId, { tipo: "sessione_confermata", titolo: titolo || null, numero: risultato.numero, data, ora: ora || null });
   return risultato;
 }

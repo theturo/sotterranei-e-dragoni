@@ -2833,57 +2833,14 @@ body:has(.btn-scheda-rapida:not([hidden])) .dashboard-wrap {
    Pannelli blu per gli strumenti (combattimento, mappa, contenuti, vaschetta,
    musica), pergamena per ciò che si legge (party e appunti). I componenti
    interni usano le variabili del tema: nei pannelli blu diventano quelle del
-   blu notte (testo avorio, accenti oro); i pochi elementi pieni restano cremisi. */
-.pagina-ridisegnata .panel.rd-blu {
-  --color-ink: var(--rd-avorio);
-  --color-ink-soft: var(--rd-testo-2);
-  --color-burgundy: var(--rd-oro);
-  --color-burgundy-bright: #f4cf96;
-  --color-gold: var(--rd-bronzo);
-  --color-gold-bright: var(--rd-oro);
-  --color-parchment: var(--rd-avorio);
-  --color-parchment-dark: var(--rd-testo-2);
-  background: rgba(24, 43, 58, 0.94);
-  color: var(--rd-avorio);
-  border: 1px solid var(--rd-bordo);
-  border-radius: 10px;
-  padding: 16px 18px 18px;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
-  scrollbar-color: var(--rd-bordo) transparent;
-}
-
-.pagina-ridisegnata .panel.rd-perg {
-  --color-ink: var(--rd-inchiostro);
-  --color-ink-soft: var(--rd-inchiostro-2);
-  --color-burgundy: var(--rd-cremisi);
-  background: var(--rd-pergamena);
-  color: var(--rd-inchiostro);
-  border: none;
-  border-radius: 10px;
-  padding: 16px 18px 18px;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
-}
-
+   blu notte (testo avorio, accenti oro); i pochi elementi pieni restano cremisi.
+   I pannelli .rd-blu e .rd-perg sono in base.css («Pannelli del redesign»). */
 .pagina-ridisegnata .panel:is(.rd-blu, .rd-perg) .sessione-appunti-intestazione h3,
 .pagina-ridisegnata .panel:is(.rd-blu, .rd-perg) > .sessione-appunti-intestazione:first-child h3 {
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 1.05rem;
   letter-spacing: 0.6px;
-}
-
-.pagina-ridisegnata .panel.rd-blu h3 {
-  color: var(--rd-avorio);
-}
-
-.pagina-ridisegnata .panel.rd-perg h3 {
-  color: var(--rd-inchiostro);
-}
-
-.pagina-ridisegnata .rd-blu :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]), select, textarea) {
-  background: #0f1b24;
-  border-color: var(--rd-bordo);
-  color: var(--rd-avorio);
 }
 
 /* Tracker e righe nei pannelli blu. */
